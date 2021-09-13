@@ -723,7 +723,9 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 			break;
 		}
 
+		bool abbreviation = false;
 		if (isdigit((ut8)*tmp)) {
+			abbreviation = true;
 			tmp = dem_list_get_n(abbr_names, *tmp - '0');
 			if (!tmp) {
 				break;
@@ -748,7 +750,7 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 		memorize = true;
 
 		read_len += len;
-		if (len == 1) {
+		if (abbreviation) {
 			if (*(prev_pos + 1) == '@') {
 				prev_pos = curr_pos;
 			} else {
