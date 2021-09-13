@@ -1622,7 +1622,7 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 	}
 	data_type->left = data_type->right = NULL;
 	// Data type and access level
-	switch (*curr_pos++) {
+	switch (*curr_pos) {
 	// Data
 	case '0': // Private static member
 	case '1': // Protected static member
@@ -1630,6 +1630,20 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 	case '3': // Normal variable
 	case '4': // Normal variable
 	case '5': // Normal variable
+		switch (*curr_pos) {
+		case '0':
+			modifier.left = strdup("private: static ");
+			break;
+		case '1':
+			modifier.left = strdup("protected: static ");
+			break;
+		case '2':
+			modifier.left = strdup("public: static ");
+			break;
+		default:
+			break;
+		}
+		curr_pos++;
 		i = 0;
 		err = get_type_code_string(curr_pos, &i, &tmp);
 		if (err != eDemanglerErrOK) {
@@ -1658,6 +1672,7 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 		break;
 	case '6': // compiler generated static
 	case '7': // compiler generated static
+		curr_pos++;
 		curr_pos += get_ptr_modifier(curr_pos, &modifier);
 		if (get_storage_class(*curr_pos, &storage_class) != eDemanglerErrOK) {
 			sdatatype_fini(&modifier);
@@ -1702,6 +1717,7 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 		}
 		break;
 	case '8':
+		curr_pos++;
 		break;
 	default:
 		return eDemanglerErrUncorrectMangledSymbol;
