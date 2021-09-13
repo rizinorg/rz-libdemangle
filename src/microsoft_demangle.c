@@ -650,7 +650,7 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 			break;
 		}
 
-		// check is it teamplate???
+		// check if it is a template
 		if ((*tmp == '?') && (*(tmp + 1) == '$')) {
 			size_t i = 0;
 			i = get_template(tmp + 2, str_info, memorize);
@@ -663,8 +663,6 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 			prev_pos = tmp + i + 2;
 			curr_pos = strchr(prev_pos, '@');
 			read_len += i + 2;
-			//			if (curr_pos)
-			//				read_len++;
 			continue;
 		}
 
@@ -806,7 +804,7 @@ get_namespace_and_name_err:
 		(state)->buff_for_parsing++; \
 		(state)->state = eTCStateEnd; \
 	}
-#define ONE_LETTER_ACTIION(action, type) \
+#define ONE_LETTER_ACTION(action, type) \
 	static void tc_state_##action(SStateInfo *state, STypeCodeStr *type_code_str) { \
 		if (copy_string(type_code_str, type, 0) == 0) { \
 			state->err = eTCStateMachineErrAlloc; \
@@ -814,20 +812,20 @@ get_namespace_and_name_err:
 		state->state = eTCStateEnd; \
 	}
 
-ONE_LETTER_ACTIION(X, "void")
-ONE_LETTER_ACTIION(D, "char")
-ONE_LETTER_ACTIION(C, "signed char")
-ONE_LETTER_ACTIION(E, "unsigned char")
-ONE_LETTER_ACTIION(F, "short int")
-ONE_LETTER_ACTIION(G, "unsigned short int")
-ONE_LETTER_ACTIION(H, "int")
-ONE_LETTER_ACTIION(I, "unsigned int")
-ONE_LETTER_ACTIION(J, "long int")
-ONE_LETTER_ACTIION(K, "unsigned long int")
-ONE_LETTER_ACTIION(M, "float")
-ONE_LETTER_ACTIION(N, "double")
-ONE_LETTER_ACTIION(Z, "varargs ...")
-ONE_LETTER_ACTIION(O, "long double")
+ONE_LETTER_ACTION(X, "void")
+ONE_LETTER_ACTION(D, "char")
+ONE_LETTER_ACTION(C, "signed char")
+ONE_LETTER_ACTION(E, "unsigned char")
+ONE_LETTER_ACTION(F, "short int")
+ONE_LETTER_ACTION(G, "unsigned short int")
+ONE_LETTER_ACTION(H, "int")
+ONE_LETTER_ACTION(I, "unsigned int")
+ONE_LETTER_ACTION(J, "long int")
+ONE_LETTER_ACTION(K, "unsigned long int")
+ONE_LETTER_ACTION(M, "float")
+ONE_LETTER_ACTION(N, "double")
+ONE_LETTER_ACTION(Z, "varargs ...")
+ONE_LETTER_ACTION(O, "long double")
 
 DEF_STATE_ACTION(_) {
 #define PROCESS_CASE(letter, type_str) \
