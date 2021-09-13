@@ -86,7 +86,15 @@ typedef struct SDataType {
 	char *right;
 } SDataType;
 
+static inline void sdatatype_fini(SDataType *data_type) {
+	free(data_type->left);
+	free(data_type->right);
+}
+
 static void sstrinfo_free(SStrInfo *sstrinfo) {
+	if (!sstrinfo) {
+		return;
+	}
 	free(sstrinfo->str_ptr);
 	free(sstrinfo);
 }
@@ -146,7 +154,7 @@ static char *get_num(SStateInfo *state);
 static EDemanglerErr parse_data_type(const char *sym, SDataType *demangled_type, size_t *len);
 static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_str, size_t *amount_of_names, bool memorize);
 static inline EDemanglerErr get_storage_class(const char encoded, const char **storage_class);
-static inline size_t get_ptr_modifier(const char encoded, SDataType *ptr_modifier);
+static inline size_t get_ptr_modifier(const char *encoded, SDataType *ptr_modifier);
 static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str, char **demangled_function, size_t *chars_read);
 static EDemanglerErr parse_microsoft_mangled_name(const char *sym, char **demangled_name, size_t *chars_read);
 static EDemanglerErr parse_microsoft_rtti_mangled_name(const char *sym, char **demangled_name, size_t *chars_read);
@@ -245,12 +253,11 @@ static int get_template_params(const char *sym, size_t *amount_of_read_chars, ch
 				return eDemanglerErrUncorrectMangledSymbol;
 			}
 			sym += ret + 1;
-			SDataType data_type;
+			SDataType data_type = { 0 };
 			if (isdigit(*sym)) {
 				err = parse_data_type(sym, &data_type, &ret);
 				*str_type_code = dem_str_newf("&%s %s%s", data_type.left, str.type_str, data_type.right);
-				free(data_type.left);
-				free(data_type.right);
+				sdatatype_fini(&data_type);
 			} else {
 				char *tmp = NULL;
 				err = parse_function(sym, &str, &tmp, &ret);
@@ -724,6 +731,9 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 			len = 1;
 		} else {
 			char *tmpname = malloc(len + 1);
+			if (!tmpname) {
+				break;
+			}
 			memset(tmpname, 0, len + 1);
 			memcpy(tmpname, prev_pos, len);
 			dem_list_append(abbr_names, tmpname);
@@ -1019,8 +1029,8 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		}
 	}
 
-	SDataType mod;
-	i = get_ptr_modifier(*state->buff_for_parsing, &mod);
+	SDataType mod = { 0 };
+	i = get_ptr_modifier(state->buff_for_parsing, &mod);
 	state->buff_for_parsing += i;
 	state->amount_of_read_chars += i;
 
@@ -1043,8 +1053,8 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		state->amount_of_read_chars += 2;
 	}
 
-	SDataType mod2;
-	i = get_ptr_modifier(*state->buff_for_parsing, &mod2);
+	SDataType mod2 = { 0 };
+	i = get_ptr_modifier(state->buff_for_parsing, &mod2);
 	state->buff_for_parsing += i;
 	state->amount_of_read_chars += i;
 
@@ -1138,6 +1148,8 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 
 MODIFIER_err:
 	RZ_FREE(tmp);
+	sdatatype_fini(&mod);
+	sdatatype_fini(&mod2);
 	free_type_code_str_struct(&tmp_str);
 	free_type_code_str_struct(&modifier);
 }
@@ -1251,7 +1263,7 @@ static EDemanglerErr parse_function_args(const char *sym, char **demangled_args,
 }
 
 // TODO: use parse_function() instead
-static void pf(SStateInfo *state, STypeCodeStr *type_code_str, const char *pointer_str) {
+static void parse_function_pointer(SStateInfo *state, STypeCodeStr *type_code_str, const char *pointer_str) {
 	const char *call_conv = NULL;
 	const char *storage = NULL;
 	char *ret_type = NULL;
@@ -1317,7 +1329,7 @@ static void parse_pointer(SStateInfo *state, STypeCodeStr *type_code_str, const 
 	if (isdigit((ut8)*state->buff_for_parsing)) {
 		ut8 digit = *state->buff_for_parsing++;
 		if (digit == '6' || digit == '7') {
-			pf(state, type_code_str, pointer_str);
+			parse_function_pointer(state, type_code_str, pointer_str);
 			return;
 		} else if (digit == '8' || digit == '9') {
 			STypeCodeStr func_str;
@@ -1330,7 +1342,7 @@ static void parse_pointer(SStateInfo *state, STypeCodeStr *type_code_str, const 
 			state->buff_for_parsing += read;
 			copy_string(&func_str, "::", 2);
 			copy_string(&func_str, pointer_str, 0);
-			pf(state, type_code_str, func_str.type_str);
+			parse_function_pointer(state, type_code_str, func_str.type_str);
 			free_type_code_str_struct(&func_str);
 			state->state = eTCStateEnd;
 			return;
@@ -1530,26 +1542,47 @@ get_type_code_string_err:
 	return err;
 }
 
-static inline size_t get_ptr_modifier(const char encoded, SDataType *ptr_modifier) {
-	size_t read = 0;
+static inline size_t get_ptr_modifier(const char *encoded, SDataType *ptr_modifier) {
+	const char *tmp = encoded;
+	if (!ptr_modifier->left) {
+		ptr_modifier->left = strdup("");
+	}
+	if (!ptr_modifier->right) {
+		ptr_modifier->right = strdup("");
+	}
 #define SET_PTR_MODIFIER(letter, modifier_left, modifier_right) \
 	case letter: \
-		ptr_modifier->left = modifier_left; \
-		ptr_modifier->right = modifier_right; \
-		read++; \
+		ptr_modifier->left = dem_str_append(ptr_modifier->left, modifier_left); \
+		ptr_modifier->right = dem_str_append(ptr_modifier->right, modifier_right); \
 		break;
 
-	switch (encoded) {
-		SET_PTR_MODIFIER('E', "", " __ptr64")
-		SET_PTR_MODIFIER('F', "__unaligned ", "")
-		SET_PTR_MODIFIER('G', "", " &")
-		SET_PTR_MODIFIER('H', "", " &&")
-		SET_PTR_MODIFIER('I', "", " __restrict")
-	default:
-		ptr_modifier->left = ptr_modifier->right = "";
+	bool ref = false;
+	bool refref = false;
+	while (true) {
+		switch (*tmp++) {
+			SET_PTR_MODIFIER('E', "", " __ptr64")
+			SET_PTR_MODIFIER('F', " __unaligned", "")
+			SET_PTR_MODIFIER('I', "", " __restrict")
+		case 'G':
+			ref = true;
+			break;
+		case 'H':
+			refref = true;
+			break;
+		default:
+			if (ref) {
+				ptr_modifier->right = dem_str_append(ptr_modifier->right, "&");
+				if (refref) {
+					ptr_modifier->right = dem_str_append(ptr_modifier->right, " ");
+				}
+			}
+			if (refref) {
+				ptr_modifier->right = dem_str_append(ptr_modifier->right, "&&");
+			}
+			return tmp - encoded - 1;
+		}
 	}
 #undef SET_PTR_MODIFIER
-	return read;
 }
 
 static inline EDemanglerErr get_storage_class(const char encoded, const char **storage_class) {
@@ -1581,7 +1614,7 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 	EDemanglerErr err = eDemanglerErrOK;
 	size_t i;
 	const char *curr_pos = sym;
-	SDataType modifier;
+	SDataType modifier = { 0 };
 	const char *storage_class = NULL;
 	char *tmp;
 	if (len) {
@@ -1604,8 +1637,9 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 		}
 
 		curr_pos += i;
-		curr_pos += get_ptr_modifier(*curr_pos, &modifier);
+		curr_pos += get_ptr_modifier(curr_pos, &modifier);
 		if (get_storage_class(*curr_pos, &storage_class) != eDemanglerErrOK) {
+			sdatatype_fini(&modifier);
 			free(tmp);
 			return eDemanglerErrUncorrectMangledSymbol;
 		}
@@ -1620,52 +1654,57 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 			}
 			free(tmp);
 		}
+		sdatatype_fini(&modifier);
 		break;
 	case '6': // compiler generated static
 	case '7': // compiler generated static
-		if (data_type) {
-			curr_pos += get_ptr_modifier(*curr_pos, &modifier);
-			if (get_storage_class(*curr_pos, &storage_class) != eDemanglerErrOK) {
+		curr_pos += get_ptr_modifier(curr_pos, &modifier);
+		if (get_storage_class(*curr_pos, &storage_class) != eDemanglerErrOK) {
+			sdatatype_fini(&modifier);
+			return eDemanglerErrUncorrectMangledSymbol;
+		}
+		curr_pos++;
+
+		data_type->left = dem_str_newf("%s%s%s", storage_class, modifier.left, modifier.right);
+		sdatatype_fini(&modifier);
+		if (*curr_pos != '@') {
+			STypeCodeStr str;
+			if (!init_type_code_str_struct(&str)) {
+				return eDemanglerErrMemoryAllocation;
+			}
+			size_t i = get_namespace_and_name(curr_pos, &str, NULL, true);
+			if (!i) {
+				free_type_code_str_struct(&str);
 				return eDemanglerErrUncorrectMangledSymbol;
 			}
-			curr_pos++;
-
-			data_type->left = dem_str_newf("%s%s%s", storage_class, modifier.left, modifier.right);
-			if (*curr_pos != '@') {
-				STypeCodeStr str;
-				if (!init_type_code_str_struct(&str)) {
+			curr_pos += i;
+			if (*(curr_pos + 1) != '@') {
+				STypeCodeStr str2;
+				if (!init_type_code_str_struct(&str2)) {
+					free_type_code_str_struct(&str);
 					return eDemanglerErrMemoryAllocation;
 				}
-				size_t i = get_namespace_and_name(curr_pos, &str, NULL, true);
+				i = get_namespace_and_name(curr_pos + 1, &str2, NULL, true);
 				if (!i) {
 					free_type_code_str_struct(&str);
+					free_type_code_str_struct(&str2);
 					return eDemanglerErrUncorrectMangledSymbol;
 				}
-				curr_pos += i;
-				if (*(curr_pos + 1) != '@') {
-					STypeCodeStr str2;
-					if (!init_type_code_str_struct(&str2)) {
-						free_type_code_str_struct(&str);
-						return eDemanglerErrMemoryAllocation;
-					}
-					i = get_namespace_and_name(curr_pos + 1, &str2, NULL, true);
-					if (!i) {
-						free_type_code_str_struct(&str);
-						free_type_code_str_struct(&str2);
-						return eDemanglerErrUncorrectMangledSymbol;
-					}
-					curr_pos += i + 1;
-					data_type->right = dem_str_newf("{for `%s's `%s'}", str.type_str, str2.type_str);
-					free_type_code_str_struct(&str2);
-				} else {
-					data_type->right = dem_str_newf("{for `%s'}", str.type_str);
-				}
-				free_type_code_str_struct(&str);
+				curr_pos += i + 1;
+				data_type->right = dem_str_newf("{for `%s's `%s'}", str.type_str, str2.type_str);
+				free_type_code_str_struct(&str2);
 			} else {
-				data_type->right = strdup("");
+				data_type->right = dem_str_newf("{for `%s'}", str.type_str);
 			}
+			free_type_code_str_struct(&str);
+		} else {
+			data_type->right = strdup("");
 		}
 		break;
+	case '8':
+		break;
+	default:
+		return eDemanglerErrUncorrectMangledSymbol;
 	}
 	if (len) {
 		*len = curr_pos - sym;
@@ -1676,7 +1715,6 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 static EDemanglerErr parse_function_type(const char *sym, SDataType *data_type,
 	size_t *len, bool *is_static, bool *is_implicit_this_pointer) {
 	const char *curr_pos = sym;
-	data_type->left = data_type->right = "";
 	*is_static = *is_implicit_this_pointer = false;
 #define SET_THUNK_MODIFIER(letter, modifier_str) \
 	case letter: { \
@@ -1686,7 +1724,7 @@ static EDemanglerErr parse_function_type(const char *sym, SDataType *data_type,
 		if (!num) { \
 			return eDemanglerErrUncorrectMangledSymbol; \
 		} \
-		data_type->left = modifier_str; \
+		data_type->left = strdup(modifier_str); \
 		data_type->right = dem_str_newf("`adjustor{%s}'", num); \
 		free(num); \
 		*is_implicit_this_pointer = true; \
@@ -1736,6 +1774,12 @@ static EDemanglerErr parse_function_type(const char *sym, SDataType *data_type,
 	if (len) {
 		*len = curr_pos - sym;
 	}
+	if (!data_type->left) {
+		data_type->left = strdup("");
+	}
+	if (!data_type->right) {
+		data_type->right = strdup("");
+	}
 	return eDemanglerErrOK;
 }
 
@@ -1748,8 +1792,9 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 	const char *storage_class_code_for_ret = NULL;
 	char *demangled_args;
 	char *ret_type = NULL;
+	SDataType data_type = { 0 };
+	SDataType this_pointer_modifier = { 0 };
 	const char *curr_pos = sym;
-	SDataType data_type;
 	const char *__64ptr = NULL;
 	size_t len;
 
@@ -1782,6 +1827,7 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 
 	// member function access code
 	if (is_implicit_this_pointer) {
+		curr_pos += get_ptr_modifier(curr_pos, &this_pointer_modifier);
 		err = get_storage_class(*curr_pos++, &memb_func_access_code);
 		if (err != eDemanglerErrOK) {
 			goto parse_function_err;
@@ -1832,7 +1878,7 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 
 	curr_pos += len;
 
-	if (*data_type.left) {
+	if (!RZ_STR_ISEMPTY(data_type.left)) {
 		copy_string(&func_str, data_type.left, 0);
 		if (!strstr(data_type.left, "static")) {
 			copy_string(&func_str, ": ", 0);
@@ -1860,7 +1906,7 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 		copy_string(&func_str, type_code_str->type_str, type_code_str->curr_pos);
 	}
 
-	if (*data_type.right) {
+	if (!RZ_STR_ISEMPTY(data_type.right)) {
 		copy_string(&func_str, data_type.right, 0);
 		free(data_type.right);
 	}
@@ -1872,10 +1918,14 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 		copy_string(&func_str, memb_func_access_code, 0);
 	}
 
+	copy_string(&func_str, this_pointer_modifier.left, 0);
+
 	if (__64ptr) {
 		copy_string(&func_str, " ", 0);
 		copy_string(&func_str, __64ptr, 0);
 	}
+
+	copy_string(&func_str, this_pointer_modifier.right, 0);
 
 	if (ret_type) {
 		if (strstr(func_str.type_str, "#{return_type}")) {
@@ -1893,6 +1943,7 @@ parse_function_err:
 	if (chars_read) {
 		*chars_read = curr_pos - sym;
 	}
+	sdatatype_fini(&this_pointer_modifier);
 	free_type_code_str_struct(&func_str);
 	free(ret_type);
 	return err;
@@ -1907,8 +1958,6 @@ parse_function_err:
 static EDemanglerErr parse_microsoft_mangled_name(const char *sym, char **demangled_name, size_t *chars_read) {
 	STypeCodeStr type_code_str;
 	EDemanglerErr err = eDemanglerErrOK;
-
-	SDataType data_type;
 
 	const char *curr_pos = sym;
 
@@ -1936,6 +1985,7 @@ static EDemanglerErr parse_microsoft_mangled_name(const char *sym, char **demang
 	}
 
 	if (isdigit(*curr_pos)) {
+		SDataType data_type = { 0 };
 		err = parse_data_type(curr_pos, &data_type, &len);
 		if (err != eDemanglerErrOK) {
 			goto parse_microsoft_mangled_name_err;
@@ -1947,8 +1997,7 @@ static EDemanglerErr parse_microsoft_mangled_name(const char *sym, char **demang
 		}
 		*demangled_name = dem_str_append(*demangled_name, type_code_str.type_str);
 		*demangled_name = dem_str_append(*demangled_name, data_type.right);
-		free(data_type.left);
-		free(data_type.right);
+		sdatatype_fini(&data_type);
 	} else if (isalpha(*curr_pos)) {
 		err = parse_function(curr_pos, &type_code_str, demangled_name, &len);
 		curr_pos += len;
