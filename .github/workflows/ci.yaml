@@ -1,0 +1,16 @@
+name: "CI Unit Tests"
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Run Unit Tests
+      run: |
+        meson build
+        ninja -C build test
