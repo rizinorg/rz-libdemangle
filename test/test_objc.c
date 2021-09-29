@@ -4,7 +4,6 @@
 #include "demangling_unit.h"
 
 bool demangle(void) {
-	mu_demangle(objc, "_OBJC_METACLASS_$_Employee", "class Employee");
 	mu_demangle(objc, "_OBJC_CLASS_$_Employee", "class Employee");
 	mu_demangle(objc, "_OBJC_Class_Employee", "class Employee");
 	mu_demangle(objc, "_OBJC_IVAR_$_Employee._shortWord", "field int Employee::_shortWord");
