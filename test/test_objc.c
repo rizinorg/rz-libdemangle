@@ -4,11 +4,15 @@
 #include "demangling_unit.h"
 
 bool demangle(void) {
+	mu_demangle(objc, "_OBJC_METACLASS_$_Employee", "class Employee");
 	mu_demangle(objc, "_OBJC_CLASS_$_Employee", "class Employee");
 	mu_demangle(objc, "_OBJC_Class_Employee", "class Employee");
 	mu_demangle(objc, "_OBJC_IVAR_$_Employee._shortWord", "field int Employee::_shortWord");
 
 	mu_demangle(objc, "_i_class1__method2_arg2_", "public int class1::method2(int, int)");
+	mu_demangle(objc, "-[class1 method2:arg2:]", "public int class1::method2(int, int)");
+	mu_demangle(objc, "+[Employee sayHello]", "static int Employee::sayHello()");
+
 	mu_end;
 }
 
