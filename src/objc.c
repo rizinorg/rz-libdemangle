@@ -22,6 +22,11 @@ char *libdemangle_handler_objc(const char *sym) {
 		ret = dem_str_newf("class %s", className);
 		return ret;
 	}
+	if (!strncmp(sym, "_OBJC_METACLASS_$_", 18)) {
+		const char *className = sym + 18;
+		ret = dem_str_newf("class %s", className);
+		return ret;
+	}
 	/* fields */
 	if (!strncmp(sym, "_OBJC_IVAR_$_", 13)) {
 		clas = strdup(sym + 13);
