@@ -3,7 +3,9 @@
 #include <rz_libdemangle.h>
 #include "demangler_util.h"
 
-#define RS(from, to) (replace_seq((const char **)&in, &out, (const char *)(from), to))
+#define RS(from, to) \
+	if (replace_seq((const char **)&in, &out, (const char *)(from), to)) \
+	continue
 
 static bool replace_seq(const char **in, char **out, const char *seq, char value) {
 	size_t len = strlen(seq);
@@ -24,9 +26,7 @@ char *libdemangle_handler_rust(const char *sym) {
 	int len;
 	char *str = NULL, *out, *in;
 
-#if WITH_GPL
 	str = libdemangle_handler_cxx(sym);
-#endif
 
 	if (!str) {
 		return str;
@@ -41,22 +41,37 @@ char *libdemangle_handler_rust(const char *sym) {
 	}
 
 	while ((len = strlen(in)) > 0) {
-		if (!(*in == '$' && (RS("$SP$", '@') || RS("$BP$", '*') || RS("$RF$", '&') || RS("$LT$", '<') || RS("$GT$", '>') || RS("$LP$", '(') || RS("$RP$", ')') || RS("$C$", ',')
-					    // maybe a good idea to replace all utf-sequences by regexp \$u[0-9a-f]{2}\$ or so
-					    || RS("$u20$", ' ') || RS("$u22$", '\"') || RS("$u27$", '\'') || RS("$u2b$", '+') || RS("$u3b$", ';') || RS("$u5b$", '[') || RS("$u5d$", ']') || RS("$u7e$", '~')))) {
-			if (*in == '.') {
-				if (len > 0 && in[1] == '.') {
-					in += 2;
-					*out++ = ':';
-					*out++ = ':';
-					len--;
-				} else {
-					in += 1;
-					*out = '-';
-				}
+		if (*in == '$') {
+			RS("$SP$", '@');
+			RS("$BP$", '*');
+			RS("$RF$", '&');
+			RS("$LT$", '<');
+			RS("$GT$", '>');
+			RS("$LP$", '(');
+			RS("$RP$", ')');
+			RS("$C$", ',');
+			// maybe a good idea to replace all utf-sequences by regexp \$u[0-9a-f]{2}\$ or so
+			RS("$u20$", ' ');
+			RS("$u22$", '\"');
+			RS("$u27$", '\'');
+			RS("$u2b$", '+');
+			RS("$u3b$", ';');
+			RS("$u5b$", '[');
+			RS("$u5d$", ']');
+			RS("$u7e$", '~');
+		}
+		if (*in == '.') {
+			if (len > 0 && in[1] == '.') {
+				in += 2;
+				*out++ = ':';
+				*out++ = ':';
+				len--;
 			} else {
-				*out++ = *in++;
+				in += 1;
+				*out = '-';
 			}
+		} else {
+			*out++ = *in++;
 		}
 	}
 	*out = '\0';

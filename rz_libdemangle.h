@@ -7,6 +7,7 @@
 
 #if WITH_GPL
 char *libdemangle_handler_cxx(const char *symbol);
+char *libdemangle_handler_rust(const char *symbol);
 #endif
 
 #if WITH_SWIFT_DEMANGLER
@@ -16,6 +17,5 @@ char *libdemangle_handler_swift(const char *symbol);
 char *libdemangle_handler_java(const char *symbol);
 char *libdemangle_handler_msvc(const char *symbol);
 char *libdemangle_handler_objc(const char *symbol);
-char *libdemangle_handler_rust(const char *symbol);
 
 #endif
