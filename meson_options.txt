@@ -1,2 +1,3 @@
 option('use_gpl', type: 'boolean', value: true, description: 'Set to false when you want to disable gpl code')
 option('use_swift_demangler', type: 'boolean', value: true, description: 'If false, disables the swift demangler')
+option('enable_tests', type: 'boolean', value: true, description: 'Build unit tests in test/')

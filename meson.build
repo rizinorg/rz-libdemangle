@@ -44,14 +44,16 @@ libdemangle_dep = declare_dependency(
     include_directories: include_directories('.'),
 )
 
-foreach test : tests
-  exe = executable('test_@0@'.format(test), 'test/test_@0@.c'.format(test),
-    include_directories: include_directories(['.', 'test']),
-    dependencies: [libdemangle_dep],
-    c_args : libdemangle_c_args,
-    install: false,
-    install_rpath: '',
-    implicit_include_directories: false
-  )
-  test(test, exe)
-endforeach
+if get_option('enable_tests')
+  foreach test : tests
+    exe = executable('test_@0@'.format(test), 'test/test_@0@.c'.format(test),
+      include_directories: include_directories(['.', 'test']),
+      dependencies: [libdemangle_dep],
+      c_args : libdemangle_c_args,
+      install: false,
+      install_rpath: '',
+      implicit_include_directories: false
+    )
+    test(test, exe)
+  endforeach
+endif
