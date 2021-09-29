@@ -36,7 +36,8 @@ endif
 libdemangle = library('demangle', libdemangle_src,
     c_args : libdemangle_c_args,
     dependencies: [],
-    include_directories: include_directories('src'))
+    implicit_include_directories: false,
+    include_directories: include_directories(['.', 'src']))
 
 libdemangle_dep = declare_dependency(
     link_with: libdemangle,
