@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2021 deroad <wargio@libero.it>
 // SPDX-License-Identifier: LGPL-3.0-only
-#include <rz_libdemangle.h>
 #include "demangler_util.h"
+#include <rz_libdemangle.h>
 
 #define is_native_type(x) ((x) && !IS_UPPER(x))
 #define is_varargs(x)     ((x)[0] == '.' && (x)[1] == '.' && (x)[2] == '.')

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2015-2018 inisider <inisider@gmail.com>
 // SPDX-License-Identifier: LGPL-3.0-only
+#include "demangler.h"
 #include <rz_libdemangle.h>
-#include "./demangler.h"
 
 char *libdemangle_handler_msvc(const char *str) {
 	char *out = NULL;

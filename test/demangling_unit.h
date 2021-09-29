@@ -5,6 +5,8 @@
 #define MANGLING_UNIT_H
 
 #include "minunit.h"
+
+#define RZ_API
 #include "rz_libdemangle.h"
 
 #define mu_demangle(name, input, expected) \
