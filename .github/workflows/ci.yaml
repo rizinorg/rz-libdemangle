@@ -10,7 +10,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+    - name: Install meson and ninja
+      run: pip3 install --user meson ninja
     - name: Run Unit Tests
       run: |
+        export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
         meson build
         ninja -C build test
