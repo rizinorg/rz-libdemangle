@@ -52,7 +52,7 @@ bool demangle(void) {
 	mu_demangle(msvc, "?Fxix_i@@YAHP6AHH@ZH0@Z", "int __cdecl Fxix_i(int (__cdecl *)(int), int, int (__cdecl *)(int))");
 	mu_demangle(msvc, "?Fxyxy_i@@YAHP6AHH@ZP6AHF@Z01@Z", "int __cdecl Fxyxy_i(int (__cdecl *)(int), int (__cdecl *)(short int), int (__cdecl *)(int), int (__cdecl *)(short int))");
 	mu_demangle(msvc, "?Fxyxy_i_x64@@YAHP6AHPEAH0H@ZP6AH0H0@ZP6AHH@ZP6AHF@Z@Z", "int __cdecl Fxyxy_i_x64(int (__cdecl *)(int * __ptr64, int * __ptr64, int), int (__cdecl *)(int * __ptr64, int, int * __ptr64), int (__cdecl *)(int), int (__cdecl *)(short int))");
-	mu_demangle(msvc, "?instance_@?$StaticStorage@VInProcModule@Details@Platform@@$0A@H@Details@WRL@Microsoft@@0V1234@A", "class Microsoft::WRL::Details::StaticStorage<class Platform::Details::InProcModule, 0, int> Microsoft::WRL::Details::StaticStorage<class Platform::Details::InProcModule, 0, int>::instance_");
+	mu_demangle(msvc, "?instance_@?$StaticStorage@VInProcModule@Details@Platform@@$0A@H@Details@WRL@Microsoft@@0V1234@A", "private: static class Microsoft::WRL::Details::StaticStorage<class Platform::Details::InProcModule, 0, int> Microsoft::WRL::Details::StaticStorage<class Platform::Details::InProcModule, 0, int>::instance_");
 	mu_demangle(msvc, "?private_func@TEST_CLASS@@AEAAXXZ", "private: void __cdecl TEST_CLASS::private_func(void) __ptr64");
 	mu_demangle(msvc, "?public_func@TEST_CLASS@@QEAAHXZ", "public: int __cdecl TEST_CLASS::public_func(void) __ptr64");
 	mu_demangle(msvc, "?SomeFunction@@YAPAVClass1@@PAV1@PAVClass2@@1AAV2@@Z", "class Class1 * __cdecl SomeFunction(class Class1 *, class Class2 *, class Class2 *, class Class2 &)");
@@ -95,6 +95,7 @@ bool demangle(void) {
 	mu_demangle(msvc, "?var_voidptr@@3PEAXA", "void * __ptr64 var_voidptr");
 	mu_demangle(msvc, "?var_volatile_int_ptr@@3PECHEC", "int volatile * __ptr64 volatile __ptr64 var_volatile_int_ptr");
 	mu_demangle(msvc, "?var_wchar_t@@3_WA", "wchar_t var_wchar_t");
+	mu_demangle(msvc, "?x@@QEFGHIBAHXZ", "public: int __cdecl x(void)const __unaligned __ptr64 __restrict& &&");
 	mu_demangle(msvc, "?xyz@?$abc@V?$def@H@@PAX@@YAXXZ", "void __cdecl abc<class def<int>, void *>::xyz(void)");
 
 	mu_end;
