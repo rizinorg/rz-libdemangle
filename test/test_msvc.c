@@ -95,6 +95,7 @@ bool demangle(void) {
 	mu_demangle(msvc, "?var_voidptr@@3PEAXA", "void * __ptr64 var_voidptr");
 	mu_demangle(msvc, "?var_volatile_int_ptr@@3PECHEC", "int volatile * __ptr64 volatile __ptr64 var_volatile_int_ptr");
 	mu_demangle(msvc, "?var_wchar_t@@3_WA", "wchar_t var_wchar_t");
+	mu_demangle(msvc, "?x@@QEFGHIBAHXZ", "public: int __cdecl x(void)const __unaligned __ptr64 __restrict& &&");
 	mu_demangle(msvc, "?xyz@?$abc@V?$def@H@@PAX@@YAXXZ", "void __cdecl abc<class def<int>, void *>::xyz(void)");
 
 	mu_end;
