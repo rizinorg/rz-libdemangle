@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2012-2019 pancake <pancake@nopcode.org>
 // SPDX-License-Identifier: LGPL-3.0-only
-#include <rz_libdemangle.h>
 #include "demangler_util.h"
+#include <rz_libdemangle.h>
 
 char *libdemangle_handler_objc(const char *sym) {
 	char *ret = NULL;

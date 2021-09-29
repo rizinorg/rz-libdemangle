@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2015-2019 pancake <pancake@nopcode.org>
 // SPDX-License-Identifier: MIT
 /* work-in-progress reverse engineered swift-demangler in C */
-#include <rz_libdemangle.h>
 #include "demangler_util.h"
+#include <rz_libdemangle.h>
 
 struct Type {
 	const char *code;

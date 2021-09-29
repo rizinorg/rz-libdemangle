@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2011-2018 pancake <pancake@nopcode.org>
 // SPDX-License-Identifier: LGPL-3.0-only
-#include <rz_libdemangle.h>
 #include "demangler_util.h"
+#include <rz_libdemangle.h>
 
 #define RS(from, to) \
 	if (replace_seq((const char **)&in, &out, (const char *)(from), to)) \

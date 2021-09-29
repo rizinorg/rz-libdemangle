@@ -1,5 +1,6 @@
 project('libdemangle', 'c', meson_version: '>=0.46.0')
 
+common_c_args = []
 libdemangle_c_args = []
 libdemangle_src = [
   'src/demangler_util.c',
@@ -19,7 +20,7 @@ tests = [
 if get_option('use_gpl')
   libdemangle_src += 'src/cxx.c'
   libdemangle_src += 'src/cxx/cp-demangle.c'
-  libdemangle_c_args += '-DWITH_GPL=1'
+  common_c_args += '-DWITH_GPL=1'
   tests += 'cxx'
 
   # rust tests depends on cxx
@@ -29,28 +30,35 @@ endif
 
 if get_option('use_swift_demangler')
   libdemangle_src += 'src/swift.c'
-  libdemangle_c_args += '-DWITH_SWIFT_DEMANGLER=1'
+  common_c_args += '-DWITH_SWIFT_DEMANGLER=1'
   tests += 'swift'
 endif
 
+if get_option('default_library') == 'shared'
+  cc = meson.get_compiler('c')
+  if cc.has_argument('-fvisibility=hidden')
+    libdemangle_c_args += '-fvisibility=hidden'
+  endif
+endif
+
 libdemangle = library('demangle', libdemangle_src,
-    c_args : libdemangle_c_args,
+    c_args : common_c_args + libdemangle_c_args,
     dependencies: [],
     implicit_include_directories: false,
-    include_directories: include_directories(['.', 'src']))
+    include_directories: include_directories(['include', 'src']))
 
 libdemangle_dep = declare_dependency(
     link_with: libdemangle,
     dependencies: [],
-    include_directories: include_directories('.'),
+    include_directories: include_directories('include'),
 )
 
-if get_option('enable_tests')
+if get_option('enable_tests') and not meson.is_subproject()
   foreach test : tests
     exe = executable('test_@0@'.format(test), 'test/test_@0@.c'.format(test),
-      include_directories: include_directories(['.', 'test']),
+      include_directories: include_directories(['include', 'test']),
       dependencies: [libdemangle_dep],
-      c_args : libdemangle_c_args,
+      c_args : common_c_args,
       install: false,
       install_rpath: '',
       implicit_include_directories: false
