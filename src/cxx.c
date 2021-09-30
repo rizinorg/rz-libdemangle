@@ -51,9 +51,10 @@ char *libdemangle_handler_cxx(const char *str) {
 	}
 
 	uint32_t len = strlen(p);
-	if (len > 4 && !strncmp(p + len - 4, "_ptr", strlen("_ptr"))) {
+	uint32_t _ptrlen = strlen("_ptr");
+	if (len > _ptrlen && !strncmp(p + len - _ptrlen, "_ptr", _ptrlen)) {
 		// remove _ptr from the end
-		*(p + len - 4) = '\0';
+		*(p + len - _ptrlen) = '\0';
 	} else if (len > 1 && IS_DIGIT(*(p + len - 1))) {
 		// removes version sequences like _5_2 or _18_4 etc... from the end
 		bool expect_digit = true;
