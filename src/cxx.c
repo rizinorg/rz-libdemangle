@@ -5,17 +5,25 @@
 #include <rz_libdemangle.h>
 
 #if WITH_GPL
+#define SL(x) \
+	{ x, strlen(x) }
+
+typedef struct cxx_prefix_t {
+	const char *name;
+	uint32_t size;
+} CxxPrefix;
+
 char *libdemangle_handler_cxx(const char *str) {
 	// DMGL_TYPES | DMGL_PARAMS | DMGL_ANSI | DMGL_VERBOSE | DMGL_RET_POSTFIX | DMGL_TYPES;
 	uint32_t i;
 
 	int flags = DMGL_NO_OPTS | DMGL_PARAMS;
-	const char *prefixes[] = {
-		"__symbol_stub1_",
-		"reloc.",
-		"sym.imp.",
-		"imp.",
-		NULL
+	CxxPrefix prefixes[] = {
+		SL("__symbol_stub1_"),
+		SL("reloc."),
+		SL("sym.imp."),
+		SL("imp."),
+		{ NULL, 0 }
 	};
 	char *tmpstr = strdup(str);
 	char *p = tmpstr;
@@ -23,10 +31,9 @@ char *libdemangle_handler_cxx(const char *str) {
 	if (p[0] == p[1] && *p == '_') {
 		p++;
 	}
-	for (i = 0; prefixes[i]; i++) {
-		uint32_t plen = strlen(prefixes[i]);
-		if (!strncmp(p, prefixes[i], plen)) {
-			p += plen;
+	for (i = 0; prefixes[i].name; i++) {
+		if (!strncmp(p, prefixes[i].name, prefixes[i].size)) {
+			p += prefixes[i].size;
 			break;
 		}
 	}
@@ -44,7 +51,7 @@ char *libdemangle_handler_cxx(const char *str) {
 	}
 
 	uint32_t len = strlen(p);
-	if (len > 4 && !strncmp(p + len - 4, "_ptr", 4)) {
+	if (len > 4 && !strncmp(p + len - 4, "_ptr", strlen("_ptr"))) {
 		// remove _ptr from the end
 		*(p + len - 4) = '\0';
 	} else if (len > 1 && IS_DIGIT(*(p + len - 1))) {
