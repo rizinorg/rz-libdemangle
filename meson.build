@@ -1,5 +1,7 @@
 project('libdemangle', 'c', meson_version: '>=0.46.0')
 
+cc = meson.get_compiler('c')
+
 common_c_args = []
 libdemangle_c_args = []
 libdemangle_src = [
@@ -35,10 +37,15 @@ if get_option('use_swift_demangler')
 endif
 
 if get_option('default_library') == 'shared'
-  cc = meson.get_compiler('c')
   if cc.has_argument('-fvisibility=hidden')
     libdemangle_c_args += '-fvisibility=hidden'
   endif
+endif
+
+if cc.has_argument('--std=gnu99')
+  add_project_arguments('--std=gnu99', language: 'c')
+elif cc.has_argument('--std=c99')
+  add_project_arguments('--std=c99', language: 'c')
 endif
 
 libdemangle = library('demangle', libdemangle_src,
