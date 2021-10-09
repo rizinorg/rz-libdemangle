@@ -30,7 +30,6 @@ cache:
   - ccache
 
 script:
-  - |
-    pip3 install -U --user meson ninja
-    meson build
+    pip3 install -U --user meson ninja ;
+    meson build ;
     ninja -C build test
