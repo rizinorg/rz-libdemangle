@@ -1134,6 +1134,24 @@ bool demangle(void) {
 	mu_demangle(cxx, "_ZTVNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEE_ptr", "vtable for std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char> >");
 	mu_demangle(cxx, "_ZTVSt15basic_streambufIcSt11char_traitsIcEE_ptr", "vtable for std::basic_streambuf<char, std::char_traits<char> >");
 	mu_demangle(cxx, "_ZTVSt9basic_iosIcSt11char_traitsIcEE_ptr", "vtable for std::basic_ios<char, std::char_traits<char> >");
+	mu_demangle(cxx, "_Z14getPackageNameP7_JNIEnvP8_jobject", "getPackageName(_JNIEnv*, _jobject*)");
+	mu_demangle(cxx, "_Z15JstringToStringP7_JNIEnvP8_jstring", "JstringToString(_JNIEnv*, _jstring*)");
+	mu_demangle(cxx, "_Z13CharTojstringP7_JNIEnvPKc", "CharTojstring(_JNIEnv*, char const*)");
+	mu_demangle(cxx, "_Z20invokeStaticMethodssP7_JNIEnvP8_jstringS2_", "invokeStaticMethodss(_JNIEnv*, _jstring*, _jstring*)");
+	mu_demangle(cxx, "_Z16getFieldOjbectExP7_JNIEnvP7_jclassP8_jobjectP8_jstring", "getFieldOjbectEx(_JNIEnv*, _jclass*, _jobject*, _jstring*)");
+	mu_demangle(cxx, "_Z14getFieldOjbectP7_JNIEnvP8_jstringP8_jobjectS2_", "getFieldOjbect(_JNIEnv*, _jstring*, _jobject*, _jstring*)");
+	mu_demangle(cxx, "_Z16setFieldOjbectExP7_JNIEnvP7_jclassP8_jstringP8_jobjectS6_", "setFieldOjbectEx(_JNIEnv*, _jclass*, _jstring*, _jobject*, _jobject*)");
+	mu_demangle(cxx, "_Z14setFieldOjbectP7_JNIEnvP8_jstringS2_P8_jobjectS4_", "setFieldOjbect(_JNIEnv*, _jstring*, _jstring*, _jobject*, _jobject*)");
+	mu_demangle(cxx, "_Z14checkExceptionP7_JNIEnv", "checkException(_JNIEnv*)");
+	mu_demangle(cxx, "_Z7forNameP7_JNIEnvP8_jstring", "forName(_JNIEnv*, _jstring*)");
+	mu_demangle(cxx, "_Z11GetFileNamePc", "GetFileName(char*)");
+	mu_demangle(cxx, "_Z10replaceAllPKcS0_S0_", "replaceAll(char const*, char const*, char const*)");
+	mu_demangle(cxx, "_Z6decodeP7_JNIEnvP8_jstringS2_", "decode(_JNIEnv*, _jstring*, _jstring*)");
+	mu_demangle(cxx, "_Z7sub_444P7_JNIEnvP8_jobjectS2_P8_jstringS4_", "sub_444(_JNIEnv*, _jobject*, _jobject*, _jstring*, _jstring*)");
+	mu_demangle(cxx, "_Z7sub_333P7_JNIEnvP8_jobjectS2_P8_jstringS4_", "sub_333(_JNIEnv*, _jobject*, _jobject*, _jstring*, _jstring*)");
+	mu_demangle(cxx, "_ZN25SystemClassLoaderInjector6injectEP7_JNIEnvP8_jobjectP8_jstringS5_", "SystemClassLoaderInjector::inject(_JNIEnv*, _jobject*, _jstring*, _jstring*)");
+	mu_demangle(cxx, "_Z21registerNativeMethodsP7_JNIEnvPKcP15JNINativeMethodi", "registerNativeMethods(_JNIEnv*, char const*, JNINativeMethod*, int)");
+	mu_demangle(cxx, "_Z17register_ndk_loadP7_JNIEnv", "register_ndk_load(_JNIEnv*)");
 
 	mu_end;
 }

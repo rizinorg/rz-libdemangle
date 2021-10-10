@@ -1,0 +1,35 @@
+language: generic
+conditions: v1
+
+services:
+  - docker
+
+jobs:
+  fast_finish: true
+  include:
+    # Linux with GCC on PowerPC
+    - os: linux
+      name: PPC64
+      arch: ppc64le
+      dist: focal
+      env: COMPILER_NAME=gcc CXX=g++ CC=gcc
+    # Linux with GCC on System Z
+    - os: linux
+      name: S390X
+      arch: s390x
+      dist: focal
+      env: COMPILER_NAME=gcc CXX=g++ CC=gcc
+    # Linux with GCC on ARMv8 (64bit)
+    - os: linux
+      name: ARM64
+      arch: arm64
+      dist: focal
+      env: COMPILER_NAME=gcc CXX=g++ CC=gcc
+
+cache:
+  - ccache
+
+script:
+    pip3 install -U --user meson ninja ;
+    meson build ;
+    ninja -C build test
