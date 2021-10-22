@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  tests:
+  unit-tests:
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout repository
@@ -18,4 +18,19 @@ jobs:
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
         meson build
+        ninja -Dbuildtype=release -C build test
+
+  unit-tests-asan:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Install meson and ninja
+      run: pip3 install --user meson ninja
+    - name: Run Unit Tests with ASAN
+      env:
+        ASAN_OPTIONS: detect_leaks=0,detect_odr_violation=0,allocator_may_return_null=1
+      run: |
+        export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
+        meson -Dbuildtype=debugoptimized -Db_sanitize=address,undefined build
         ninja -C build test

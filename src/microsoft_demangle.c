@@ -1816,7 +1816,7 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 	bool is_static;
 	const char *memb_func_access_code = NULL;
 	const char *call_conv = NULL;
-	char *demangled_args;
+	char *demangled_args = NULL;
 	char *ret_type = NULL;
 	SDataType data_type = { 0 };
 	SDataType this_pointer_modifier = { 0 };
