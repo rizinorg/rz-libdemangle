@@ -77,6 +77,9 @@ EDemanglerErr init_demangler(SDemangler *demangler, char *sym) {
 	case eManglingUnknown:
 		err = eDemanglerErrUnkown;
 		break;
+	case eManglingInternalError:
+		err = eManglingInternalError;
+		break;
 	default:
 		break;
 	}
