@@ -1631,7 +1631,7 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 		*len = 0;
 	}
 	if (!data_type) {
-		return eManglingInternalError;
+		return eDemanglerErrInternal;
 	}
 	data_type->left = data_type->right = NULL;
 	// Data type and access level

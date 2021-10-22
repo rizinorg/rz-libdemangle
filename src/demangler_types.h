@@ -12,7 +12,7 @@ typedef enum EDemanglerErr {
 	eDemanglerErrUnsupportedMangling, ///< unsupported mangling scheme yet
 	eDemanglerErrUnkown, ///< unknown mangling scheme
 	eDemanglerErrUncorrectMangledSymbol, ///< uncorrect mangled symbol
-	eManglingInternalError, ///< when something very wrong happens
+	eDemanglerErrInternal, ///< when something very wrong happens
 	eDemanglerErrMax
 } EDemanglerErr;
 
