@@ -188,10 +188,6 @@ static int copy_string(STypeCodeStr *type_code_str, const char *str_for_copy, si
 	}
 
 	char *dst = type_code_str->type_str + type_code_str->curr_pos;
-	if (!dst) {
-		return 0;
-	}
-
 	if (str_for_copy) {
 		strncpy(dst, str_for_copy, str_for_copy_len + 1);
 	} else {
@@ -478,11 +474,19 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 				char *c = get_num(&state);
 				char *d = get_num(&state);
 				if (!a || !b || !c || !d) {
+					free(a);
+					free(b);
+					free(c);
+					free(d);
 					dem_list_free(names_l);
 					return 0;
 				}
 				read_len += state.amount_of_read_chars + 1;
 				dem_str_newf("`RTTI Base Class Descriptor at (%s,%s,%s,%s)'", a, b, c, d);
+				free(a);
+				free(b);
+				free(c);
+				free(d);
 				break;
 			}
 			case '2': SET_OPERATOR_CODE("`RTTI Base Class Array'"); break;
@@ -528,11 +532,13 @@ static size_t get_template(const char *buf, SStrInfo *str_info, bool memorize) {
 	if (*buf == '?') {
 		DemList *names_l = dem_list_newf((DemListFree)sstrinfo_free);
 		if (!names_l) {
-			return 0;
+			len = 0;
+			goto get_template_err;
 		}
 		size_t i = get_operator_code(buf, names_l, memorize);
 		if (!i) {
-			return 0;
+			len = 0;
+			goto get_template_err;
 		}
 		len += i;
 		buf += i;
@@ -706,6 +712,7 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 			}
 			char *demangled = NULL;
 			if (parse_microsoft_mangled_name(tmp + 2, &demangled, &len) != eDemanglerErrOK) {
+				free(num);
 				break;
 			}
 			read_len += len + 1;
@@ -1315,8 +1322,9 @@ static void parse_function_pointer(SStateInfo *state, STypeCodeStr *type_code_st
 	state->amount_of_read_chars += i;
 	state->buff_for_parsing += i;
 
-	char *demangled_args;
+	char *demangled_args = NULL;
 	if (parse_function_args(state->buff_for_parsing, &demangled_args, &i) != eDemanglerErrOK) {
+		free(demangled_args);
 		state->err = eTCStateMachineErrUncorrectTypeCode;
 		return;
 	}
@@ -1622,6 +1630,9 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 	if (len) {
 		*len = 0;
 	}
+	if (!data_type) {
+		return eManglingInternalError;
+	}
 	data_type->left = data_type->right = NULL;
 	// Data type and access level
 	switch (*curr_pos) {
@@ -1661,15 +1672,13 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 		}
 		curr_pos++;
 
-		if (data_type) {
-			data_type->right = strdup("");
-			if (!storage_class) {
-				data_type->left = dem_str_newf("%s%s%s", modifier.left, tmp, modifier.right);
-			} else {
-				data_type->left = dem_str_newf("%s%s %s%s", modifier.left, tmp, storage_class, modifier.right);
-			}
-			free(tmp);
+		data_type->right = strdup("");
+		if (!storage_class) {
+			data_type->left = dem_str_newf("%s%s%s", modifier.left, tmp, modifier.right);
+		} else {
+			data_type->left = dem_str_newf("%s%s %s%s", modifier.left, tmp, storage_class, modifier.right);
 		}
+		free(tmp);
 		sdatatype_fini(&modifier);
 		break;
 	case '6': // compiler generated static
@@ -1807,7 +1816,6 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 	bool is_static;
 	const char *memb_func_access_code = NULL;
 	const char *call_conv = NULL;
-	const char *storage_class_code_for_ret = NULL;
 	char *demangled_args;
 	char *ret_type = NULL;
 	SDataType data_type = { 0 };
@@ -1905,11 +1913,6 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 		}
 	}
 
-	if (storage_class_code_for_ret) {
-		copy_string(&func_str, storage_class_code_for_ret, 0);
-		copy_string(&func_str, " ", 0);
-	}
-
 	if (ret_type) {
 		copy_string(&func_str, ret_type, 0);
 		copy_string(&func_str, " ", 0);
@@ -1930,7 +1933,7 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 	}
 
 	copy_string(&func_str, demangled_args, 0);
-	free(demangled_args);
+	RZ_FREE(demangled_args);
 
 	if (memb_func_access_code) {
 		copy_string(&func_str, memb_func_access_code, 0);
@@ -1964,6 +1967,7 @@ parse_function_err:
 	sdatatype_fini(&this_pointer_modifier);
 	free_type_code_str_struct(&func_str);
 	free(ret_type);
+	free(demangled_args);
 	return err;
 }
 
