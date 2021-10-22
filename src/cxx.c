@@ -71,9 +71,7 @@ char *libdemangle_handler_cxx(const char *str) {
 				}
 			} else if (expect_underscore && p[i] == '_') {
 				p[i] = '\0';
-				if (i == 0) {
-					break;
-				} else if (!IS_DIGIT(p[i - 1])) {
+				if (!IS_DIGIT(p[i - 1])) {
 					break;
 				} else {
 					expect_underscore = false;
