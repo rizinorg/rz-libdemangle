@@ -2,6 +2,8 @@ name: "Licenses reuse lint"
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 jobs:
