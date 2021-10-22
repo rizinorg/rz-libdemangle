@@ -61,10 +61,17 @@ libdemangle_dep = declare_dependency(
 )
 
 if get_option('enable_tests') and not meson.is_subproject()
+  test_dependencies = [libdemangle_dep]
+  if get_option('b_sanitize').contains('address')
+    test_dependencies += cc.find_library('asan')
+  endif
+  if get_option('b_sanitize').contains('undefined')
+    test_dependencies += cc.find_library('ubsan')
+  endif
   foreach test : tests
     exe = executable('test_@0@'.format(test), 'test/test_@0@.c'.format(test),
       include_directories: include_directories(['include', 'test']),
-      dependencies: [libdemangle_dep],
+      dependencies: test_dependencies,
       c_args : common_c_args,
       install: false,
       install_rpath: '',

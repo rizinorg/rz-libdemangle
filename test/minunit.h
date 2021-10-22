@@ -48,7 +48,7 @@ typedef int bool;
 #define MU_TEST_UNBROKEN 0
 #define MU_TEST_BROKEN   1
 
-#define MU_BUF_SIZE 5120
+#define MU_BUF_SIZE 10240
 
 void snprint_mem(char *out, size_t out_size, const ut8 *buf, size_t len) {
 	size_t i;
