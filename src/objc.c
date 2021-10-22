@@ -10,20 +10,22 @@ char *libdemangle_handler_objc(const char *sym) {
 	char *args = NULL;
 	int i, nargs = 0;
 	const char *type = NULL;
+	if (!sym) {
+		return NULL;
+	}
 
 	/* classes */
 	if (!strncmp(sym, "_OBJC_Class_", 12)) {
 		const char *className = sym + 12;
 		ret = dem_str_newf("class %s", className);
 		return ret;
-	}
-	if (!strncmp(sym, "_OBJC_CLASS_$_", 14)) {
+	} else if (!strncmp(sym, "_OBJC_CLASS_$_", 14)) {
 		const char *className = sym + 14;
 		ret = dem_str_newf("class %s", className);
 		return ret;
 	}
-	/* fields */
 	if (!strncmp(sym, "_OBJC_IVAR_$_", 13)) {
+		/* fields */
 		clas = strdup(sym + 13);
 		char *p = strchr(clas, '.');
 		type = "field";
@@ -33,9 +35,8 @@ char *libdemangle_handler_objc(const char *sym) {
 		} else {
 			name = NULL;
 		}
-	}
-	/* methods */
-	if (sym && sym[0] && sym[1] == '[') { // apple style
+	} else if (sym[0] && sym[1] == '[') { // apple style
+		/* methods */
 		if (sym[0] == '+') {
 			type = "static";
 		} else if (sym[0] == '-') {
