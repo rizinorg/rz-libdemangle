@@ -17,8 +17,8 @@ jobs:
     - name: Run Unit Tests
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson build
-        ninja -Dbuildtype=release -C build test
+        meson -Dbuildtype=release build
+        ninja -C build test
 
   unit-tests-asan:
     runs-on: ubuntu-20.04
