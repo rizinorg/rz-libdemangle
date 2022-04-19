@@ -32,30 +32,30 @@ typedef enum ETCStateMachineErr {
 typedef enum ETCState { // TC - type code
 	eTCStateStart = 0,
 	eTCStateEnd,
-	eTCStateH,
-	eTCStateX,
-	eTCStateN,
-	eTCStateD,
+	eTCStateA,
 	eTCStateC,
+	eTCStateD,
 	eTCStateE,
 	eTCStateF,
 	eTCStateG,
+	eTCStateH,
 	eTCStateI,
 	eTCStateJ,
 	eTCStateK,
 	eTCStateM,
-	eTCStateZ,
-	eTCState_,
+	eTCStateN,
+	eTCStateO,
+	eTCStateP,
+	eTCStateQ,
+	eTCStateR,
+	eTCStateS,
 	eTCStateT,
 	eTCStateU,
-	eTCStateW,
 	eTCStateV,
-	eTCStateO,
-	eTCStateS,
-	eTCStateP,
-	eTCStateR,
-	eTCStateQ,
-	eTCStateA,
+	eTCStateW,
+	eTCStateX,
+	eTCStateZ,
+	eTCState_,
 	eTCState$,
 	eTCStateMax
 } ETCState;
@@ -102,10 +102,9 @@ static void sstrinfo_free(SStrInfo *sstrinfo) {
 #define DECL_STATE_ACTION(action) static void tc_state_##action(SStateInfo *state, STypeCodeStr *type_code_str);
 DECL_STATE_ACTION(start)
 DECL_STATE_ACTION(end)
-DECL_STATE_ACTION(X)
-DECL_STATE_ACTION(N)
-DECL_STATE_ACTION(D)
+DECL_STATE_ACTION(A)
 DECL_STATE_ACTION(C)
+DECL_STATE_ACTION(D)
 DECL_STATE_ACTION(E)
 DECL_STATE_ACTION(F)
 DECL_STATE_ACTION(G)
@@ -114,27 +113,52 @@ DECL_STATE_ACTION(I)
 DECL_STATE_ACTION(J)
 DECL_STATE_ACTION(K)
 DECL_STATE_ACTION(M)
-DECL_STATE_ACTION(Z)
-DECL_STATE_ACTION(_)
+DECL_STATE_ACTION(N)
+DECL_STATE_ACTION(O)
+DECL_STATE_ACTION(P)
+DECL_STATE_ACTION(Q)
+DECL_STATE_ACTION(R)
+DECL_STATE_ACTION(S)
 DECL_STATE_ACTION(T)
 DECL_STATE_ACTION(U)
-DECL_STATE_ACTION(W)
 DECL_STATE_ACTION(V)
-DECL_STATE_ACTION(O)
-DECL_STATE_ACTION(S)
-DECL_STATE_ACTION(P)
-DECL_STATE_ACTION(R)
-DECL_STATE_ACTION(Q)
-DECL_STATE_ACTION(A)
+DECL_STATE_ACTION(W)
+DECL_STATE_ACTION(X)
+DECL_STATE_ACTION(Z)
+DECL_STATE_ACTION(_)
 DECL_STATE_ACTION($)
 #undef DECL_STATE_ACTION
 
 #define NAME(action) tc_state_##action
 static state_func const state_table[eTCStateMax] = {
-	NAME(start), NAME(end), NAME(H), NAME(X), NAME(N), NAME(D), NAME(C), NAME(E),
-	NAME(F), NAME(G), NAME(I), NAME(J), NAME(K), NAME(M), NAME(Z), NAME(_),
-	NAME(T), NAME(U), NAME(W), NAME(V), NAME(O), NAME(S), NAME(P), NAME(R),
-	NAME(Q), NAME(A), NAME($)
+	NAME(start),
+	NAME(end),
+	NAME(A),
+	NAME(B),
+	NAME(C),
+	NAME(D),
+	NAME(E),
+	NAME(F),
+	NAME(G),
+	NAME(H),
+	NAME(I),
+	NAME(J),
+	NAME(K),
+	NAME(M),
+	NAME(N),
+	NAME(O),
+	NAME(P),
+	NAME(Q),
+	NAME(R),
+	NAME(S),
+	NAME(T),
+	NAME(U),
+	NAME(V),
+	NAME(W),
+	NAME(X),
+	NAME(Z),
+	NAME(_),
+	NAME($),
 };
 #undef NAME
 ///////////////////////////////////////////////////////////////////////////////
@@ -789,10 +813,10 @@ get_namespace_and_name_err:
 	return read_len;
 }
 
-#define SINGLEQUOTED_U           'U'
-#define SINGLEQUOTED_X           'X'
-#define SINGLEQUOTED_D           'D'
+#define SINGLEQUOTED_A           'A'
+#define SINGLEQUOTED_B           'B'
 #define SINGLEQUOTED_C           'C'
+#define SINGLEQUOTED_D           'D'
 #define SINGLEQUOTED_E           'E'
 #define SINGLEQUOTED_F           'F'
 #define SINGLEQUOTED_G           'G'
@@ -800,18 +824,21 @@ get_namespace_and_name_err:
 #define SINGLEQUOTED_I           'I'
 #define SINGLEQUOTED_J           'J'
 #define SINGLEQUOTED_K           'K'
+#define SINGLEQUOTED_L           'L'
 #define SINGLEQUOTED_M           'M'
 #define SINGLEQUOTED_N           'N'
-#define SINGLEQUOTED_T           'T'
-#define SINGLEQUOTED_Z           'Z'
-#define SINGLEQUOTED_W           'W'
-#define SINGLEQUOTED_V           'V'
 #define SINGLEQUOTED_O           'O'
-#define SINGLEQUOTED_S           'S'
 #define SINGLEQUOTED_P           'P'
-#define SINGLEQUOTED_R           'R'
 #define SINGLEQUOTED_Q           'Q'
-#define SINGLEQUOTED_A           'A'
+#define SINGLEQUOTED_R           'R'
+#define SINGLEQUOTED_S           'S'
+#define SINGLEQUOTED_T           'T'
+#define SINGLEQUOTED_U           'U'
+#define SINGLEQUOTED_V           'V'
+#define SINGLEQUOTED_W           'W'
+#define SINGLEQUOTED_X           'X'
+#define SINGLEQUOTED_Y           'Y'
+#define SINGLEQUOTED_Z           'Z'
 #define SINGLEQUOTED__           '_'
 #define SINGLEQUOTED_$           '$'
 #define CHAR_WITH_QUOTES(letter) (SINGLEQUOTED_##letter)
@@ -831,9 +858,8 @@ get_namespace_and_name_err:
 		state->state = eTCStateEnd; \
 	}
 
-ONE_LETTER_ACTION(X, "void")
-ONE_LETTER_ACTION(D, "char")
 ONE_LETTER_ACTION(C, "signed char")
+ONE_LETTER_ACTION(D, "char")
 ONE_LETTER_ACTION(E, "unsigned char")
 ONE_LETTER_ACTION(F, "short int")
 ONE_LETTER_ACTION(G, "unsigned short int")
@@ -843,8 +869,9 @@ ONE_LETTER_ACTION(J, "long int")
 ONE_LETTER_ACTION(K, "unsigned long int")
 ONE_LETTER_ACTION(M, "float")
 ONE_LETTER_ACTION(N, "double")
-ONE_LETTER_ACTION(Z, "varargs ...")
 ONE_LETTER_ACTION(O, "long double")
+ONE_LETTER_ACTION(X, "void")
+ONE_LETTER_ACTION(Z, "varargs ...")
 
 DEF_STATE_ACTION(_) {
 #define PROCESS_CASE(letter, type_str) \
@@ -1433,9 +1460,9 @@ static void tc_state_start(SStateInfo *state, STypeCodeStr *type_code_str) {
 		break;
 
 	switch (*(state->buff_for_parsing)) {
-		ONE_LETTER_STATE(X)
-		ONE_LETTER_STATE(D)
+		ONE_LETTER_STATE(A)
 		ONE_LETTER_STATE(C)
+		ONE_LETTER_STATE(D)
 		ONE_LETTER_STATE(E)
 		ONE_LETTER_STATE(F)
 		ONE_LETTER_STATE(G)
@@ -1445,18 +1472,18 @@ static void tc_state_start(SStateInfo *state, STypeCodeStr *type_code_str) {
 		ONE_LETTER_STATE(K)
 		ONE_LETTER_STATE(M)
 		ONE_LETTER_STATE(N)
-		ONE_LETTER_STATE(Z)
-		ONE_LETTER_STATE(_)
+		ONE_LETTER_STATE(O)
+		ONE_LETTER_STATE(P)
+		ONE_LETTER_STATE(Q)
+		ONE_LETTER_STATE(R)
+		ONE_LETTER_STATE(S)
 		ONE_LETTER_STATE(T)
 		ONE_LETTER_STATE(U)
-		ONE_LETTER_STATE(W)
 		ONE_LETTER_STATE(V)
-		ONE_LETTER_STATE(O)
-		ONE_LETTER_STATE(S)
-		ONE_LETTER_STATE(P)
-		ONE_LETTER_STATE(R)
-		ONE_LETTER_STATE(Q)
-		ONE_LETTER_STATE(A)
+		ONE_LETTER_STATE(W)
+		ONE_LETTER_STATE(X)
+		ONE_LETTER_STATE(Z)
+		ONE_LETTER_STATE(_)
 		ONE_LETTER_STATE($)
 	default:
 		//eprintf("[uncorrect type] error while parsing type\n");
