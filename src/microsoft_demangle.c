@@ -1474,8 +1474,25 @@ static void parse_pointer(SStateInfo *state, STypeCodeStr *type_code_str, const 
 			state->buff_for_parsing += read;
 			copy_string(&func_str, "::", 2);
 			copy_string(&func_str, pointer_str, 0);
+			SDataType data_type = { 0 };
+			size_t ptr_mod_cnt = get_ptr_modifier(state->buff_for_parsing, &data_type);
+			state->buff_for_parsing += ptr_mod_cnt;
+			state->amount_of_read_chars += ptr_mod_cnt;
+			const char *storage;
+			if (get_storage_class(*state->buff_for_parsing++, &storage) != eDemanglerErrOK) {
+				state->err = eTCStateMachineErrUncorrectTypeCode;
+				free_type_code_str_struct(&func_str);
+				return;
+			}
+			state->amount_of_read_chars++;
+			copy_string(type_code_str, data_type.left, 0);
 			parse_function_pointer(state, type_code_str, func_str.type_str);
 			free_type_code_str_struct(&func_str);
+			if (storage) {
+				copy_string(type_code_str, " ", 1);
+				copy_string(type_code_str, storage, 0);
+			}
+			copy_string(type_code_str, data_type.right, 0);
 			state->state = eTCStateEnd;
 			return;
 		}
