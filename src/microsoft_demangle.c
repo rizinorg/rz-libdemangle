@@ -1090,6 +1090,17 @@ DEF_STATE_ACTION(V) {
 
 static char *get_num(SStateInfo *state) {
 	char *ptr = NULL;
+	bool negative = false;
+	if (*state->buff_for_parsing == '?') {
+		negative = true;
+		state->buff_for_parsing++;
+		state->amount_of_read_chars++;
+	}
+	if (*state->buff_for_parsing == '@') {
+		state->buff_for_parsing++;
+		state->amount_of_read_chars++;
+		return strdup("0");
+	}
 	if (*state->buff_for_parsing >= '0' && *state->buff_for_parsing <= '8') {
 		ptr = malloc(2);
 		if (!ptr) {
@@ -1118,10 +1129,16 @@ static char *get_num(SStateInfo *state) {
 		}
 
 		ptr = dem_str_newf("%u", ret);
-		state->buff_for_parsing++;
-		state->amount_of_read_chars++;
+		if (*state->buff_for_parsing && *state->buff_for_parsing == '@') {
+			state->buff_for_parsing++;
+			state->amount_of_read_chars++;
+		}
 	}
-
+	if (negative) {
+		char *tmp = ptr;
+		ptr = dem_str_newf("-%s", tmp);
+		free(tmp);
+	}
 	return ptr;
 }
 
