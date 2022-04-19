@@ -638,20 +638,24 @@ static size_t get_template(const char *buf, SStrInfo *str_info, bool memorize) {
 	}
 
 	abbr_names = new_abbr_names;
-
+	bool first = true;
 	// get identifier
 	size_t i = 0;
 	while (*buf != '@') {
-		if (i) {
-			copy_string(&type_code_str, ", ", 0);
-		}
 		if (get_type_code_string(buf, &i, &str_type_code) != eDemanglerErrOK) {
 			if (get_template_params(buf, &i, &str_type_code) != eDemanglerErrOK) {
 				len = 0;
+				free_type_code_str_struct(&type_code_str);
 				goto get_template_err;
 			}
 		}
-		copy_string(&type_code_str, str_type_code, 0);
+		if (!RZ_STR_ISEMPTY(str_type_code)) {
+			if (!first) {
+				copy_string(&type_code_str, ", ", 0);
+			}
+			copy_string(&type_code_str, str_type_code, 0);
+			first = false;
+		}
 		buf += i;
 		len += i;
 		RZ_FREE(str_type_code);
