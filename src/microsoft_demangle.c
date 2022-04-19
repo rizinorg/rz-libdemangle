@@ -1067,7 +1067,7 @@ DEF_STATE_ACTION(U) {
 }
 
 DEF_STATE_ACTION(W) {
-	//W4X@@ -> enum X, W4X@Y@@ -> enum Y::X
+	// W4X@@ -> enum X, W4X@Y@@ -> enum Y::X
 	size_t check_len = 0;
 	state->state = eTCStateEnd;
 
@@ -1660,7 +1660,7 @@ static void tc_state_start(SStateInfo *state, STypeCodeStr *type_code_str) {
 		ONE_LETTER_STATE(_)
 		ONE_LETTER_STATE($)
 	default:
-		//eprintf("[uncorrect type] error while parsing type\n");
+		// eprintf("[uncorrect type] error while parsing type\n");
 
 		state->state = eTCStateEnd;
 		state->err = eTCStateMachineErrUncorrectTypeCode;
