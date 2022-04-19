@@ -773,36 +773,59 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 			continue;
 		}
 
-		// Nested name
+		// Nested name or numbered namespace
 		if (*tmp == '?') {
+			tmp++;
 			read_len++;
-			// Optional sequence number
+			// Optional sequence number or numbered namespace
+			bool nested_name = false;
 			char *num = NULL;
-			if (*(tmp + 1) != '?') {
+			if (*tmp != '?') {
 				SStateInfo state;
-				init_state_struct(&state, tmp + 1);
+				init_state_struct(&state, tmp);
 				num = get_num(&state);
-				tmp += state.amount_of_read_chars + 1;
-				read_len += state.amount_of_read_chars + 1;
+				if (!num) {
+					break;
+				}
+				tmp += state.amount_of_read_chars;
+				read_len += state.amount_of_read_chars;
+				if (*tmp == '?' && tmp[1] == '?') {
+					tmp += 2;
+					read_len += 2;
+					nested_name = true;
+				}
+			} else {
+				tmp++;
+				read_len++;
+				nested_name = true;
 			}
 			char *demangled = NULL;
-			if (parse_microsoft_mangled_name(tmp + 2, &demangled, &len) != eDemanglerErrOK) {
-				free(num);
-				break;
+			if (nested_name) {
+				if (parse_microsoft_mangled_name(tmp, &demangled, &len) != eDemanglerErrOK) {
+					free(num);
+					break;
+				}
+				tmp += len;
+				read_len += len;
 			}
-			read_len += len + 1;
-			if (num) {
+			if (num && demangled) {
 				str_info->str_ptr = dem_str_newf("`%s'::`%s'", demangled, num);
-				free(num);
-			} else {
+			} else if (demangled) {
 				str_info->str_ptr = dem_str_newf("`%s'", demangled);
+			} else if (num) {
+				str_info->str_ptr = dem_str_newf("`%s'", num);
 			}
 
 			str_info->len = strlen(str_info->str_ptr);
 			dem_list_append(names_l, str_info);
-			dem_list_append(abbr_names, strdup(str_info->str_ptr));
+			if (demangled) {
+				dem_list_append(abbr_names, strdup(str_info->str_ptr));
+			}
 			free(demangled);
-			break;
+			free(num);
+			prev_pos = tmp;
+			curr_pos = strchr(tmp, '@');
+			continue;
 		}
 
 		bool abbreviation = false;
