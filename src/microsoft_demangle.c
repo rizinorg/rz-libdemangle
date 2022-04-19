@@ -1808,6 +1808,7 @@ static inline EDemanglerErr get_storage_class(const char encoded, const char **s
 		*storage_class = "const volatile";
 		break;
 	default:
+		*storage_class = NULL;
 		return eDemanglerErrUncorrectMangledSymbol;
 	}
 	return eDemanglerErrOK;
@@ -1853,6 +1854,7 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 		i = 0;
 		err = get_type_code_string(curr_pos, &i, &tmp);
 		if (err != eDemanglerErrOK) {
+			sdatatype_fini(&modifier);
 			return err;
 		}
 
@@ -1866,10 +1868,10 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 		curr_pos++;
 
 		data_type->right = strdup("");
-		if (!storage_class) {
-			data_type->left = dem_str_newf("%s%s%s", modifier.left, tmp, modifier.right);
-		} else {
+		if (storage_class) {
 			data_type->left = dem_str_newf("%s%s %s%s", modifier.left, tmp, storage_class, modifier.right);
+		} else {
+			data_type->left = dem_str_newf("%s%s%s", modifier.left, tmp, modifier.right);
 		}
 		free(tmp);
 		sdatatype_fini(&modifier);
@@ -1884,7 +1886,11 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 		}
 		curr_pos++;
 
-		data_type->left = dem_str_newf("%s%s%s", storage_class, modifier.left, modifier.right);
+		if (storage_class) {
+			data_type->left = dem_str_newf("%s%s%s", storage_class, modifier.left, modifier.right);
+		} else {
+			data_type->left = dem_str_newf("%s%s", modifier.left, modifier.right);
+		}
 		sdatatype_fini(&modifier);
 		if (*curr_pos != '@') {
 			STypeCodeStr str;
