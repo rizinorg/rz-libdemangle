@@ -680,7 +680,7 @@ get_template_err:
 	dem_list_free(new_abbr_names);
 	abbr_names = saved_abbr_names; // restore global list with name abbr.
 
-	if (memorize) {
+	if (memorize && len) {
 		dem_list_append(abbr_names, strdup(type_code_str.type_str));
 	}
 
