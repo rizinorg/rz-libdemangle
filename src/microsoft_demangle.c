@@ -1930,6 +1930,7 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 		}
 		break;
 	case '8':
+	case '9':
 		curr_pos++;
 		break;
 	default:
