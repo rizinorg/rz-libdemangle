@@ -88,8 +88,11 @@ typedef struct SDataType {
 } SDataType;
 
 static inline void sdatatype_fini(SDataType *data_type) {
-	free(data_type->left);
-	free(data_type->right);
+	if (!data_type) {
+		return;
+	}
+	RZ_FREE(data_type->left);
+	RZ_FREE(data_type->right);
 }
 
 static void sstrinfo_free(SStrInfo *sstrinfo) {
