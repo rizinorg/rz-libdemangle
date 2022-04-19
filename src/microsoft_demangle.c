@@ -885,12 +885,23 @@ DEF_STATE_ACTION(_) {
 		break;
 
 	switch (*(state->buff_for_parsing)) {
-		PROCESS_CASE(J, "long long(__int64)")
-		PROCESS_CASE(K, "unsigned long long(unsigned __int64)")
-		PROCESS_CASE(T, "long double(80 bit precision)")
-		PROCESS_CASE(Z, "long double(64 bit precision)")
-		PROCESS_CASE(W, "wchar_t")
+		PROCESS_CASE(D, "__int8")
+		PROCESS_CASE(E, "unsigned __int8")
+		PROCESS_CASE(F, "__int16")
+		PROCESS_CASE(G, "unsigned __int16")
+		PROCESS_CASE(H, "__int32")
+		PROCESS_CASE(I, "unsigned __int32")
+		PROCESS_CASE(J, "__int64")
+		PROCESS_CASE(K, "unsigned __int64")
+		PROCESS_CASE(L, "__int128")
+		PROCESS_CASE(M, "unsigned __int128")
 		PROCESS_CASE(N, "bool")
+		PROCESS_CASE(Q, "char8_t")
+		PROCESS_CASE(S, "char16_t")
+		PROCESS_CASE(T, "long double(80 bit precision)")
+		PROCESS_CASE(U, "char32_t")
+		PROCESS_CASE(W, "wchar_t")
+		PROCESS_CASE(Z, "long double(64 bit precision)")
 	default:
 		state->err = eTCStateMachineErrUncorrectTypeCode;
 		break;
