@@ -1150,7 +1150,7 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 	EDemanglerErr err = eDemanglerErrOK;
 	char *tmp = NULL;
 	STypeCodeStr tmp_str;
-	STypeCodeStr modifier;
+	STypeCodeStr storage_class;
 	bool is_pin_ptr = false;
 	char clr_type = '\0';
 
@@ -1160,7 +1160,7 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		state->err = eTCStateMachineErrAlloc;
 		return;
 	}
-	if (!init_type_code_str_struct(&modifier)) {
+	if (!init_type_code_str_struct(&storage_class)) {
 		free_type_code_str_struct(&tmp_str);
 		state->err = eTCStateMachineErrAlloc;
 		return;
@@ -1173,9 +1173,21 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 			state->amount_of_read_chars += 3;
 		}
 	}
+	STypeCodeStr mod_left;
+	STypeCodeStr mod_right;
+	if (!init_type_code_str_struct(&mod_left) ||
+		!init_type_code_str_struct(&mod_right)) {
+		free_type_code_str_struct(&mod_left);
+		free_type_code_str_struct(&mod_right);
+		state->err = eTCStateMachineErrAlloc;
+	}
 
 	SDataType mod = { 0 };
 	i = get_ptr_modifier(state->buff_for_parsing, &mod);
+	copy_string(&mod_left, mod.left, 0);
+	copy_string(&mod_right, mod.right, 0);
+	sdatatype_fini(&mod);
+
 	state->buff_for_parsing += i;
 	state->amount_of_read_chars += i;
 
@@ -1198,24 +1210,24 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		state->amount_of_read_chars += 2;
 	}
 
-	SDataType mod2 = { 0 };
-	i = get_ptr_modifier(state->buff_for_parsing, &mod2);
-	state->buff_for_parsing += i;
-	state->amount_of_read_chars += i;
+	do {
+		i = get_ptr_modifier(state->buff_for_parsing, &mod);
+		state->buff_for_parsing += i;
+		state->amount_of_read_chars += i;
 
-	const char *storage_class;
-	if (get_storage_class(*state->buff_for_parsing, &storage_class) != eDemanglerErrOK) {
-		state->err = eTCStateMachineErrUnsupportedTypeCode;
-		goto MODIFIER_err;
-	}
-	if (storage_class) {
-		copy_string(&modifier, storage_class, 0);
-		copy_string(&modifier, " ", 1);
-	}
-	copy_string(&modifier, mod2.left, 0);
-
-	state->buff_for_parsing++;
-	state->amount_of_read_chars++;
+		const char *storage_class_str;
+		err = get_storage_class(*state->buff_for_parsing, &storage_class_str);
+		if (storage_class_str) {
+			copy_string(&storage_class, storage_class_str, 0);
+		}
+		if (err == eDemanglerErrOK) {
+			state->buff_for_parsing++;
+			state->amount_of_read_chars++;
+		}
+		copy_string(&mod_left, mod.left, 0);
+		copy_string(&mod_right, mod.right, 0);
+		sdatatype_fini(&mod);
+	} while (i);
 
 	if (*state->buff_for_parsing == 'Y') {
 		char *n1;
@@ -1229,25 +1241,34 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		num = atoi(n1);
 		RZ_FREE(n1);
 
-		copy_string(&tmp_str, " ", 0);
-		copy_string(&tmp_str, "(", 0);
-		copy_string(&tmp_str, modifier.type_str, modifier.curr_pos);
-		copy_string(&tmp_str, modifier_str, 0);
-		copy_string(&tmp_str, ")", 0);
+		if (*storage_class.type_str || *mod_left.type_str || *mod_right.type_str || *modifier_str) {
+			copy_string(&tmp_str, "(", 1);
+			copy_string(&tmp_str, storage_class.type_str, storage_class.curr_pos);
+			copy_string(&tmp_str, mod_left.type_str, mod_left.curr_pos);
+			const char last_char = tmp_str.type_str[tmp_str.curr_pos - 1];
+			if (last_char != ' ' && last_char != '(') {
+				copy_string(&tmp_str, " ", 1);
+			}
+			copy_string(&tmp_str, modifier_str, 1);
+			copy_string(&tmp_str, mod_right.type_str, mod_right.curr_pos);
+			copy_string(&tmp_str, ")", 1);
+		}
 
 		while (num--) {
 			n1 = get_num(state);
-			copy_string(&tmp_str, "[", 0);
+			copy_string(&tmp_str, "[", 1);
 			copy_string(&tmp_str, n1, 0);
-			copy_string(&tmp_str, "]", 0);
+			copy_string(&tmp_str, "]", 1);
 			RZ_FREE(n1);
 		}
 	}
 
 	if (tmp_str.curr_pos == 0) {
-		copy_string(&tmp_str, " ", 0);
-		copy_string(&tmp_str, modifier.type_str, modifier.curr_pos);
-		copy_string(&tmp_str, mod.left, 0);
+		copy_string(&tmp_str, storage_class.type_str, storage_class.curr_pos);
+		copy_string(&tmp_str, mod_left.type_str, mod_left.curr_pos);
+		if (tmp_str.curr_pos && tmp_str.type_str[tmp_str.curr_pos - 1] != ' ') {
+			copy_string(&tmp_str, " ", 1);
+		}
 		if (clr_type) {
 			char *str = strdup(modifier_str);
 			if (!str) {
@@ -1264,8 +1285,11 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 			}
 			copy_string(&tmp_str, modifier_str, 0);
 		}
-		copy_string(&tmp_str, mod2.right, 0);
+		copy_string(&tmp_str, mod_right.type_str, mod_right.curr_pos);
 	}
+
+	free_type_code_str_struct(&mod_left);
+	free_type_code_str_struct(&mod_right);
 
 	if (!strncmp(state->buff_for_parsing, "__Z", 3)) {
 		// TODO: no idea what this means
@@ -1285,18 +1309,19 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		copy_string(type_code_str, "cli::pin_ptr<", 0);
 	}
 	copy_string(type_code_str, tmp, 0);
+	if (type_code_str->curr_pos && type_code_str->type_str[type_code_str->curr_pos - 1] != ' ' && tmp_str.type_str[0] != ' ') {
+		copy_string(type_code_str, " ", 1);
+	}
 	copy_string(type_code_str, tmp_str.type_str, tmp_str.curr_pos);
 	if (is_pin_ptr) {
 		copy_string(type_code_str, ">", 0);
 	}
-	copy_string(type_code_str, mod.right, 0);
 
 MODIFIER_err:
 	RZ_FREE(tmp);
 	sdatatype_fini(&mod);
-	sdatatype_fini(&mod2);
 	free_type_code_str_struct(&tmp_str);
-	free_type_code_str_struct(&modifier);
+	free_type_code_str_struct(&storage_class);
 }
 
 DEF_STATE_ACTION(S) {
