@@ -1211,6 +1211,16 @@ static inline const char *get_calling_convention(char calling_convention) {
 	case 'K': return "default (none given)";
 	case 'L': return "default (none given) __declspec(dllexport)";
 	case 'M': return "__clrcall";
+	case 'N': return "__clrcall __declspec(dllexport)";
+	case 'O': return "__eabi";
+	case 'P': return "__eabi __declspec(dllexport)";
+	case 'Q': return "__vectorcall";
+	case 'R': return "__vectorcall __declspec(dllexport)";
+	case 'S': return "__swift_1";
+	case 'T': return "__swift_1 __declspec(dllexport)";
+	case 'U': return "__swift_2";
+	case 'V': return "__swift_2 __declspec(dllexport)";
+	case 'W': return "__swift_3";
 	default: return NULL;
 	}
 }
