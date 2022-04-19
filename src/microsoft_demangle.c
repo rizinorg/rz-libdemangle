@@ -1925,6 +1925,9 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 		} else {
 			data_type->right = strdup("");
 		}
+		if (*curr_pos == '@') {
+			curr_pos++;
+		}
 		break;
 	case '8':
 		curr_pos++;
