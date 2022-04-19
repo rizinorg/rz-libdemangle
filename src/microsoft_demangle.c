@@ -483,15 +483,16 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 		case 'N': SET_OPERATOR_CODE("eh_vector_vbase_ctor_iter"); break;
 		case 'O': SET_OPERATOR_CODE("copy_ctor_closure"); break;
 		case 'R':
-			switch (*++buf) {
+			buf++;
+			read_len++;
+			switch (*buf++) {
 			case '0': {
 				size_t len;
 				char *str = NULL;
-				if (parse_microsoft_rtti_mangled_name(buf + 2, &str, &len) != eDemanglerErrOK) {
-					dem_list_free(names_l);
-					return 0;
+				if (parse_microsoft_rtti_mangled_name(buf + 1, &str, &len) != eDemanglerErrOK) {
+					goto fail;
 				}
-				read_len += len + 2;
+				read_len += len + 1;
 				str = dem_str_append(str, " `RTTI Type Descriptor'");
 				SET_OPERATOR_CODE(str);
 				free(str);
@@ -499,7 +500,7 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 			}
 			case '1': {
 				SStateInfo state;
-				init_state_struct(&state, buf + 1);
+				init_state_struct(&state, buf);
 				char *a = get_num(&state);
 				char *b = get_num(&state);
 				char *c = get_num(&state);
@@ -509,11 +510,12 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 					free(b);
 					free(c);
 					free(d);
-					dem_list_free(names_l);
-					return 0;
+					goto fail;
 				}
-				read_len += state.amount_of_read_chars + 1;
-				dem_str_newf("`RTTI Base Class Descriptor at (%s,%s,%s,%s)'", a, b, c, d);
+				read_len += state.amount_of_read_chars;
+				char *tmp = dem_str_newf("`RTTI Base Class Descriptor at (%s,%s,%s,%s)'", a, b, c, d);
+				SET_OPERATOR_CODE(tmp);
+				free(tmp);
 				free(a);
 				free(b);
 				free(c);
