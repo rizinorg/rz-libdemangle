@@ -1120,15 +1120,23 @@ static char *get_num(SStateInfo *state) {
 	} else if (*state->buff_for_parsing >= 'A' && *state->buff_for_parsing <= 'P') {
 		ut32 ret = 0;
 
-		while (*state->buff_for_parsing >= 'A' && *state->buff_for_parsing <= 'P') {
-			ret *= 16;
-			ret += *state->buff_for_parsing - 'A';
-			state->buff_for_parsing++;
-			state->amount_of_read_chars++;
-		}
-
-		if (*state->buff_for_parsing != '@') {
-			return NULL;
+		if (state->buff_for_parsing[1] == '0' && state->buff_for_parsing[2] == 'x' && isxdigit(state->buff_for_parsing[3])) {
+			size_t chars = 0;
+			state->buff_for_parsing += 3;
+			state->amount_of_read_chars += 3;
+			while (isxdigit(*state->buff_for_parsing)) {
+				state->buff_for_parsing++;
+				state->amount_of_read_chars++;
+				chars++;
+			}
+			ret = strtoul(state->buff_for_parsing - chars, NULL, 16);
+		} else {
+			while (*state->buff_for_parsing >= 'A' && *state->buff_for_parsing <= 'P') {
+				ret *= 16;
+				ret += *state->buff_for_parsing - 'A';
+				state->buff_for_parsing++;
+				state->amount_of_read_chars++;
+			}
 		}
 
 		ptr = dem_str_newf("%u", ret);
