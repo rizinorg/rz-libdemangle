@@ -33,6 +33,7 @@ typedef enum ETCState { // TC - type code
 	eTCStateStart = 0,
 	eTCStateEnd,
 	eTCStateA,
+	eTCStateB,
 	eTCStateC,
 	eTCStateD,
 	eTCStateE,
@@ -103,6 +104,7 @@ static void sstrinfo_free(SStrInfo *sstrinfo) {
 DECL_STATE_ACTION(start)
 DECL_STATE_ACTION(end)
 DECL_STATE_ACTION(A)
+DECL_STATE_ACTION(B)
 DECL_STATE_ACTION(C)
 DECL_STATE_ACTION(D)
 DECL_STATE_ACTION(E)
@@ -1406,6 +1408,10 @@ DEF_STATE_ACTION(A) {
 	PARSE_POINTER("&");
 }
 
+DEF_STATE_ACTION(B) {
+	PARSE_POINTER("& volatile");
+}
+
 DEF_STATE_ACTION($) {
 	if (*(state->buff_for_parsing++) != '$') {
 		state->err = eTCStateMachineErrUncorrectTypeCode;
@@ -1461,6 +1467,7 @@ static void tc_state_start(SStateInfo *state, STypeCodeStr *type_code_str) {
 
 	switch (*(state->buff_for_parsing)) {
 		ONE_LETTER_STATE(A)
+		ONE_LETTER_STATE(B)
 		ONE_LETTER_STATE(C)
 		ONE_LETTER_STATE(D)
 		ONE_LETTER_STATE(E)
