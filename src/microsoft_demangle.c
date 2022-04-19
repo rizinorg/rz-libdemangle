@@ -2051,7 +2051,14 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 	}
 
 	if (*curr_pos == '$') {
-		curr_pos += 2;
+		curr_pos++;
+		if (*curr_pos) {
+			curr_pos++;
+		}
+	}
+
+	if (!*curr_pos) {
+		goto print_function;
 	}
 
 	// member function access code
@@ -2106,6 +2113,8 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 	}
 
 	curr_pos += len;
+
+print_function:
 
 	if (!RZ_STR_ISEMPTY(data_type.left)) {
 		copy_string(&func_str, data_type.left, 0);
@@ -2197,7 +2206,14 @@ static EDemanglerErr parse_microsoft_mangled_name(const char *sym, char **demang
 		goto parse_microsoft_mangled_name_err;
 	}
 
-	curr_pos += len + 1;
+	curr_pos += len;
+
+	if (!*curr_pos) {
+		*demangled_name = strdup(type_code_str.type_str);
+		goto parse_microsoft_mangled_name_err;
+	}
+
+	curr_pos++;
 
 	if (!strncmp(curr_pos, "$$F", 3)) {
 		// Managed function (Managed C++ or C++/CLI)
