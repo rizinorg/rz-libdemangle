@@ -472,10 +472,12 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 		case 'C': SET_OPERATOR_CODE("string"); break;
 		case 'D': SET_OPERATOR_CODE("vbase_dtor"); break;
 		case 'E': SET_OPERATOR_CODE("vector_dtor"); break;
+		case 'F': SET_OPERATOR_CODE("default_ctor_closure"); break;
 		case 'G': SET_OPERATOR_CODE("scalar_dtor"); break;
 		case 'H': SET_OPERATOR_CODE("vector_ctor_iter"); break;
 		case 'I': SET_OPERATOR_CODE("vector_dtor_iter"); break;
 		case 'J': SET_OPERATOR_CODE("vector_vbase_ctor_iter"); break;
+		case 'K': SET_OPERATOR_CODE("virtual_displacement_map"); break;
 		case 'L': SET_OPERATOR_CODE("eh_vector_ctor_iter"); break;
 		case 'M': SET_OPERATOR_CODE("eh_vector_dtor_iter"); break;
 		case 'N': SET_OPERATOR_CODE("eh_vector_vbase_ctor_iter"); break;
@@ -521,7 +523,7 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 			case '2': SET_OPERATOR_CODE("`RTTI Base Class Array'"); break;
 			case '3': SET_OPERATOR_CODE("`RTTI Class Hierarchy Descriptor'"); break;
 			case '4': SET_OPERATOR_CODE("`RTTI Complete Object Locator'"); break;
-			default: return 0;
+			default: goto fail;
 			}
 			break;
 		case 'S': SET_OPERATOR_CODE("local_vftable"); break;
@@ -530,19 +532,61 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 		case 'V': SET_OPERATOR_CODE("operator delete[]"); break;
 		case 'X': SET_OPERATOR_CODE("placement_new_closure"); break;
 		case 'Y': SET_OPERATOR_CODE("placement_delete_closure"); break;
-		default:
-			dem_list_free(names_l);
-			return 0;
+		case '_':
+			buf++;
+			read_len++;
+			switch (*buf++) {
+			case 'A': SET_OPERATOR_CODE("managed_vector_ctor_iter"); break;
+			case 'B': SET_OPERATOR_CODE("managed_vector_dtor_iter"); break;
+			case 'C': SET_OPERATOR_CODE("eh_vector_copy_ctor_iter"); break;
+			case 'D': SET_OPERATOR_CODE("eh_vector_vbase_copy_ctor_iter"); break;
+			case 'E': {
+				const char *end;
+				const char *op = "dynamic initializer";
+				char *name;
+				size_t name_len;
+				goto get_name;
+			case 'F':
+				op = "dynamic atexit destructor";
+			get_name:
+				end = strchr(buf, '@');
+				if (!end) {
+					goto fail;
+				}
+				name_len = end - buf;
+				read_len += name_len + 1;
+				name = malloc(name_len + 1);
+				if (!name) {
+					goto fail;
+				}
+				memcpy(name, buf, name_len);
+				name[name_len] = '\0';
+				char *tmp = dem_str_newf("`%s for '%s''", op, name);
+				free(name);
+				SET_OPERATOR_CODE(tmp);
+				free(tmp);
+				break;
+			}
+			case 'G': SET_OPERATOR_CODE("vector_copy_ctor_iter"); break;
+			case 'H': SET_OPERATOR_CODE("vector_vbase_copy_ctor_iter"); break;
+			case 'I': SET_OPERATOR_CODE("managed_vector_copy_ctor_iter"); break;
+			case 'J': SET_OPERATOR_CODE("local_static_thread_guard"); break;
+			case 'K': SET_OPERATOR_CODE("user_defined_literal_op"); break;
+			default: goto fail;
+			}
+			break;
+		default: goto fail;
 		}
 		read_len++;
 		break;
-	default:
-		dem_list_free(names_l);
-		return 0;
+	default: goto fail;
 	}
 	read_len++;
 	return read_len;
 #undef SET_OPERATOR_CODE
+fail:
+	dem_list_free(names_l);
+	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
