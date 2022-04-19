@@ -469,7 +469,10 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 		case '9': SET_OPERATOR_CODE("vcall"); break;
 		case 'A': SET_OPERATOR_CODE("typeof"); break;
 		case 'B': SET_OPERATOR_CODE("local_static_guard"); break;
-		case 'C': SET_OPERATOR_CODE("string"); break;
+		case 'C':
+			SET_OPERATOR_CODE("string");
+			read_len += strlen(buf) - 1;
+			break;
 		case 'D': SET_OPERATOR_CODE("vbase_dtor"); break;
 		case 'E': SET_OPERATOR_CODE("vector_dtor"); break;
 		case 'F': SET_OPERATOR_CODE("default_ctor_closure"); break;
