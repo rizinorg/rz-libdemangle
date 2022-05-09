@@ -391,6 +391,80 @@ static int get_template_params(const char *sym, size_t *amount_of_read_chars, ch
 	return eDemanglerErrOK;
 }
 
+static inline ut16 read_be16(const void *src) {
+	const ut8 *s = (const ut8 *)src;
+	return (((ut16)s[0]) << 8) | (((ut16)s[1]) << 0);
+}
+
+static ssize_t utf16be_to_utf8_impl(const char *utf16be, size_t utf16be_len, char *utf8, size_t utf8_len) {
+	char *const outstart = utf8;
+	char *const outend = utf8 + utf8_len;
+	const ut16 *in = (const ut16 *)utf16be;
+	ut32 c, d;
+	int bits;
+
+	const size_t inlen = utf16be_len / 2;
+	const ut16 *const inend = in + inlen;
+	while ((in < inend) && (utf8 - outstart + 5 < utf8_len)) {
+		c = read_be16(in++);
+		if ((c & 0xFC00) == 0xD800) { /* surrogates */
+			if (in >= inend) { /* (in > inend) shouldn't happen */
+				break;
+			}
+			d = read_be16(in++);
+			if ((d & 0xFC00) == 0xDC00) {
+				c &= 0x03FF;
+				c <<= 10;
+				c |= d & 0x03FF;
+				c += 0x10000;
+			} else {
+				return -1;
+			}
+		}
+
+		/* assertion: c is a single UTF-4 value */
+		if (utf8 >= outend) {
+			break;
+		}
+		if (c < 0x80) {
+			*utf8++ = c;
+			bits = -6;
+		} else if (c < 0x800) {
+			*utf8++ = ((c >> 6) & 0x1F) | 0xC0;
+			bits = 0;
+		} else if (c < 0x10000) {
+			*utf8++ = ((c >> 12) & 0x0F) | 0xE0;
+			bits = 6;
+		} else {
+			*utf8++ = ((c >> 18) & 0x07) | 0xF0;
+			bits = 12;
+		}
+
+		for (; bits >= 0; bits -= 6) {
+			if (utf8 >= outend) {
+				break;
+			}
+			*utf8++ = ((c >> bits) & 0x3F) | 0x80;
+		}
+	}
+	return utf8 - outstart;
+}
+
+static EDemanglerErr utf16be_to_utf8(const char *utf16be, size_t utf16be_len, char **utf8, size_t *utf8_len) {
+	const size_t utf8_len_tmp = utf16be_len * 4;
+	*utf8 = malloc(utf8_len_tmp);
+	if (!*utf8) {
+		return eDemanglerErrMemoryAllocation;
+	}
+	ssize_t res = utf16be_to_utf8_impl(utf16be, utf16be_len, *utf8, utf8_len_tmp);
+	if (res < 0) {
+		free(*utf8);
+		return eDemanglerErrUncorrectMangledSymbol;
+	}
+	*utf8_len = res;
+	return eDemanglerErrOK;
+}
+
 static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize) {
 	// C++ operator code (one character, or two if the first is '_')
 #define SET_OPERATOR_CODE(str) \
@@ -470,8 +544,123 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 		case 'A': SET_OPERATOR_CODE("typeof"); break;
 		case 'B': SET_OPERATOR_CODE("local_static_guard"); break;
 		case 'C':
-			SET_OPERATOR_CODE("string");
-			read_len += strlen(buf) - 1;
+			if (*++buf != '@') {
+				goto fail;
+			}
+			if (*++buf != '_') {
+				goto fail;
+			}
+			buf++;
+			read_len += 3;
+			bool is_double_byte;
+			if (*buf == '0') {
+				is_double_byte = false;
+			} else if (*buf == '1') {
+				is_double_byte = true;
+			} else {
+				goto fail;
+			}
+			buf++;
+			read_len++;
+			const char *const str_buf_start = buf;
+			SStateInfo state_info;
+			init_state_struct(&state_info, buf);
+			char *len = get_num(&state_info);
+			free(len);
+			buf += state_info.amount_of_read_chars;
+			init_state_struct(&state_info, buf);
+			char *checksum = get_num(&state_info);
+			buf += state_info.amount_of_read_chars;
+			DemString *s = dem_string_new();
+			if (!s) {
+				free(checksum);
+				goto fail;
+			}
+			dem_string_appendf(s, "`string'::%s::\"", checksum);
+			free(checksum);
+			DemString *unicode = NULL;
+			if (is_double_byte) {
+				unicode = dem_string_new();
+				if (!unicode) {
+					dem_string_free(s);
+					goto fail;
+				}
+			}
+			char c[2];
+			int high = 0;
+			const char *encoded = ",/\\:. \v\n'-";
+			while (*buf && *buf != '@') {
+				if (*buf == '?') {
+					buf++;
+					if (*buf == '$') {
+						buf++;
+						if (*buf < 'A' || *buf > 'P') {
+							dem_string_free(s);
+							goto fail;
+						}
+						const char nibble_high = (*buf++ - 'A') & 0xf0;
+						const char nibble_low = (*buf - 'A') & 0x0f;
+						c[high] = nibble_high | nibble_low;
+					} else if (isdigit((int)*buf)) {
+						c[high] = encoded[*buf - '0'];
+					} else if ((*buf > 'a' && *buf < 'p') || (*buf > 'A' && *buf < 'P')) {
+						c[high] = *buf + 0x80;
+					} else {
+						dem_string_free(s);
+						goto fail;
+					}
+				} else {
+					c[high] = *buf;
+				}
+				buf++;
+				if (is_double_byte) {
+					high++;
+					if (high > 1) {
+						if (!c[0] && !c[1]) {
+							break;
+						}
+						if (!dem_string_append_n(unicode, c, 2)) {
+							dem_string_free(s);
+							goto fail;
+						}
+						high = 0;
+					}
+				} else {
+					if (!c[0]) {
+						break;
+					}
+					if (!dem_string_append_n(s, c, 1)) {
+						dem_string_free(s);
+						goto fail;
+					}
+				}
+			}
+			if (is_double_byte) {
+				size_t utf16_len = unicode->len;
+				char *utf16 = dem_string_drain(unicode);
+				char *utf8_buf = NULL;
+				size_t utf8_len = 0;
+				if (utf16be_to_utf8(utf16, utf16_len, &utf8_buf, &utf8_len) != eDemanglerErrOK) {
+					free(utf16);
+					dem_string_free(s);
+					goto fail;
+				}
+				free(utf16);
+				if (!dem_string_append_n(s, utf8_buf, utf8_len)) {
+					free(utf8_buf);
+					dem_string_free(s);
+					goto fail;
+				}
+				free(utf8_buf);
+			}
+			dem_string_append_n(s, "\"", 1);
+			char *str = dem_string_drain(s);
+			if (!str) {
+				goto fail;
+			}
+			SET_OPERATOR_CODE(str);
+			free(str);
+			read_len += buf - str_buf_start;
 			break;
 		case 'D': SET_OPERATOR_CODE("vbase_dtor"); break;
 		case 'E': SET_OPERATOR_CODE("vector_dtor"); break;

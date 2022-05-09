@@ -106,6 +106,10 @@ mu_demangle(99, msvc, "??__FNullSlot@?1??GetSlotAt@?$TSlotlessChildren@VSWidget@
 mu_demangle(100, msvc, "?in@?$codecvt@DDU_Mbstatet@@@std@@QEBAHAEAU_Mbstatet@@PEBD1AEAPEBDPEAD3AEAPEAD@Z", "public: int __cdecl std::codecvt<char, char, struct _Mbstatet>::in(struct _Mbstatet & __ptr64, char const * __ptr64, char const * __ptr64, char const * __ptr64 & __ptr64, char * __ptr64, char * __ptr64, char * __ptr64 & __ptr64)const __ptr64");
 mu_demangle(101, msvc, "??$Add@$$BY09UFVector4@@@FDraw@@QEAAXVFParameter@@AEAY09$$CBUFVector4@@@Z", "public: void __cdecl FDraw::Add<struct FVector4 [10]>(class FParameter, struct FVector4 const (& __ptr64)[10]) __ptr64");
 mu_demangle(102, msvc, "??$CreateSP@VSThrobber@@H@?$TBaseDelegate@UFVector2D@@$$V@@SA?AV0@PEAVSThrobber@@P81@EBA?AUFVector2D@@H@ZH@Z", "public: static class TBaseDelegate<struct FVector2D> __cdecl TBaseDelegate<struct FVector2D>::CreateSP<class SThrobber, int>(class SThrobber * __ptr64, struct FVector2D (__cdecl SThrobber::*)(int) const __ptr64, int)");
+mu_demangle(103, msvc, "??_C@_1CK@EOPGIILJ@?$AAi?$AAn?$AAv?$AAa?$AAl?$AAi?$AAd?$AA?5?$AAn?$AAu?$AAl?$AAl?$AA?5?$AAp?$AAo?$AAi?$AAn?$AAt?$AAe?$AAr?$AA?$AA@", "`string'::1324779705::\"invalid null pointer\"");
+mu_demangle(104, msvc, "??_C@_0CK@EOPGIILJ@invalid?5null?5pointer?$AA@", "`string'::1324779705::\"invalid null pointer\"");
+mu_demangle(105, msvc, "??_C@_1BK@FIHMCKAM@?$AAa@", "`string'::1484532236::\"a\"");
+mu_demangle(106, msvc, "??_C@_0BK@FIHMCKAM@a@", "`string'::1484532236::\"a\"");
 
 int all_tests() {
 	mu_demangle_run(0);
@@ -211,6 +215,10 @@ int all_tests() {
 	mu_demangle_run(100);
 	mu_demangle_run(101);
 	mu_demangle_run(102);
+	mu_demangle_run(103);
+	mu_demangle_run(104);
+	mu_demangle_run(105);
+	mu_demangle_run(106);
 	return tests_passed != tests_run;
 }
 

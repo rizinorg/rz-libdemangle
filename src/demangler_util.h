@@ -27,6 +27,7 @@ typedef SSIZE_T ssize_t;
 	}
 
 typedef uint8_t ut8;
+typedef uint16_t ut16;
 typedef uint32_t ut32;
 
 #if defined(__GNUC__) && __GNUC__ >= 4
