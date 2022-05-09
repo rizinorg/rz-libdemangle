@@ -9,7 +9,6 @@
 #define RZ_API
 #include "rz_libdemangle.h"
 
-
 #define mu_demangle_str(name, input, expected) \
 	do { \
 		char *output = libdemangle_handler_##name(input); \

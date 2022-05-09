@@ -63,6 +63,7 @@ typedef enum ETCState { // TC - type code
 
 typedef struct STypeCodeStr {
 	char *type_str;
+	char type_str_buf[MICROSOFT_NAME_LEN];
 	size_t type_str_len;
 	size_t curr_pos;
 } STypeCodeStr;
@@ -176,8 +177,9 @@ static state_func const state_table[eTCStateMax] = {
 
 static void init_state_struct(SStateInfo *state, const char *buff_for_parsing);
 static EDemanglerErr get_type_code_string(const char *sym, size_t *amount_of_read_chars, char **str_type_code);
-static bool init_type_code_str_struct(STypeCodeStr *type_coder_str);
+static bool init_type_code_str_struct(STypeCodeStr *type_code_str);
 static void free_type_code_str_struct(STypeCodeStr *type_code_str);
+static char *type_code_str_get(STypeCodeStr *type_code_str);
 static size_t get_template(const char *buf, SStrInfo *str_info, bool memorize);
 static char *get_num(SStateInfo *state);
 static EDemanglerErr parse_data_type(const char *sym, SDataType *demangled_type, size_t *len);
@@ -192,43 +194,54 @@ static void run_state(SStateInfo *state_info, STypeCodeStr *type_code_str) {
 	state_table[state_info->state](state_info, type_code_str);
 }
 
-static int copy_string(STypeCodeStr *type_code_str, const char *str_for_copy, size_t copy_len) {
-	int res = 1; // all is OK
-	size_t str_for_copy_len = (copy_len == 0 && str_for_copy) ? strlen(str_for_copy) : copy_len;
+#define copy_string(type_code_str, str_for_copy) copy_string_n(type_code_str, str_for_copy, str_for_copy ? strlen(str_for_copy) : 0)
+
+static bool copy_string_n(STypeCodeStr *type_code_str, const char *str_for_copy, size_t copy_len) {
+	if (!copy_len) {
+		return true;
+	}
 	size_t free_space = type_code_str->type_str_len - type_code_str->curr_pos - 1;
 
-	if (free_space < str_for_copy_len) {
-		int newlen = type_code_str->type_str_len + (str_for_copy_len << 1) + 1;
-		if (newlen < 1) {
-			RZ_FREE(type_code_str->type_str);
-			goto copy_string_err;
+	if (free_space < copy_len) {
+		size_t newlen = type_code_str->type_str_len + copy_len;
+		if (newlen < type_code_str->type_str_len) {
+			return false;
+		}
+		newlen *= 2;
+		if (newlen < type_code_str->type_str_len) {
+			return false;
 		}
 		type_code_str->type_str_len = newlen;
-		char *type_str = (char *)realloc(type_code_str->type_str, newlen);
+		char *type_str;
+		if (type_code_str->type_str != type_code_str->type_str_buf) {
+			type_str = realloc(type_code_str->type_str, newlen);
+		} else {
+			type_str = malloc(newlen);
+			if (!type_str) {
+				return false;
+			}
+			memcpy(type_str, type_code_str->type_str, type_code_str->curr_pos);
+		}
 		if (!type_str) {
-			RZ_FREE(type_code_str->type_str);
-			goto copy_string_err;
+			return false;
 		}
 		type_code_str->type_str = type_str;
 		if (!type_code_str->type_str) {
-			res = 0;
-			goto copy_string_err;
+			return false;
 		}
 	}
 
 	char *dst = type_code_str->type_str + type_code_str->curr_pos;
 	if (str_for_copy) {
-		strncpy(dst, str_for_copy, str_for_copy_len + 1);
+		memcpy(dst, str_for_copy, copy_len);
 	} else {
-		memset(dst, 0, str_for_copy_len);
+		memset(dst, 0, copy_len);
 	}
-	type_code_str->curr_pos += str_for_copy_len;
+	type_code_str->curr_pos += copy_len;
 	if (type_code_str->type_str) {
 		type_code_str->type_str[type_code_str->curr_pos] = '\0';
 	}
-
-copy_string_err:
-	return res;
+	return true;
 }
 
 static int get_template_params(const char *sym, size_t *amount_of_read_chars, char **str_type_code) {
@@ -279,7 +292,7 @@ static int get_template_params(const char *sym, size_t *amount_of_read_chars, ch
 			}
 			sym += ret + 1;
 			SDataType data_type = { 0 };
-			if (isdigit(*sym)) {
+			if (isdigit((int)*sym)) {
 				err = parse_data_type(sym, &data_type, &ret);
 				*str_type_code = dem_str_newf("&%s %s%s", data_type.left, str.type_str, data_type.right);
 				sdatatype_fini(&data_type);
@@ -803,18 +816,16 @@ static size_t get_template(const char *buf, SStrInfo *str_info, bool memorize) {
 	if (*buf == '?') {
 		DemList *names_l = dem_list_newf((DemListFree)sstrinfo_free);
 		if (!names_l) {
-			len = 0;
 			goto get_template_err;
 		}
 		size_t i = get_operator_code(buf, names_l, memorize);
 		if (!i) {
-			len = 0;
 			goto get_template_err;
 		}
 		len += i;
 		buf += i;
 		SStrInfo *name = dem_list_head(names_l)->data;
-		copy_string(&type_code_str, name->str_ptr, name->len);
+		copy_string_n(&type_code_str, name->str_ptr, name->len);
 		dem_list_free(names_l);
 	} else {
 		char *tmp = strchr(buf, '@');
@@ -824,13 +835,13 @@ static size_t get_template(const char *buf, SStrInfo *str_info, bool memorize) {
 
 		// get/copy template len/name
 		len += (tmp - buf + 1);
-		copy_string(&type_code_str, buf, len - 1);
+		copy_string_n(&type_code_str, buf, len - 1);
 		dem_list_append(new_abbr_names, dem_str_ndup(buf, len - 1));
 		buf += len;
 	}
 
 	if (*buf != '@') {
-		copy_string(&type_code_str, "<", 0);
+		copy_string(&type_code_str, "<");
 	}
 
 	abbr_names = new_abbr_names;
@@ -847,9 +858,9 @@ static size_t get_template(const char *buf, SStrInfo *str_info, bool memorize) {
 		}
 		if (!RZ_STR_ISEMPTY(str_type_code)) {
 			if (!first) {
-				copy_string(&type_code_str, ", ", 0);
+				copy_string(&type_code_str, ", ");
 			}
-			copy_string(&type_code_str, str_type_code, 0);
+			copy_string(&type_code_str, str_type_code);
 			first = false;
 		}
 		buf += i;
@@ -861,12 +872,12 @@ static size_t get_template(const char *buf, SStrInfo *str_info, bool memorize) {
 		goto get_template_err;
 	}
 	if (i) {
-		copy_string(&type_code_str, ">", 0);
+		copy_string(&type_code_str, ">");
 	}
 	buf++;
 	len++;
 
-	str_info->str_ptr = type_code_str.type_str;
+	str_info->str_ptr = type_code_str_get(&type_code_str);
 	str_info->len = type_code_str.curr_pos;
 
 get_template_err:
@@ -874,11 +885,8 @@ get_template_err:
 	abbr_names = saved_abbr_names; // restore global list with name abbr.
 
 	if (memorize && len) {
-		dem_list_append(abbr_names, strdup(type_code_str.type_str));
+		dem_list_append(abbr_names, strdup(str_info->str_ptr));
 	}
-
-	//    will be free at a caller function
-	//    free_type_code_str_struct(&type_code_str);
 	return len;
 }
 
@@ -969,7 +977,7 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 			str_info->str_ptr = dem_str_newf("[%s]", str.type_str);
 			str_info->len = strlen(str_info->str_ptr);
 			dem_list_append(names_l, str_info);
-			free(str.type_str);
+			free_type_code_str_struct(&str);
 			continue;
 		}
 
@@ -1076,10 +1084,10 @@ get_namespace_and_name_err:
 		*amount_of_names = tmp_len;
 	}
 	dem_list_foreach_prev(names_l, it, str_info) {
-		copy_string(type_code_str, str_info->str_ptr, str_info->len);
+		copy_string_n(type_code_str, str_info->str_ptr, str_info->len);
 
 		if (--tmp_len) {
-			copy_string(type_code_str, "::", 0);
+			copy_string(type_code_str, "::");
 		}
 	}
 	dem_list_free(names_l);
@@ -1126,7 +1134,7 @@ get_namespace_and_name_err:
 	}
 #define ONE_LETTER_ACTION(action, type) \
 	static void tc_state_##action(SStateInfo *state, STypeCodeStr *type_code_str) { \
-		if (copy_string(type_code_str, type, 0) == 0) { \
+		if (copy_string(type_code_str, type) == 0) { \
 			state->err = eTCStateMachineErrAlloc; \
 		} \
 		state->state = eTCStateEnd; \
@@ -1150,7 +1158,7 @@ ONE_LETTER_ACTION(Z, "varargs ...")
 DEF_STATE_ACTION(_) {
 #define PROCESS_CASE(letter, type_str) \
 	case CHAR_WITH_QUOTES(letter): \
-		copy_string(type_code_str, type_str, 0); \
+		copy_string(type_code_str, type_str); \
 		break;
 
 	switch (*(state->buff_for_parsing)) {
@@ -1188,7 +1196,7 @@ DEF_STATE_ACTION(_) {
 // or +2 -> skip abbreviated_num + '@'
 #define GET_USER_DEF_TYPE_NAME(data_struct_str) \
 	{ \
-		copy_string(type_code_str, data_struct_str, 0); \
+		copy_string(type_code_str, data_struct_str); \
 \
 		check_len = get_namespace_and_name(state->buff_for_parsing, type_code_str, NULL, true); \
 		if (check_len) { \
@@ -1207,16 +1215,14 @@ DEF_STATE_ACTION(T) {
 #define PROCESS_CASE(case_string, type_str) \
 	{ \
 		check_len = strlen(case_string); \
-		if ((check_len < buff_len) && \
-			(strncmp(state->buff_for_parsing, case_string, check_len) == 0)) { \
-			copy_string(type_code_str, type_str, 0); \
+		if (strncmp(state->buff_for_parsing, case_string, check_len) == 0) { \
+			copy_string(type_code_str, type_str); \
 			state->buff_for_parsing += check_len; \
 			state->amount_of_read_chars += check_len; \
 			return; \
 		} \
 	}
 
-	size_t buff_len = strlen(state->buff_for_parsing);
 	size_t check_len = 0;
 
 	state->state = eTCStateEnd;
@@ -1237,16 +1243,14 @@ DEF_STATE_ACTION(U) {
 #define PROCESS_CASE(case_string, type_str) \
 	{ \
 		check_len = strlen(case_string); \
-		if ((check_len < buff_len) && \
-			(strncmp(state->buff_for_parsing, case_string, check_len) == 0)) { \
-			copy_string(type_code_str, type_str, 0); \
+		if (strncmp(state->buff_for_parsing, case_string, check_len) == 0) { \
+			copy_string(type_code_str, type_str); \
 			state->amount_of_read_chars += check_len; \
 			state->buff_for_parsing += check_len; \
 			return; \
 		} \
 	}
 
-	size_t buff_len = strlen(state->buff_for_parsing);
 	size_t check_len = 0;
 
 	state->state = eTCStateEnd;
@@ -1385,8 +1389,8 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 
 	SDataType mod = { 0 };
 	i = get_ptr_modifier(state->buff_for_parsing, &mod);
-	copy_string(&mod_left, mod.left, 0);
-	copy_string(&mod_right, mod.right, 0);
+	copy_string(&mod_left, mod.left);
+	copy_string(&mod_right, mod.right);
 	sdatatype_fini(&mod);
 
 	state->buff_for_parsing += i;
@@ -1419,14 +1423,14 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		const char *storage_class_str;
 		err = get_storage_class(*state->buff_for_parsing, &storage_class_str);
 		if (storage_class_str) {
-			copy_string(&storage_class, storage_class_str, 0);
+			copy_string(&storage_class, storage_class_str);
 		}
 		if (err == eDemanglerErrOK) {
 			state->buff_for_parsing++;
 			state->amount_of_read_chars++;
 		}
-		copy_string(&mod_left, mod.left, 0);
-		copy_string(&mod_right, mod.right, 0);
+		copy_string(&mod_left, mod.left);
+		copy_string(&mod_right, mod.right);
 		sdatatype_fini(&mod);
 	} while (i);
 
@@ -1443,32 +1447,32 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		RZ_FREE(n1);
 
 		if (*storage_class.type_str || *mod_left.type_str || *mod_right.type_str || *modifier_str) {
-			copy_string(&tmp_str, "(", 1);
-			copy_string(&tmp_str, storage_class.type_str, storage_class.curr_pos);
-			copy_string(&tmp_str, mod_left.type_str, mod_left.curr_pos);
+			copy_string(&tmp_str, "(");
+			copy_string_n(&tmp_str, storage_class.type_str, storage_class.curr_pos);
+			copy_string_n(&tmp_str, mod_left.type_str, mod_left.curr_pos);
 			const char last_char = tmp_str.type_str[tmp_str.curr_pos - 1];
 			if (last_char != ' ' && last_char != '(') {
-				copy_string(&tmp_str, " ", 1);
+				copy_string(&tmp_str, " ");
 			}
-			copy_string(&tmp_str, modifier_str, 1);
-			copy_string(&tmp_str, mod_right.type_str, mod_right.curr_pos);
-			copy_string(&tmp_str, ")", 1);
+			copy_string(&tmp_str, modifier_str);
+			copy_string_n(&tmp_str, mod_right.type_str, mod_right.curr_pos);
+			copy_string(&tmp_str, ")");
 		}
 
 		while (num--) {
 			n1 = get_num(state);
-			copy_string(&tmp_str, "[", 1);
-			copy_string(&tmp_str, n1, 0);
-			copy_string(&tmp_str, "]", 1);
+			copy_string(&tmp_str, "[");
+			copy_string(&tmp_str, n1);
+			copy_string(&tmp_str, "]");
 			RZ_FREE(n1);
 		}
 	}
 
 	if (tmp_str.curr_pos == 0) {
-		copy_string(&tmp_str, storage_class.type_str, storage_class.curr_pos);
-		copy_string(&tmp_str, mod_left.type_str, mod_left.curr_pos);
+		copy_string_n(&tmp_str, storage_class.type_str, storage_class.curr_pos);
+		copy_string_n(&tmp_str, mod_left.type_str, mod_left.curr_pos);
 		if (tmp_str.curr_pos && tmp_str.type_str[tmp_str.curr_pos - 1] != ' ') {
-			copy_string(&tmp_str, " ", 1);
+			copy_string(&tmp_str, " ");
 		}
 		if (clr_type) {
 			char *str = strdup(modifier_str);
@@ -1477,16 +1481,16 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 				goto MODIFIER_err;
 			}
 			*str = clr_type;
-			copy_string(&tmp_str, str, 0);
+			copy_string(&tmp_str, str);
 			free(str);
 		} else {
 			if (is_pin_ptr) {
 				while (*++modifier_str == ' ') {
 				};
 			}
-			copy_string(&tmp_str, modifier_str, 0);
+			copy_string(&tmp_str, modifier_str);
 		}
-		copy_string(&tmp_str, mod_right.type_str, mod_right.curr_pos);
+		copy_string_n(&tmp_str, mod_right.type_str, mod_right.curr_pos);
 	}
 
 	free_type_code_str_struct(&mod_left);
@@ -1507,15 +1511,15 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 	state->amount_of_read_chars += i;
 	state->buff_for_parsing += i;
 	if (is_pin_ptr) {
-		copy_string(type_code_str, "cli::pin_ptr<", 0);
+		copy_string(type_code_str, "cli::pin_ptr<");
 	}
-	copy_string(type_code_str, tmp, 0);
+	copy_string(type_code_str, tmp);
 	if (type_code_str->curr_pos && type_code_str->type_str[type_code_str->curr_pos - 1] != ' ' && tmp_str.type_str[0] != ' ') {
-		copy_string(type_code_str, " ", 1);
+		copy_string(type_code_str, " ");
 	}
-	copy_string(type_code_str, tmp_str.type_str, tmp_str.curr_pos);
+	copy_string_n(type_code_str, tmp_str.type_str, tmp_str.curr_pos);
 	if (is_pin_ptr) {
-		copy_string(type_code_str, ">", 0);
+		copy_string(type_code_str, ">");
 	}
 
 MODIFIER_err:
@@ -1568,7 +1572,7 @@ static EDemanglerErr parse_function_args(const char *sym, char **demangled_args,
 		return eDemanglerErrMemoryAllocation;
 	}
 
-	copy_string(&func_str, "(", 0);
+	copy_string(&func_str, "(");
 
 	// Function arguments
 	while (*curr_pos && *curr_pos != 'Z') {
@@ -1576,7 +1580,7 @@ static EDemanglerErr parse_function_args(const char *sym, char **demangled_args,
 			char *tmp;
 			bool is_abbr_type = false;
 			if (len) {
-				copy_string(&func_str, ", ", 0);
+				copy_string(&func_str, ", ");
 			}
 			err = get_type_code_string(curr_pos, &len, &tmp);
 			if (err != eDemanglerErrOK) {
@@ -1603,7 +1607,7 @@ static EDemanglerErr parse_function_args(const char *sym, char **demangled_args,
 				dem_list_append(abbr_types, strdup(tmp));
 			}
 
-			copy_string(&func_str, tmp, 0);
+			copy_string(&func_str, tmp);
 
 			if (strncmp(tmp, "void", 4) == 0 && strlen(tmp) == 4) {
 				// arguments list is void
@@ -1628,7 +1632,7 @@ static EDemanglerErr parse_function_args(const char *sym, char **demangled_args,
 		err = eDemanglerErrUncorrectMangledSymbol;
 	}
 
-	copy_string(&func_str, ")", 0);
+	copy_string(&func_str, ")");
 
 	if (demangled_args) {
 		*demangled_args = strdup(func_str.type_str);
@@ -1678,18 +1682,18 @@ static void parse_function_pointer(SStateInfo *state, STypeCodeStr *type_code_st
 		return;
 	}
 
-	copy_string(type_code_str, ret_type, 0);
+	copy_string(type_code_str, ret_type);
 	if (storage) {
-		copy_string(type_code_str, " ", 1);
-		copy_string(type_code_str, storage, 0);
+		copy_string(type_code_str, " ");
+		copy_string(type_code_str, storage);
 	}
-	copy_string(type_code_str, " (", 0);
+	copy_string(type_code_str, " (");
 	RZ_FREE(ret_type);
 
-	copy_string(type_code_str, call_conv, 0);
-	copy_string(type_code_str, " ", 1);
-	copy_string(type_code_str, pointer_str, 0);
-	copy_string(type_code_str, ")", 1);
+	copy_string(type_code_str, call_conv);
+	copy_string(type_code_str, " ");
+	copy_string(type_code_str, pointer_str);
+	copy_string(type_code_str, ")");
 
 	state->amount_of_read_chars += i;
 	state->buff_for_parsing += i;
@@ -1702,7 +1706,7 @@ static void parse_function_pointer(SStateInfo *state, STypeCodeStr *type_code_st
 	}
 	state->amount_of_read_chars += i;
 	state->buff_for_parsing += i;
-	copy_string(type_code_str, demangled_args, 0);
+	copy_string(type_code_str, demangled_args);
 	free(demangled_args);
 	return;
 }
@@ -1722,8 +1726,8 @@ static void parse_pointer(SStateInfo *state, STypeCodeStr *type_code_str, const 
 			size_t read = get_namespace_and_name(state->buff_for_parsing, &func_str, NULL, true) + 1;
 			state->amount_of_read_chars += read;
 			state->buff_for_parsing += read;
-			copy_string(&func_str, "::", 2);
-			copy_string(&func_str, pointer_str, 0);
+			copy_string(&func_str, "::");
+			copy_string(&func_str, pointer_str);
 			SDataType data_type = { 0 };
 			size_t ptr_mod_cnt = get_ptr_modifier(state->buff_for_parsing, &data_type);
 			state->buff_for_parsing += ptr_mod_cnt;
@@ -1732,17 +1736,19 @@ static void parse_pointer(SStateInfo *state, STypeCodeStr *type_code_str, const 
 			if (get_storage_class(*state->buff_for_parsing++, &storage) != eDemanglerErrOK) {
 				state->err = eTCStateMachineErrUncorrectTypeCode;
 				free_type_code_str_struct(&func_str);
+				sdatatype_fini(&data_type);
 				return;
 			}
 			state->amount_of_read_chars++;
-			copy_string(type_code_str, data_type.left, 0);
+			copy_string(type_code_str, data_type.left);
 			parse_function_pointer(state, type_code_str, func_str.type_str);
 			free_type_code_str_struct(&func_str);
 			if (storage) {
-				copy_string(type_code_str, " ", 1);
-				copy_string(type_code_str, storage, 0);
+				copy_string(type_code_str, " ");
+				copy_string(type_code_str, storage);
 			}
-			copy_string(type_code_str, data_type.right, 0);
+			copy_string(type_code_str, data_type.right);
+			sdatatype_fini(&data_type);
 			state->state = eTCStateEnd;
 			return;
 		}
@@ -1800,7 +1806,7 @@ DEF_STATE_ACTION($) {
 		state->state = eTCStateEnd;
 		break;
 	case 'T':
-		copy_string(type_code_str, "std::nullptr_t", 15);
+		copy_string(type_code_str, "std::nullptr_t");
 		state->state = eTCStateEnd;
 		break;
 	case 'V':
@@ -1876,30 +1882,35 @@ static void init_state_struct(SStateInfo *state, const char *buff_for_parsing) {
 	state->err = eTCStateMachineErrOK;
 }
 
-static bool init_type_code_str_struct(STypeCodeStr *type_coder_str) {
-#define TYPE_STR_LEN 1024
-	// 1 - initialization finish with success, else - 0
-
-	type_coder_str->type_str_len = TYPE_STR_LEN;
-
-	type_coder_str->type_str = (char *)calloc(TYPE_STR_LEN, sizeof(char));
-	if (!type_coder_str->type_str) {
-		return false;
-	}
-	memset(type_coder_str->type_str, 0, TYPE_STR_LEN * sizeof(char));
-
-	type_coder_str->curr_pos = 0; // strlen ("unknown type");
-	//	strncpy(type_coder_str->type_str, "unknown_type", type_coder_str->curr_pos);
-
+static bool init_type_code_str_struct(STypeCodeStr *type_code_str) {
+	type_code_str->type_str_len = MICROSOFT_NAME_LEN;
+	type_code_str->type_str = type_code_str->type_str_buf;
+	*type_code_str->type_str = '\0';
+	type_code_str->curr_pos = 0;
 	return true;
-#undef TYPE_STR_LEN
 }
 
 static void free_type_code_str_struct(STypeCodeStr *type_code_str) {
-	if (type_code_str->type_str) {
+	if (type_code_str->type_str && type_code_str->type_str != type_code_str->type_str_buf) {
 		RZ_FREE(type_code_str->type_str);
 	}
 	type_code_str->type_str_len = 0;
+}
+
+static char *type_code_str_get(STypeCodeStr *type_code_str) {
+	char *ret;
+	if (type_code_str->type_str == type_code_str->type_str_buf) {
+		ret = malloc(type_code_str->curr_pos + 1);
+		if (!ret) {
+			return NULL;
+		}
+		memcpy(ret, type_code_str->type_str, type_code_str->curr_pos);
+		ret[type_code_str->curr_pos] = '\0';
+	} else {
+		ret = type_code_str->type_str;
+	}
+	type_code_str->type_str = NULL;
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1908,7 +1919,6 @@ static void free_type_code_str_struct(STypeCodeStr *type_code_str) {
 
 static EDemanglerErr get_type_code_string(const char *sym, size_t *amount_of_read_chars, char **str_type_code) {
 	EDemanglerErr err = eDemanglerErrOK;
-	char *tmp_sym = strdup(sym);
 	STypeCodeStr type_code_str;
 	SStateInfo state;
 
@@ -1917,7 +1927,7 @@ static EDemanglerErr get_type_code_string(const char *sym, size_t *amount_of_rea
 		goto get_type_code_string_err;
 	}
 
-	init_state_struct(&state, tmp_sym);
+	init_state_struct(&state, sym);
 
 	while (state.state != eTCStateEnd) {
 		run_state(&state, &type_code_str);
@@ -1937,11 +1947,10 @@ static EDemanglerErr get_type_code_string(const char *sym, size_t *amount_of_rea
 		}
 	}
 
-	*str_type_code = strdup(type_code_str.type_str);
+	*str_type_code = type_code_str_get(&type_code_str);
 	*amount_of_read_chars = state.amount_of_read_chars;
 
 get_type_code_string_err:
-	RZ_FREE(tmp_sym);
 	free_type_code_str_struct(&type_code_str);
 	return err;
 }
@@ -2225,7 +2234,7 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 	SDataType data_type = { 0 };
 	SDataType this_pointer_modifier = { 0 };
 	const char *curr_pos = sym;
-	const char *__64ptr = NULL;
+	bool __64ptr = false;
 	size_t len;
 
 	STypeCodeStr func_str;
@@ -2247,7 +2256,7 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 	curr_pos += len;
 
 	if (*curr_pos == 'E') {
-		__64ptr = "__ptr64";
+		__64ptr = true;
 		curr_pos++;
 	}
 
@@ -2318,50 +2327,50 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 print_function:
 
 	if (!RZ_STR_ISEMPTY(data_type.left)) {
-		copy_string(&func_str, data_type.left, 0);
+		copy_string(&func_str, data_type.left);
 		if (!strstr(data_type.left, "static")) {
-			copy_string(&func_str, ": ", 0);
+			copy_string(&func_str, ": ");
 		} else {
-			copy_string(&func_str, " ", 0);
+			copy_string(&func_str, " ");
 		}
 	}
 
 	if (ret_type) {
-		copy_string(&func_str, ret_type, 0);
-		copy_string(&func_str, " ", 0);
+		copy_string(&func_str, ret_type);
+		copy_string(&func_str, " ");
 	}
 
 	if (call_conv) {
-		copy_string(&func_str, call_conv, 0);
-		copy_string(&func_str, " ", 0);
+		copy_string(&func_str, call_conv);
+		copy_string(&func_str, " ");
 	}
 
 	if (type_code_str->type_str) {
-		copy_string(&func_str, type_code_str->type_str, type_code_str->curr_pos);
+		copy_string_n(&func_str, type_code_str->type_str, type_code_str->curr_pos);
 	}
 
 	if (!RZ_STR_ISEMPTY(data_type.right)) {
-		copy_string(&func_str, data_type.right, 0);
+		copy_string(&func_str, data_type.right);
 	}
 
-	copy_string(&func_str, demangled_args, 0);
+	copy_string(&func_str, demangled_args);
 	RZ_FREE(demangled_args);
 
 	if (memb_func_access_code) {
-		copy_string(&func_str, memb_func_access_code, 0);
+		copy_string(&func_str, memb_func_access_code);
 	}
 
-	copy_string(&func_str, this_pointer_modifier.left, 0);
+	copy_string(&func_str, this_pointer_modifier.left);
 
 	if (__64ptr) {
-		copy_string(&func_str, " ", 0);
-		copy_string(&func_str, __64ptr, 0);
+		copy_string(&func_str, " __ptr64");
 	}
 
-	copy_string(&func_str, this_pointer_modifier.right, 0);
+	copy_string(&func_str, this_pointer_modifier.right);
 
 	if (ret_type) {
 		if (strstr(func_str.type_str, "#{return_type}")) {
+			func_str.type_str = type_code_str_get(&func_str);
 			func_str.type_str = dem_str_replace(func_str.type_str, "#{return_type}", ret_type, 0);
 			func_str.curr_pos -= strlen("#{return_type}") - strlen(ret_type);
 		}
@@ -2369,7 +2378,7 @@ print_function:
 
 	// need to be free by user
 	if (func_str.type_str) {
-		*demangled_function = strdup(func_str.type_str);
+		*demangled_function = type_code_str_get(&func_str);
 	}
 
 parse_function_err:
@@ -2410,7 +2419,7 @@ static EDemanglerErr parse_microsoft_mangled_name(const char *sym, char **demang
 	curr_pos += len;
 
 	if (!*curr_pos) {
-		*demangled_name = strdup(type_code_str.type_str);
+		*demangled_name = type_code_str_get(&type_code_str);
 		goto parse_microsoft_mangled_name_err;
 	}
 
