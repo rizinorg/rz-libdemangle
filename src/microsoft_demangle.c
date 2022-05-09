@@ -376,6 +376,10 @@ static int get_template_params(const char *sym, size_t *amount_of_read_chars, ch
 				res = tmp;
 			}
 			break;
+		case 'S':
+			// empty non-type parameter pack
+			res = strdup("");
+			break;
 		default:
 			break;
 		}
