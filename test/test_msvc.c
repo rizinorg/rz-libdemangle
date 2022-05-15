@@ -110,6 +110,8 @@ mu_demangle(103, msvc, "??_C@_1CK@EOPGIILJ@?$AAi?$AAn?$AAv?$AAa?$AAl?$AAi?$AAd?$
 mu_demangle(104, msvc, "??_C@_0CK@EOPGIILJ@invalid?5null?5pointer?$AA@", "`string'::1324779705::\"invalid null pointer\"");
 mu_demangle(105, msvc, "??_C@_1BK@FIHMCKAM@?$AAa@", "`string'::1484532236::\"a\"");
 mu_demangle(106, msvc, "??_C@_0BK@FIHMCKAM@a@", "`string'::1484532236::\"a\"");
+mu_demangle(107, msvc, "??_C@_0BK@OFCNNNKO@?$GAgeneric?9class?9parameter?9@", "`string'::3844988334::\"\6generic-class-parameter-\"");
+mu_demangle(108, msvc, "??_C@_0CL@CODINPLA@Failed?5to?5get?5the?5string?5from?5t@NNGAKEGL@", "`string'::775479216::\"Failed to get the string from t\"::3714098283");
 
 int all_tests() {
 	mu_demangle_run(0);
@@ -219,6 +221,8 @@ int all_tests() {
 	mu_demangle_run(104);
 	mu_demangle_run(105);
 	mu_demangle_run(106);
+	mu_demangle_run(107);
+	mu_demangle_run(108);
 	return tests_passed != tests_run;
 }
 
