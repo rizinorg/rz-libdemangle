@@ -615,8 +615,8 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 							dem_string_free(s);
 							goto fail;
 						}
-						const char nibble_high = (*buf++ - 'A') & 0xf0;
-						const char nibble_low = (*buf - 'A') & 0x0f;
+						const char nibble_high = (*buf++ - 'A');
+						const char nibble_low = (*buf - 'A');
 						c[high] = nibble_high | nibble_low;
 					} else if (isdigit((int)*buf)) {
 						c[high] = encoded[*buf - '0'];
