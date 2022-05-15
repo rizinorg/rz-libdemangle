@@ -671,6 +671,16 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 				free(utf8_buf);
 			}
 			dem_string_append_n(s, "\"", 1);
+			if (*buf == '@' && buf[1]) {
+				buf++;
+				init_state_struct(&state_info, buf);
+				char *unk = get_num(&state_info);
+				if (unk) {
+					buf += state_info.amount_of_read_chars - 1;
+					dem_string_appendf(s, "::%s", unk);
+					free(unk);
+				}
+			}
 			char *str = dem_string_drain(s);
 			if (!str) {
 				goto fail;
