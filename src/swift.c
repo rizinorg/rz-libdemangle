@@ -78,12 +78,12 @@ static const char *numpos(const char *n) {
 	return n;
 }
 
-static const char *getstring(const char *s, int len) {
-	static char buf[256] = { 0 };
-	if (len < 0 || len > sizeof(buf) - 2) {
-		return "";
+static char *getstring(const char *s, int len) {
+	if (len < 1) {
+		return strdup("");
 	}
-	strncpy(buf, s, len);
+	char *buf = malloc(len + 1);
+	memcpy(buf, s, len);
 	buf[len] = 0;
 	return buf;
 }
@@ -222,18 +222,21 @@ char *libdemangle_handler_swift(const char *s) {
 			if (!len) {
 				break;
 			}
-			const char *str = getstring(q, len);
+			char *str = getstring(q, len);
 			if (len == 2 && !strcmp(str, "ee")) {
 				strcat(out, "Swift");
 			} else {
+				RZ_FREE(str);
 				// push string
 				if (i && *out) {
 					strcat(out, ".");
 				}
 				STRCAT_BOUNDS(len);
 				len = RZ_MIN(len, strlen(q));
-				strcat(out, getstring(q, len));
+				str = getstring(q, len);
+				strcat(out, str);
 			}
+			free(str);
 		}
 		if (q > q_end) {
 			return 0;
@@ -249,18 +252,17 @@ char *libdemangle_handler_swift(const char *s) {
 		/* parse accessors */
 		if (attr) {
 			int len = 0;
-			const char *name;
+			char *name = NULL;
 			/* get field name and then type */
 			resolve(types, q, &attr);
 
 			q = getnum(q + 1, &len);
-			name = getstring(q, len);
 			if (len < strlen(q)) {
 				resolve(types, q + len, &attr2);
 			} else {
 				resolve(types, q, &attr2);
 			}
-
+			name = getstring(q, len);
 			do {
 				if (name && *name) {
 					strcat(out, ".");
@@ -278,6 +280,7 @@ char *libdemangle_handler_swift(const char *s) {
 					strcat(out, attr2);
 				}
 			} while (0);
+			free(name);
 			if (*q == '_') {
 				strcat(out, " -> ()");
 			}
@@ -292,10 +295,9 @@ char *libdemangle_handler_swift(const char *s) {
 				case 's': {
 					int n = 0;
 					const char *Q = getnum(q + 1, &n);
-					const char *res = getstring(Q, n);
-					if (res) {
-						strcat(out, res);
-					}
+					char *res = getstring(Q, n);
+					strcat(out, res);
+					free(res);
 					q = Q + n + 1;
 					continue;
 				} break;
@@ -304,7 +306,9 @@ char *libdemangle_handler_swift(const char *s) {
 						strcat(out, "..");
 						int n = 0;
 						const char *Q = getnum(q + 4, &n);
-						strcat(out, getstring(Q, n));
+						char *res = getstring(Q, n);
+						strcat(out, res);
+						free(res);
 						q = Q + n + 1;
 						continue;
 					}
@@ -332,7 +336,9 @@ char *libdemangle_handler_swift(const char *s) {
 							strcat(out, "..");
 							int n = 0;
 							const char *Q = getnum(q + 2, &n);
-							strcat(out, getstring(Q, n));
+							char *res = getstring(Q, n);
+							strcat(out, res);
+							free(res);
 							q = Q + n + 1;
 							continue;
 						}
@@ -400,7 +406,7 @@ char *libdemangle_handler_swift(const char *s) {
 						break;
 					}
 					if (len <= (q_end - q) && q[len]) {
-						const char *s = getstring(q, len);
+						char *s = getstring(q, len);
 						if (s && *s) {
 							if (is_first) {
 								strcat(out, is_generic ? "<" : "(");
@@ -430,6 +436,7 @@ char *libdemangle_handler_swift(const char *s) {
 								strcat(out, attr);
 							}
 						}
+						free(s);
 					} else {
 						if (attr) {
 							strcat(out, " -> ");
