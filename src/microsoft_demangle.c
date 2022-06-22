@@ -281,18 +281,24 @@ static int get_template_params(const char *sym, size_t *amount_of_read_chars, ch
 		case '1': {
 			STypeCodeStr str;
 			EDemanglerErr err;
+			if (!*(++sym) || !(*sym == '?')) {
+				return eDemanglerErrUncorrectMangledSymbol;
+			}
 			if (!init_type_code_str_struct(&str)) {
 				return eDemanglerErrMemoryAllocation;
 			}
-			sym += 2;
-			size_t ret = get_namespace_and_name(sym, &str, NULL, true);
+			size_t ret = get_namespace_and_name(++sym, &str, NULL, true);
 			if (!ret) {
 				free_type_code_str_struct(&str);
 				return eDemanglerErrUncorrectMangledSymbol;
 			}
-			sym += ret + 1;
+			sym += ret;
+			if (!*sym) {
+				free_type_code_str_struct(&str);
+				return eDemanglerErrUncorrectMangledSymbol;
+			}
 			SDataType data_type = { 0 };
-			if (isdigit((int)*sym)) {
+			if (isdigit((int)*++sym)) {
 				err = parse_data_type(sym, &data_type, &ret);
 				*str_type_code = dem_str_newf("&%s %s%s", data_type.left, str.type_str, data_type.right);
 				sdatatype_fini(&data_type);
@@ -535,12 +541,12 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 	case '$': {
 		str_info = malloc(sizeof(SStrInfo));
 		if (!str_info) {
-			break;
+			goto fail;
 		}
 		size_t i = get_template(buf + 1, str_info, memorize);
 		if (!i) {
 			RZ_FREE(str_info);
-			return 0;
+			goto fail;
 		}
 		dem_list_append(names_l, str_info);
 		read_len += i;
@@ -583,6 +589,9 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 			SStateInfo state_info;
 			init_state_struct(&state_info, buf);
 			char *len = get_num(&state_info);
+			if (!len) {
+				goto fail;
+			}
 			free(len);
 			buf += state_info.amount_of_read_chars;
 			init_state_struct(&state_info, buf);
@@ -593,8 +602,13 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 				free(checksum);
 				goto fail;
 			}
-			dem_string_appendf(s, "`string'::%s::\"", checksum);
-			free(checksum);
+			dem_string_append(s, "`string'::");
+			if (checksum) {
+				dem_string_appendf(s, "%s::\"", checksum);
+				free(checksum);
+			} else {
+				dem_string_append(s, "\"");
+			}
 			DemString *unicode = NULL;
 			if (is_double_byte) {
 				unicode = dem_string_new();
@@ -611,8 +625,10 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 					buf++;
 					if (*buf == '$') {
 						buf++;
-						if (*buf < 'A' || *buf > 'P') {
+						if (buf[0] < 'A' || buf[0] > 'P' ||
+							buf[1] < 'A' || buf[1] > 'P') {
 							dem_string_free(s);
+							dem_string_free(unicode);
 							goto fail;
 						}
 						const char nibble_high = (*buf++ - 'A');
@@ -623,6 +639,7 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 					} else if ((*buf > 'a' && *buf < 'p') || (*buf > 'A' && *buf < 'P')) {
 						c[high] = *buf + 0x80;
 					} else {
+						dem_string_free(unicode);
 						dem_string_free(s);
 						goto fail;
 					}
@@ -637,6 +654,7 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 							break;
 						}
 						if (!dem_string_append_n(unicode, c, 2)) {
+							dem_string_free(unicode);
 							dem_string_free(s);
 							goto fail;
 						}
@@ -708,7 +726,10 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 			case '0': {
 				size_t len;
 				char *str = NULL;
-				if (parse_microsoft_rtti_mangled_name(buf + 1, &str, &len) != eDemanglerErrOK) {
+				if (!*buf++) {
+					goto fail;
+				}
+				if (parse_microsoft_rtti_mangled_name(buf, &str, &len) != eDemanglerErrOK) {
 					goto fail;
 				}
 				read_len += len + 1;
@@ -802,7 +823,9 @@ static size_t get_operator_code(const char *buf, DemList *names_l, bool memorize
 		break;
 	default: goto fail;
 	}
-	read_len++;
+	if (*buf) {
+		read_len++;
+	}
 	return read_len;
 #undef SET_OPERATOR_CODE
 fail:
@@ -818,7 +841,7 @@ static size_t get_template(const char *buf, SStrInfo *str_info, bool memorize) {
 	// DemListIter *it = NULL;
 	DemList *saved_abbr_names = abbr_names; // save current abbr names, this
 	DemList *new_abbr_names = dem_list_newf(free);
-
+	memset(str_info, 0, sizeof(*str_info));
 	if (!init_type_code_str_struct(&type_code_str)) {
 		goto get_template_err;
 	}
@@ -850,9 +873,7 @@ static size_t get_template(const char *buf, SStrInfo *str_info, bool memorize) {
 		buf += len;
 	}
 
-	if (*buf != '@') {
-		copy_string(&type_code_str, "<");
-	}
+	copy_string(&type_code_str, "<");
 
 	abbr_names = new_abbr_names;
 	bool first = true;
@@ -861,8 +882,7 @@ static size_t get_template(const char *buf, SStrInfo *str_info, bool memorize) {
 	while (*buf != '@') {
 		if (get_type_code_string(buf, &i, &str_type_code) != eDemanglerErrOK) {
 			if (get_template_params(buf, &i, &str_type_code) != eDemanglerErrOK) {
-				len = 0;
-				free_type_code_str_struct(&type_code_str);
+				RZ_FREE(str_type_code);
 				goto get_template_err;
 			}
 		}
@@ -878,23 +898,21 @@ static size_t get_template(const char *buf, SStrInfo *str_info, bool memorize) {
 		RZ_FREE(str_type_code);
 	}
 	if (*buf != '@') {
-		len = 0;
 		goto get_template_err;
 	}
-	if (i) {
-		copy_string(&type_code_str, ">");
-	}
-	buf++;
 	len++;
 
-	str_info->str_ptr = type_code_str_get(&type_code_str);
-	str_info->len = type_code_str.curr_pos;
-
 get_template_err:
+	if (type_code_str.curr_pos) {
+		copy_string(&type_code_str, ">");
+		str_info->str_ptr = type_code_str_get(&type_code_str);
+		str_info->len = type_code_str.curr_pos;
+	}
+
 	dem_list_free(new_abbr_names);
 	abbr_names = saved_abbr_names; // restore global list with name abbr.
 
-	if (memorize && len) {
+	if (memorize && str_info->str_ptr) {
 		dem_list_append(abbr_names, strdup(str_info->str_ptr));
 	}
 	return len;
@@ -911,7 +929,10 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 	const char *curr_pos = NULL, *prev_pos = NULL, *tmp = NULL;
 	DemList /* <SStrInfo *> */ *names_l = NULL;
 	DemListIter *it = NULL;
-	SStrInfo *str_info = NULL;
+
+	if (RZ_STR_ISEMPTY(buf)) {
+		return 0;
+	}
 
 	size_t len = 0, read_len = 0, tmp_len = 0;
 
@@ -951,14 +972,13 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 			goto get_namespace_and_name_err;
 		}
 
-		str_info = malloc(sizeof(SStrInfo));
-		if (!str_info) {
-			break;
-		}
-
 		// check if it is a template
 		if ((*tmp == '?') && (*(tmp + 1) == '$')) {
 			size_t i = 0;
+			SStrInfo *str_info = RZ_NEW0(SStrInfo);
+			if (!str_info) {
+				break;
+			}
 			i = get_template(tmp + 2, str_info, memorize);
 			if (!i) {
 				RZ_FREE(str_info);
@@ -978,12 +998,18 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 				break;
 			}
 			size_t i = get_namespace_and_name(tmp + 2, &str, NULL, true);
-			if (!i) {
+			read_len += i + 2;
+			if (!i || *(tmp + i + 2) != '@') {
+				free_type_code_str_struct(&str);
 				break;
 			}
 			prev_pos = tmp + i + 3;
 			curr_pos = strchr(prev_pos, '@');
-			read_len += i + 3;
+			read_len++;
+			SStrInfo *str_info = RZ_NEW0(SStrInfo);
+			if (!str_info) {
+				break;
+			}
 			str_info->str_ptr = dem_str_newf("[%s]", str.type_str);
 			str_info->len = strlen(str_info->str_ptr);
 			dem_list_append(names_l, str_info);
@@ -1019,12 +1045,14 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 			}
 			char *demangled = NULL;
 			if (nested_name) {
-				if (parse_microsoft_mangled_name(tmp, &demangled, &len) != eDemanglerErrOK) {
-					free(num);
-					break;
-				}
+				parse_microsoft_mangled_name(tmp, &demangled, &len);
 				tmp += len;
 				read_len += len;
+			}
+			SStrInfo *str_info = RZ_NEW0(SStrInfo);
+			if (!str_info) {
+				free(num);
+				break;
 			}
 			if (num && demangled) {
 				str_info->str_ptr = dem_str_newf("`%s'::`%s'", demangled, num);
@@ -1032,8 +1060,14 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 				str_info->str_ptr = dem_str_newf("`%s'", demangled);
 			} else if (num) {
 				str_info->str_ptr = dem_str_newf("`%s'", num);
+			} else {
+				str_info->str_ptr = strdup("");
 			}
-
+			if (!str_info->str_ptr) {
+				RZ_FREE(str_info);
+				free(num);
+				break;
+			}
 			str_info->len = strlen(str_info->str_ptr);
 			dem_list_append(names_l, str_info);
 			if (demangled) {
@@ -1064,7 +1098,10 @@ static size_t get_namespace_and_name(const char *buf, STypeCodeStr *type_code_st
 			dem_list_append(abbr_names, tmpname);
 			tmp = tmpname;
 		}
-
+		SStrInfo *str_info = RZ_NEW0(SStrInfo);
+		if (!str_info) {
+			break;
+		}
 		str_info->str_ptr = strdup(tmp);
 		str_info->len = strlen(tmp);
 
@@ -1093,6 +1130,7 @@ get_namespace_and_name_err:
 	if (amount_of_names) {
 		*amount_of_names = tmp_len;
 	}
+	SStrInfo *str_info;
 	dem_list_foreach_prev(names_l, it, str_info) {
 		copy_string_n(type_code_str, str_info->str_ptr, str_info->len);
 
@@ -1280,6 +1318,7 @@ DEF_STATE_ACTION(W) {
 
 	if (*state->buff_for_parsing != '4') {
 		state->err = eTCStateMachineErrUncorrectTypeCode;
+		return;
 	}
 
 	state->buff_for_parsing++;
@@ -1352,7 +1391,7 @@ static char *get_num(SStateInfo *state) {
 			state->amount_of_read_chars++;
 		}
 	}
-	if (negative) {
+	if (negative && ptr) {
 		char *tmp = ptr;
 		ptr = dem_str_newf("-%s", tmp);
 		free(tmp);
@@ -1381,20 +1420,12 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		return;
 	}
 
-	if (*state->buff_for_parsing == '$') {
-		if (state->buff_for_parsing[1] == '0') {
-			// TODO: no idea what this means
-			state->buff_for_parsing += 3;
-			state->amount_of_read_chars += 3;
-		}
-	}
 	STypeCodeStr mod_left;
 	STypeCodeStr mod_right;
 	if (!init_type_code_str_struct(&mod_left) ||
 		!init_type_code_str_struct(&mod_right)) {
-		free_type_code_str_struct(&mod_left);
-		free_type_code_str_struct(&mod_right);
 		state->err = eTCStateMachineErrAlloc;
+		goto MODIFIER_err;
 	}
 
 	SDataType mod = { 0 };
@@ -1418,6 +1449,9 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		case 'C':
 			clr_type = '%';
 			break;
+		case '\0':
+			state->err = eTCStateMachineErrUncorrectTypeCode;
+			goto MODIFIER_err;
 		default:
 			state->err = eTCStateMachineErrUnsupportedTypeCode;
 			break;
@@ -1471,6 +1505,9 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 
 		while (num--) {
 			n1 = get_num(state);
+			if (!n1) {
+				break;
+			}
 			copy_string(&tmp_str, "[");
 			copy_string(&tmp_str, n1);
 			copy_string(&tmp_str, "]");
@@ -1484,17 +1521,12 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		if (tmp_str.curr_pos && tmp_str.type_str[tmp_str.curr_pos - 1] != ' ') {
 			copy_string(&tmp_str, " ");
 		}
-		if (clr_type) {
-			char *str = strdup(modifier_str);
-			if (!str) {
-				state->err = eTCStateMachineErrAlloc;
-				goto MODIFIER_err;
-			}
-			*str = clr_type;
-			copy_string(&tmp_str, str);
-			free(str);
+		if (clr_type && *modifier_str != '\0') {
+			copy_string_n(&tmp_str, &clr_type, 1);
+			const char *rest_of_mod_str = modifier_str + (*(modifier_str + 1) == '&' ? 2 : 1);
+			copy_string(&tmp_str, rest_of_mod_str);
 		} else {
-			if (is_pin_ptr) {
+			if (is_pin_ptr && *modifier_str) {
 				while (*++modifier_str == ' ') {
 				};
 			}
@@ -1502,9 +1534,6 @@ static inline void parse_type_modifier(SStateInfo *state, STypeCodeStr *type_cod
 		}
 		copy_string_n(&tmp_str, mod_right.type_str, mod_right.curr_pos);
 	}
-
-	free_type_code_str_struct(&mod_left);
-	free_type_code_str_struct(&mod_right);
 
 	if (!strncmp(state->buff_for_parsing, "__Z", 3)) {
 		// TODO: no idea what this means
@@ -1537,6 +1566,8 @@ MODIFIER_err:
 	sdatatype_fini(&mod);
 	free_type_code_str_struct(&tmp_str);
 	free_type_code_str_struct(&storage_class);
+	free_type_code_str_struct(&mod_left);
+	free_type_code_str_struct(&mod_right);
 }
 
 DEF_STATE_ACTION(S) {
@@ -1619,7 +1650,7 @@ static EDemanglerErr parse_function_args(const char *sym, char **demangled_args,
 
 			copy_string(&func_str, tmp);
 
-			if (strncmp(tmp, "void", 4) == 0 && strlen(tmp) == 4) {
+			if (tmp && strncmp(tmp, "void", 4) == 0 && strlen(tmp) == 4) {
 				// arguments list is void
 				if (!is_abbr_type) {
 					free(tmp);
@@ -1671,7 +1702,8 @@ static void parse_function_pointer(SStateInfo *state, STypeCodeStr *type_code_st
 	call_conv = get_calling_convention(*state->buff_for_parsing++);
 	if (!call_conv) {
 		// XXX unify error messages into a single enum
-		state->err = (ETCStateMachineErr)eDemanglerErrUncorrectMangledSymbol;
+		state->err = eTCStateMachineErrUncorrectTypeCode;
+		return;
 	}
 
 	state->amount_of_read_chars += 2; // '6' + call_conv
@@ -1733,7 +1765,13 @@ static void parse_pointer(SStateInfo *state, STypeCodeStr *type_code_str, const 
 				state->err = eTCStateMachineErrAlloc;
 				return;
 			};
-			size_t read = get_namespace_and_name(state->buff_for_parsing, &func_str, NULL, true) + 1;
+			size_t read = get_namespace_and_name(state->buff_for_parsing, &func_str, NULL, true);
+			if (!read || !*(state->buff_for_parsing + read) || *(state->buff_for_parsing + read) != '@') {
+				state->err = eTCStateMachineErrUncorrectTypeCode;
+				free_type_code_str_struct(&func_str);
+				return;
+			}
+			read++;
 			state->amount_of_read_chars += read;
 			state->buff_for_parsing += read;
 			copy_string(&func_str, "::");
@@ -1981,7 +2019,7 @@ static inline size_t get_ptr_modifier(const char *encoded, SDataType *ptr_modifi
 
 	bool ref = false;
 	bool refref = false;
-	while (true) {
+	while (*tmp) {
 		switch (*tmp++) {
 			SET_PTR_MODIFIER('E', "", " __ptr64")
 			SET_PTR_MODIFIER('F', " __unaligned", "")
@@ -2005,6 +2043,7 @@ static inline size_t get_ptr_modifier(const char *encoded, SDataType *ptr_modifi
 			return tmp - encoded - 1;
 		}
 	}
+	return tmp - encoded;
 #undef SET_PTR_MODIFIER
 }
 
@@ -2123,7 +2162,7 @@ static EDemanglerErr parse_data_type(const char *sym, SDataType *data_type, size
 				return eDemanglerErrUncorrectMangledSymbol;
 			}
 			curr_pos += i;
-			if (*(curr_pos + 1) != '@') {
+			if (*curr_pos && *(curr_pos + 1) != '@') {
 				STypeCodeStr str2;
 				if (!init_type_code_str_struct(&str2)) {
 					free_type_code_str_struct(&str);
@@ -2284,10 +2323,11 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 	// member function access code
 	if (is_implicit_this_pointer) {
 		curr_pos += get_ptr_modifier(curr_pos, &this_pointer_modifier);
-		err = get_storage_class(*curr_pos++, &memb_func_access_code);
+		err = get_storage_class(*curr_pos, &memb_func_access_code);
 		if (err != eDemanglerErrOK) {
 			goto parse_function_err;
 		}
+		curr_pos++;
 	}
 
 	// currently does not use because I can not find real example of
@@ -2299,11 +2339,12 @@ static EDemanglerErr parse_function(const char *sym, STypeCodeStr *type_code_str
 	(void)is_static;
 
 	// Calling convention
-	call_conv = get_calling_convention(*curr_pos++);
+	call_conv = get_calling_convention(*curr_pos);
 	if (!call_conv) {
 		err = eDemanglerErrUncorrectMangledSymbol;
 		goto parse_function_err;
 	}
+	curr_pos++;
 
 	// get storage class code for return
 	if (*curr_pos == '?') {
@@ -2449,6 +2490,7 @@ static EDemanglerErr parse_microsoft_mangled_name(const char *sym, char **demang
 		SDataType data_type = { 0 };
 		err = parse_data_type(curr_pos, &data_type, &len);
 		if (err != eDemanglerErrOK) {
+			sdatatype_fini(&data_type);
 			goto parse_microsoft_mangled_name_err;
 		}
 		curr_pos += len;
@@ -2480,6 +2522,9 @@ static EDemanglerErr parse_microsoft_rtti_mangled_name(const char *sym, char **d
 	const char *storage = NULL;
 	if (chars_read) {
 		*chars_read = 0;
+	}
+	if (RZ_STR_ISEMPTY(sym)) {
+		return eDemanglerErrUncorrectMangledSymbol;
 	}
 	err = get_storage_class(*sym++, &storage);
 	if (err != eDemanglerErrOK) {

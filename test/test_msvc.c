@@ -112,6 +112,29 @@ mu_demangle(105, msvc, "??_C@_1BK@FIHMCKAM@?$AAa@", "`string'::1484532236::\"a\"
 mu_demangle(106, msvc, "??_C@_0BK@FIHMCKAM@a@", "`string'::1484532236::\"a\"");
 mu_demangle(107, msvc, "??_C@_0BK@OFCNNNKO@?$GAgeneric?9class?9parameter?9@", "`string'::3844988334::\"\6generic-class-parameter-\"");
 mu_demangle(108, msvc, "??_C@_0CL@CODINPLA@Failed?5to?5get?5the?5string?5from?5t@NNGAKEGL@", "`string'::775479216::\"Failed to get the string from t\"::3714098283");
+mu_demangle(109, msvc, "?", NULL);
+mu_demangle(110, msvc, ".?", NULL);
+mu_demangle(111, msvc, "..?", NULL);
+mu_demangle(112, msvc, "??", NULL);
+mu_demangle(113, msvc, "??_R0", NULL);
+mu_demangle(114, msvc, "??A", "operator[]");
+mu_demangle(115, msvc, "???1", NULL);
+mu_demangle(116, msvc, "??$?$@R9", "<><>");
+mu_demangle(117, msvc, "??_C@_10", "`string'::\"\"");
+mu_demangle(118, msvc, "??_C@_10@$A", "`string'::0::\"⑁\"");
+mu_demangle(119, msvc, "??_C@_10@$?A", NULL);
+mu_demangle(120, msvc, "?a@?$", NULL);
+mu_demangle(121, msvc, "?a@?$a@?$", NULL);
+mu_demangle(122, msvc, "?a@?$a@W4", NULL);
+mu_demangle(123, msvc, "?a@?$a@AE$", "private virtual: a<>::a");
+mu_demangle(124, msvc, "?a@@Y", "a");
+mu_demangle(125, msvc, "?a@@YA", NULL);
+mu_demangle(126, msvc, "?a@@YAE", NULL);
+mu_demangle(127, msvc, ".?AV?$a@a@P6", "class a::a<>");
+mu_demangle(128, msvc, ".?AV?$a@@", "class a<>");
+mu_demangle(129, msvc, "??J?6J?J", "const operator->*{for `operator->*'}");
+mu_demangle(130, msvc, "??QQSSQ6", NULL);
+mu_demangle(131, msvc, "?A@7B?5", "const A{for `operator>>'}");
 
 int all_tests() {
 	mu_demangle_run(0);
@@ -223,6 +246,29 @@ int all_tests() {
 	mu_demangle_run(106);
 	mu_demangle_run(107);
 	mu_demangle_run(108);
+	mu_demangle_run(109);
+	mu_demangle_run(110);
+	mu_demangle_run(111);
+	mu_demangle_run(112);
+	mu_demangle_run(113);
+	mu_demangle_run(114);
+	mu_demangle_run(115);
+	mu_demangle_run(116);
+	mu_demangle_run(117);
+	mu_demangle_run(118);
+	mu_demangle_run(119);
+	mu_demangle_run(120);
+	mu_demangle_run(121);
+	mu_demangle_run(122);
+	mu_demangle_run(123);
+	mu_demangle_run(124);
+	mu_demangle_run(125);
+	mu_demangle_run(126);
+	mu_demangle_run(127);
+	mu_demangle_run(128);
+	mu_demangle_run(129);
+	mu_demangle_run(130);
+	mu_demangle_run(131);
 	return tests_passed != tests_run;
 }
 
