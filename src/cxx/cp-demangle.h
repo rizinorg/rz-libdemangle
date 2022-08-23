@@ -1,8 +1,8 @@
-// SPDX-FileCopyrightText: 2003-2018 Free Software Foundation, Inc.
+// SPDX-FileCopyrightText: 2003-2022 Free Software Foundation, Inc.
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /* Internal demangler interface for g++ V3 ABI.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@wasabisystems.com>.
 
    This file is part of the libiberty library, which is part of GCC.
@@ -28,7 +28,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA. 
+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
 /* This file provides some definitions shared by cp-demangle.c and
@@ -113,14 +113,21 @@ struct d_info {
 	/* The last name we saw, for constructors and destructors.  */
 	struct demangle_component *last_name;
 	/* A running total of the length of large expansions from the
-     mangled name to the demangled name, such as standard
-     substitutions and builtin types.  */
+	   mangled name to the demangled name, such as standard
+	   substitutions and builtin types.  */
 	int expansion;
 	/* Non-zero if we are parsing an expression.  */
 	int is_expression;
 	/* Non-zero if we are parsing the type operand of a conversion
-     operator, but not when in an expression.  */
+	   operator, but not when in an expression.  */
 	int is_conversion;
+	/*  1: using new unresolved-name grammar.
+	   -1: using new unresolved-name grammar and saw an unresolved-name.
+	    0: using old unresolved-name grammar.  */
+	int unresolved_name_state;
+	/* If DMGL_NO_RECURSE_LIMIT is not active then this is set to
+	   the current recursion level.  */
+	unsigned int recursion_level;
 };
 
 /* To avoid running past the ending '\0', don't:
@@ -169,7 +176,7 @@ d_advance(struct d_info *di, int i) {
 extern const struct demangle_operator_info cplus_demangle_operators[];
 #endif
 
-#define D_BUILTIN_TYPE_COUNT (33)
+#define D_BUILTIN_TYPE_COUNT (34)
 
 CP_STATIC_IF_GLIBCPP_V3
 const struct demangle_builtin_type_info
