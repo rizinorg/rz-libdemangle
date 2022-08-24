@@ -355,7 +355,6 @@ mu_demangle(341, java, "Lorg/json/JSONObject;", "org.json.JSONObject");
 mu_demangle(342, java, "Lorg/json/JSONTokener;", "org.json.JSONTokener");
 mu_demangle(343, java, "Lsome/jar/Fake<[BCDFIJSZLjava/lang/String;Ljava/lang/String;>", "some.jar.Fake<byte[], char, double, float, int, long, short, boolean, String, String>");
 
-
 int all_tests() {
 	mu_demangle_run(0);
 	mu_demangle_run(1);

@@ -12,41 +12,41 @@ typedef struct {
 #define is_varargs(x)     ((x)[0] == '.' && (x)[1] == '.' && (x)[2] == '.')
 
 static java_replace_t java_replace_table[] = {
-	{"java/lang/Boolean", "Boolean"},
-	{"java/lang/Byte", "Byte"},
-	{"java/lang/Character", "Character"},
-	{"java/lang/Class", "Class"},
-	{"java/lang/Class", "Class"},
-	{"java/lang/ClassLoader", "ClassLoader"},
-	{"java/lang/ClassValue", "ClassValue"},
-	{"java/lang/Compiler", "Compiler"},
-	{"java/lang/Double", "Double"},
-	{"java/lang/Enum", "Enum"},
-	{"java/lang/Float", "Float"},
-	{"java/lang/InheritableThreadLocal", "InheritableThreadLocal"},
-	{"java/lang/Integer", "Integer"},
-	{"java/lang/Long", "Long"},
-	{"java/lang/Math", "Math"},
-	{"java/lang/Number", "Number"},
-	{"java/lang/Object", "Object"},
-	{"java/lang/Package", "Package"},
-	{"java/lang/Process", "Process"},
-	{"java/lang/ProcessBuilder", "ProcessBuilder"},
-	{"java/lang/Runtime", "Runtime"},
-	{"java/lang/RuntimePermission", "RuntimePermission"},
-	{"java/lang/SecurityManager", "SecurityManager"},
-	{"java/lang/Short", "Short"},
-	{"java/lang/StackTraceElement", "StackTraceElement"},
-	{"java/lang/StrictMath", "StrictMath"},
-	{"java/lang/String", "String"},
-	{"java/lang/StringBuffer", "StringBuffer"},
-	{"java/lang/StringBuilder", "StringBuilder"},
-	{"java/lang/System", "System"},
-	{"java/lang/Thread", "Thread"},
-	{"java/lang/ThreadGroup", "ThreadGroup"},
-	{"java/lang/ThreadLocal", "ThreadLocal"},
-	{"java/lang/Throwable", "Throwable"},
-	{"java/lang/Void", "Void"},
+	{ "java/lang/Boolean", "Boolean" },
+	{ "java/lang/Byte", "Byte" },
+	{ "java/lang/Character", "Character" },
+	{ "java/lang/Class", "Class" },
+	{ "java/lang/Class", "Class" },
+	{ "java/lang/ClassLoader", "ClassLoader" },
+	{ "java/lang/ClassValue", "ClassValue" },
+	{ "java/lang/Compiler", "Compiler" },
+	{ "java/lang/Double", "Double" },
+	{ "java/lang/Enum", "Enum" },
+	{ "java/lang/Float", "Float" },
+	{ "java/lang/InheritableThreadLocal", "InheritableThreadLocal" },
+	{ "java/lang/Integer", "Integer" },
+	{ "java/lang/Long", "Long" },
+	{ "java/lang/Math", "Math" },
+	{ "java/lang/Number", "Number" },
+	{ "java/lang/Object", "Object" },
+	{ "java/lang/Package", "Package" },
+	{ "java/lang/Process", "Process" },
+	{ "java/lang/ProcessBuilder", "ProcessBuilder" },
+	{ "java/lang/Runtime", "Runtime" },
+	{ "java/lang/RuntimePermission", "RuntimePermission" },
+	{ "java/lang/SecurityManager", "SecurityManager" },
+	{ "java/lang/Short", "Short" },
+	{ "java/lang/StackTraceElement", "StackTraceElement" },
+	{ "java/lang/StrictMath", "StrictMath" },
+	{ "java/lang/String", "String" },
+	{ "java/lang/StringBuffer", "StringBuffer" },
+	{ "java/lang/StringBuilder", "StringBuilder" },
+	{ "java/lang/System", "System" },
+	{ "java/lang/Thread", "Thread" },
+	{ "java/lang/ThreadGroup", "ThreadGroup" },
+	{ "java/lang/ThreadLocal", "ThreadLocal" },
+	{ "java/lang/Throwable", "Throwable" },
+	{ "java/lang/Void", "Void" },
 };
 
 static bool demangle_type(char *type, DemString *sb, size_t *used) {
@@ -330,9 +330,9 @@ static char *demangle_any(char *mangled) {
 
 /**
  * \brief Demangles java classes/methods/fields
- * 
+ *
  * Demangles java classes/methods/fields
- * 
+ *
  * Supported formats:
  * - Lsome/class/Object;                some.class.Object.myField
  * - F                                  float
@@ -354,7 +354,6 @@ char *libdemangle_handler_java(const char *mangled) {
 		return NULL;
 	}
 
-	
 	for (size_t i = 0; i < RZ_ARRAY_SIZE(java_replace_table); ++i) {
 		if (!name) {
 			return NULL;
