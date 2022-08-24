@@ -16,7 +16,6 @@ static java_replace_t java_replace_table[] = {
 	{ "java/lang/Byte", "Byte" },
 	{ "java/lang/Character", "Character" },
 	{ "java/lang/Class", "Class" },
-	{ "java/lang/Class", "Class" },
 	{ "java/lang/ClassLoader", "ClassLoader" },
 	{ "java/lang/ClassValue", "ClassValue" },
 	{ "java/lang/Compiler", "Compiler" },
