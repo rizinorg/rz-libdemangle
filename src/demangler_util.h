@@ -18,8 +18,9 @@ typedef int bool;
 typedef SSIZE_T ssize_t;
 #endif
 
-#define RZ_NEW0(x) (x *)calloc(1, sizeof(x))
-#define RZ_NEW(x)  (x *)malloc(sizeof(x))
+#define RZ_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define RZ_NEW0(x)       (x *)calloc(1, sizeof(x))
+#define RZ_NEW(x)        (x *)malloc(sizeof(x))
 #define RZ_FREE(x) \
 	{ \
 		free((void *)x); \

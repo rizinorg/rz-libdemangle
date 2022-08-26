@@ -3,13 +3,58 @@
 #include "demangler_util.h"
 #include <rz_libdemangle.h>
 
+typedef struct {
+	const char *search;
+	const char *replace;
+} java_replace_t;
+
 #define is_native_type(x) ((x) && !IS_UPPER(x))
 #define is_varargs(x)     ((x)[0] == '.' && (x)[1] == '.' && (x)[2] == '.')
 
-static inline bool demangle_type(char *type, DemString *sb, size_t *used) {
-	bool array = false, varargs = false;
+// The following table contains the list of java classes that can be simplified
+// to save memory and making the demangled string more readable.
+static java_replace_t java_replace_table[] = {
+	{ "java/lang/Boolean", "Boolean" },
+	{ "java/lang/Byte", "Byte" },
+	{ "java/lang/Character", "Character" },
+	{ "java/lang/Class", "Class" },
+	{ "java/lang/ClassLoader", "ClassLoader" },
+	{ "java/lang/ClassValue", "ClassValue" },
+	{ "java/lang/Compiler", "Compiler" },
+	{ "java/lang/Double", "Double" },
+	{ "java/lang/Enum", "Enum" },
+	{ "java/lang/Float", "Float" },
+	{ "java/lang/InheritableThreadLocal", "InheritableThreadLocal" },
+	{ "java/lang/Integer", "Integer" },
+	{ "java/lang/Long", "Long" },
+	{ "java/lang/Math", "Math" },
+	{ "java/lang/Number", "Number" },
+	{ "java/lang/Object", "Object" },
+	{ "java/lang/Package", "Package" },
+	{ "java/lang/Process", "Process" },
+	{ "java/lang/ProcessBuilder", "ProcessBuilder" },
+	{ "java/lang/Runtime", "Runtime" },
+	{ "java/lang/RuntimePermission", "RuntimePermission" },
+	{ "java/lang/SecurityManager", "SecurityManager" },
+	{ "java/lang/Short", "Short" },
+	{ "java/lang/StackTraceElement", "StackTraceElement" },
+	{ "java/lang/StrictMath", "StrictMath" },
+	{ "java/lang/String", "String" },
+	{ "java/lang/StringBuffer", "StringBuffer" },
+	{ "java/lang/StringBuilder", "StringBuilder" },
+	{ "java/lang/System", "System" },
+	{ "java/lang/Thread", "Thread" },
+	{ "java/lang/ThreadGroup", "ThreadGroup" },
+	{ "java/lang/ThreadLocal", "ThreadLocal" },
+	{ "java/lang/Throwable", "Throwable" },
+	{ "java/lang/Void", "Void" },
+};
+
+static bool demangle_type(char *type, DemString *sb, size_t *used) {
+	bool array = false, varargs = false, subtype = false;
 	char *end = NULL;
 	size_t type_len = 1;
+
 	if (is_varargs(type)) {
 		varargs = true;
 		type += 3;
@@ -21,13 +66,20 @@ static inline bool demangle_type(char *type, DemString *sb, size_t *used) {
 
 	switch (type[0]) {
 	case 'L':
-		if (!(end = strchr(type, ';'))) {
+		if ((end = strchr(type, '<'))) {
+			if (!strstr(end + 1, ">")) {
+				return false;
+			}
+			subtype = true;
+		} else if (!(end = strchr(type, ';'))) {
 			return false;
 		}
+
 		end[0] = 0;
 		type_len = strlen(type);
 		dem_string_append_n(sb, type + 1, type_len - 1);
 		type_len++;
+		type = end + 1;
 		break;
 	case 'B':
 		if (is_native_type(type[1])) {
@@ -83,8 +135,40 @@ static inline bool demangle_type(char *type, DemString *sb, size_t *used) {
 		}
 		dem_string_append(sb, "boolean");
 		break;
+	case 'T': // templates
+		if (is_native_type(type[1]) && type[1] != ';') {
+			return false;
+		}
+		dem_string_append(sb, "T");
+		break;
 	default:
 		return false;
+	}
+	if (subtype) {
+		dem_string_append(sb, "<");
+		if (*type == '*') {
+			dem_string_append(sb, "T");
+		} else {
+			bool comma = false;
+			end = strstr(type, ">");
+			end[0] = 0;
+			while (*type && type != end) {
+				if (*type == ';') {
+					type++;
+					continue;
+				} else if (comma) {
+					dem_string_append(sb, ", ");
+				}
+				size_t len = 0;
+				if (!demangle_type(type, sb, &len)) {
+					return false;
+				}
+				type += len;
+				type_len += len;
+				comma = true;
+			}
+		}
+		dem_string_append(sb, ">");
 	}
 	if (varargs) {
 		dem_string_append(sb, "...");
@@ -247,9 +331,9 @@ static char *demangle_any(char *mangled) {
 
 /**
  * \brief Demangles java classes/methods/fields
- * 
+ *
  * Demangles java classes/methods/fields
- * 
+ *
  * Supported formats:
  * - Lsome/class/Object;                some.class.Object.myField
  * - F                                  float
@@ -271,7 +355,14 @@ char *libdemangle_handler_java(const char *mangled) {
 		return NULL;
 	}
 
-	name = dem_str_replace(name, "java/lang/", "", 1);
+	for (size_t i = 0; i < RZ_ARRAY_SIZE(java_replace_table); ++i) {
+		if (!name) {
+			return NULL;
+		}
+		java_replace_t *rpl = &java_replace_table[i];
+		name = dem_str_replace(name, rpl->search, rpl->replace, 1);
+	}
+
 	if ((arguments = strchr(name, '(')) && (return_type = strchr(arguments, ')'))) {
 		return demangle_method(name, arguments, return_type);
 	} else if (name[0] == 'L' && (arguments = strchr(name, '.'))) {
