@@ -11,6 +11,8 @@ typedef struct {
 #define is_native_type(x) ((x) && !IS_UPPER(x))
 #define is_varargs(x)     ((x)[0] == '.' && (x)[1] == '.' && (x)[2] == '.')
 
+// The following table contains the list of java classes that can be simplified
+// to save memory and making the demangled string more readable.
 static java_replace_t java_replace_table[] = {
 	{ "java/lang/Boolean", "Boolean" },
 	{ "java/lang/Byte", "Byte" },
