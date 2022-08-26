@@ -133,7 +133,7 @@ mu_demangle(119, java, "Ljava/lang/ClassLoader;", "ClassLoader");
 mu_demangle(120, java, "Ljava/lang/Cloneable;", "java.lang.Cloneable");
 mu_demangle(121, java, "Ljava/lang/Comparable;", "java.lang.Comparable");
 mu_demangle(122, java, "Ljava/lang/Enum;", "Enum");
-mu_demangle(123, java, "Ljava/lang/Exception;", "java.lang.Exception");
+mu_demangle(123, java, "Ljava/lang/Exception;", "Exception");
 mu_demangle(124, java, "Ljava/lang/IllegalAccessError;", "java.lang.IllegalAccessError");
 mu_demangle(125, java, "Ljava/lang/Integer;", "Integer");
 mu_demangle(126, java, "Ljava/lang/LinkageError;", "java.lang.LinkageError");
@@ -354,6 +354,7 @@ mu_demangle(340, java, "Lorg/json/JSONException;", "org.json.JSONException");
 mu_demangle(341, java, "Lorg/json/JSONObject;", "org.json.JSONObject");
 mu_demangle(342, java, "Lorg/json/JSONTokener;", "org.json.JSONTokener");
 mu_demangle(343, java, "Lsome/jar/Fake<[BCDFIJSZLjava/lang/String;Ljava/lang/String;>", "some.jar.Fake<byte[], char, double, float, int, long, short, boolean, String, String>");
+mu_demangle(344, java, "Ljava/io/BufferedReader;.<init>(Ljava/io/Reader;)V", "void java.io.BufferedReader.<init>(java.io.Reader)");
 
 int all_tests() {
 	mu_demangle_run(0);
@@ -700,6 +701,7 @@ int all_tests() {
 	mu_demangle_run(341);
 	mu_demangle_run(342);
 	mu_demangle_run(343);
+	mu_demangle_run(344);
 	return tests_passed != tests_run;
 }
 
