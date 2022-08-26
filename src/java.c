@@ -23,6 +23,7 @@ static java_replace_t java_replace_table[] = {
 	{ "java/lang/Compiler", "Compiler" },
 	{ "java/lang/Double", "Double" },
 	{ "java/lang/Enum", "Enum" },
+	{ "java/lang/Exception", "Exception" },
 	{ "java/lang/Float", "Float" },
 	{ "java/lang/InheritableThreadLocal", "InheritableThreadLocal" },
 	{ "java/lang/Integer", "Integer" },
@@ -52,7 +53,7 @@ static java_replace_t java_replace_table[] = {
 
 static bool demangle_type(char *type, DemString *sb, size_t *used) {
 	bool array = false, varargs = false, subtype = false;
-	char *end = NULL;
+	char *end = NULL, *tmp = NULL;
 	size_t type_len = 1;
 
 	if (is_varargs(type)) {
@@ -66,13 +67,15 @@ static bool demangle_type(char *type, DemString *sb, size_t *used) {
 
 	switch (type[0]) {
 	case 'L':
-		if ((end = strchr(type, '<'))) {
-			if (!strstr(end + 1, ">")) {
+		if (!(end = strchr(type, ';'))) {
+			return false;
+		}
+		if ((tmp = strchr(type, '<')) && tmp < end) {
+			if (!strstr(tmp + 1, ">")) {
 				return false;
 			}
+			end = tmp;
 			subtype = true;
-		} else if (!(end = strchr(type, ';'))) {
-			return false;
 		}
 
 		end[0] = 0;
