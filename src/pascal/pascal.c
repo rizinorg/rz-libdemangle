@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2021 deroad <wargio@libero.it>
 // SPDX-License-Identifier: LGPL-3.0-only
+
 #include "demangler_util.h"
 #include <rz_libdemangle.h>
 #include <ctype.h>
@@ -67,10 +68,8 @@ static char *demangle_free_pascal(char *mangled, size_t mangled_len) {
 
 		while (next < end && *next != '$' && (tmp = strchr(next, '$')) && tmp > next && IS_NAME(tmp[-1])) {
 			// <type0$type1>$$<ret_type>
-			if (n_arg < 1) {
-				dem_string_appendf(ds, "var a%u: ", n_arg);
-			} else {
-				dem_string_appendf(ds, "; a%u: ", n_arg);
+			if (n_arg > 0) {
+				dem_string_appends(ds, ", ");
 			}
 			dem_string_append_n(ds, next, tmp - next);
 			next = tmp + strlen("$");
@@ -88,10 +87,8 @@ static char *demangle_free_pascal(char *mangled, size_t mangled_len) {
 		} else {
 			if (next < end) {
 				// <type0> (sometimes it may not have a return type just args.)
-				if (n_arg < 1) {
-					dem_string_appendf(ds, "var a%u: ", n_arg);
-				} else {
-					dem_string_appendf(ds, "; a%u: ", n_arg);
+				if (n_arg > 0) {
+					dem_string_appends(ds, ", ");
 				}
 				dem_string_append(ds, next);
 			}
