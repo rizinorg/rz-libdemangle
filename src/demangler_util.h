@@ -40,6 +40,7 @@ typedef uint32_t ut32;
 #endif
 
 #define IS_UPPER(c)       ((c) >= 'A' && (c) <= 'Z')
+#define IS_LOWER(c)       ((c) >= 'a' && (c) <= 'z')
 #define IS_DIGIT(x)       ((x) >= '0' && (x) <= '9')
 #define RZ_MIN(x, y)      (((x) > (y)) ? (y) : (x))
 #define RZ_STR_ISEMPTY(x) (!(x) || !*(x))
@@ -61,6 +62,7 @@ char *dem_string_drain(DemString *ds);
 bool dem_string_append(DemString *ds, const char *string);
 bool dem_string_append_n(DemString *ds, const char *string, size_t size);
 bool dem_string_appendf(DemString *ds, const char *fmt, ...);
+#define dem_string_appends(d, s) dem_string_append_n(d, s, strlen(s))
 
 void dem_string_replace_char(DemString *ds, char ch, char rp);
 

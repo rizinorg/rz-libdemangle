@@ -17,5 +17,6 @@ RZ_API char *libdemangle_handler_swift(const char *symbol);
 RZ_API char *libdemangle_handler_java(const char *symbol);
 RZ_API char *libdemangle_handler_msvc(const char *symbol);
 RZ_API char *libdemangle_handler_objc(const char *symbol);
+RZ_API char *libdemangle_handler_pascal(const char *symbol);
 
 #endif

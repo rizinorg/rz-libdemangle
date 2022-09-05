@@ -1,27 +1,29 @@
-project('libdemangle', 'c', meson_version: '>=0.46.0')
+project('libdemangle', 'c', meson_version: '>=0.49.0')
 
 cc = meson.get_compiler('c')
 
 common_c_args = []
 libdemangle_c_args = []
 libdemangle_src = [
-  'src/demangler_util.c',
-  'src/demangler.c',
-  'src/java.c',
-  'src/microsoft_demangle.c',
-  'src/msvc.c',
-  'src/objc.c',
+  'src' / 'demangler_util.c',
+  'src' / 'demangler.c',
+  'src' / 'java.c',
+  'src' / 'microsoft_demangle.c',
+  'src' / 'msvc.c',
+  'src' / 'objc.c',
+  'src' / 'pascal' / 'pascal.c',
 ]
 
 tests = [
   'java',
   'msvc',
   'objc',
+  'pascal',
 ]
 
 if get_option('use_gpl')
-  libdemangle_src += 'src/cxx.c'
-  libdemangle_src += 'src/cxx/cp-demangle.c'
+  libdemangle_src += 'src' / 'cxx.c'
+  libdemangle_src += 'src' / 'cxx' / 'cp-demangle.c'
   common_c_args += '-DWITH_GPL=1'
   tests += 'cxx'
 
@@ -31,7 +33,7 @@ if get_option('use_gpl')
 endif
 
 if get_option('use_swift_demangler')
-  libdemangle_src += 'src/swift.c'
+  libdemangle_src += 'src' / 'swift.c'
   common_c_args += '-DWITH_SWIFT_DEMANGLER=1'
   tests += 'swift'
 endif
