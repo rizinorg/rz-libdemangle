@@ -4,7 +4,7 @@
 #include "demangler_util.h"
 #include <rz_libdemangle.h>
 
-uint32_t rebase_value(uint8_t char_code, uint8_t base) {
+static uint32_t rebase_value(uint8_t char_code, uint8_t base) {
 	if ((char_code >= 'a' && char_code <= 'z') || (char_code >= 'A' && char_code <= 'Z')) {
 		/* lower/upper case letter */
 		return (char_code | 0x20) - 'a' + 10;
@@ -17,7 +17,7 @@ uint32_t rebase_value(uint8_t char_code, uint8_t base) {
 	}
 }
 
-uint32_t get_integer(const char **str, uint8_t base) {
+static uint32_t get_integer(const char **str, uint8_t base) {
 	uint32_t result = 0;
 	const char *x = *str;
 	uint8_t digit;
@@ -34,7 +34,7 @@ uint32_t get_integer(const char **str, uint8_t base) {
 	return result;
 }
 
-uint32_t utf_to_bytes(uint32_t utf) {
+static uint32_t utf_to_bytes(uint32_t utf) {
 	/* returns in big endian */
 	uint32_t result = 0;
 
@@ -60,7 +60,7 @@ uint32_t utf_to_bytes(uint32_t utf) {
 	return result;
 }
 
-DemString *replace_utf(const char *utf_str) {
+static DemString *replace_utf(const char *utf_str) {
 	DemString *demstr = dem_string_new();
 	const char *utf_char = strchr(utf_str, '$');
 	const char *last_ptr = utf_str;
