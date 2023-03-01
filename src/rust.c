@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: 2011-2018 pancake <pancake@nopcode.org>
+// SPDX-FileCopyrightText: 2023 Dhruv Maroo <dhruvmaru007@gmail.com>
 // SPDX-License-Identifier: LGPL-3.0-only
+
 #include "demangler_util.h"
 #include <rz_libdemangle.h>
 
