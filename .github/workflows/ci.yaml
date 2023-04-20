@@ -20,6 +20,32 @@ jobs:
         meson -Dbuildtype=release build
         ninja -C build test
 
+  Normal-No-GPL:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Install meson and ninja
+      run: pip3 install --user meson ninja
+    - name: Run Unit Tests
+      run: |
+        export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
+        meson -Dbuildtype=release -Duse_gpl=false build
+        ninja -C build test
+
+  Normal-Minimal:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Install meson and ninja
+      run: pip3 install --user meson ninja
+    - name: Run Unit Tests
+      run: |
+        export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
+        meson -Dbuildtype=release -Duse_gpl=false -Duse_swift_demangler=false build
+        ninja -C build test
+
   Asan:
     runs-on: ubuntu-20.04
     steps:
