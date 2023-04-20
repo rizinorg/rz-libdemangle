@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: 2021 RizinOrg <info@rizin.re>
-// SPDX-FileCopyrightText: 2021 deroad <wargio@libero.it>
+// SPDX-FileCopyrightText: 2021-2023 RizinOrg <info@rizin.re>
+// SPDX-FileCopyrightText: 2021-2023 deroad <wargio@libero.it>
 // SPDX-License-Identifier: LGPL-3.0-only
+
 #include "demangler_util.h"
 #include <stdarg.h>
 /* These are mostly copied from rz_util till the util itself is not a side lib */
