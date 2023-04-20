@@ -5,31 +5,31 @@ cc = meson.get_compiler('c')
 common_c_args = []
 libdemangle_c_args = []
 libdemangle_src = [
-  'src' / 'demangler_util.c',
+  'src' / 'cxx.c',
+  'src' / 'cxx' / 'borland.c',
   'src' / 'demangler.c',
+  'src' / 'demangler_util.c',
   'src' / 'java.c',
   'src' / 'microsoft_demangle.c',
   'src' / 'msvc.c',
   'src' / 'objc.c',
   'src' / 'pascal' / 'pascal.c',
+  'src' / 'rust.c',
 ]
 
 tests = [
+  'borland',
   'java',
   'msvc',
   'objc',
   'pascal',
+  'rust',
 ]
 
 if get_option('use_gpl')
-  libdemangle_src += 'src' / 'cxx.c'
   libdemangle_src += 'src' / 'cxx' / 'cp-demangle.c'
   common_c_args += '-DWITH_GPL=1'
   tests += 'cxx'
-
-  # rust tests depends on cxx
-  tests += 'rust'
-  libdemangle_src += 'src/rust.c'
 endif
 
 if get_option('use_swift_demangler')

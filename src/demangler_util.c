@@ -170,6 +170,21 @@ bool dem_string_append(DemString *ds, const char *string) {
 	return dem_string_append_n(ds, string, size);
 }
 
+bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size) {
+	dem_return_val_if_fail(ds && string, false);
+	if (!size) {
+		return true;
+	} else if (!dem_string_realloc_no_len_update(ds, size)) {
+		return false;
+	}
+	memmove(ds->buf + size, ds->buf, ds->len);
+
+	memcpy(ds->buf, string, size);
+	ds->len += size;
+	ds->buf[ds->len] = 0;
+	return true;
+}
+
 bool dem_string_append_n(DemString *ds, const char *string, size_t size) {
 	dem_return_val_if_fail(ds && string, false);
 	if (!size) {
@@ -181,6 +196,20 @@ bool dem_string_append_n(DemString *ds, const char *string, size_t size) {
 	memcpy(ds->buf + ds->len, string, size);
 	ds->len += size;
 	ds->buf[ds->len] = 0;
+	return true;
+}
+
+bool dem_string_concat(DemString *dst, DemString *src) {
+	dem_return_val_if_fail(dst && src, false);
+	if (!src->len) {
+		return true;
+	} else if (!dem_string_realloc_no_len_update(dst, src->len)) {
+		return false;
+	}
+
+	memcpy(dst->buf + dst->len, src->buf, src->len);
+	dst->len += src->len;
+	dst->buf[dst->len] = 0;
 	return true;
 }
 
