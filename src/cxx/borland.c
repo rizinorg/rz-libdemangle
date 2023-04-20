@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2023 RizinOrg <info@rizin.re>
 // SPDX-License-Identifier: LGPL-3.0-only
+
 #include "demangler_util.h"
 #include <rz_libdemangle.h>
 #include <ctype.h>

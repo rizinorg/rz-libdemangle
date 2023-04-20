@@ -1,5 +1,7 @@
+// SPDX-FileCopyrightText: 2023 RizinOrg <info@rizin.re>
 // SPDX-FileCopyrightText: 2013-2019 pancake <pancake@nopcode.org>
 // SPDX-License-Identifier: LGPL-3.0-only
+
 #include "demangler_util.h"
 #include "borland.h"
 #include <rz_libdemangle.h>
