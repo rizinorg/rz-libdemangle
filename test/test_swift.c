@@ -1,183 +1,97 @@
-// SPDX-FileCopyrightText: 2021 deroad <wargio@libero.it>
+// SPDX-FileCopyrightText: 2021-2023 deroad <wargio@libero.it>
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "demangling_unit.h"
+#include "minunit.h"
 
-mu_demangle(0, swift, "__TFV4main7Balanceg5widthSd", "main.Balance.width.getter__Double");
-mu_demangle(1, swift, "__TFV4main7Balances5widthSd", "main.Balance.width.setter__Double");
-mu_demangle(2, swift, "__TFV4main7Balancem5widthSd", "main.Balance.width.method__Double");
-mu_demangle(3, swift, "__TFV4main7Balanceg6heightSd", "main.Balance.height.getter__Double");
-mu_demangle(4, swift, "__TFV4main7Balances6heightSd", "main.Balance.height.setter__Double");
-mu_demangle(5, swift, "__TFV4main7Balancem6heightSd", "main.Balance.height.method__Double");
-mu_demangle(6, swift, "__TFV4main7Balanceg3posSd", "main.Balance.pos.getter__Double");
-mu_demangle(7, swift, "__TFV4main7Balances3posSd", "main.Balance.pos.setter__Double");
-mu_demangle(8, swift, "__TFV4main7Balancem3posSd", "main.Balance.pos.method__Double");
-mu_demangle(9, swift, "__TFV4main7BalanceCfT5widthSd6heightSd3posSd_S0_", "main.Balance.allocator");
-mu_demangle(10, swift, "__TFV4main7BalanceCfT_S0_", "main.Balance.allocator");
-mu_demangle(11, swift, "__TFC4main8FooClasscfT_S0_", "main.FooClass.constructor");
-mu_demangle(12, swift, "__TFC4main8FooClassCfT_S0_", "main.FooClass.allocator");
-mu_demangle(13, swift, "__TFC4main8FooClass8sayHellofT_T_", "main.FooClass.sayHello");
-mu_demangle(14, swift, "__TFC4main8FooClassD", "main.FooClass.deallocator");
-mu_demangle(15, swift, "__TFC4main8FooClassd", "main.FooClass.destructor");
-mu_demangle(16, swift, "__TFC4main8FooClassg3fooSi", "main.FooClass.foo.getter__Swift.Int");
-mu_demangle(17, swift, "__TFC4main8FooClasss3fooSi", "main.FooClass.foo.setter__Swift.Int");
-mu_demangle(18, swift, "__TFC4main8FooClassm3fooSi", "main.FooClass.foo.method__Swift.Int");
-mu_demangle(19, swift, "__TFC4main8FooClassg3barSS", "main.FooClass.bar.getter__String");
-mu_demangle(20, swift, "__TFC4main8FooClasss3barSS", "main.FooClass.bar.setter__String");
-mu_demangle(21, swift, "__TFC4main8FooClassm3barSS", "main.FooClass.bar.method__String");
-mu_demangle(22, swift, "__TTWC4main8FooClassS_9FoodClassS_FS1_8sayHellofT_T_", "main.FooClass..FoodClass(String _)");
-mu_demangle(23, swift, "__TFe4mainRxCS_8FooClassxS_9FoodClassrS1_8sayHellofT_T_", "main..FooClass..FoodClass..sayHello..extension");
-mu_demangle(24, swift, "__TWaC4main8FooClassS_9FoodClassS_", "main.FooClass..FoodClass..protocol");
-mu_demangle(25, swift, "__TMfV4main7Balance", "main.Balance..metadata");
-mu_demangle(26, swift, "__TMfC4main8FooClass", "main.FooClass..metadata");
-mu_demangle(27, swift, "__TMfC4main8BarClass", "main.BarClass..metadata");
-mu_demangle(28, swift, "__TMfC4main4Tost", "main.Tost..metadata");
-mu_demangle(29, swift, "__TF4main4moinFT_Si", "main.moin () -> Swift.Int");
-mu_demangle(30, swift, "__TFC4main4TostCfT_S0_", "main.Tost.allocator");
-mu_demangle(31, swift, "__TFC4main4TostD", "main.Tost.deallocator");
-mu_demangle(32, swift, "__TFC4main4TostcfT_S0_", "main.Tost.constructor");
-mu_demangle(33, swift, "__TFC4main4Tostd", "main.Tost.destructor");
-mu_demangle(34, swift, "__TFC4main4Tostg3msgSS", "main.Tost.msg.getter__String");
-mu_demangle(35, swift, "__TFC4main4Tostm3msgSS", "main.Tost.msg.method__String");
-mu_demangle(36, swift, "__TFC4main4Tosts3msgSS", "main.Tost.msg.setter__String");
-mu_demangle(37, swift, "__TFC4main8BarClass8sayHellofT_T_", "main.BarClass.sayHello");
-mu_demangle(38, swift, "__TFC4main8BarClassCfT_S0_", "main.BarClass.allocator");
-mu_demangle(39, swift, "__TFC4main8BarClassD", "main.BarClass.deallocator");
-mu_demangle(40, swift, "__TFC4main8BarClasscfT_S0_", "main.BarClass.constructor");
-mu_demangle(41, swift, "__TFC4main8BarClassd", "main.BarClass.destructor");
-mu_demangle(42, swift, "__TMC4main4Tost", "main.Tost..metadata");
-mu_demangle(43, swift, "__TMC4main8BarClass", "main.BarClass..metadata");
-mu_demangle(44, swift, "__TMC4main8FooClass", "main.FooClass..metadata");
-mu_demangle(45, swift, "__TMLC4main4Tost", "main.Tost..lazy.metadata");
-mu_demangle(46, swift, "__TMLC4main8BarClass", "main.BarClass..lazy.metadata");
-mu_demangle(47, swift, "__TMLC4main8FooClass", "main.FooClass..lazy.metadata");
-mu_demangle(48, swift, "__TMV4main7Balance", "main.Balance..metadata");
-mu_demangle(49, swift, "__TMaC4main4Tost", "main.Tost..accessor.metadata");
-mu_demangle(50, swift, "__TMaC4main8BarClass", "main.BarClass..accessor.metadata");
-mu_demangle(51, swift, "__TMaC4main8FooClass", "main.FooClass..accessor.metadata");
-mu_demangle(52, swift, "__TMaV4main7Balance", "main.Balance..accessor.metadata");
-mu_demangle(53, swift, "__TMmC4main4Tost", "main.Tost..metaclass");
-mu_demangle(54, swift, "__TMmC4main8BarClass", "main.BarClass..metaclass");
-mu_demangle(55, swift, "__TMmC4main8FooClass", "main.FooClass..metaclass");
-mu_demangle(56, swift, "__TMnC4main4Tost", "main.Tost..metadata");
-mu_demangle(57, swift, "__TMnC4main8BarClass", "main.BarClass..metadata");
-mu_demangle(58, swift, "__TMnC4main8FooClass", "main.FooClass..metadata");
-mu_demangle(59, swift, "__TMnV4main7Balance", "main.Balance..metadata");
-mu_demangle(60, swift, "__TMp4main9FoodClass", "main.FoodClass..metadata");
-mu_demangle(61, swift, "__TWVV4main7Balance", "main.Balance");
-mu_demangle(62, swift, "__TWoFC4main4TostCfT_S0_", "Tost.allocator..init.witnesstable");
-mu_demangle(63, swift, "__TWoFC4main4Tostg3msgSS", "Tost.msg.getter__String..init.witnesstable");
-mu_demangle(64, swift, "__TWoFC4main4Tostm3msgSS", "Tost.msg.method__String..init.witnesstable");
-mu_demangle(65, swift, "__TWoFC4main4Tosts3msgSS", "Tost.msg.setter__String..init.witnesstable");
-mu_demangle(66, swift, "__TWoFC4main8BarClass8sayHellofT_T_", "BarClass.sayHello..init.witnesstable");
-mu_demangle(67, swift, "__TWoFC4main8BarClassCfT_S0_", "BarClass.allocator..init.witnesstable");
-mu_demangle(68, swift, "__TWoFC4main8FooClass8sayHellofT_T_", "FooClass.sayHello..init.witnesstable");
-mu_demangle(69, swift, "__TWoFC4main8FooClassCfT_S0_", "FooClass.allocator..init.witnesstable");
-mu_demangle(70, swift, "__TWoFC4main8FooClassg3barSS", "FooClass.bar.getter__String..init.witnesstable");
-mu_demangle(71, swift, "__TWoFC4main8FooClassg3fooSi", "FooClass.foo.getter__Swift.Int..init.witnesstable");
-mu_demangle(72, swift, "__TWoFC4main8FooClassm3barSS", "FooClass.bar.method__String..init.witnesstable");
-mu_demangle(73, swift, "__TWoFC4main8FooClassm3fooSi", "FooClass.foo.method__Swift.Int..init.witnesstable");
-mu_demangle(74, swift, "__TWoFC4main8FooClasss3barSS", "FooClass.bar.setter__String..init.witnesstable");
-mu_demangle(75, swift, "__TWoFC4main8FooClasss3fooSi", "FooClass.foo.setter__Swift.Int..init.witnesstable");
-mu_demangle(76, swift, "__TWvdvC4main4Tost3msgSS", "main.Tost.msg__String..field");
-mu_demangle(77, swift, "__TWvdvC4main8FooClass3barSS", "main.FooClass.bar__String..field");
-mu_demangle(78, swift, "__TWvdvC4main8FooClass3fooSi", "main.FooClass.foo..field");
-mu_demangle(79, swift, "__TMSS", "Swift.String.init (..metadata");
-mu_demangle(80, swift, "__TZvOs7Process11_unsafeArgvGSpGSpVs4Int8__", "Process._unsafeArgv");
-mu_demangle(81, swift, "__TZvOs7Process5_argcVs5Int32", "Process._argc");
+mu_demangle_tests(swift,
+	mu_demangle_test("__TFV4main7Balanceg5widthSd", "main.Balance.width.getter__Double"),
+	mu_demangle_test("__TFV4main7Balances5widthSd", "main.Balance.width.setter__Double"),
+	mu_demangle_test("__TFV4main7Balancem5widthSd", "main.Balance.width.method__Double"),
+	mu_demangle_test("__TFV4main7Balanceg6heightSd", "main.Balance.height.getter__Double"),
+	mu_demangle_test("__TFV4main7Balances6heightSd", "main.Balance.height.setter__Double"),
+	mu_demangle_test("__TFV4main7Balancem6heightSd", "main.Balance.height.method__Double"),
+	mu_demangle_test("__TFV4main7Balanceg3posSd", "main.Balance.pos.getter__Double"),
+	mu_demangle_test("__TFV4main7Balances3posSd", "main.Balance.pos.setter__Double"),
+	mu_demangle_test("__TFV4main7Balancem3posSd", "main.Balance.pos.method__Double"),
+	mu_demangle_test("__TFV4main7BalanceCfT5widthSd6heightSd3posSd_S0_", "main.Balance.allocator"),
+	mu_demangle_test("__TFV4main7BalanceCfT_S0_", "main.Balance.allocator"),
+	mu_demangle_test("__TFC4main8FooClasscfT_S0_", "main.FooClass.constructor"),
+	mu_demangle_test("__TFC4main8FooClassCfT_S0_", "main.FooClass.allocator"),
+	mu_demangle_test("__TFC4main8FooClass8sayHellofT_T_", "main.FooClass.sayHello"),
+	mu_demangle_test("__TFC4main8FooClassD", "main.FooClass.deallocator"),
+	mu_demangle_test("__TFC4main8FooClassd", "main.FooClass.destructor"),
+	mu_demangle_test("__TFC4main8FooClassg3fooSi", "main.FooClass.foo.getter__Swift.Int"),
+	mu_demangle_test("__TFC4main8FooClasss3fooSi", "main.FooClass.foo.setter__Swift.Int"),
+	mu_demangle_test("__TFC4main8FooClassm3fooSi", "main.FooClass.foo.method__Swift.Int"),
+	mu_demangle_test("__TFC4main8FooClassg3barSS", "main.FooClass.bar.getter__String"),
+	mu_demangle_test("__TFC4main8FooClasss3barSS", "main.FooClass.bar.setter__String"),
+	mu_demangle_test("__TFC4main8FooClassm3barSS", "main.FooClass.bar.method__String"),
+	mu_demangle_test("__TTWC4main8FooClassS_9FoodClassS_FS1_8sayHellofT_T_", "main.FooClass..FoodClass(String _)"),
+	mu_demangle_test("__TFe4mainRxCS_8FooClassxS_9FoodClassrS1_8sayHellofT_T_", "main..FooClass..FoodClass..sayHello..extension"),
+	mu_demangle_test("__TWaC4main8FooClassS_9FoodClassS_", "main.FooClass..FoodClass..protocol"),
+	mu_demangle_test("__TMfV4main7Balance", "main.Balance..metadata"),
+	mu_demangle_test("__TMfC4main8FooClass", "main.FooClass..metadata"),
+	mu_demangle_test("__TMfC4main8BarClass", "main.BarClass..metadata"),
+	mu_demangle_test("__TMfC4main4Tost", "main.Tost..metadata"),
+	mu_demangle_test("__TF4main4moinFT_Si", "main.moin () -> Swift.Int"),
+	mu_demangle_test("__TFC4main4TostCfT_S0_", "main.Tost.allocator"),
+	mu_demangle_test("__TFC4main4TostD", "main.Tost.deallocator"),
+	mu_demangle_test("__TFC4main4TostcfT_S0_", "main.Tost.constructor"),
+	mu_demangle_test("__TFC4main4Tostd", "main.Tost.destructor"),
+	mu_demangle_test("__TFC4main4Tostg3msgSS", "main.Tost.msg.getter__String"),
+	mu_demangle_test("__TFC4main4Tostm3msgSS", "main.Tost.msg.method__String"),
+	mu_demangle_test("__TFC4main4Tosts3msgSS", "main.Tost.msg.setter__String"),
+	mu_demangle_test("__TFC4main8BarClass8sayHellofT_T_", "main.BarClass.sayHello"),
+	mu_demangle_test("__TFC4main8BarClassCfT_S0_", "main.BarClass.allocator"),
+	mu_demangle_test("__TFC4main8BarClassD", "main.BarClass.deallocator"),
+	mu_demangle_test("__TFC4main8BarClasscfT_S0_", "main.BarClass.constructor"),
+	mu_demangle_test("__TFC4main8BarClassd", "main.BarClass.destructor"),
+	mu_demangle_test("__TMC4main4Tost", "main.Tost..metadata"),
+	mu_demangle_test("__TMC4main8BarClass", "main.BarClass..metadata"),
+	mu_demangle_test("__TMC4main8FooClass", "main.FooClass..metadata"),
+	mu_demangle_test("__TMLC4main4Tost", "main.Tost..lazy.metadata"),
+	mu_demangle_test("__TMLC4main8BarClass", "main.BarClass..lazy.metadata"),
+	mu_demangle_test("__TMLC4main8FooClass", "main.FooClass..lazy.metadata"),
+	mu_demangle_test("__TMV4main7Balance", "main.Balance..metadata"),
+	mu_demangle_test("__TMaC4main4Tost", "main.Tost..accessor.metadata"),
+	mu_demangle_test("__TMaC4main8BarClass", "main.BarClass..accessor.metadata"),
+	mu_demangle_test("__TMaC4main8FooClass", "main.FooClass..accessor.metadata"),
+	mu_demangle_test("__TMaV4main7Balance", "main.Balance..accessor.metadata"),
+	mu_demangle_test("__TMmC4main4Tost", "main.Tost..metaclass"),
+	mu_demangle_test("__TMmC4main8BarClass", "main.BarClass..metaclass"),
+	mu_demangle_test("__TMmC4main8FooClass", "main.FooClass..metaclass"),
+	mu_demangle_test("__TMnC4main4Tost", "main.Tost..metadata"),
+	mu_demangle_test("__TMnC4main8BarClass", "main.BarClass..metadata"),
+	mu_demangle_test("__TMnC4main8FooClass", "main.FooClass..metadata"),
+	mu_demangle_test("__TMnV4main7Balance", "main.Balance..metadata"),
+	mu_demangle_test("__TMp4main9FoodClass", "main.FoodClass..metadata"),
+	mu_demangle_test("__TWVV4main7Balance", "main.Balance"),
+	mu_demangle_test("__TWoFC4main4TostCfT_S0_", "Tost.allocator..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main4Tostg3msgSS", "Tost.msg.getter__String..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main4Tostm3msgSS", "Tost.msg.method__String..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main4Tosts3msgSS", "Tost.msg.setter__String..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main8BarClass8sayHellofT_T_", "BarClass.sayHello..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main8BarClassCfT_S0_", "BarClass.allocator..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main8FooClass8sayHellofT_T_", "FooClass.sayHello..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main8FooClassCfT_S0_", "FooClass.allocator..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main8FooClassg3barSS", "FooClass.bar.getter__String..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main8FooClassg3fooSi", "FooClass.foo.getter__Swift.Int..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main8FooClassm3barSS", "FooClass.bar.method__String..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main8FooClassm3fooSi", "FooClass.foo.method__Swift.Int..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main8FooClasss3barSS", "FooClass.bar.setter__String..init.witnesstable"),
+	mu_demangle_test("__TWoFC4main8FooClasss3fooSi", "FooClass.foo.setter__Swift.Int..init.witnesstable"),
+	mu_demangle_test("__TWvdvC4main4Tost3msgSS", "main.Tost.msg__String..field"),
+	mu_demangle_test("__TWvdvC4main8FooClass3barSS", "main.FooClass.bar__String..field"),
+	mu_demangle_test("__TWvdvC4main8FooClass3fooSi", "main.FooClass.foo..field"),
+	mu_demangle_test("__TMSS", "Swift.String.init (..metadata"),
+	mu_demangle_test("__TZvOs7Process11_unsafeArgvGSpGSpVs4Int8__", "Process._unsafeArgv"),
+	mu_demangle_test("__TZvOs7Process5_argcVs5Int32", "Process._argc"),
 
-bool broken(void) {
+#if 0
 	// these tests are broken because the demangler is demangling symbols in the wrong way
 	mu_demangle_str(swift, "_TFSSCfT21_builtinStringLiteralBp8byteSizeBw7isASCIIBi1__SS", "Swift.String.init (_builtinStringLiteral(Builtin.RawPointer byteSize__Builtin.Word isASCII__Builtin.Int1 _) -> String");
-	mu_ignore;
-}
+#endif
+	// end
+);
 
-int all_tests() {
-	mu_demangle_run(0);
-	mu_demangle_run(1);
-	mu_demangle_run(2);
-	mu_demangle_run(3);
-	mu_demangle_run(4);
-	mu_demangle_run(5);
-	mu_demangle_run(6);
-	mu_demangle_run(7);
-	mu_demangle_run(8);
-	mu_demangle_run(9);
-	mu_demangle_run(10);
-	mu_demangle_run(11);
-	mu_demangle_run(12);
-	mu_demangle_run(13);
-	mu_demangle_run(14);
-	mu_demangle_run(15);
-	mu_demangle_run(16);
-	mu_demangle_run(17);
-	mu_demangle_run(18);
-	mu_demangle_run(19);
-	mu_demangle_run(20);
-	mu_demangle_run(21);
-	mu_demangle_run(22);
-	mu_demangle_run(23);
-	mu_demangle_run(24);
-	mu_demangle_run(25);
-	mu_demangle_run(26);
-	mu_demangle_run(27);
-	mu_demangle_run(28);
-	mu_demangle_run(29);
-	mu_demangle_run(30);
-	mu_demangle_run(31);
-	mu_demangle_run(32);
-	mu_demangle_run(33);
-	mu_demangle_run(34);
-	mu_demangle_run(35);
-	mu_demangle_run(36);
-	mu_demangle_run(37);
-	mu_demangle_run(38);
-	mu_demangle_run(39);
-	mu_demangle_run(40);
-	mu_demangle_run(41);
-	mu_demangle_run(42);
-	mu_demangle_run(43);
-	mu_demangle_run(44);
-	mu_demangle_run(45);
-	mu_demangle_run(46);
-	mu_demangle_run(47);
-	mu_demangle_run(48);
-	mu_demangle_run(49);
-	mu_demangle_run(50);
-	mu_demangle_run(51);
-	mu_demangle_run(52);
-	mu_demangle_run(53);
-	mu_demangle_run(54);
-	mu_demangle_run(55);
-	mu_demangle_run(56);
-	mu_demangle_run(57);
-	mu_demangle_run(58);
-	mu_demangle_run(59);
-	mu_demangle_run(60);
-	mu_demangle_run(61);
-	mu_demangle_run(62);
-	mu_demangle_run(63);
-	mu_demangle_run(64);
-	mu_demangle_run(65);
-	mu_demangle_run(66);
-	mu_demangle_run(67);
-	mu_demangle_run(68);
-	mu_demangle_run(69);
-	mu_demangle_run(70);
-	mu_demangle_run(71);
-	mu_demangle_run(72);
-	mu_demangle_run(73);
-	mu_demangle_run(74);
-	mu_demangle_run(75);
-	mu_demangle_run(76);
-	mu_demangle_run(77);
-	mu_demangle_run(78);
-	mu_demangle_run(79);
-	mu_demangle_run(80);
-	mu_demangle_run(81);
-
-	mu_run_test(broken);
-	return tests_passed != tests_run;
-}
-
-mu_main(all_tests)
+mu_main2(swift);
