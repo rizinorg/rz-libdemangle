@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 typedef int bool;
-#define true 1
+#define true  1
 #define false 0
 
 #if defined(_MSC_VER)
@@ -60,9 +60,14 @@ void dem_string_free(DemString *ds);
 DemString *dem_string_new();
 char *dem_string_drain(DemString *ds);
 bool dem_string_append(DemString *ds, const char *string);
+bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size);
 bool dem_string_append_n(DemString *ds, const char *string, size_t size);
 bool dem_string_appendf(DemString *ds, const char *fmt, ...);
-#define dem_string_appends(d, s) dem_string_append_n(d, s, strlen(s))
+bool dem_string_concat(DemString *dst, DemString *src);
+#define dem_string_buffer(d)            (d->buf)
+#define dem_string_length(d)            (d->len)
+#define dem_string_appends(d, s)        dem_string_append_n(d, s, strlen(s))
+#define dem_string_appends_prefix(d, s) dem_string_append_prefix_n(d, s, strlen(s))
 
 void dem_string_replace_char(DemString *ds, char ch, char rp);
 
@@ -92,5 +97,6 @@ DemListIter *dem_list_append(DemList *list, void *data);
 void dem_list_free(DemList *list);
 void *dem_list_get_n(const DemList *list, ut32 n);
 ut32 dem_list_length(const DemList *list);
+void dem_list_delete(DemList *list, DemListIter *iter);
 
 #endif /* RZ_LIBDEMANGLE_UTIL_H */

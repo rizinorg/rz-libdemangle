@@ -5,10 +5,8 @@
 #ifndef RZ_LIBDEMANGLE_H
 #define RZ_LIBDEMANGLE_H
 
-#if WITH_GPL
 RZ_API char *libdemangle_handler_cxx(const char *symbol);
 RZ_API char *libdemangle_handler_rust(const char *symbol);
-#endif
 
 #if WITH_SWIFT_DEMANGLER
 RZ_API char *libdemangle_handler_swift(const char *symbol);

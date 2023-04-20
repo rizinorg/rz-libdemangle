@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: 2013-2019 pancake <pancake@nopcode.org>
 // SPDX-License-Identifier: LGPL-3.0-only
 #include "demangler_util.h"
-#include "cxx/demangle.h"
+#include "borland.h"
 #include <rz_libdemangle.h>
 
 #if WITH_GPL
+#include "cxx/demangle.h"
+
 #define SL(x) \
 	{ x, strlen(x) }
 
@@ -13,7 +15,7 @@ typedef struct cxx_prefix_t {
 	uint32_t size;
 } CxxPrefix;
 
-char *libdemangle_handler_cxx(const char *str) {
+char *demangle_gpl_cxx(const char *str) {
 	// DMGL_TYPES | DMGL_PARAMS | DMGL_ANSI | DMGL_VERBOSE | DMGL_RET_POSTFIX | DMGL_TYPES;
 	uint32_t i;
 
@@ -86,3 +88,15 @@ char *libdemangle_handler_cxx(const char *str) {
 	return out;
 }
 #endif
+
+char *libdemangle_handler_cxx(const char *symbol) {
+	char *result = demangle_borland_delphi(symbol);
+	if (result) {
+		return result;
+	}
+#if WITH_GPL
+	return demangle_gpl_cxx(symbol);
+#else
+	return NULL;
+#endif
+}
