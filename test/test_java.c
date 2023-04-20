@@ -1,708 +1,362 @@
-// SPDX-FileCopyrightText: 2021 deroad <wargio@libero.it>
+// SPDX-FileCopyrightText: 2021-2023 deroad <wargio@libero.it>
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "demangling_unit.h"
+#include "minunit.h"
 
-mu_demangle(0, java, "Ljava/lang/String;", "String");
-mu_demangle(1, java, "Lsome/random/Class;", "some.random.Class");
-mu_demangle(2, java, "B", "byte");
-mu_demangle(3, java, "C", "char");
-mu_demangle(4, java, "D", "double");
-mu_demangle(5, java, "F", "float");
-mu_demangle(6, java, "I", "int");
-mu_demangle(7, java, "J", "long");
-mu_demangle(8, java, "S", "short");
-mu_demangle(9, java, "V", "void");
-mu_demangle(10, java, "Z", "boolean");
+mu_demangle_tests(java,
+	mu_demangle_test("Ljava/lang/String;", "String"),
+	mu_demangle_test("Lsome/random/Class;", "some.random.Class"),
+	mu_demangle_test("B", "byte"),
+	mu_demangle_test("C", "char"),
+	mu_demangle_test("D", "double"),
+	mu_demangle_test("F", "float"),
+	mu_demangle_test("I", "int"),
+	mu_demangle_test("J", "long"),
+	mu_demangle_test("S", "short"),
+	mu_demangle_test("V", "void"),
+	mu_demangle_test("Z", "boolean"),
 
-mu_demangle(11, java, "[Ljava/lang/String;", "String[]");
-mu_demangle(12, java, "[Lsome/random/Class;", "some.random.Class[]");
-mu_demangle(13, java, "[B", "byte[]");
-mu_demangle(14, java, "[C", "char[]");
-mu_demangle(15, java, "[D", "double[]");
-mu_demangle(16, java, "[F", "float[]");
-mu_demangle(17, java, "[I", "int[]");
-mu_demangle(18, java, "[J", "long[]");
-mu_demangle(19, java, "[S", "short[]");
-mu_demangle(20, java, "[V", "void[]");
-mu_demangle(21, java, "[Z", "boolean[]");
+	mu_demangle_test("[Ljava/lang/String;", "String[]"),
+	mu_demangle_test("[Lsome/random/Class;", "some.random.Class[]"),
+	mu_demangle_test("[B", "byte[]"),
+	mu_demangle_test("[C", "char[]"),
+	mu_demangle_test("[D", "double[]"),
+	mu_demangle_test("[F", "float[]"),
+	mu_demangle_test("[I", "int[]"),
+	mu_demangle_test("[J", "long[]"),
+	mu_demangle_test("[S", "short[]"),
+	mu_demangle_test("[V", "void[]"),
+	mu_demangle_test("[Z", "boolean[]"),
 
-// methods
-mu_demangle(22, java, "makeConcatWithConstants(Ljava/lang/String;)Ljava/lang/String;", "String makeConcatWithConstants(String)");
-mu_demangle(23, java, "Lsome/random/Class;.makeConcatWithConstants(Ljava/lang/String;)Ljava/lang/String;", "String some.random.Class.makeConcatWithConstants(String)");
-mu_demangle(24, java, "Fake([BCDFIJSZ)Ltest/class/name;", "test.class.name Fake(byte[], char, double, float, int, long, short, boolean)");
-mu_demangle(25, java, "Fake([BCDFIJSZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ltest/class/name;", "test.class.name Fake(byte[], char, double, float, int, long, short, boolean, String, String, String)");
+	// methods
+	mu_demangle_test("makeConcatWithConstants(Ljava/lang/String;)Ljava/lang/String;", "String makeConcatWithConstants(String)"),
+	mu_demangle_test("Lsome/random/Class;.makeConcatWithConstants(Ljava/lang/String;)Ljava/lang/String;", "String some.random.Class.makeConcatWithConstants(String)"),
+	mu_demangle_test("Fake([BCDFIJSZ)Ltest/class/name;", "test.class.name Fake(byte[], char, double, float, int, long, short, boolean)"),
+	mu_demangle_test("Fake([BCDFIJSZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ltest/class/name;", "test.class.name Fake(byte[], char, double, float, int, long, short, boolean, String, String, String)"),
 
-// fields
-mu_demangle(26, java, "makeConcatWithConstants.Ljava/lang/String;", "makeConcatWithConstants:String");
-mu_demangle(27, java, "Lsome/random/Class;.makeConcatWithConstants.Ljava/lang/String;", "some.random.Class.makeConcatWithConstants:String");
+	// fields
+	mu_demangle_test("makeConcatWithConstants.Ljava/lang/String;", "makeConcatWithConstants:String"),
+	mu_demangle_test("Lsome/random/Class;.makeConcatWithConstants.Ljava/lang/String;", "some.random.Class.makeConcatWithConstants:String"),
 
-// user tests
-mu_demangle(28, java, "Lahmyth/mine/king/ahmyth/R$id;", "ahmyth.mine.king.ahmyth.R$id");
-mu_demangle(29, java, "Landroid/app/Activity;", "android.app.Activity");
-mu_demangle(30, java, "Landroid/app/Service;", "android.app.Service");
-mu_demangle(31, java, "Landroid/content/ComponentName;", "android.content.ComponentName");
-mu_demangle(32, java, "Landroid/content/Context;", "android.content.Context");
-mu_demangle(33, java, "Landroid/content/Intent;", "android.content.Intent");
-mu_demangle(34, java, "Landroid/database/Cursor;", "android.database.Cursor");
-mu_demangle(35, java, "Landroid/graphics/Bitmap;", "android.graphics.Bitmap");
-mu_demangle(36, java, "Landroid/hardware/Camera;", "android.hardware.Camera");
-mu_demangle(37, java, "Landroid/media/MediaRecorder;", "android.media.MediaRecorder");
-mu_demangle(38, java, "Landroid/net/Uri;", "android.net.Uri");
-mu_demangle(39, java, "Landroid/os/Build$VERSION;", "android.os.Build$VERSION");
-mu_demangle(40, java, "Landroid/os/Build;", "android.os.Build");
-mu_demangle(41, java, "Landroid/os/Bundle;", "android.os.Bundle");
-mu_demangle(42, java, "Landroid/os/IBinder;", "android.os.IBinder");
-mu_demangle(43, java, "Landroid/os/Looper;", "android.os.Looper");
-mu_demangle(44, java, "Landroid/telephony/SmsManager;", "android.telephony.SmsManager");
-mu_demangle(45, java, "Landroid/util/Log;", "android.util.Log");
-mu_demangle(46, java, "Ldalvik/annotation/InnerClass;", "dalvik.annotation.InnerClass");
-mu_demangle(47, java, "Ldalvik/annotation/Signature;", "dalvik.annotation.Signature");
-mu_demangle(48, java, "Ldalvik/annotation/Throws;", "dalvik.annotation.Throws");
-mu_demangle(49, java, "Lio/socket/backo/Backoff;", "io.socket.backo.Backoff");
-mu_demangle(50, java, "Lio/socket/client/Ack;", "io.socket.client.Ack");
-mu_demangle(51, java, "Lio/socket/client/IO$Options;", "io.socket.client.IO$Options");
-mu_demangle(52, java, "Lio/socket/client/IO;", "io.socket.client.IO");
-mu_demangle(53, java, "Lio/socket/client/Manager$1$1;", "io.socket.client.Manager$1$1");
-mu_demangle(54, java, "Lio/socket/client/Manager$1$2;", "io.socket.client.Manager$1$2");
-mu_demangle(55, java, "Lio/socket/client/Manager$1$3;", "io.socket.client.Manager$1$3");
-mu_demangle(56, java, "Lio/socket/client/Manager$1$4;", "io.socket.client.Manager$1$4");
-mu_demangle(57, java, "Lio/socket/client/Manager$1$5;", "io.socket.client.Manager$1$5");
-mu_demangle(58, java, "Lio/socket/client/Manager$10;", "io.socket.client.Manager$10");
-mu_demangle(59, java, "Lio/socket/client/Manager$11$1;", "io.socket.client.Manager$11$1");
-mu_demangle(60, java, "Lio/socket/client/Manager$11;", "io.socket.client.Manager$11");
-mu_demangle(61, java, "Lio/socket/client/Manager$12;", "io.socket.client.Manager$12");
-mu_demangle(62, java, "Lio/socket/client/Manager$1;", "io.socket.client.Manager$1");
-mu_demangle(63, java, "Lio/socket/client/Manager$2;", "io.socket.client.Manager$2");
-mu_demangle(64, java, "Lio/socket/client/Manager$3;", "io.socket.client.Manager$3");
-mu_demangle(65, java, "Lio/socket/client/Manager$4;", "io.socket.client.Manager$4");
-mu_demangle(66, java, "Lio/socket/client/Manager$5;", "io.socket.client.Manager$5");
-mu_demangle(67, java, "Lio/socket/client/Manager$6;", "io.socket.client.Manager$6");
-mu_demangle(68, java, "Lio/socket/client/Manager$7;", "io.socket.client.Manager$7");
-mu_demangle(69, java, "Lio/socket/client/Manager$8;", "io.socket.client.Manager$8");
-mu_demangle(70, java, "Lio/socket/client/Manager$9;", "io.socket.client.Manager$9");
-mu_demangle(71, java, "Lio/socket/client/Manager;", "io.socket.client.Manager");
-mu_demangle(72, java, "Lio/socket/client/On$1;", "io.socket.client.On$1");
-mu_demangle(73, java, "Lio/socket/client/On$Handle;", "io.socket.client.On$Handle");
-mu_demangle(74, java, "Lio/socket/client/On;", "io.socket.client.On");
-mu_demangle(75, java, "Lio/socket/client/Socket$2$1;", "io.socket.client.Socket$2$1");
-mu_demangle(76, java, "Lio/socket/client/Socket$2$2;", "io.socket.client.Socket$2$2");
-mu_demangle(77, java, "Lio/socket/client/Socket$2$3;", "io.socket.client.Socket$2$3");
-mu_demangle(78, java, "Lio/socket/client/Socket$6$1;", "io.socket.client.Socket$6$1");
-mu_demangle(79, java, "Lio/socket/client/Socket$7$1;", "io.socket.client.Socket$7$1");
-mu_demangle(80, java, "Lio/socket/client/Socket;", "io.socket.client.Socket");
-mu_demangle(81, java, "Lio/socket/client/Url;", "io.socket.client.Url");
-mu_demangle(82, java, "Lio/socket/global/Global;", "io.socket.global.Global");
-mu_demangle(83, java, "Lio/socket/hasbinary/HasBinary;", "io.socket.hasbinary.HasBinary");
-mu_demangle(84, java, "Lio/socket/parser/Binary;", "io.socket.parser.Binary");
-mu_demangle(85, java, "Lio/socket/parser/Packet;", "io.socket.parser.Packet");
-mu_demangle(86, java, "Lio/socket/parser/Packet<*>;", "io.socket.parser.Packet<T>");
-mu_demangle(87, java, "Lio/socket/parser/Packet<TT;>;", "io.socket.parser.Packet<T, T>");
-mu_demangle(88, java, "Lio/socket/parser/Parser;", "io.socket.parser.Parser");
-mu_demangle(89, java, "Lio/socket/thread/EventThread;", "io.socket.thread.EventThread");
-mu_demangle(90, java, "Lio/socket/utf8/UTF8;", "io.socket.utf8.UTF8");
-mu_demangle(91, java, "Lio/socket/utf8/UTF8Exception;", "io.socket.utf8.UTF8Exception");
-mu_demangle(92, java, "Lio/socket/yeast/Yeast;", "io.socket.yeast.Yeast");
-mu_demangle(93, java, "Ljava/io/BufferedInputStream;", "java.io.BufferedInputStream");
-mu_demangle(94, java, "Ljava/io/BufferedOutputStream;", "java.io.BufferedOutputStream");
-mu_demangle(95, java, "Ljava/io/BufferedReader;", "java.io.BufferedReader");
-mu_demangle(96, java, "Ljava/io/ByteArrayOutputStream;", "java.io.ByteArrayOutputStream");
-mu_demangle(97, java, "Ljava/io/Closeable;", "java.io.Closeable");
-mu_demangle(98, java, "Ljava/io/EOFException;", "java.io.EOFException");
-mu_demangle(99, java, "Ljava/io/File;", "java.io.File");
-mu_demangle(100, java, "Ljava/io/FileInputStream;", "java.io.FileInputStream");
-mu_demangle(101, java, "Ljava/io/FileNotFoundException;", "java.io.FileNotFoundException");
-mu_demangle(102, java, "Ljava/io/FileOutputStream;", "java.io.FileOutputStream");
-mu_demangle(103, java, "Ljava/io/Flushable;", "java.io.Flushable");
-mu_demangle(104, java, "Ljava/io/InputStream;", "java.io.InputStream");
-mu_demangle(105, java, "Ljava/io/IOException;", "java.io.IOException");
-mu_demangle(106, java, "Ljava/io/ObjectOutputStream;", "java.io.ObjectOutputStream");
-mu_demangle(107, java, "Ljava/io/OutputStream;", "java.io.OutputStream");
-mu_demangle(108, java, "Ljava/io/RandomAccessFile;", "java.io.RandomAccessFile");
-mu_demangle(109, java, "Ljava/io/Reader;", "java.io.Reader");
-mu_demangle(110, java, "Ljava/io/Serializable;", "java.io.Serializable");
-mu_demangle(111, java, "Ljava/lang/AssertionError;", "java.lang.AssertionError");
-mu_demangle(112, java, "Ljava/lang/Boolean;", "Boolean");
-mu_demangle(113, java, "Ljava/lang/Byte;", "Byte");
-mu_demangle(114, java, "Ljava/lang/Character;", "Character");
-mu_demangle(115, java, "Ljava/lang/CharSequence;", "java.lang.CharSequence");
-mu_demangle(116, java, "Ljava/lang/Class;", "Class");
-mu_demangle(117, java, "Ljava/lang/Class<*>;", "Class<T>");
-mu_demangle(118, java, "Ljava/lang/Class<TT;>;", "Class<T, T>");
-mu_demangle(119, java, "Ljava/lang/ClassLoader;", "ClassLoader");
-mu_demangle(120, java, "Ljava/lang/Cloneable;", "java.lang.Cloneable");
-mu_demangle(121, java, "Ljava/lang/Comparable;", "java.lang.Comparable");
-mu_demangle(122, java, "Ljava/lang/Enum;", "Enum");
-mu_demangle(123, java, "Ljava/lang/Exception;", "Exception");
-mu_demangle(124, java, "Ljava/lang/IllegalAccessError;", "java.lang.IllegalAccessError");
-mu_demangle(125, java, "Ljava/lang/Integer;", "Integer");
-mu_demangle(126, java, "Ljava/lang/LinkageError;", "java.lang.LinkageError");
-mu_demangle(127, java, "Ljava/lang/Long;", "Long");
-mu_demangle(128, java, "Ljava/lang/Math;", "Math");
-mu_demangle(129, java, "Ljava/lang/NoSuchFieldError;", "java.lang.NoSuchFieldError");
-mu_demangle(130, java, "Ljava/lang/Object;", "Object");
-mu_demangle(131, java, "Ljava/lang/ref/Reference;", "java.lang.ref.Reference");
-mu_demangle(132, java, "Ljava/lang/ref/WeakReference;", "java.lang.ref.WeakReference");
-mu_demangle(133, java, "Ljava/lang/reflect/Array;", "java.lang.reflect.Array");
-mu_demangle(134, java, "Ljava/lang/reflect/Constructor;", "java.lang.reflect.Constructor");
-mu_demangle(135, java, "Ljava/lang/reflect/Field;", "java.lang.reflect.Field");
-mu_demangle(136, java, "Ljava/lang/reflect/Method;", "java.lang.reflect.Method");
-mu_demangle(137, java, "Ljava/lang/reflect/Proxy;", "java.lang.reflect.Proxy");
-mu_demangle(138, java, "Ljava/lang/Runnable;", "java.lang.Runnable");
-mu_demangle(139, java, "Ljava/lang/RuntimeException;", "RuntimeException");
-mu_demangle(140, java, "Ljava/lang/SecurityException;", "java.lang.SecurityException");
-mu_demangle(141, java, "Ljava/lang/Short;", "Short");
-mu_demangle(142, java, "Ljava/lang/String;", "String");
-mu_demangle(143, java, "Ljava/lang/StringBuilder;", "StringBuilder");
-mu_demangle(144, java, "Ljava/lang/System;", "System");
-mu_demangle(145, java, "Ljava/lang/Thread;", "Thread");
-mu_demangle(146, java, "Ljava/lang/ThreadDeath;", "ThreadDeath");
-mu_demangle(147, java, "Ljava/lang/ThreadLocal;", "ThreadLocal");
-mu_demangle(148, java, "Ljava/lang/Throwable;", "Throwable");
-mu_demangle(149, java, "Ljava/lang/VirtualMachineError;", "java.lang.VirtualMachineError");
-mu_demangle(150, java, "Ljava/lang/Void;", "Void");
-mu_demangle(151, java, "Ljava/math/BigDecimal;", "java.math.BigDecimal");
-mu_demangle(152, java, "Ljava/math/BigInteger;", "java.math.BigInteger");
-mu_demangle(153, java, "Ljava/net/HttpRetryException;", "java.net.HttpRetryException");
-mu_demangle(154, java, "Ljava/net/HttpURLConnection;", "java.net.HttpURLConnection");
-mu_demangle(155, java, "Ljava/net/IDN;", "java.net.IDN");
-mu_demangle(156, java, "Ljava/net/InetAddress;", "java.net.InetAddress");
-mu_demangle(157, java, "Ljava/net/InetSocketAddress;", "java.net.InetSocketAddress");
-mu_demangle(158, java, "Ljava/net/ProtocolException;", "java.net.ProtocolException");
-mu_demangle(159, java, "Ljava/net/Proxy$Type;", "java.net.Proxy$Type");
-mu_demangle(160, java, "Ljava/net/Proxy;", "java.net.Proxy");
-mu_demangle(161, java, "Ljava/net/ProxySelector;", "java.net.ProxySelector");
-mu_demangle(162, java, "Ljava/net/ServerSocket;", "java.net.ServerSocket");
-mu_demangle(163, java, "Ljava/net/Socket;", "java.net.Socket");
-mu_demangle(164, java, "Ljava/net/SocketAddress;", "java.net.SocketAddress");
-mu_demangle(165, java, "Ljava/net/SocketException;", "java.net.SocketException");
-mu_demangle(166, java, "Ljava/net/UnknownHostException;", "java.net.UnknownHostException");
-mu_demangle(167, java, "Ljava/net/URI;", "java.net.URI");
-mu_demangle(168, java, "Ljava/net/URISyntaxException;", "java.net.URISyntaxException");
-mu_demangle(169, java, "Ljava/net/URL;", "java.net.URL");
-mu_demangle(170, java, "Ljava/net/URLConnection;", "java.net.URLConnection");
-mu_demangle(171, java, "Ljava/net/URLDecoder;", "java.net.URLDecoder");
-mu_demangle(172, java, "Ljava/net/URLEncoder;", "java.net.URLEncoder");
-mu_demangle(173, java, "Ljava/nio/Buffer;", "java.nio.Buffer");
-mu_demangle(174, java, "Ljava/nio/ByteBuffer;", "java.nio.ByteBuffer");
-mu_demangle(175, java, "Ljava/nio/channels/FileChannel;", "java.nio.channels.FileChannel");
-mu_demangle(176, java, "Ljava/nio/charset/Charset;", "java.nio.charset.Charset");
-mu_demangle(177, java, "Ljava/nio/file/Files;", "java.nio.file.Files");
-mu_demangle(178, java, "Ljava/nio/file/Path;", "java.nio.file.Path");
-mu_demangle(179, java, "Ljava/security/Key;", "java.security.Key");
-mu_demangle(180, java, "Ljava/security/KeyStore;", "java.security.KeyStore");
-mu_demangle(181, java, "Ljava/security/MessageDigest;", "java.security.MessageDigest");
-mu_demangle(182, java, "Ljava/security/Principal;", "java.security.Principal");
-mu_demangle(183, java, "Ljava/security/PublicKey;", "java.security.PublicKey");
-mu_demangle(184, java, "Ljava/security/SecureRandom;", "java.security.SecureRandom");
-mu_demangle(185, java, "Ljava/text/DateFormat;", "java.text.DateFormat");
-mu_demangle(186, java, "Ljava/text/ParsePosition;", "java.text.ParsePosition");
-mu_demangle(187, java, "Ljava/text/SimpleDateFormat;", "java.text.SimpleDateFormat");
-mu_demangle(188, java, "Ljava/util/AbstractList;", "java.util.AbstractList");
-mu_demangle(189, java, "Ljava/util/ArrayDeque;", "java.util.ArrayDeque");
-mu_demangle(190, java, "Ljava/util/ArrayList;", "java.util.ArrayList");
-mu_demangle(191, java, "Ljava/util/ArrayList<[B>;", "java.util.ArrayList<byte[]>");
-mu_demangle(192, java, "Ljava/util/Arrays;", "java.util.Arrays");
-mu_demangle(193, java, "Ljava/util/Calendar;", "java.util.Calendar");
-mu_demangle(194, java, "Ljava/util/Collection;", "java.util.Collection");
-mu_demangle(195, java, "Ljava/util/Collection<*>;", "java.util.Collection<T>");
-mu_demangle(196, java, "Ljava/util/Collections;", "java.util.Collections");
-mu_demangle(197, java, "Ljava/util/Comparator;", "java.util.Comparator");
-mu_demangle(198, java, "Ljava/util/concurrent/Executor;", "java.util.concurrent.Executor");
-mu_demangle(199, java, "Ljava/util/concurrent/Future;", "java.util.concurrent.Future");
-mu_demangle(200, java, "Ljava/util/concurrent/TimeUnit;", "java.util.concurrent.TimeUnit");
-mu_demangle(201, java, "Ljava/util/Date;", "java.util.Date");
-mu_demangle(202, java, "Ljava/util/Deque;", "java.util.Deque");
-mu_demangle(203, java, "Ljava/util/Deque<TT;>;", "java.util.Deque<T, T>");
-mu_demangle(204, java, "Ljava/util/GregorianCalendar;", "java.util.GregorianCalendar");
-mu_demangle(205, java, "Ljava/util/HashMap;", "java.util.HashMap");
-mu_demangle(206, java, "Ljava/util/HashSet;", "java.util.HashSet");
-mu_demangle(207, java, "Ljava/util/Iterator;", "java.util.Iterator");
-mu_demangle(208, java, "Ljava/util/Iterator<*>;", "java.util.Iterator<T>");
-mu_demangle(209, java, "Ljava/util/LinkedHashMap;", "java.util.LinkedHashMap");
-mu_demangle(210, java, "Ljava/util/LinkedHashSet;", "java.util.LinkedHashSet");
-mu_demangle(211, java, "Ljava/util/LinkedList;", "java.util.LinkedList");
-mu_demangle(212, java, "Ljava/util/List;", "java.util.List");
-mu_demangle(213, java, "Ljava/util/List<*>;", "java.util.List<T>");
-mu_demangle(214, java, "Ljava/util/List<[B>;", "java.util.List<byte[]>");
-mu_demangle(215, java, "Ljava/util/List<TT;>;", "java.util.List<T, T>");
-mu_demangle(216, java, "Ljava/util/Locale;", "java.util.Locale");
-mu_demangle(217, java, "Ljava/util/logging/Level;", "java.util.logging.Level");
-mu_demangle(218, java, "Ljava/util/logging/Logger;", "java.util.logging.Logger");
-mu_demangle(219, java, "Ljava/util/Map$Entry;", "java.util.Map$Entry");
-mu_demangle(220, java, "Ljava/util/Map;", "java.util.Map");
-mu_demangle(221, java, "Ljava/util/Queue;", "java.util.Queue");
-mu_demangle(222, java, "Ljava/util/Random;", "java.util.Random");
-mu_demangle(223, java, "Ljava/util/RandomAccess;", "java.util.RandomAccess");
-mu_demangle(224, java, "Ljava/util/regex/Matcher;", "java.util.regex.Matcher");
-mu_demangle(225, java, "Ljava/util/regex/Pattern;", "java.util.regex.Pattern");
-mu_demangle(226, java, "Ljava/util/Set;", "java.util.Set");
-mu_demangle(227, java, "Ljava/util/Timer;", "java.util.Timer");
-mu_demangle(228, java, "Ljava/util/TimerTask;", "java.util.TimerTask");
-mu_demangle(229, java, "Ljava/util/TimeZone;", "java.util.TimeZone");
-mu_demangle(230, java, "Ljava/util/TreeMap;", "java.util.TreeMap");
-mu_demangle(231, java, "Ljava/util/TreeSet;", "java.util.TreeSet");
-mu_demangle(232, java, "Ljava/util/UUID;", "java.util.UUID");
-mu_demangle(233, java, "Ljava/util/zip/CRC32;", "java.util.zip.CRC32");
-mu_demangle(234, java, "Ljava/util/zip/Deflater;", "java.util.zip.Deflater");
-mu_demangle(235, java, "Ljava/util/zip/Inflater;", "java.util.zip.Inflater");
-mu_demangle(236, java, "Ljavax/crypto/Mac;", "javax.crypto.Mac");
-mu_demangle(237, java, "Ljavax/net/SocketFactory;", "javax.net.SocketFactory");
-mu_demangle(238, java, "Ljavax/net/ssl/SSLContext;", "javax.net.ssl.SSLContext");
-mu_demangle(239, java, "Ljavax/net/ssl/SSLException;", "javax.net.ssl.SSLException");
-mu_demangle(240, java, "Ljavax/net/ssl/SSLParameters;", "javax.net.ssl.SSLParameters");
-mu_demangle(241, java, "Ljavax/net/ssl/SSLSession;", "javax.net.ssl.SSLSession");
-mu_demangle(242, java, "Ljavax/net/ssl/SSLSocket;", "javax.net.ssl.SSLSocket");
-mu_demangle(243, java, "Lio/socket/engineio/parser/Parser$DecodePayloadCallback<Ljava/lang/String;>;", "io.socket.engineio.parser.Parser$DecodePayloadCallback<String>");
-mu_demangle(244, java, "Lokhttp3/Address;", "okhttp3.Address");
-mu_demangle(245, java, "Lokhttp3/Authenticator$1;", "okhttp3.Authenticator$1");
-mu_demangle(246, java, "Lokhttp3/Authenticator;", "okhttp3.Authenticator");
-mu_demangle(247, java, "Lokhttp3/Cache$1;", "okhttp3.Cache$1");
-mu_demangle(248, java, "Lokhttp3/Cache$2;", "okhttp3.Cache$2");
-mu_demangle(249, java, "Lokhttp3/Cache$Entry;", "okhttp3.Cache$Entry");
-mu_demangle(250, java, "Lokhttp3/Cache;", "okhttp3.Cache");
-mu_demangle(251, java, "Lokhttp3/CacheControl$Builder;", "okhttp3.CacheControl$Builder");
-mu_demangle(252, java, "Lokhttp3/CacheControl;", "okhttp3.CacheControl");
-mu_demangle(253, java, "Lokhttp3/Call$Factory;", "okhttp3.Call$Factory");
-mu_demangle(254, java, "Lokhttp3/Call;", "okhttp3.Call");
-mu_demangle(255, java, "Lokhttp3/Callback;", "okhttp3.Callback");
-mu_demangle(256, java, "Lokhttp3/CertificatePinner$Pin;", "okhttp3.CertificatePinner$Pin");
-mu_demangle(257, java, "Lokhttp3/Challenge;", "okhttp3.Challenge");
-mu_demangle(258, java, "Lokhttp3/CipherSuite;", "okhttp3.CipherSuite");
-mu_demangle(259, java, "Lokhttp3/Connection;", "okhttp3.Connection");
-mu_demangle(260, java, "Lokhttp3/ConnectionPool$1;", "okhttp3.ConnectionPool$1");
-mu_demangle(261, java, "Lokhttp3/ConnectionPool;", "okhttp3.ConnectionPool");
-mu_demangle(262, java, "Lokhttp3/ConnectionSpec;", "okhttp3.ConnectionSpec");
-mu_demangle(263, java, "Lokhttp3/Cookie$Builder;", "okhttp3.Cookie$Builder");
-mu_demangle(264, java, "Lokhttp3/Cookie;", "okhttp3.Cookie");
-mu_demangle(265, java, "Lokhttp3/CookieJar$1;", "okhttp3.CookieJar$1");
-mu_demangle(266, java, "Lokhttp3/CookieJar;", "okhttp3.CookieJar");
-mu_demangle(267, java, "Lokhttp3/Credentials;", "okhttp3.Credentials");
-mu_demangle(268, java, "Lokhttp3/Dispatcher;", "okhttp3.Dispatcher");
-mu_demangle(269, java, "Lokhttp3/Dns$1;", "okhttp3.Dns$1");
-mu_demangle(270, java, "Lokhttp3/FormBody$Builder;", "okhttp3.FormBody$Builder");
-mu_demangle(271, java, "Lokhttp3/FormBody;", "okhttp3.FormBody");
-mu_demangle(272, java, "Lokhttp3/Handshake;", "okhttp3.Handshake");
-mu_demangle(273, java, "Lokhttp3/Headers$Builder;", "okhttp3.Headers$Builder");
-mu_demangle(274, java, "Lokhttp3/Headers;", "okhttp3.Headers");
-mu_demangle(275, java, "Lokhttp3/HttpUrl$1;", "okhttp3.HttpUrl$1");
-mu_demangle(276, java, "Lokhttp3/HttpUrl$Builder;", "okhttp3.HttpUrl$Builder");
-mu_demangle(277, java, "Lokhttp3/HttpUrl;", "okhttp3.HttpUrl");
-mu_demangle(278, java, "Lokhttp3/Interceptor;", "okhttp3.Interceptor");
-mu_demangle(279, java, "Lokhttp3/internal/cache2/Relay;", "okhttp3.internal.cache2.Relay");
-mu_demangle(280, java, "Lokhttp3/internal/http2/Header;", "okhttp3.internal.http2.Header");
-mu_demangle(281, java, "Lokhttp3/internal/http2/Hpack;", "okhttp3.internal.http2.Hpack");
-mu_demangle(282, java, "Lokhttp3/internal/http2/Http2;", "okhttp3.internal.http2.Http2");
-mu_demangle(283, java, "Lokhttp3/internal/http2/Ping;", "okhttp3.internal.http2.Ping");
-mu_demangle(284, java, "Lokhttp3/internal/Util$1;", "okhttp3.internal.Util$1");
-mu_demangle(285, java, "Lokhttp3/internal/Util;", "okhttp3.internal.Util");
-mu_demangle(286, java, "Lokhttp3/internal/Version;", "okhttp3.internal.Version");
-mu_demangle(287, java, "Lokhttp3/MediaType;", "okhttp3.MediaType");
-mu_demangle(288, java, "Lokhttp3/MultipartBody$Builder;", "okhttp3.MultipartBody$Builder");
-mu_demangle(289, java, "Lokhttp3/MultipartBody$Part;", "okhttp3.MultipartBody$Part");
-mu_demangle(290, java, "Lokhttp3/MultipartBody;", "okhttp3.MultipartBody");
-mu_demangle(291, java, "Lokhttp3/OkHttpClient$1;", "okhttp3.OkHttpClient$1");
-mu_demangle(292, java, "Lokhttp3/OkHttpClient$Builder;", "okhttp3.OkHttpClient$Builder");
-mu_demangle(293, java, "Lokhttp3/OkHttpClient;", "okhttp3.OkHttpClient");
-mu_demangle(294, java, "Lokhttp3/Protocol;", "okhttp3.Protocol");
-mu_demangle(295, java, "Lokhttp3/RealCall$AsyncCall;", "okhttp3.RealCall$AsyncCall");
-mu_demangle(296, java, "Lokhttp3/RealCall;", "okhttp3.RealCall");
-mu_demangle(297, java, "Lokhttp3/Request$Builder;", "okhttp3.Request$Builder");
-mu_demangle(298, java, "Lokhttp3/Request;", "okhttp3.Request");
-mu_demangle(299, java, "Lokhttp3/RequestBody$1;", "okhttp3.RequestBody$1");
-mu_demangle(300, java, "Lokhttp3/RequestBody$2;", "okhttp3.RequestBody$2");
-mu_demangle(301, java, "Lokhttp3/RequestBody$3;", "okhttp3.RequestBody$3");
-mu_demangle(302, java, "Lokhttp3/RequestBody;", "okhttp3.RequestBody");
-mu_demangle(303, java, "Lokhttp3/Response$Builder;", "okhttp3.Response$Builder");
-mu_demangle(304, java, "Lokhttp3/Response;", "okhttp3.Response");
-mu_demangle(305, java, "Lokhttp3/ResponseBody$1;", "okhttp3.ResponseBody$1");
-mu_demangle(306, java, "Lokhttp3/ResponseBody;", "okhttp3.ResponseBody");
-mu_demangle(307, java, "Lokhttp3/Route;", "okhttp3.Route");
-mu_demangle(308, java, "Lokhttp3/TlsVersion;", "okhttp3.TlsVersion");
-mu_demangle(309, java, "Lokhttp3/WebSocket;", "okhttp3.WebSocket");
-mu_demangle(310, java, "Lokio/AsyncTimeout$1;", "okio.AsyncTimeout$1");
-mu_demangle(311, java, "Lokio/AsyncTimeout$2;", "okio.AsyncTimeout$2");
-mu_demangle(312, java, "Lokio/AsyncTimeout$Watchdog;", "okio.AsyncTimeout$Watchdog");
-mu_demangle(313, java, "Lokio/AsyncTimeout;", "okio.AsyncTimeout");
-mu_demangle(314, java, "Lokio/Buffer$1;", "okio.Buffer$1");
-mu_demangle(315, java, "Lokio/Buffer$2;", "okio.Buffer$2");
-mu_demangle(316, java, "Lokio/BufferedSink;", "okio.BufferedSink");
-mu_demangle(317, java, "Lokio/BufferedSource;", "okio.BufferedSource");
-mu_demangle(318, java, "Lokio/ByteString;", "okio.ByteString");
-mu_demangle(319, java, "Lokio/DeflaterSink;", "okio.DeflaterSink");
-mu_demangle(320, java, "Lokio/ForwardingSink;", "okio.ForwardingSink");
-mu_demangle(321, java, "Lokio/ForwardingSource;", "okio.ForwardingSource");
-mu_demangle(322, java, "Lokio/ForwardingTimeout;", "okio.ForwardingTimeout");
-mu_demangle(323, java, "Lokio/GzipSink;", "okio.GzipSink");
-mu_demangle(324, java, "Lokio/GzipSource;", "okio.GzipSource");
-mu_demangle(325, java, "Lokio/HashingSink;", "okio.HashingSink");
-mu_demangle(326, java, "Lokio/HashingSource;", "okio.HashingSource");
-mu_demangle(327, java, "Lokio/InflaterSource;", "okio.InflaterSource");
-mu_demangle(328, java, "Lokio/Options;", "okio.Options");
-mu_demangle(329, java, "Lokio/Pipe$PipeSink;", "okio.Pipe$PipeSink");
-mu_demangle(330, java, "Lokio/Pipe$PipeSource;", "okio.Pipe$PipeSource");
-mu_demangle(331, java, "Lokio/RealBufferedSink$1;", "okio.RealBufferedSink$1");
-mu_demangle(332, java, "Lokio/RealBufferedSink;", "okio.RealBufferedSink");
-mu_demangle(333, java, "Lokio/RealBufferedSource;", "okio.RealBufferedSource");
-mu_demangle(334, java, "Lokio/Segment;", "okio.Segment");
-mu_demangle(335, java, "Lokio/SegmentedByteString;", "okio.SegmentedByteString");
-mu_demangle(336, java, "Lokio/SegmentPool;", "okio.SegmentPool");
-mu_demangle(337, java, "Lokio/Timeout$1;", "okio.Timeout$1");
-mu_demangle(338, java, "Lokio/Timeout;", "okio.Timeout");
-mu_demangle(339, java, "Lorg/json/JSONArray;", "org.json.JSONArray");
-mu_demangle(340, java, "Lorg/json/JSONException;", "org.json.JSONException");
-mu_demangle(341, java, "Lorg/json/JSONObject;", "org.json.JSONObject");
-mu_demangle(342, java, "Lorg/json/JSONTokener;", "org.json.JSONTokener");
-mu_demangle(343, java, "Lsome/jar/Fake<[BCDFIJSZLjava/lang/String;Ljava/lang/String;>", "some.jar.Fake<byte[], char, double, float, int, long, short, boolean, String, String>");
-mu_demangle(344, java, "Ljava/io/BufferedReader;.<init>(Ljava/io/Reader;)V", "void java.io.BufferedReader.<init>(java.io.Reader)");
+	// user tests
+	mu_demangle_test("Lahmyth/mine/king/ahmyth/R$id;", "ahmyth.mine.king.ahmyth.R$id"),
+	mu_demangle_test("Landroid/app/Activity;", "android.app.Activity"),
+	mu_demangle_test("Landroid/app/Service;", "android.app.Service"),
+	mu_demangle_test("Landroid/content/ComponentName;", "android.content.ComponentName"),
+	mu_demangle_test("Landroid/content/Context;", "android.content.Context"),
+	mu_demangle_test("Landroid/content/Intent;", "android.content.Intent"),
+	mu_demangle_test("Landroid/database/Cursor;", "android.database.Cursor"),
+	mu_demangle_test("Landroid/graphics/Bitmap;", "android.graphics.Bitmap"),
+	mu_demangle_test("Landroid/hardware/Camera;", "android.hardware.Camera"),
+	mu_demangle_test("Landroid/media/MediaRecorder;", "android.media.MediaRecorder"),
+	mu_demangle_test("Landroid/net/Uri;", "android.net.Uri"),
+	mu_demangle_test("Landroid/os/Build$VERSION;", "android.os.Build$VERSION"),
+	mu_demangle_test("Landroid/os/Build;", "android.os.Build"),
+	mu_demangle_test("Landroid/os/Bundle;", "android.os.Bundle"),
+	mu_demangle_test("Landroid/os/IBinder;", "android.os.IBinder"),
+	mu_demangle_test("Landroid/os/Looper;", "android.os.Looper"),
+	mu_demangle_test("Landroid/telephony/SmsManager;", "android.telephony.SmsManager"),
+	mu_demangle_test("Landroid/util/Log;", "android.util.Log"),
+	mu_demangle_test("Ldalvik/annotation/InnerClass;", "dalvik.annotation.InnerClass"),
+	mu_demangle_test("Ldalvik/annotation/Signature;", "dalvik.annotation.Signature"),
+	mu_demangle_test("Ldalvik/annotation/Throws;", "dalvik.annotation.Throws"),
+	mu_demangle_test("Lio/socket/backo/Backoff;", "io.socket.backo.Backoff"),
+	mu_demangle_test("Lio/socket/client/Ack;", "io.socket.client.Ack"),
+	mu_demangle_test("Lio/socket/client/IO$Options;", "io.socket.client.IO$Options"),
+	mu_demangle_test("Lio/socket/client/IO;", "io.socket.client.IO"),
+	mu_demangle_test("Lio/socket/client/Manager$1$1;", "io.socket.client.Manager$1$1"),
+	mu_demangle_test("Lio/socket/client/Manager$1$2;", "io.socket.client.Manager$1$2"),
+	mu_demangle_test("Lio/socket/client/Manager$1$3;", "io.socket.client.Manager$1$3"),
+	mu_demangle_test("Lio/socket/client/Manager$1$4;", "io.socket.client.Manager$1$4"),
+	mu_demangle_test("Lio/socket/client/Manager$1$5;", "io.socket.client.Manager$1$5"),
+	mu_demangle_test("Lio/socket/client/Manager$10;", "io.socket.client.Manager$10"),
+	mu_demangle_test("Lio/socket/client/Manager$11$1;", "io.socket.client.Manager$11$1"),
+	mu_demangle_test("Lio/socket/client/Manager$11;", "io.socket.client.Manager$11"),
+	mu_demangle_test("Lio/socket/client/Manager$12;", "io.socket.client.Manager$12"),
+	mu_demangle_test("Lio/socket/client/Manager$1;", "io.socket.client.Manager$1"),
+	mu_demangle_test("Lio/socket/client/Manager$2;", "io.socket.client.Manager$2"),
+	mu_demangle_test("Lio/socket/client/Manager$3;", "io.socket.client.Manager$3"),
+	mu_demangle_test("Lio/socket/client/Manager$4;", "io.socket.client.Manager$4"),
+	mu_demangle_test("Lio/socket/client/Manager$5;", "io.socket.client.Manager$5"),
+	mu_demangle_test("Lio/socket/client/Manager$6;", "io.socket.client.Manager$6"),
+	mu_demangle_test("Lio/socket/client/Manager$7;", "io.socket.client.Manager$7"),
+	mu_demangle_test("Lio/socket/client/Manager$8;", "io.socket.client.Manager$8"),
+	mu_demangle_test("Lio/socket/client/Manager$9;", "io.socket.client.Manager$9"),
+	mu_demangle_test("Lio/socket/client/Manager;", "io.socket.client.Manager"),
+	mu_demangle_test("Lio/socket/client/On$1;", "io.socket.client.On$1"),
+	mu_demangle_test("Lio/socket/client/On$Handle;", "io.socket.client.On$Handle"),
+	mu_demangle_test("Lio/socket/client/On;", "io.socket.client.On"),
+	mu_demangle_test("Lio/socket/client/Socket$2$1;", "io.socket.client.Socket$2$1"),
+	mu_demangle_test("Lio/socket/client/Socket$2$2;", "io.socket.client.Socket$2$2"),
+	mu_demangle_test("Lio/socket/client/Socket$2$3;", "io.socket.client.Socket$2$3"),
+	mu_demangle_test("Lio/socket/client/Socket$6$1;", "io.socket.client.Socket$6$1"),
+	mu_demangle_test("Lio/socket/client/Socket$7$1;", "io.socket.client.Socket$7$1"),
+	mu_demangle_test("Lio/socket/client/Socket;", "io.socket.client.Socket"),
+	mu_demangle_test("Lio/socket/client/Url;", "io.socket.client.Url"),
+	mu_demangle_test("Lio/socket/global/Global;", "io.socket.global.Global"),
+	mu_demangle_test("Lio/socket/hasbinary/HasBinary;", "io.socket.hasbinary.HasBinary"),
+	mu_demangle_test("Lio/socket/parser/Binary;", "io.socket.parser.Binary"),
+	mu_demangle_test("Lio/socket/parser/Packet;", "io.socket.parser.Packet"),
+	mu_demangle_test("Lio/socket/parser/Packet<*>;", "io.socket.parser.Packet<T>"),
+	mu_demangle_test("Lio/socket/parser/Packet<TT;>;", "io.socket.parser.Packet<T, T>"),
+	mu_demangle_test("Lio/socket/parser/Parser;", "io.socket.parser.Parser"),
+	mu_demangle_test("Lio/socket/thread/EventThread;", "io.socket.thread.EventThread"),
+	mu_demangle_test("Lio/socket/utf8/UTF8;", "io.socket.utf8.UTF8"),
+	mu_demangle_test("Lio/socket/utf8/UTF8Exception;", "io.socket.utf8.UTF8Exception"),
+	mu_demangle_test("Lio/socket/yeast/Yeast;", "io.socket.yeast.Yeast"),
+	mu_demangle_test("Ljava/io/BufferedInputStream;", "java.io.BufferedInputStream"),
+	mu_demangle_test("Ljava/io/BufferedOutputStream;", "java.io.BufferedOutputStream"),
+	mu_demangle_test("Ljava/io/BufferedReader;", "java.io.BufferedReader"),
+	mu_demangle_test("Ljava/io/ByteArrayOutputStream;", "java.io.ByteArrayOutputStream"),
+	mu_demangle_test("Ljava/io/Closeable;", "java.io.Closeable"),
+	mu_demangle_test("Ljava/io/EOFException;", "java.io.EOFException"),
+	mu_demangle_test("Ljava/io/File;", "java.io.File"),
+	mu_demangle_test("Ljava/io/FileInputStream;", "java.io.FileInputStream"),
+	mu_demangle_test("Ljava/io/FileNotFoundException;", "java.io.FileNotFoundException"),
+	mu_demangle_test("Ljava/io/FileOutputStream;", "java.io.FileOutputStream"),
+	mu_demangle_test("Ljava/io/Flushable;", "java.io.Flushable"),
+	mu_demangle_test("Ljava/io/InputStream;", "java.io.InputStream"),
+	mu_demangle_test("Ljava/io/IOException;", "java.io.IOException"),
+	mu_demangle_test("Ljava/io/ObjectOutputStream;", "java.io.ObjectOutputStream"),
+	mu_demangle_test("Ljava/io/OutputStream;", "java.io.OutputStream"),
+	mu_demangle_test("Ljava/io/RandomAccessFile;", "java.io.RandomAccessFile"),
+	mu_demangle_test("Ljava/io/Reader;", "java.io.Reader"),
+	mu_demangle_test("Ljava/io/Serializable;", "java.io.Serializable"),
+	mu_demangle_test("Ljava/lang/AssertionError;", "java.lang.AssertionError"),
+	mu_demangle_test("Ljava/lang/Boolean;", "Boolean"),
+	mu_demangle_test("Ljava/lang/Byte;", "Byte"),
+	mu_demangle_test("Ljava/lang/Character;", "Character"),
+	mu_demangle_test("Ljava/lang/CharSequence;", "java.lang.CharSequence"),
+	mu_demangle_test("Ljava/lang/Class;", "Class"),
+	mu_demangle_test("Ljava/lang/Class<*>;", "Class<T>"),
+	mu_demangle_test("Ljava/lang/Class<TT;>;", "Class<T, T>"),
+	mu_demangle_test("Ljava/lang/ClassLoader;", "ClassLoader"),
+	mu_demangle_test("Ljava/lang/Cloneable;", "java.lang.Cloneable"),
+	mu_demangle_test("Ljava/lang/Comparable;", "java.lang.Comparable"),
+	mu_demangle_test("Ljava/lang/Enum;", "Enum"),
+	mu_demangle_test("Ljava/lang/Exception;", "Exception"),
+	mu_demangle_test("Ljava/lang/IllegalAccessError;", "java.lang.IllegalAccessError"),
+	mu_demangle_test("Ljava/lang/Integer;", "Integer"),
+	mu_demangle_test("Ljava/lang/LinkageError;", "java.lang.LinkageError"),
+	mu_demangle_test("Ljava/lang/Long;", "Long"),
+	mu_demangle_test("Ljava/lang/Math;", "Math"),
+	mu_demangle_test("Ljava/lang/NoSuchFieldError;", "java.lang.NoSuchFieldError"),
+	mu_demangle_test("Ljava/lang/Object;", "Object"),
+	mu_demangle_test("Ljava/lang/ref/Reference;", "java.lang.ref.Reference"),
+	mu_demangle_test("Ljava/lang/ref/WeakReference;", "java.lang.ref.WeakReference"),
+	mu_demangle_test("Ljava/lang/reflect/Array;", "java.lang.reflect.Array"),
+	mu_demangle_test("Ljava/lang/reflect/Constructor;", "java.lang.reflect.Constructor"),
+	mu_demangle_test("Ljava/lang/reflect/Field;", "java.lang.reflect.Field"),
+	mu_demangle_test("Ljava/lang/reflect/Method;", "java.lang.reflect.Method"),
+	mu_demangle_test("Ljava/lang/reflect/Proxy;", "java.lang.reflect.Proxy"),
+	mu_demangle_test("Ljava/lang/Runnable;", "java.lang.Runnable"),
+	mu_demangle_test("Ljava/lang/RuntimeException;", "RuntimeException"),
+	mu_demangle_test("Ljava/lang/SecurityException;", "java.lang.SecurityException"),
+	mu_demangle_test("Ljava/lang/Short;", "Short"),
+	mu_demangle_test("Ljava/lang/String;", "String"),
+	mu_demangle_test("Ljava/lang/StringBuilder;", "StringBuilder"),
+	mu_demangle_test("Ljava/lang/System;", "System"),
+	mu_demangle_test("Ljava/lang/Thread;", "Thread"),
+	mu_demangle_test("Ljava/lang/ThreadDeath;", "ThreadDeath"),
+	mu_demangle_test("Ljava/lang/ThreadLocal;", "ThreadLocal"),
+	mu_demangle_test("Ljava/lang/Throwable;", "Throwable"),
+	mu_demangle_test("Ljava/lang/VirtualMachineError;", "java.lang.VirtualMachineError"),
+	mu_demangle_test("Ljava/lang/Void;", "Void"),
+	mu_demangle_test("Ljava/math/BigDecimal;", "java.math.BigDecimal"),
+	mu_demangle_test("Ljava/math/BigInteger;", "java.math.BigInteger"),
+	mu_demangle_test("Ljava/net/HttpRetryException;", "java.net.HttpRetryException"),
+	mu_demangle_test("Ljava/net/HttpURLConnection;", "java.net.HttpURLConnection"),
+	mu_demangle_test("Ljava/net/IDN;", "java.net.IDN"),
+	mu_demangle_test("Ljava/net/InetAddress;", "java.net.InetAddress"),
+	mu_demangle_test("Ljava/net/InetSocketAddress;", "java.net.InetSocketAddress"),
+	mu_demangle_test("Ljava/net/ProtocolException;", "java.net.ProtocolException"),
+	mu_demangle_test("Ljava/net/Proxy$Type;", "java.net.Proxy$Type"),
+	mu_demangle_test("Ljava/net/Proxy;", "java.net.Proxy"),
+	mu_demangle_test("Ljava/net/ProxySelector;", "java.net.ProxySelector"),
+	mu_demangle_test("Ljava/net/ServerSocket;", "java.net.ServerSocket"),
+	mu_demangle_test("Ljava/net/Socket;", "java.net.Socket"),
+	mu_demangle_test("Ljava/net/SocketAddress;", "java.net.SocketAddress"),
+	mu_demangle_test("Ljava/net/SocketException;", "java.net.SocketException"),
+	mu_demangle_test("Ljava/net/UnknownHostException;", "java.net.UnknownHostException"),
+	mu_demangle_test("Ljava/net/URI;", "java.net.URI"),
+	mu_demangle_test("Ljava/net/URISyntaxException;", "java.net.URISyntaxException"),
+	mu_demangle_test("Ljava/net/URL;", "java.net.URL"),
+	mu_demangle_test("Ljava/net/URLConnection;", "java.net.URLConnection"),
+	mu_demangle_test("Ljava/net/URLDecoder;", "java.net.URLDecoder"),
+	mu_demangle_test("Ljava/net/URLEncoder;", "java.net.URLEncoder"),
+	mu_demangle_test("Ljava/nio/Buffer;", "java.nio.Buffer"),
+	mu_demangle_test("Ljava/nio/ByteBuffer;", "java.nio.ByteBuffer"),
+	mu_demangle_test("Ljava/nio/channels/FileChannel;", "java.nio.channels.FileChannel"),
+	mu_demangle_test("Ljava/nio/charset/Charset;", "java.nio.charset.Charset"),
+	mu_demangle_test("Ljava/nio/file/Files;", "java.nio.file.Files"),
+	mu_demangle_test("Ljava/nio/file/Path;", "java.nio.file.Path"),
+	mu_demangle_test("Ljava/security/Key;", "java.security.Key"),
+	mu_demangle_test("Ljava/security/KeyStore;", "java.security.KeyStore"),
+	mu_demangle_test("Ljava/security/MessageDigest;", "java.security.MessageDigest"),
+	mu_demangle_test("Ljava/security/Principal;", "java.security.Principal"),
+	mu_demangle_test("Ljava/security/PublicKey;", "java.security.PublicKey"),
+	mu_demangle_test("Ljava/security/SecureRandom;", "java.security.SecureRandom"),
+	mu_demangle_test("Ljava/text/DateFormat;", "java.text.DateFormat"),
+	mu_demangle_test("Ljava/text/ParsePosition;", "java.text.ParsePosition"),
+	mu_demangle_test("Ljava/text/SimpleDateFormat;", "java.text.SimpleDateFormat"),
+	mu_demangle_test("Ljava/util/AbstractList;", "java.util.AbstractList"),
+	mu_demangle_test("Ljava/util/ArrayDeque;", "java.util.ArrayDeque"),
+	mu_demangle_test("Ljava/util/ArrayList;", "java.util.ArrayList"),
+	mu_demangle_test("Ljava/util/ArrayList<[B>;", "java.util.ArrayList<byte[]>"),
+	mu_demangle_test("Ljava/util/Arrays;", "java.util.Arrays"),
+	mu_demangle_test("Ljava/util/Calendar;", "java.util.Calendar"),
+	mu_demangle_test("Ljava/util/Collection;", "java.util.Collection"),
+	mu_demangle_test("Ljava/util/Collection<*>;", "java.util.Collection<T>"),
+	mu_demangle_test("Ljava/util/Collections;", "java.util.Collections"),
+	mu_demangle_test("Ljava/util/Comparator;", "java.util.Comparator"),
+	mu_demangle_test("Ljava/util/concurrent/Executor;", "java.util.concurrent.Executor"),
+	mu_demangle_test("Ljava/util/concurrent/Future;", "java.util.concurrent.Future"),
+	mu_demangle_test("Ljava/util/concurrent/TimeUnit;", "java.util.concurrent.TimeUnit"),
+	mu_demangle_test("Ljava/util/Date;", "java.util.Date"),
+	mu_demangle_test("Ljava/util/Deque;", "java.util.Deque"),
+	mu_demangle_test("Ljava/util/Deque<TT;>;", "java.util.Deque<T, T>"),
+	mu_demangle_test("Ljava/util/GregorianCalendar;", "java.util.GregorianCalendar"),
+	mu_demangle_test("Ljava/util/HashMap;", "java.util.HashMap"),
+	mu_demangle_test("Ljava/util/HashSet;", "java.util.HashSet"),
+	mu_demangle_test("Ljava/util/Iterator;", "java.util.Iterator"),
+	mu_demangle_test("Ljava/util/Iterator<*>;", "java.util.Iterator<T>"),
+	mu_demangle_test("Ljava/util/LinkedHashMap;", "java.util.LinkedHashMap"),
+	mu_demangle_test("Ljava/util/LinkedHashSet;", "java.util.LinkedHashSet"),
+	mu_demangle_test("Ljava/util/LinkedList;", "java.util.LinkedList"),
+	mu_demangle_test("Ljava/util/List;", "java.util.List"),
+	mu_demangle_test("Ljava/util/List<*>;", "java.util.List<T>"),
+	mu_demangle_test("Ljava/util/List<[B>;", "java.util.List<byte[]>"),
+	mu_demangle_test("Ljava/util/List<TT;>;", "java.util.List<T, T>"),
+	mu_demangle_test("Ljava/util/Locale;", "java.util.Locale"),
+	mu_demangle_test("Ljava/util/logging/Level;", "java.util.logging.Level"),
+	mu_demangle_test("Ljava/util/logging/Logger;", "java.util.logging.Logger"),
+	mu_demangle_test("Ljava/util/Map$Entry;", "java.util.Map$Entry"),
+	mu_demangle_test("Ljava/util/Map;", "java.util.Map"),
+	mu_demangle_test("Ljava/util/Queue;", "java.util.Queue"),
+	mu_demangle_test("Ljava/util/Random;", "java.util.Random"),
+	mu_demangle_test("Ljava/util/RandomAccess;", "java.util.RandomAccess"),
+	mu_demangle_test("Ljava/util/regex/Matcher;", "java.util.regex.Matcher"),
+	mu_demangle_test("Ljava/util/regex/Pattern;", "java.util.regex.Pattern"),
+	mu_demangle_test("Ljava/util/Set;", "java.util.Set"),
+	mu_demangle_test("Ljava/util/Timer;", "java.util.Timer"),
+	mu_demangle_test("Ljava/util/TimerTask;", "java.util.TimerTask"),
+	mu_demangle_test("Ljava/util/TimeZone;", "java.util.TimeZone"),
+	mu_demangle_test("Ljava/util/TreeMap;", "java.util.TreeMap"),
+	mu_demangle_test("Ljava/util/TreeSet;", "java.util.TreeSet"),
+	mu_demangle_test("Ljava/util/UUID;", "java.util.UUID"),
+	mu_demangle_test("Ljava/util/zip/CRC32;", "java.util.zip.CRC32"),
+	mu_demangle_test("Ljava/util/zip/Deflater;", "java.util.zip.Deflater"),
+	mu_demangle_test("Ljava/util/zip/Inflater;", "java.util.zip.Inflater"),
+	mu_demangle_test("Ljavax/crypto/Mac;", "javax.crypto.Mac"),
+	mu_demangle_test("Ljavax/net/SocketFactory;", "javax.net.SocketFactory"),
+	mu_demangle_test("Ljavax/net/ssl/SSLContext;", "javax.net.ssl.SSLContext"),
+	mu_demangle_test("Ljavax/net/ssl/SSLException;", "javax.net.ssl.SSLException"),
+	mu_demangle_test("Ljavax/net/ssl/SSLParameters;", "javax.net.ssl.SSLParameters"),
+	mu_demangle_test("Ljavax/net/ssl/SSLSession;", "javax.net.ssl.SSLSession"),
+	mu_demangle_test("Ljavax/net/ssl/SSLSocket;", "javax.net.ssl.SSLSocket"),
+	mu_demangle_test("Lio/socket/engineio/parser/Parser$DecodePayloadCallback<Ljava/lang/String;>;", "io.socket.engineio.parser.Parser$DecodePayloadCallback<String>"),
+	mu_demangle_test("Lokhttp3/Address;", "okhttp3.Address"),
+	mu_demangle_test("Lokhttp3/Authenticator$1;", "okhttp3.Authenticator$1"),
+	mu_demangle_test("Lokhttp3/Authenticator;", "okhttp3.Authenticator"),
+	mu_demangle_test("Lokhttp3/Cache$1;", "okhttp3.Cache$1"),
+	mu_demangle_test("Lokhttp3/Cache$2;", "okhttp3.Cache$2"),
+	mu_demangle_test("Lokhttp3/Cache$Entry;", "okhttp3.Cache$Entry"),
+	mu_demangle_test("Lokhttp3/Cache;", "okhttp3.Cache"),
+	mu_demangle_test("Lokhttp3/CacheControl$Builder;", "okhttp3.CacheControl$Builder"),
+	mu_demangle_test("Lokhttp3/CacheControl;", "okhttp3.CacheControl"),
+	mu_demangle_test("Lokhttp3/Call$Factory;", "okhttp3.Call$Factory"),
+	mu_demangle_test("Lokhttp3/Call;", "okhttp3.Call"),
+	mu_demangle_test("Lokhttp3/Callback;", "okhttp3.Callback"),
+	mu_demangle_test("Lokhttp3/CertificatePinner$Pin;", "okhttp3.CertificatePinner$Pin"),
+	mu_demangle_test("Lokhttp3/Challenge;", "okhttp3.Challenge"),
+	mu_demangle_test("Lokhttp3/CipherSuite;", "okhttp3.CipherSuite"),
+	mu_demangle_test("Lokhttp3/Connection;", "okhttp3.Connection"),
+	mu_demangle_test("Lokhttp3/ConnectionPool$1;", "okhttp3.ConnectionPool$1"),
+	mu_demangle_test("Lokhttp3/ConnectionPool;", "okhttp3.ConnectionPool"),
+	mu_demangle_test("Lokhttp3/ConnectionSpec;", "okhttp3.ConnectionSpec"),
+	mu_demangle_test("Lokhttp3/Cookie$Builder;", "okhttp3.Cookie$Builder"),
+	mu_demangle_test("Lokhttp3/Cookie;", "okhttp3.Cookie"),
+	mu_demangle_test("Lokhttp3/CookieJar$1;", "okhttp3.CookieJar$1"),
+	mu_demangle_test("Lokhttp3/CookieJar;", "okhttp3.CookieJar"),
+	mu_demangle_test("Lokhttp3/Credentials;", "okhttp3.Credentials"),
+	mu_demangle_test("Lokhttp3/Dispatcher;", "okhttp3.Dispatcher"),
+	mu_demangle_test("Lokhttp3/Dns$1;", "okhttp3.Dns$1"),
+	mu_demangle_test("Lokhttp3/FormBody$Builder;", "okhttp3.FormBody$Builder"),
+	mu_demangle_test("Lokhttp3/FormBody;", "okhttp3.FormBody"),
+	mu_demangle_test("Lokhttp3/Handshake;", "okhttp3.Handshake"),
+	mu_demangle_test("Lokhttp3/Headers$Builder;", "okhttp3.Headers$Builder"),
+	mu_demangle_test("Lokhttp3/Headers;", "okhttp3.Headers"),
+	mu_demangle_test("Lokhttp3/HttpUrl$1;", "okhttp3.HttpUrl$1"),
+	mu_demangle_test("Lokhttp3/HttpUrl$Builder;", "okhttp3.HttpUrl$Builder"),
+	mu_demangle_test("Lokhttp3/HttpUrl;", "okhttp3.HttpUrl"),
+	mu_demangle_test("Lokhttp3/Interceptor;", "okhttp3.Interceptor"),
+	mu_demangle_test("Lokhttp3/internal/cache2/Relay;", "okhttp3.internal.cache2.Relay"),
+	mu_demangle_test("Lokhttp3/internal/http2/Header;", "okhttp3.internal.http2.Header"),
+	mu_demangle_test("Lokhttp3/internal/http2/Hpack;", "okhttp3.internal.http2.Hpack"),
+	mu_demangle_test("Lokhttp3/internal/http2/Http2;", "okhttp3.internal.http2.Http2"),
+	mu_demangle_test("Lokhttp3/internal/http2/Ping;", "okhttp3.internal.http2.Ping"),
+	mu_demangle_test("Lokhttp3/internal/Util$1;", "okhttp3.internal.Util$1"),
+	mu_demangle_test("Lokhttp3/internal/Util;", "okhttp3.internal.Util"),
+	mu_demangle_test("Lokhttp3/internal/Version;", "okhttp3.internal.Version"),
+	mu_demangle_test("Lokhttp3/MediaType;", "okhttp3.MediaType"),
+	mu_demangle_test("Lokhttp3/MultipartBody$Builder;", "okhttp3.MultipartBody$Builder"),
+	mu_demangle_test("Lokhttp3/MultipartBody$Part;", "okhttp3.MultipartBody$Part"),
+	mu_demangle_test("Lokhttp3/MultipartBody;", "okhttp3.MultipartBody"),
+	mu_demangle_test("Lokhttp3/OkHttpClient$1;", "okhttp3.OkHttpClient$1"),
+	mu_demangle_test("Lokhttp3/OkHttpClient$Builder;", "okhttp3.OkHttpClient$Builder"),
+	mu_demangle_test("Lokhttp3/OkHttpClient;", "okhttp3.OkHttpClient"),
+	mu_demangle_test("Lokhttp3/Protocol;", "okhttp3.Protocol"),
+	mu_demangle_test("Lokhttp3/RealCall$AsyncCall;", "okhttp3.RealCall$AsyncCall"),
+	mu_demangle_test("Lokhttp3/RealCall;", "okhttp3.RealCall"),
+	mu_demangle_test("Lokhttp3/Request$Builder;", "okhttp3.Request$Builder"),
+	mu_demangle_test("Lokhttp3/Request;", "okhttp3.Request"),
+	mu_demangle_test("Lokhttp3/RequestBody$1;", "okhttp3.RequestBody$1"),
+	mu_demangle_test("Lokhttp3/RequestBody$2;", "okhttp3.RequestBody$2"),
+	mu_demangle_test("Lokhttp3/RequestBody$3;", "okhttp3.RequestBody$3"),
+	mu_demangle_test("Lokhttp3/RequestBody;", "okhttp3.RequestBody"),
+	mu_demangle_test("Lokhttp3/Response$Builder;", "okhttp3.Response$Builder"),
+	mu_demangle_test("Lokhttp3/Response;", "okhttp3.Response"),
+	mu_demangle_test("Lokhttp3/ResponseBody$1;", "okhttp3.ResponseBody$1"),
+	mu_demangle_test("Lokhttp3/ResponseBody;", "okhttp3.ResponseBody"),
+	mu_demangle_test("Lokhttp3/Route;", "okhttp3.Route"),
+	mu_demangle_test("Lokhttp3/TlsVersion;", "okhttp3.TlsVersion"),
+	mu_demangle_test("Lokhttp3/WebSocket;", "okhttp3.WebSocket"),
+	mu_demangle_test("Lokio/AsyncTimeout$1;", "okio.AsyncTimeout$1"),
+	mu_demangle_test("Lokio/AsyncTimeout$2;", "okio.AsyncTimeout$2"),
+	mu_demangle_test("Lokio/AsyncTimeout$Watchdog;", "okio.AsyncTimeout$Watchdog"),
+	mu_demangle_test("Lokio/AsyncTimeout;", "okio.AsyncTimeout"),
+	mu_demangle_test("Lokio/Buffer$1;", "okio.Buffer$1"),
+	mu_demangle_test("Lokio/Buffer$2;", "okio.Buffer$2"),
+	mu_demangle_test("Lokio/BufferedSink;", "okio.BufferedSink"),
+	mu_demangle_test("Lokio/BufferedSource;", "okio.BufferedSource"),
+	mu_demangle_test("Lokio/ByteString;", "okio.ByteString"),
+	mu_demangle_test("Lokio/DeflaterSink;", "okio.DeflaterSink"),
+	mu_demangle_test("Lokio/ForwardingSink;", "okio.ForwardingSink"),
+	mu_demangle_test("Lokio/ForwardingSource;", "okio.ForwardingSource"),
+	mu_demangle_test("Lokio/ForwardingTimeout;", "okio.ForwardingTimeout"),
+	mu_demangle_test("Lokio/GzipSink;", "okio.GzipSink"),
+	mu_demangle_test("Lokio/GzipSource;", "okio.GzipSource"),
+	mu_demangle_test("Lokio/HashingSink;", "okio.HashingSink"),
+	mu_demangle_test("Lokio/HashingSource;", "okio.HashingSource"),
+	mu_demangle_test("Lokio/InflaterSource;", "okio.InflaterSource"),
+	mu_demangle_test("Lokio/Options;", "okio.Options"),
+	mu_demangle_test("Lokio/Pipe$PipeSink;", "okio.Pipe$PipeSink"),
+	mu_demangle_test("Lokio/Pipe$PipeSource;", "okio.Pipe$PipeSource"),
+	mu_demangle_test("Lokio/RealBufferedSink$1;", "okio.RealBufferedSink$1"),
+	mu_demangle_test("Lokio/RealBufferedSink;", "okio.RealBufferedSink"),
+	mu_demangle_test("Lokio/RealBufferedSource;", "okio.RealBufferedSource"),
+	mu_demangle_test("Lokio/Segment;", "okio.Segment"),
+	mu_demangle_test("Lokio/SegmentedByteString;", "okio.SegmentedByteString"),
+	mu_demangle_test("Lokio/SegmentPool;", "okio.SegmentPool"),
+	mu_demangle_test("Lokio/Timeout$1;", "okio.Timeout$1"),
+	mu_demangle_test("Lokio/Timeout;", "okio.Timeout"),
+	mu_demangle_test("Lorg/json/JSONArray;", "org.json.JSONArray"),
+	mu_demangle_test("Lorg/json/JSONException;", "org.json.JSONException"),
+	mu_demangle_test("Lorg/json/JSONObject;", "org.json.JSONObject"),
+	mu_demangle_test("Lorg/json/JSONTokener;", "org.json.JSONTokener"),
+	mu_demangle_test("Lsome/jar/Fake<[BCDFIJSZLjava/lang/String;Ljava/lang/String;>", "some.jar.Fake<byte[], char, double, float, int, long, short, boolean, String, String>"),
+	mu_demangle_test("Ljava/io/BufferedReader;.<init>(Ljava/io/Reader;)V", "void java.io.BufferedReader.<init>(java.io.Reader)"),
+	// end
+);
 
-int all_tests() {
-	mu_demangle_run(0);
-	mu_demangle_run(1);
-	mu_demangle_run(2);
-	mu_demangle_run(3);
-	mu_demangle_run(4);
-	mu_demangle_run(5);
-	mu_demangle_run(6);
-	mu_demangle_run(7);
-	mu_demangle_run(8);
-	mu_demangle_run(9);
-	mu_demangle_run(10);
-	mu_demangle_run(11);
-	mu_demangle_run(12);
-	mu_demangle_run(13);
-	mu_demangle_run(14);
-	mu_demangle_run(15);
-	mu_demangle_run(16);
-	mu_demangle_run(17);
-	mu_demangle_run(18);
-	mu_demangle_run(19);
-	mu_demangle_run(20);
-	mu_demangle_run(21);
-	mu_demangle_run(22);
-	mu_demangle_run(23);
-	mu_demangle_run(24);
-	mu_demangle_run(25);
-	mu_demangle_run(26);
-	mu_demangle_run(27);
-	mu_demangle_run(28);
-	mu_demangle_run(29);
-	mu_demangle_run(30);
-	mu_demangle_run(31);
-	mu_demangle_run(32);
-	mu_demangle_run(33);
-	mu_demangle_run(34);
-	mu_demangle_run(35);
-	mu_demangle_run(36);
-	mu_demangle_run(37);
-	mu_demangle_run(38);
-	mu_demangle_run(39);
-	mu_demangle_run(40);
-	mu_demangle_run(41);
-	mu_demangle_run(42);
-	mu_demangle_run(43);
-	mu_demangle_run(44);
-	mu_demangle_run(45);
-	mu_demangle_run(46);
-	mu_demangle_run(47);
-	mu_demangle_run(48);
-	mu_demangle_run(49);
-	mu_demangle_run(50);
-	mu_demangle_run(51);
-	mu_demangle_run(52);
-	mu_demangle_run(53);
-	mu_demangle_run(54);
-	mu_demangle_run(55);
-	mu_demangle_run(56);
-	mu_demangle_run(57);
-	mu_demangle_run(58);
-	mu_demangle_run(59);
-	mu_demangle_run(60);
-	mu_demangle_run(61);
-	mu_demangle_run(62);
-	mu_demangle_run(63);
-	mu_demangle_run(64);
-	mu_demangle_run(65);
-	mu_demangle_run(66);
-	mu_demangle_run(67);
-	mu_demangle_run(68);
-	mu_demangle_run(69);
-	mu_demangle_run(70);
-	mu_demangle_run(71);
-	mu_demangle_run(72);
-	mu_demangle_run(73);
-	mu_demangle_run(74);
-	mu_demangle_run(75);
-	mu_demangle_run(76);
-	mu_demangle_run(77);
-	mu_demangle_run(78);
-	mu_demangle_run(79);
-	mu_demangle_run(80);
-	mu_demangle_run(81);
-	mu_demangle_run(82);
-	mu_demangle_run(83);
-	mu_demangle_run(84);
-	mu_demangle_run(85);
-	mu_demangle_run(86);
-	mu_demangle_run(87);
-	mu_demangle_run(88);
-	mu_demangle_run(89);
-	mu_demangle_run(90);
-	mu_demangle_run(91);
-	mu_demangle_run(92);
-	mu_demangle_run(93);
-	mu_demangle_run(94);
-	mu_demangle_run(95);
-	mu_demangle_run(96);
-	mu_demangle_run(97);
-	mu_demangle_run(98);
-	mu_demangle_run(99);
-	mu_demangle_run(100);
-	mu_demangle_run(101);
-	mu_demangle_run(102);
-	mu_demangle_run(103);
-	mu_demangle_run(104);
-	mu_demangle_run(105);
-	mu_demangle_run(106);
-	mu_demangle_run(107);
-	mu_demangle_run(108);
-	mu_demangle_run(109);
-	mu_demangle_run(110);
-	mu_demangle_run(111);
-	mu_demangle_run(112);
-	mu_demangle_run(113);
-	mu_demangle_run(114);
-	mu_demangle_run(115);
-	mu_demangle_run(116);
-	mu_demangle_run(117);
-	mu_demangle_run(118);
-	mu_demangle_run(119);
-	mu_demangle_run(120);
-	mu_demangle_run(121);
-	mu_demangle_run(122);
-	mu_demangle_run(123);
-	mu_demangle_run(124);
-	mu_demangle_run(125);
-	mu_demangle_run(126);
-	mu_demangle_run(127);
-	mu_demangle_run(128);
-	mu_demangle_run(129);
-	mu_demangle_run(130);
-	mu_demangle_run(131);
-	mu_demangle_run(132);
-	mu_demangle_run(133);
-	mu_demangle_run(134);
-	mu_demangle_run(135);
-	mu_demangle_run(136);
-	mu_demangle_run(137);
-	mu_demangle_run(138);
-	mu_demangle_run(139);
-	mu_demangle_run(140);
-	mu_demangle_run(141);
-	mu_demangle_run(142);
-	mu_demangle_run(143);
-	mu_demangle_run(144);
-	mu_demangle_run(145);
-	mu_demangle_run(146);
-	mu_demangle_run(147);
-	mu_demangle_run(148);
-	mu_demangle_run(149);
-	mu_demangle_run(150);
-	mu_demangle_run(151);
-	mu_demangle_run(152);
-	mu_demangle_run(153);
-	mu_demangle_run(154);
-	mu_demangle_run(155);
-	mu_demangle_run(156);
-	mu_demangle_run(157);
-	mu_demangle_run(158);
-	mu_demangle_run(159);
-	mu_demangle_run(160);
-	mu_demangle_run(161);
-	mu_demangle_run(162);
-	mu_demangle_run(163);
-	mu_demangle_run(164);
-	mu_demangle_run(165);
-	mu_demangle_run(166);
-	mu_demangle_run(167);
-	mu_demangle_run(168);
-	mu_demangle_run(169);
-	mu_demangle_run(170);
-	mu_demangle_run(171);
-	mu_demangle_run(172);
-	mu_demangle_run(173);
-	mu_demangle_run(174);
-	mu_demangle_run(175);
-	mu_demangle_run(176);
-	mu_demangle_run(177);
-	mu_demangle_run(178);
-	mu_demangle_run(179);
-	mu_demangle_run(180);
-	mu_demangle_run(181);
-	mu_demangle_run(182);
-	mu_demangle_run(183);
-	mu_demangle_run(184);
-	mu_demangle_run(185);
-	mu_demangle_run(186);
-	mu_demangle_run(187);
-	mu_demangle_run(188);
-	mu_demangle_run(189);
-	mu_demangle_run(190);
-	mu_demangle_run(191);
-	mu_demangle_run(192);
-	mu_demangle_run(193);
-	mu_demangle_run(194);
-	mu_demangle_run(195);
-	mu_demangle_run(196);
-	mu_demangle_run(197);
-	mu_demangle_run(198);
-	mu_demangle_run(199);
-	mu_demangle_run(200);
-	mu_demangle_run(201);
-	mu_demangle_run(202);
-	mu_demangle_run(203);
-	mu_demangle_run(204);
-	mu_demangle_run(205);
-	mu_demangle_run(206);
-	mu_demangle_run(207);
-	mu_demangle_run(208);
-	mu_demangle_run(209);
-	mu_demangle_run(210);
-	mu_demangle_run(211);
-	mu_demangle_run(212);
-	mu_demangle_run(213);
-	mu_demangle_run(214);
-	mu_demangle_run(215);
-	mu_demangle_run(216);
-	mu_demangle_run(217);
-	mu_demangle_run(218);
-	mu_demangle_run(219);
-	mu_demangle_run(220);
-	mu_demangle_run(221);
-	mu_demangle_run(222);
-	mu_demangle_run(223);
-	mu_demangle_run(224);
-	mu_demangle_run(225);
-	mu_demangle_run(226);
-	mu_demangle_run(227);
-	mu_demangle_run(228);
-	mu_demangle_run(229);
-	mu_demangle_run(230);
-	mu_demangle_run(231);
-	mu_demangle_run(232);
-	mu_demangle_run(233);
-	mu_demangle_run(234);
-	mu_demangle_run(235);
-	mu_demangle_run(236);
-	mu_demangle_run(237);
-	mu_demangle_run(238);
-	mu_demangle_run(239);
-	mu_demangle_run(240);
-	mu_demangle_run(241);
-	mu_demangle_run(242);
-	mu_demangle_run(243);
-	mu_demangle_run(244);
-	mu_demangle_run(245);
-	mu_demangle_run(246);
-	mu_demangle_run(247);
-	mu_demangle_run(248);
-	mu_demangle_run(249);
-	mu_demangle_run(250);
-	mu_demangle_run(251);
-	mu_demangle_run(252);
-	mu_demangle_run(253);
-	mu_demangle_run(254);
-	mu_demangle_run(255);
-	mu_demangle_run(256);
-	mu_demangle_run(257);
-	mu_demangle_run(258);
-	mu_demangle_run(259);
-	mu_demangle_run(260);
-	mu_demangle_run(261);
-	mu_demangle_run(262);
-	mu_demangle_run(263);
-	mu_demangle_run(264);
-	mu_demangle_run(265);
-	mu_demangle_run(266);
-	mu_demangle_run(267);
-	mu_demangle_run(268);
-	mu_demangle_run(269);
-	mu_demangle_run(270);
-	mu_demangle_run(271);
-	mu_demangle_run(272);
-	mu_demangle_run(273);
-	mu_demangle_run(274);
-	mu_demangle_run(275);
-	mu_demangle_run(276);
-	mu_demangle_run(277);
-	mu_demangle_run(278);
-	mu_demangle_run(279);
-	mu_demangle_run(280);
-	mu_demangle_run(281);
-	mu_demangle_run(282);
-	mu_demangle_run(283);
-	mu_demangle_run(284);
-	mu_demangle_run(285);
-	mu_demangle_run(286);
-	mu_demangle_run(287);
-	mu_demangle_run(288);
-	mu_demangle_run(289);
-	mu_demangle_run(290);
-	mu_demangle_run(291);
-	mu_demangle_run(292);
-	mu_demangle_run(293);
-	mu_demangle_run(294);
-	mu_demangle_run(295);
-	mu_demangle_run(296);
-	mu_demangle_run(297);
-	mu_demangle_run(298);
-	mu_demangle_run(299);
-	mu_demangle_run(300);
-	mu_demangle_run(301);
-	mu_demangle_run(302);
-	mu_demangle_run(303);
-	mu_demangle_run(304);
-	mu_demangle_run(305);
-	mu_demangle_run(306);
-	mu_demangle_run(307);
-	mu_demangle_run(308);
-	mu_demangle_run(309);
-	mu_demangle_run(310);
-	mu_demangle_run(311);
-	mu_demangle_run(312);
-	mu_demangle_run(313);
-	mu_demangle_run(314);
-	mu_demangle_run(315);
-	mu_demangle_run(316);
-	mu_demangle_run(317);
-	mu_demangle_run(318);
-	mu_demangle_run(319);
-	mu_demangle_run(320);
-	mu_demangle_run(321);
-	mu_demangle_run(322);
-	mu_demangle_run(323);
-	mu_demangle_run(324);
-	mu_demangle_run(325);
-	mu_demangle_run(326);
-	mu_demangle_run(327);
-	mu_demangle_run(328);
-	mu_demangle_run(329);
-	mu_demangle_run(330);
-	mu_demangle_run(331);
-	mu_demangle_run(332);
-	mu_demangle_run(333);
-	mu_demangle_run(334);
-	mu_demangle_run(335);
-	mu_demangle_run(336);
-	mu_demangle_run(337);
-	mu_demangle_run(338);
-	mu_demangle_run(339);
-	mu_demangle_run(340);
-	mu_demangle_run(341);
-	mu_demangle_run(342);
-	mu_demangle_run(343);
-	mu_demangle_run(344);
-	return tests_passed != tests_run;
-}
-
-mu_main(all_tests)
+mu_main2(java);

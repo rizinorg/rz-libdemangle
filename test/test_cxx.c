@@ -1,2305 +1,1157 @@
-// SPDX-FileCopyrightText: 2021 deroad <wargio@libero.it>
+// SPDX-FileCopyrightText: 2021-2023 deroad <wargio@libero.it>
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "demangling_unit.h"
+#include "minunit.h"
 
-mu_demangle(0, cxx, "_ZNSt2147483648ios_base4InitD1Ev", NULL);
-mu_demangle(1, cxx, "_Z10initThemesv_ptr", "initThemes()");
-mu_demangle(2, cxx, "_Z11InitUIViewsv_ptr", "InitUIViews()");
-mu_demangle(3, cxx, "_Z13getThemeColor12BNThemeColor_ptr", "getThemeColor(BNThemeColor)");
-mu_demangle(4, cxx, "_Z13InitUIActionsv_ptr", "InitUIActions()");
-mu_demangle(5, cxx, "_Z13InitUIPluginsv_ptr", "InitUIPlugins()");
-mu_demangle(6, cxx, "_Z14getActiveThemev_ptr", "getActiveTheme()");
-mu_demangle(7, cxx, "_Z14setActiveThemeRK7QStringb_ptr", "setActiveTheme(QString const&, bool)");
-mu_demangle(8, cxx, "_Z15resetUserThemesv_ptr", "resetUserThemes()");
-mu_demangle(9, cxx, "_Z16getMonospaceFontP7QWidget_ptr", "getMonospaceFont(QWidget*)");
-mu_demangle(10, cxx, "_Z16setMonospaceFontRK5QFont_ptr", "setMonospaceFont(QFont const&)");
-mu_demangle(11, cxx, "_Z17setAllowBoldFontsb_ptr", "setAllowBoldFonts(bool)");
-mu_demangle(12, cxx, "_Z17setColorBlindModeb_ptr", "setColorBlindMode(bool)");
-mu_demangle(13, cxx, "_Z19getExtraFontSpacingv_ptr", "getExtraFontSpacing()");
-mu_demangle(14, cxx, "_Z19setExtraFontSpacingi_ptr", "setExtraFontSpacing(int)");
-mu_demangle(15, cxx, "_Z20setAntialiasingStyle17AntialiasingStyle_ptr", "setAntialiasingStyle(AntialiasingStyle)");
-mu_demangle(16, cxx, "_Z21qRegisterResourceDataiPKhS0_S0__ptr", "qRegisterResourceData(int, unsigned char const*, unsigned char const*, unsigned char const*)");
-mu_demangle(17, cxx, "_Z23getDefaultMonospaceFontv_ptr", "getDefaultMonospaceFont()");
-mu_demangle(18, cxx, "_Z23qUnregisterResourceDataiPKhS0_S0__ptr", "qUnregisterResourceData(int, unsigned char const*, unsigned char const*, unsigned char const*)");
-mu_demangle(19, cxx, "_Z26getDefaultExtraFontSpacingv_ptr", "getDefaultExtraFontSpacing()");
-mu_demangle(20, cxx, "_Z33adjustFontForAntialiasingSettingsR5QFontP7QWidget_ptr", "adjustFontForAntialiasingSettings(QFont&, QWidget*)");
-mu_demangle(21, cxx, "_ZdaPv_ptr", "operator delete[](void*)");
-mu_demangle(22, cxx, "_ZdaPvm_ptr", "operator delete[](void*, unsigned long)");
-mu_demangle(23, cxx, "_ZdlPv_ptr", "operator delete(void*)");
-mu_demangle(24, cxx, "_ZdlPvm_ptr", "operator delete(void*, unsigned long)");
-mu_demangle(25, cxx, "_ZeqRK7QStringS1__ptr", "operator==(QString const&, QString const&)");
-mu_demangle(26, cxx, "_ZltRK7QStringS1__ptr", "operator<(QString const&, QString const&)");
-mu_demangle(27, cxx, "_ZN10FeatureMapC1EP9ViewFrameN11BinaryNinja3RefINS2_10BinaryViewEEE_ptr", "FeatureMap::FeatureMap(ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)");
-mu_demangle(28, cxx, "_ZN10MenuHelper11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "MenuHelper::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(29, cxx, "_ZN10MenuHelper11qt_metacastEPKc_ptr", "MenuHelper::qt_metacast(char const*)");
-mu_demangle(30, cxx, "_ZN10MenuHelper22setBackgroundColorRoleEN8QPalette9ColorRoleE_ptr", "MenuHelper::setBackgroundColorRole(QPalette::ColorRole)");
-mu_demangle(31, cxx, "_ZN10MenuHelperC2EP7QWidgetb_ptr", "MenuHelper::MenuHelper(QWidget*, bool)");
-mu_demangle(32, cxx, "_ZN10QArrayData10deallocateEPS_mm_ptr", "QArrayData::deallocate(QArrayData*, unsigned long, unsigned long)");
-mu_demangle(33, cxx, "_ZN10QArrayData11shared_nullE_ptr", "QArrayData::shared_null");
-mu_demangle(34, cxx, "_ZN10QBoxLayout10addSpacingEi_ptr", "QBoxLayout::addSpacing(int)");
-mu_demangle(35, cxx, "_ZN10QBoxLayout10addStretchEi_ptr", "QBoxLayout::addStretch(int)");
-mu_demangle(36, cxx, "_ZN10QBoxLayout10setSpacingEi_ptr", "QBoxLayout::setSpacing(int)");
-mu_demangle(37, cxx, "_ZN10QBoxLayout9addLayoutEP7QLayouti_ptr", "QBoxLayout::addLayout(QLayout*, int)");
-mu_demangle(38, cxx, "_ZN10QBoxLayout9addWidgetEP7QWidgeti6QFlagsIN2Qt13AlignmentFlagEE_ptr", "QBoxLayout::addWidget(QWidget*, int, QFlags<Qt::AlignmentFlag>)");
-mu_demangle(39, cxx, "_ZN10QByteArray11reallocDataEj6QFlagsIN10QArrayData16AllocationOptionEE_ptr", "QByteArray::reallocData(unsigned int, QFlags<QArrayData::AllocationOption>)");
-mu_demangle(40, cxx, "_ZN10QByteArray6appendEc_ptr", "QByteArray::append(char)");
-mu_demangle(41, cxx, "_ZN10QByteArray6appendEPKc_ptr", "QByteArray::append(char const*)");
-mu_demangle(42, cxx, "_ZN10QByteArray6appendEPKci_ptr", "QByteArray::append(char const*, int)");
-mu_demangle(43, cxx, "_ZN10QByteArrayC1EPKci_ptr", "QByteArray::QByteArray(char const*, int)");
-mu_demangle(44, cxx, "_ZN10QClipboard11setMimeDataEP9QMimeDataNS_4ModeE_ptr", "QClipboard::setMimeData(QMimeData*, QClipboard::Mode)");
-mu_demangle(45, cxx, "_ZN10QClipboard5clearENS_4ModeE_ptr", "QClipboard::clear(QClipboard::Mode)");
-mu_demangle(46, cxx, "_ZN10QCompleter18setCaseSensitivityEN2Qt15CaseSensitivityE_ptr", "QCompleter::setCaseSensitivity(Qt::CaseSensitivity)");
-mu_demangle(47, cxx, "_ZN10QCompleterC1ERK11QStringListP7QObject_ptr", "QCompleter::QCompleter(QStringList const&, QObject*)");
-mu_demangle(48, cxx, "_ZN10QEventLoop4execE6QFlagsINS_17ProcessEventsFlagEE_ptr", "QEventLoop::exec(QFlags<QEventLoop::ProcessEventsFlag>)");
-mu_demangle(49, cxx, "_ZN10QEventLoopC1EP7QObject_ptr", "QEventLoop::QEventLoop(QObject*)");
-mu_demangle(50, cxx, "_ZN10QEventLoopD1Ev_ptr", "QEventLoop::~QEventLoop()");
-mu_demangle(51, cxx, "_ZN10QJsonValueD1Ev_ptr", "QJsonValue::~QJsonValue()");
-mu_demangle(52, cxx, "_ZN10QStatusBar11showMessageERK7QStringi_ptr", "QStatusBar::showMessage(QString const&, int)");
-mu_demangle(53, cxx, "_ZN10QStatusBar12clearMessageEv_ptr", "QStatusBar::clearMessage()");
-mu_demangle(54, cxx, "_ZN10QStatusBar12removeWidgetEP7QWidget_ptr", "QStatusBar::removeWidget(QWidget*)");
-mu_demangle(55, cxx, "_ZN10QStatusBar18addPermanentWidgetEP7QWidgeti_ptr", "QStatusBar::addPermanentWidget(QWidget*, int)");
-mu_demangle(56, cxx, "_ZN10QStatusBar9addWidgetEP7QWidgeti_ptr", "QStatusBar::addWidget(QWidget*, int)");
-mu_demangle(57, cxx, "_ZN10QTableView11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QTableView::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(58, cxx, "_ZN10QTableView11qt_metacastEPKc_ptr", "QTableView::qt_metacast(char const*)");
-mu_demangle(59, cxx, "_ZN10QTableView11setShowGridEb_ptr", "QTableView::setShowGrid(bool)");
-mu_demangle(60, cxx, "_ZN10QTableView12sortByColumnEiN2Qt9SortOrderE_ptr", "QTableView::sortByColumn(int, Qt::SortOrder)");
-mu_demangle(61, cxx, "_ZN10QTableView16staticMetaObjectE_ptr", "QTableView::staticMetaObject");
-mu_demangle(62, cxx, "_ZN10QTableView17setSortingEnabledEb_ptr", "QTableView::setSortingEnabled(bool)");
-mu_demangle(63, cxx, "_ZN10QTableView23resizeColumnsToContentsEv_ptr", "QTableView::resizeColumnsToContents()");
-mu_demangle(64, cxx, "_ZN10QTableView8setModelEP18QAbstractItemModel_ptr", "QTableView::setModel(QAbstractItemModel*)");
-mu_demangle(65, cxx, "_ZN10QTableView9selectRowEi_ptr", "QTableView::selectRow(int)");
-mu_demangle(66, cxx, "_ZN10QTableViewC2EP7QWidget_ptr", "QTableView::QTableView(QWidget*)");
-mu_demangle(67, cxx, "_ZN10QTableViewD2Ev_ptr", "QTableView::~QTableView()");
-mu_demangle(68, cxx, "_ZN10QTabWidget10setMovableEb_ptr", "QTabWidget::setMovable(bool)");
-mu_demangle(69, cxx, "_ZN10QTabWidget10setTabTextEiRK7QString_ptr", "QTabWidget::setTabText(int, QString const&)");
-mu_demangle(70, cxx, "_ZN10QTabWidget11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QTabWidget::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(71, cxx, "_ZN10QTabWidget11qt_metacastEPKc_ptr", "QTabWidget::qt_metacast(char const*)");
-mu_demangle(72, cxx, "_ZN10QTabWidget15setCornerWidgetEP7QWidgetN2Qt6CornerE_ptr", "QTabWidget::setCornerWidget(QWidget*, Qt::Corner)");
-mu_demangle(73, cxx, "_ZN10QTabWidget15setCurrentIndexEi_ptr", "QTabWidget::setCurrentIndex(int)");
-mu_demangle(74, cxx, "_ZN10QTabWidget15setDocumentModeEb_ptr", "QTabWidget::setDocumentMode(bool)");
-mu_demangle(75, cxx, "_ZN10QTabWidget15setTabsClosableEb_ptr", "QTabWidget::setTabsClosable(bool)");
-mu_demangle(76, cxx, "_ZN10QTabWidget17setTabBarAutoHideEb_ptr", "QTabWidget::setTabBarAutoHide(bool)");
-mu_demangle(77, cxx, "_ZN10QTabWidget6addTabEP7QWidgetRK7QString_ptr", "QTabWidget::addTab(QWidget*, QString const&)");
-mu_demangle(78, cxx, "_ZN10QTabWidget9insertTabEiP7QWidgetRK7QString_ptr", "QTabWidget::insertTab(int, QWidget*, QString const&)");
-mu_demangle(79, cxx, "_ZN10QTabWidget9removeTabEi_ptr", "QTabWidget::removeTab(int)");
-mu_demangle(80, cxx, "_ZN10QTabWidget9setTabBarEP7QTabBar_ptr", "QTabWidget::setTabBar(QTabBar*)");
-mu_demangle(81, cxx, "_ZN10QTabWidgetC1EP7QWidget_ptr", "QTabWidget::QTabWidget(QWidget*)");
-mu_demangle(82, cxx, "_ZN10QTabWidgetC2EP7QWidget_ptr", "QTabWidget::QTabWidget(QWidget*)");
-mu_demangle(83, cxx, "_ZN10QTabWidgetD2Ev_ptr", "QTabWidget::~QTabWidget()");
-mu_demangle(84, cxx, "_ZN11DockHandler10setVisibleERK7QStringb_ptr", "DockHandler::setVisible(QString const&, bool)");
-mu_demangle(85, cxx, "_ZN11DockHandler11updateFontsEv_ptr", "DockHandler::updateFonts()");
-mu_demangle(86, cxx, "_ZN11DockHandler11updateThemeEv_ptr", "DockHandler::updateTheme()");
-mu_demangle(87, cxx, "_ZN11DockHandler11viewChangedEP9ViewFrame_ptr", "DockHandler::viewChanged(ViewFrame*)");
-mu_demangle(88, cxx, "_ZN11DockHandler12restoreStateER9QSettingsRK7QString_ptr", "DockHandler::restoreState(QSettings&, QString const&)");
-mu_demangle(89, cxx, "_ZN11DockHandler13addDockWidgetEP7QWidgetN2Qt14DockWidgetAreaENS2_11OrientationEb_ptr", "DockHandler::addDockWidget(QWidget*, Qt::DockWidgetArea, Qt::Orientation, bool)");
-mu_demangle(90, cxx, "_ZN11DockHandler13addDockWidgetERK7QStringRKSt8functionIFP7QWidgetS2_P9ViewFrameN11BinaryNinja3RefINS8_10BinaryViewEEEEEN2Qt14DockWidgetAreaENSG_11OrientationEb_ptr", "DockHandler::addDockWidget(QString const&, std::function<QWidget* (QString const&, ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)> const&, Qt::DockWidgetArea, Qt::Orientation, bool)");
-mu_demangle(91, cxx, "_ZN11DockHandler13getDockWidgetERK7QString_ptr", "DockHandler::getDockWidget(QString const&)");
-mu_demangle(92, cxx, "_ZN11DockHandler15addActionOnShowERK7QStringRKSt8functionIFvvEE_ptr", "DockHandler::addActionOnShow(QString const&, std::function<void ()> const&)");
-mu_demangle(93, cxx, "_ZN11DockHandler17shouldResizeDocksEv_ptr", "DockHandler::shouldResizeDocks()");
-mu_demangle(94, cxx, "_ZN11DockHandler18updateViewLocationEP4ViewRK12ViewLocation_ptr", "DockHandler::updateViewLocation(View*, ViewLocation const&)");
-mu_demangle(95, cxx, "_ZN11DockHandler23notifyRestoredFromStateEv_ptr", "DockHandler::notifyRestoredFromState()");
-mu_demangle(96, cxx, "_ZN11DockHandler5closeEv_ptr", "DockHandler::close()");
-mu_demangle(97, cxx, "_ZN11DockHandler5resetEb_ptr", "DockHandler::reset(bool)");
-mu_demangle(98, cxx, "_ZN11DockHandler5resetERK7QString_ptr", "DockHandler::reset(QString const&)");
-mu_demangle(99, cxx, "_ZN11DockHandler9isVisibleERK7QString_ptr", "DockHandler::isVisible(QString const&)");
-mu_demangle(100, cxx, "_ZN11DockHandler9saveStateER9QSettingsRK7QString_ptr", "DockHandler::saveState(QSettings&, QString const&)");
-mu_demangle(101, cxx, "_ZN11DockHandlerC1EP7QObjecti_ptr", "DockHandler::DockHandler(QObject*, int)");
-mu_demangle(102, cxx, "_ZN11FileContext10isModifiedEv_ptr", "FileContext::isModified()");
-mu_demangle(103, cxx, "_ZN11FileContext11getBestTypeEv_ptr", "FileContext::getBestType()");
-mu_demangle(104, cxx, "_ZN11FileContext11getDataViewERK7QStringb_ptr", "FileContext::getDataView(QString const&, bool)");
-mu_demangle(105, cxx, "_ZN11FileContext11markAsSavedERK7QString_ptr", "FileContext::markAsSaved(QString const&)");
-mu_demangle(106, cxx, "_ZN11FileContext11resolveTypeERK7QStringRP8ViewTypeRN11BinaryNinja3RefINS6_14BinaryViewTypeEEE_ptr", "FileContext::resolveType(QString const&, ViewType*&, BinaryNinja::Ref<BinaryNinja::BinaryViewType>&)");
-mu_demangle(107, cxx, "_ZN11FileContext14createDataViewERK7QString_ptr", "FileContext::createDataView(QString const&)");
-mu_demangle(108, cxx, "_ZN11FileContext15isTypeAvailableERK7QString_ptr", "FileContext::isTypeAvailable(QString const&)");
-mu_demangle(109, cxx, "_ZN11FileContext17closeAllOpenFilesEv_ptr", "FileContext::closeAllOpenFiles()");
-mu_demangle(110, cxx, "_ZN11FileContext17getAvailableTypesEv_ptr", "FileContext::getAvailableTypes()");
-mu_demangle(111, cxx, "_ZN11FileContext17registerReferenceEP7QWidget_ptr", "FileContext::registerReference(QWidget*)");
-mu_demangle(112, cxx, "_ZN11FileContext19getOpenFileContextsEv_ptr", "FileContext::getOpenFileContexts()");
-mu_demangle(113, cxx, "_ZN11FileContext19setCurrentViewFrameEP9ViewFrame_ptr", "FileContext::setCurrentViewFrame(ViewFrame*)");
-mu_demangle(114, cxx, "_ZN11FileContext20refreshDataViewCacheEv_ptr", "FileContext::refreshDataViewCache()");
-mu_demangle(115, cxx, "_ZN11FileContext7newFileEv_ptr", "FileContext::newFile()");
-mu_demangle(116, cxx, "_ZN11FileContextC1EN11BinaryNinja3RefINS0_12FileMetadataEEENS1_INS0_10BinaryViewEEERK7QStringbb_ptr", "FileContext::FileContext(BinaryNinja::Ref<BinaryNinja::FileMetadata>, BinaryNinja::Ref<BinaryNinja::BinaryView>, QString const&, bool, bool)");
-mu_demangle(117, cxx, "_ZN11QFileDevice5closeEv_ptr", "QFileDevice::close()");
-mu_demangle(118, cxx, "_ZN11QFileDialog15getOpenFileNameEP7QWidgetRK7QStringS4_S4_PS2_6QFlagsINS_6OptionEE_ptr", "QFileDialog::getOpenFileName(QWidget*, QString const&, QString const&, QString const&, QString*, QFlags<QFileDialog::Option>)");
-mu_demangle(119, cxx, "_ZN11QFileDialog15getSaveFileNameEP7QWidgetRK7QStringS4_S4_PS2_6QFlagsINS_6OptionEE_ptr", "QFileDialog::getSaveFileName(QWidget*, QString const&, QString const&, QString const&, QString*, QFlags<QFileDialog::Option>)");
-mu_demangle(120, cxx, "_ZN11QFileDialog16getOpenFileNamesEP7QWidgetRK7QStringS4_S4_PS2_6QFlagsINS_6OptionEE_ptr", "QFileDialog::getOpenFileNames(QWidget*, QString const&, QString const&, QString const&, QString*, QFlags<QFileDialog::Option>)");
-mu_demangle(121, cxx, "_ZN11QFileDialog20getExistingDirectoryEP7QWidgetRK7QStringS4_6QFlagsINS_6OptionEE_ptr", "QFileDialog::getExistingDirectory(QWidget*, QString const&, QString const&, QFlags<QFileDialog::Option>)");
-mu_demangle(122, cxx, "_ZN11QFontDialog7getFontEPbRK5QFontP7QWidgetRK7QString6QFlagsINS_16FontDialogOptionEE_ptr", "QFontDialog::getFont(bool*, QFont const&, QWidget*, QString const&, QFlags<QFontDialog::FontDialogOption>)");
-mu_demangle(123, cxx, "_ZN11QGridLayout16setColumnStretchEii_ptr", "QGridLayout::setColumnStretch(int, int)");
-mu_demangle(124, cxx, "_ZN11QGridLayout19setRowMinimumHeightEii_ptr", "QGridLayout::setRowMinimumHeight(int, int)");
-mu_demangle(125, cxx, "_ZN11QGridLayout9addWidgetEP7QWidgetii6QFlagsIN2Qt13AlignmentFlagEE_ptr", "QGridLayout::addWidget(QWidget*, int, int, QFlags<Qt::AlignmentFlag>)");
-mu_demangle(126, cxx, "_ZN11QGridLayoutC1EP7QWidget_ptr", "QGridLayout::QGridLayout(QWidget*)");
-mu_demangle(127, cxx, "_ZN11QGridLayoutC1Ev_ptr", "QGridLayout::QGridLayout()");
-mu_demangle(128, cxx, "_ZN11QHBoxLayoutC1EP7QWidget_ptr", "QHBoxLayout::QHBoxLayout(QWidget*)");
-mu_demangle(129, cxx, "_ZN11QHBoxLayoutC1Ev_ptr", "QHBoxLayout::QHBoxLayout()");
-mu_demangle(130, cxx, "_ZN11QHeaderView20setSectionResizeModeEiNS_10ResizeModeE_ptr", "QHeaderView::setSectionResizeMode(int, QHeaderView::ResizeMode)");
-mu_demangle(131, cxx, "_ZN11QHeaderView20setSectionResizeModeENS_10ResizeModeE_ptr", "QHeaderView::setSectionResizeMode(QHeaderView::ResizeMode)");
-mu_demangle(132, cxx, "_ZN11QHeaderView21setDefaultSectionSizeEi_ptr", "QHeaderView::setDefaultSectionSize(int)");
-mu_demangle(133, cxx, "_ZN11QHeaderView21setStretchLastSectionEb_ptr", "QHeaderView::setStretchLastSection(bool)");
-mu_demangle(134, cxx, "_ZN11QJsonObjectD1Ev_ptr", "QJsonObject::~QJsonObject()");
-mu_demangle(135, cxx, "_ZN11QMainWindow10addToolBarEN2Qt11ToolBarAreaEP8QToolBar_ptr", "QMainWindow::addToolBar(Qt::ToolBarArea, QToolBar*)");
-mu_demangle(136, cxx, "_ZN11QMainWindow11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QMainWindow::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(137, cxx, "_ZN11QMainWindow11qt_metacastEPKc_ptr", "QMainWindow::qt_metacast(char const*)");
-mu_demangle(138, cxx, "_ZN11QMainWindow11resizeDocksERK5QListIP11QDockWidgetERKS0_IiEN2Qt11OrientationE_ptr", "QMainWindow::resizeDocks(QList<QDockWidget*> const&, QList<int> const&, Qt::Orientation)");
-mu_demangle(139, cxx, "_ZN11QMainWindow12restoreStateERK10QByteArrayi_ptr", "QMainWindow::restoreState(QByteArray const&, int)");
-mu_demangle(140, cxx, "_ZN11QMainWindow15splitDockWidgetEP11QDockWidgetS1_N2Qt11OrientationE_ptr", "QMainWindow::splitDockWidget(QDockWidget*, QDockWidget*, Qt::Orientation)");
-mu_demangle(141, cxx, "_ZN11QMainWindow16setCentralWidgetEP7QWidget_ptr", "QMainWindow::setCentralWidget(QWidget*)");
-mu_demangle(142, cxx, "_ZN11QMainWindow16tabifyDockWidgetEP11QDockWidgetS1__ptr", "QMainWindow::tabifyDockWidget(QDockWidget*, QDockWidget*)");
-mu_demangle(143, cxx, "_ZN11QMainWindow21setDockNestingEnabledEb_ptr", "QMainWindow::setDockNestingEnabled(bool)");
-mu_demangle(144, cxx, "_ZN11QMainWindow9setCornerEN2Qt6CornerENS0_14DockWidgetAreaE_ptr", "QMainWindow::setCorner(Qt::Corner, Qt::DockWidgetArea)");
-mu_demangle(145, cxx, "_ZN11QMainWindowC2EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QMainWindow::QMainWindow(QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(146, cxx, "_ZN11QMainWindowD2Ev_ptr", "QMainWindow::~QMainWindow()");
-mu_demangle(147, cxx, "_ZN11QMessageBox11informationEP7QWidgetRK7QStringS4_6QFlagsINS_14StandardButtonEES6__ptr", "QMessageBox::information(QWidget*, QString const&, QString const&, QFlags<QMessageBox::StandardButton>, QMessageBox::StandardButton)");
-mu_demangle(148, cxx, "_ZN11QMessageBox14setWindowTitleERK7QString_ptr", "QMessageBox::setWindowTitle(QString const&)");
-mu_demangle(149, cxx, "_ZN11QMessageBox16setDefaultButtonENS_14StandardButtonE_ptr", "QMessageBox::setDefaultButton(QMessageBox::StandardButton)");
-mu_demangle(150, cxx, "_ZN11QMessageBox18setInformativeTextERK7QString_ptr", "QMessageBox::setInformativeText(QString const&)");
-mu_demangle(151, cxx, "_ZN11QMessageBox18setStandardButtonsE6QFlagsINS_14StandardButtonEE_ptr", "QMessageBox::setStandardButtons(QFlags<QMessageBox::StandardButton>)");
-mu_demangle(152, cxx, "_ZN11QMessageBox7setIconENS_4IconE_ptr", "QMessageBox::setIcon(QMessageBox::Icon)");
-mu_demangle(153, cxx, "_ZN11QMessageBox7setTextERK7QString_ptr", "QMessageBox::setText(QString const&)");
-mu_demangle(154, cxx, "_ZN11QMessageBox7warningEP7QWidgetRK7QStringS4_6QFlagsINS_14StandardButtonEES6__ptr", "QMessageBox::warning(QWidget*, QString const&, QString const&, QFlags<QMessageBox::StandardButton>, QMessageBox::StandardButton)");
-mu_demangle(155, cxx, "_ZN11QMessageBox8criticalEP7QWidgetRK7QStringS4_6QFlagsINS_14StandardButtonEES6__ptr", "QMessageBox::critical(QWidget*, QString const&, QString const&, QFlags<QMessageBox::StandardButton>, QMessageBox::StandardButton)");
-mu_demangle(156, cxx, "_ZN11QMessageBox8questionEP7QWidgetRK7QStringS4_6QFlagsINS_14StandardButtonEES6__ptr", "QMessageBox::question(QWidget*, QString const&, QString const&, QFlags<QMessageBox::StandardButton>, QMessageBox::StandardButton)");
-mu_demangle(157, cxx, "_ZN11QMessageBox9addButtonENS_14StandardButtonE_ptr", "QMessageBox::addButton(QMessageBox::StandardButton)");
-mu_demangle(158, cxx, "_ZN11QMessageBox9addButtonERK7QStringNS_10ButtonRoleE_ptr", "QMessageBox::addButton(QString const&, QMessageBox::ButtonRole)");
-mu_demangle(159, cxx, "_ZN11QMessageBoxC1ENS_4IconERK7QStringS3_6QFlagsINS_14StandardButtonEEP7QWidgetS4_IN2Qt10WindowTypeEE_ptr", "QMessageBox::QMessageBox(QMessageBox::Icon, QString const&, QString const&, QFlags<QMessageBox::StandardButton>, QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(160, cxx, "_ZN11QMessageBoxC1EP7QWidget_ptr", "QMessageBox::QMessageBox(QWidget*)");
-mu_demangle(161, cxx, "_ZN11QMessageBoxD1Ev_ptr", "QMessageBox::~QMessageBox()");
-mu_demangle(162, cxx, "_ZN11QMetaObject10ConnectionD1Ev_ptr", "QMetaObject::Connection::~Connection()");
-mu_demangle(163, cxx, "_ZN11QMetaObject14normalizedTypeEPKc_ptr", "QMetaObject::normalizedType(char const*)");
-mu_demangle(164, cxx, "_ZN11QMetaObject8activateEP7QObjectPKS_iPPv_ptr", "QMetaObject::activate(QObject*, QMetaObject const*, int, void**)");
-mu_demangle(165, cxx, "_ZN11QPushButton10setDefaultEb_ptr", "QPushButton::setDefault(bool)");
-mu_demangle(166, cxx, "_ZN11QPushButtonC1EP7QWidget_ptr", "QPushButton::QPushButton(QWidget*)");
-mu_demangle(167, cxx, "_ZN11QPushButtonC1ERK7QStringP7QWidget_ptr", "QPushButton::QPushButton(QString const&, QWidget*)");
-mu_demangle(168, cxx, "_ZN11QScrollArea11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QScrollArea::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(169, cxx, "_ZN11QScrollArea11qt_metacastEPKc_ptr", "QScrollArea::qt_metacast(char const*)");
-mu_demangle(170, cxx, "_ZN11QScrollArea18setWidgetResizableEb_ptr", "QScrollArea::setWidgetResizable(bool)");
-mu_demangle(171, cxx, "_ZN11QScrollArea9setWidgetEP7QWidget_ptr", "QScrollArea::setWidget(QWidget*)");
-mu_demangle(172, cxx, "_ZN11QScrollAreaC2EP7QWidget_ptr", "QScrollArea::QScrollArea(QWidget*)");
-mu_demangle(173, cxx, "_ZN11QScrollAreaD2Ev_ptr", "QScrollArea::~QScrollArea()");
-mu_demangle(174, cxx, "_ZN11QTextStream7readAllEv_ptr", "QTextStream::readAll()");
-mu_demangle(175, cxx, "_ZN11QTextStreamC1EP7QString6QFlagsIN9QIODevice12OpenModeFlagEE_ptr", "QTextStream::QTextStream(QString*, QFlags<QIODevice::OpenModeFlag>)");
-mu_demangle(176, cxx, "_ZN11QTextStreamC1EP9QIODevice_ptr", "QTextStream::QTextStream(QIODevice*)");
-mu_demangle(177, cxx, "_ZN11QTextStreamD1Ev_ptr", "QTextStream::~QTextStream()");
-mu_demangle(178, cxx, "_ZN11QTextStreamlsEl_ptr", "QTextStream::operator<<(long)");
-mu_demangle(179, cxx, "_ZN11QTextStreamlsEm_ptr", "QTextStream::operator<<(unsigned long)");
-mu_demangle(180, cxx, "_ZN11QTextStreamlsEPKc_ptr", "QTextStream::operator<<(char const*)");
-mu_demangle(181, cxx, "_ZN11QTextStreamlsERK7QString_ptr", "QTextStream::operator<<(QString const&)");
-mu_demangle(182, cxx, "_ZN11QThreadPool5startEP9QRunnablei_ptr", "QThreadPool::start(QRunnable*, int)");
-mu_demangle(183, cxx, "_ZN11QThreadPoolC1EP7QObject_ptr", "QThreadPool::QThreadPool(QObject*)");
-mu_demangle(184, cxx, "_ZN11QToolButton12setArrowTypeEN2Qt9ArrowTypeE_ptr", "QToolButton::setArrowType(Qt::ArrowType)");
-mu_demangle(185, cxx, "_ZN11QToolButtonC1EP7QWidget_ptr", "QToolButton::QToolButton(QWidget*)");
-mu_demangle(186, cxx, "_ZN11QVBoxLayoutC1EP7QWidget_ptr", "QVBoxLayout::QVBoxLayout(QWidget*)");
-mu_demangle(187, cxx, "_ZN11QVBoxLayoutC1Ev_ptr", "QVBoxLayout::QVBoxLayout()");
-mu_demangle(188, cxx, "_ZN11SymbolsViewC1EP9ViewFrameN11BinaryNinja3RefINS2_10BinaryViewEEE_ptr", "SymbolsView::SymbolsView(ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)");
-mu_demangle(189, cxx, "_ZN12FilteredView10showFilterERK7QString_ptr", "FilteredView::showFilter(QString const&)");
-mu_demangle(190, cxx, "_ZN12FilteredView5matchERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES7__ptr", "FilteredView::match(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)");
-mu_demangle(191, cxx, "_ZN12FilteredViewC1EP7QWidgetS1_P12FilterTarget_ptr", "FilteredView::FilteredView(QWidget*, QWidget*, FilterTarget*)");
-mu_demangle(192, cxx, "_ZN12LogListModel16staticMetaObjectE_ptr", "LogListModel::staticMetaObject");
-mu_demangle(193, cxx, "_ZN12QApplication11focusWidgetEv_ptr", "QApplication::focusWidget()");
-mu_demangle(194, cxx, "_ZN12QApplication11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QApplication::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(195, cxx, "_ZN12QApplication11qt_metacastEPKc_ptr", "QApplication::qt_metacast(char const*)");
-mu_demangle(196, cxx, "_ZN12QApplication12activeWindowEv_ptr", "QApplication::activeWindow()");
-mu_demangle(197, cxx, "_ZN12QApplication17activeModalWidgetEv_ptr", "QApplication::activeModalWidget()");
-mu_demangle(198, cxx, "_ZN12QApplication4execEv_ptr", "QApplication::exec()");
-mu_demangle(199, cxx, "_ZN12QApplication4fontEv_ptr", "QApplication::font()");
-mu_demangle(200, cxx, "_ZN12QApplication7setFontERK5QFontPKc_ptr", "QApplication::setFont(QFont const&, char const*)");
-mu_demangle(201, cxx, "_ZN12QApplicationC2ERiPPci_ptr", "QApplication::QApplication(int&, char**, int)");
-mu_demangle(202, cxx, "_ZN12QApplicationD2Ev_ptr", "QApplication::~QApplication()");
-mu_demangle(203, cxx, "_ZN12QDirIterator4nextEv_ptr", "QDirIterator::next()");
-mu_demangle(204, cxx, "_ZN12QDirIteratorC1ERK7QString6QFlagsINS_12IteratorFlagEE_ptr", "QDirIterator::QDirIterator(QString const&, QFlags<QDirIterator::IteratorFlag>)");
-mu_demangle(205, cxx, "_ZN12QDirIteratorD1Ev_ptr", "QDirIterator::~QDirIterator()");
-mu_demangle(206, cxx, "_ZN12QEasingCurveC1ENS_4TypeE_ptr", "QEasingCurve::QEasingCurve(QEasingCurve::Type)");
-mu_demangle(207, cxx, "_ZN12QEasingCurveD1Ev_ptr", "QEasingCurve::~QEasingCurve()");
-mu_demangle(208, cxx, "_ZN12QFontMetricsC1ERK5QFont_ptr", "QFontMetrics::QFontMetrics(QFont const&)");
-mu_demangle(209, cxx, "_ZN12QFontMetricsD1Ev_ptr", "QFontMetrics::~QFontMetrics()");
-mu_demangle(210, cxx, "_ZN12QInputDialog12setLabelTextERK7QString_ptr", "QInputDialog::setLabelText(QString const&)");
-mu_demangle(211, cxx, "_ZN12QInputDialog15setTextEchoModeEN9QLineEdit8EchoModeE_ptr", "QInputDialog::setTextEchoMode(QLineEdit::EchoMode)");
-mu_demangle(212, cxx, "_ZN12QInputDialog7getItemEP7QWidgetRK7QStringS4_RK11QStringListibPb6QFlagsIN2Qt10WindowTypeEES9_INSA_15InputMethodHintEE_ptr", "QInputDialog::getItem(QWidget*, QString const&, QString const&, QStringList const&, int, bool, bool*, QFlags<Qt::WindowType>, QFlags<Qt::InputMethodHint>)");
-mu_demangle(213, cxx, "_ZN12QInputDialog7getTextEP7QWidgetRK7QStringS4_N9QLineEdit8EchoModeES4_Pb6QFlagsIN2Qt10WindowTypeEES8_INS9_15InputMethodHintEE_ptr", "QInputDialog::getText(QWidget*, QString const&, QString const&, QLineEdit::EchoMode, QString const&, bool*, QFlags<Qt::WindowType>, QFlags<Qt::InputMethodHint>)");
-mu_demangle(214, cxx, "_ZN12QInputDialogC1EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QInputDialog::QInputDialog(QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(215, cxx, "_ZN12QInputDialogD1Ev_ptr", "QInputDialog::~QInputDialog()");
-mu_demangle(216, cxx, "_ZN12QKeySequenceC1Eiiii_ptr", "QKeySequence::QKeySequence(int, int, int, int)");
-mu_demangle(217, cxx, "_ZN12QKeySequenceC1ENS_11StandardKeyE_ptr", "QKeySequence::QKeySequence(QKeySequence::StandardKey)");
-mu_demangle(218, cxx, "_ZN12QKeySequenceC1ERK7QStringNS_14SequenceFormatE_ptr", "QKeySequence::QKeySequence(QString const&, QKeySequence::SequenceFormat)");
-mu_demangle(219, cxx, "_ZN12QKeySequenceC1ERKS__ptr", "QKeySequence::QKeySequence(QKeySequence const&)");
-mu_demangle(220, cxx, "_ZN12QKeySequenceC1Ev_ptr", "QKeySequence::QKeySequence()");
-mu_demangle(221, cxx, "_ZN12QKeySequenceD1Ev_ptr", "QKeySequence::~QKeySequence()");
-mu_demangle(222, cxx, "_ZN12QRadioButtonC1ERK7QStringP7QWidget_ptr", "QRadioButton::QRadioButton(QString const&, QWidget*)");
-mu_demangle(223, cxx, "_ZN12QStyleOption4initEPK7QWidget_ptr", "QStyleOption::init(QWidget const*)");
-mu_demangle(224, cxx, "_ZN12QStyleOptionC1Eii_ptr", "QStyleOption::QStyleOption(int, int)");
-mu_demangle(225, cxx, "_ZN12QStyleOptionD1Ev_ptr", "QStyleOption::~QStyleOption()");
-mu_demangle(226, cxx, "_ZN12QTextBrowser20setOpenExternalLinksEb_ptr", "QTextBrowser::setOpenExternalLinks(bool)");
-mu_demangle(227, cxx, "_ZN12QTextBrowserC1EP7QWidget_ptr", "QTextBrowser::QTextBrowser(QWidget*)");
-mu_demangle(228, cxx, "_ZN12ReportWidgetC1EP7QWidgetN11BinaryNinja3RefINS2_10BinaryViewEEERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE12BNReportTypeSD_SD__ptr", "ReportWidget::ReportWidget(QWidget*, BinaryNinja::Ref<BinaryNinja::BinaryView>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, BNReportType, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)");
-mu_demangle(229, cxx, "_ZN13QFileAccessor5CloseEv_ptr", "QFileAccessor::Close()");
-mu_demangle(230, cxx, "_ZN13QFileAccessorC1ERK7QStringb_ptr", "QFileAccessor::QFileAccessor(QString const&, bool)");
-mu_demangle(231, cxx, "_ZN13QFileAccessorD1Ev_ptr", "QFileAccessor::~QFileAccessor()");
-mu_demangle(232, cxx, "_ZN13QFontDatabase18addApplicationFontERK7QString_ptr", "QFontDatabase::addApplicationFont(QString const&)");
-mu_demangle(233, cxx, "_ZN13QFontMetricsFC1ERK5QFont_ptr", "QFontMetricsF::QFontMetricsF(QFont const&)");
-mu_demangle(234, cxx, "_ZN13QFontMetricsFD1Ev_ptr", "QFontMetricsF::~QFontMetricsF()");
-mu_demangle(235, cxx, "_ZN13QItemDelegate11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QItemDelegate::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(236, cxx, "_ZN13QItemDelegate11qt_metacastEPKc_ptr", "QItemDelegate::qt_metacast(char const*)");
-mu_demangle(237, cxx, "_ZN13QItemDelegateC2EP7QObject_ptr", "QItemDelegate::QItemDelegate(QObject*)");
-mu_demangle(238, cxx, "_ZN13QItemDelegateD2Ev_ptr", "QItemDelegate::~QItemDelegate()");
-mu_demangle(239, cxx, "_ZN13QJsonDocument8fromJsonERK10QByteArrayP15QJsonParseError_ptr", "QJsonDocument::fromJson(QByteArray const&, QJsonParseError*)");
-mu_demangle(240, cxx, "_ZN13QJsonDocumentD1Ev_ptr", "QJsonDocument::~QJsonDocument()");
-mu_demangle(241, cxx, "_ZN13RenderContext19drawDisassemblyLineER8QPainteriiRKSt6vectorIN11BinaryNinja20InstructionTextTokenESaIS4_EER19HighlightTokenStateb_ptr", "RenderContext::drawDisassemblyLine(QPainter&, int, int, std::vector<BinaryNinja::InstructionTextToken, std::allocator<BinaryNinja::InstructionTextToken> > const&, HighlightTokenState&, bool)");
-mu_demangle(242, cxx, "_ZN13RenderContext7setFontERK5QFont_ptr", "RenderContext::setFont(QFont const&)");
-mu_demangle(243, cxx, "_ZN13RenderContextC1EP7QWidgetf_ptr", "RenderContext::RenderContext(QWidget*, float)");
-mu_demangle(244, cxx, "_ZN13TagListWidgetC1EP7QWidgetP9ViewFrameN11BinaryNinja3RefINS4_10BinaryViewEEE_ptr", "TagListWidget::TagListWidget(QWidget*, ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)");
-mu_demangle(245, cxx, "_ZN14ClickableLabel16staticMetaObjectE_ptr", "ClickableLabel::staticMetaObject");
-mu_demangle(246, cxx, "_ZN14ClickableLabel7clickedEv_ptr", "ClickableLabel::clicked()");
-mu_demangle(247, cxx, "_ZN14CommandPalette10focusInputEv_ptr", "CommandPalette::focusInput()");
-mu_demangle(248, cxx, "_ZN14CommandPaletteC1EP7QWidgetP15UIActionHandler_ptr", "CommandPalette::CommandPalette(QWidget*, UIActionHandler*)");
-mu_demangle(249, cxx, "_ZN14QDoubleSpinBox10setMaximumEd_ptr", "QDoubleSpinBox::setMaximum(double)");
-mu_demangle(250, cxx, "_ZN14QDoubleSpinBox10setMinimumEd_ptr", "QDoubleSpinBox::setMinimum(double)");
-mu_demangle(251, cxx, "_ZN14QDoubleSpinBox11setDecimalsEi_ptr", "QDoubleSpinBox::setDecimals(int)");
-mu_demangle(252, cxx, "_ZN14QDoubleSpinBox8setValueEd_ptr", "QDoubleSpinBox::setValue(double)");
-mu_demangle(253, cxx, "_ZN14QDoubleSpinBoxC1EP7QWidget_ptr", "QDoubleSpinBox::QDoubleSpinBox(QWidget*)");
-mu_demangle(254, cxx, "_ZN14QWebEnginePage11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QWebEnginePage::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(255, cxx, "_ZN14QWebEnginePage11qt_metacastEPKc_ptr", "QWebEnginePage::qt_metacast(char const*)");
-mu_demangle(256, cxx, "_ZN14QWebEnginePage13runJavaScriptERK7QStringj_ptr", "QWebEnginePage::runJavaScript(QString const&, unsigned int)");
-mu_demangle(257, cxx, "_ZN14QWebEnginePage13runJavaScriptERK7QStringRK18QWebEngineCallbackIRK8QVariantE_ptr", "QWebEnginePage::runJavaScript(QString const&, QWebEngineCallback<QVariant const&> const&)");
-mu_demangle(258, cxx, "_ZN14QWebEnginePage16staticMetaObjectE_ptr", "QWebEnginePage::staticMetaObject");
-mu_demangle(259, cxx, "_ZN14QWebEnginePage18setBackgroundColorERK6QColor_ptr", "QWebEnginePage::setBackgroundColor(QColor const&)");
-mu_demangle(260, cxx, "_ZN14QWebEnginePage19contentsSizeChangedERK6QSizeF_ptr", "QWebEnginePage::contentsSizeChanged(QSizeF const&)");
-mu_demangle(261, cxx, "_ZN14QWebEnginePage23acceptNavigationRequestERK4QUrlNS_14NavigationTypeEb_ptr", "QWebEnginePage::acceptNavigationRequest(QUrl const&, QWebEnginePage::NavigationType, bool)");
-mu_demangle(262, cxx, "_ZN14QWebEnginePage7scriptsEv_ptr", "QWebEnginePage::scripts()");
-mu_demangle(263, cxx, "_ZN14QWebEnginePageC2EP7QObject_ptr", "QWebEnginePage::QWebEnginePage(QObject*)");
-mu_demangle(264, cxx, "_ZN14QWebEnginePageD2Ev_ptr", "QWebEnginePage::~QWebEnginePage()");
-mu_demangle(265, cxx, "_ZN14QWebEngineView13setZoomFactorEd_ptr", "QWebEngineView::setZoomFactor(double)");
-mu_demangle(266, cxx, "_ZN14QWebEngineView6setUrlERK4QUrl_ptr", "QWebEngineView::setUrl(QUrl const&)");
-mu_demangle(267, cxx, "_ZN14QWebEngineView7setHtmlERK7QStringRK4QUrl_ptr", "QWebEngineView::setHtml(QString const&, QUrl const&)");
-mu_demangle(268, cxx, "_ZN14QWebEngineView7setPageEP14QWebEnginePage_ptr", "QWebEngineView::setPage(QWebEnginePage*)");
-mu_demangle(269, cxx, "_ZN14QWebEngineViewC1EP7QWidget_ptr", "QWebEngineView::QWebEngineView(QWidget*)");
-mu_demangle(270, cxx, "_ZN14ReflectionViewC1EP9ViewFrameN11BinaryNinja3RefINS2_10BinaryViewEEE_ptr", "ReflectionView::ReflectionView(ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)");
-mu_demangle(271, cxx, "_ZN15FlowGraphWidgetC1EP7QWidgetN11BinaryNinja3RefINS2_10BinaryViewEEENS3_INS2_9FlowGraphEEE_ptr", "FlowGraphWidget::FlowGraphWidget(QWidget*, BinaryNinja::Ref<BinaryNinja::BinaryView>, BinaryNinja::Ref<BinaryNinja::FlowGraph>)");
-mu_demangle(272, cxx, "_ZN15FormInputDialogC1EP7QWidgetPSt6vectorIN11BinaryNinja14FormInputFieldESaIS4_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE_ptr", "FormInputDialog::FormInputDialog(QWidget*, std::vector<BinaryNinja::FormInputField, std::allocator<BinaryNinja::FormInputField> >*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)");
-mu_demangle(273, cxx, "_ZN15QAbstractButton10setCheckedEb_ptr", "QAbstractButton::setChecked(bool)");
-mu_demangle(274, cxx, "_ZN15QAbstractButton16staticMetaObjectE_ptr", "QAbstractButton::staticMetaObject");
-mu_demangle(275, cxx, "_ZN15QAbstractButton7clickedEb_ptr", "QAbstractButton::clicked(bool)");
-mu_demangle(276, cxx, "_ZN15QAbstractButton7setTextERK7QString_ptr", "QAbstractButton::setText(QString const&)");
-mu_demangle(277, cxx, "_ZN15QAbstractSlider13setSingleStepEi_ptr", "QAbstractSlider::setSingleStep(int)");
-mu_demangle(278, cxx, "_ZN15QGuiApplication22queryKeyboardModifiersEv_ptr", "QGuiApplication::queryKeyboardModifiers()");
-mu_demangle(279, cxx, "_ZN15QGuiApplication7screensEv_ptr", "QGuiApplication::screens()");
-mu_demangle(280, cxx, "_ZN15QGuiApplication9clipboardEv_ptr", "QGuiApplication::clipboard()");
-mu_demangle(281, cxx, "_ZN15QNetworkRequest12setAttributeENS_9AttributeERK8QVariant_ptr", "QNetworkRequest::setAttribute(QNetworkRequest::Attribute, QVariant const&)");
-mu_demangle(282, cxx, "_ZN15QNetworkRequest12setRawHeaderERK10QByteArrayS2__ptr", "QNetworkRequest::setRawHeader(QByteArray const&, QByteArray const&)");
-mu_demangle(283, cxx, "_ZN15QNetworkRequest18setTransferTimeoutEi_ptr", "QNetworkRequest::setTransferTimeout(int)");
-mu_demangle(284, cxx, "_ZN15QNetworkRequestC1ERK4QUrl_ptr", "QNetworkRequest::QNetworkRequest(QUrl const&)");
-mu_demangle(285, cxx, "_ZN15QNetworkRequestD1Ev_ptr", "QNetworkRequest::~QNetworkRequest()");
-mu_demangle(286, cxx, "_ZN15QProgressDialog10setMaximumEi_ptr", "QProgressDialog::setMaximum(int)");
-mu_demangle(287, cxx, "_ZN15QProgressDialog12setLabelTextERK7QString_ptr", "QProgressDialog::setLabelText(QString const&)");
-mu_demangle(288, cxx, "_ZN15QProgressDialog18setMinimumDurationEi_ptr", "QProgressDialog::setMinimumDuration(int)");
-mu_demangle(289, cxx, "_ZN15QProgressDialog19setCancelButtonTextERK7QString_ptr", "QProgressDialog::setCancelButtonText(QString const&)");
-mu_demangle(290, cxx, "_ZN15QProgressDialog6cancelEv_ptr", "QProgressDialog::cancel()");
-mu_demangle(291, cxx, "_ZN15QProgressDialog8setValueEi_ptr", "QProgressDialog::setValue(int)");
-mu_demangle(292, cxx, "_ZN15QProgressDialogC1EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QProgressDialog::QProgressDialog(QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(293, cxx, "_ZN15QProgressDialogD1Ev_ptr", "QProgressDialog::~QProgressDialog()");
-mu_demangle(294, cxx, "_ZN15QtSharedPointer20ExternalRefCountData9getAndRefEPK7QObject_ptr", "QtSharedPointer::ExternalRefCountData::getAndRef(QObject const*)");
-mu_demangle(295, cxx, "_ZN15UIActionContextC1Ev_ptr", "UIActionContext::UIActionContext()");
-mu_demangle(296, cxx, "_ZN15UIActionHandler10bindActionERK7QStringRK8UIAction14ActionPriority_ptr", "UIActionHandler::bindAction(QString const&, UIAction const&, ActionPriority)");
-mu_demangle(297, cxx, "_ZN15UIActionHandler10bindActionERK7QStringRK8UIAction_ptr", "UIActionHandler::bindAction(QString const&, UIAction const&)");
-mu_demangle(298, cxx, "_ZN15UIActionHandler10setCheckedERK7QStringRKSt8functionIFbvEE_ptr", "UIActionHandler::setChecked(QString const&, std::function<bool ()> const&)");
-mu_demangle(299, cxx, "_ZN15UIActionHandler12unbindActionERK7QString_ptr", "UIActionHandler::unbindAction(QString const&)");
-mu_demangle(300, cxx, "_ZN15UIActionHandler13executeActionERK7QString_ptr", "UIActionHandler::executeAction(QString const&)");
-mu_demangle(301, cxx, "_ZN15UIActionHandler14reparentWidgetEP7QWidget_ptr", "UIActionHandler::reparentWidget(QWidget*)");
-mu_demangle(302, cxx, "_ZN15UIActionHandler18setupActionHandlerEP7QWidgetb_ptr", "UIActionHandler::setupActionHandler(QWidget*, bool)");
-mu_demangle(303, cxx, "_ZN15UIActionHandler20setActionDisplayNameERK7QStringRKSt8functionIFS0_vEE_ptr", "UIActionHandler::setActionDisplayName(QString const&, std::function<QString ()> const&)");
-mu_demangle(304, cxx, "_ZN15UIActionHandler23actionHandlerFromWidgetEP7QWidget_ptr", "UIActionHandler::actionHandlerFromWidget(QWidget*)");
-mu_demangle(305, cxx, "_ZN15UIActionHandler24bindPluginCommandActionsEv_ptr", "UIActionHandler::bindPluginCommandActions()");
-mu_demangle(306, cxx, "_ZN15UIActionHandlerC1Eb_ptr", "UIActionHandler::UIActionHandler(bool)");
-mu_demangle(307, cxx, "_ZN15UIActionHandlerD1Ev_ptr", "UIActionHandler::~UIActionHandler()");
-mu_demangle(308, cxx, "_ZN16AddressIndicator10setOffsetsEmm_ptr", "AddressIndicator::setOffsets(unsigned long, unsigned long)");
-mu_demangle(309, cxx, "_ZN16AddressIndicatorC1EP7QWidget_ptr", "AddressIndicator::AddressIndicator(QWidget*)");
-mu_demangle(310, cxx, "_ZN16MainMenuInstance6updateEP15UIActionHandler_ptr", "MainMenuInstance::update(UIActionHandler*)");
-mu_demangle(311, cxx, "_ZN16MainMenuInstance6updateEP15UIActionHandlerRK15UIActionContext_ptr", "MainMenuInstance::update(UIActionHandler*, UIActionContext const&)");
-mu_demangle(312, cxx, "_ZN16MainMenuInstanceC1EP8QMenuBar_ptr", "MainMenuInstance::MainMenuInstance(QMenuBar*)");
-mu_demangle(313, cxx, "_ZN16MainMenuInstanceD1Ev_ptr", "MainMenuInstance::~MainMenuInstance()");
-mu_demangle(314, cxx, "_ZN16QAbstractSpinBox11setWrappingEb_ptr", "QAbstractSpinBox::setWrapping(bool)");
-mu_demangle(315, cxx, "_ZN16QCoreApplication12setAttributeEN2Qt20ApplicationAttributeEb_ptr", "QCoreApplication::setAttribute(Qt::ApplicationAttribute, bool)");
-mu_demangle(316, cxx, "_ZN16QCoreApplication13processEventsE6QFlagsIN10QEventLoop17ProcessEventsFlagEE_ptr", "QCoreApplication::processEvents(QFlags<QEventLoop::ProcessEventsFlag>)");
-mu_demangle(317, cxx, "_ZN16QCoreApplication18applicationDirPathEv_ptr", "QCoreApplication::applicationDirPath()");
-mu_demangle(318, cxx, "_ZN16QCoreApplication18setApplicationNameERK7QString_ptr", "QCoreApplication::setApplicationName(QString const&)");
-mu_demangle(319, cxx, "_ZN16QCoreApplication19setOrganizationNameERK7QString_ptr", "QCoreApplication::setOrganizationName(QString const&)");
-mu_demangle(320, cxx, "_ZN16QCoreApplication21setApplicationVersionERK7QString_ptr", "QCoreApplication::setApplicationVersion(QString const&)");
-mu_demangle(321, cxx, "_ZN16QCoreApplication21setOrganizationDomainERK7QString_ptr", "QCoreApplication::setOrganizationDomain(QString const&)");
-mu_demangle(322, cxx, "_ZN16QCoreApplication4selfE_ptr", "QCoreApplication::self");
-mu_demangle(323, cxx, "_ZN16QCoreApplication9argumentsEv_ptr", "QCoreApplication::arguments()");
-mu_demangle(324, cxx, "_ZN16QCoreApplication9postEventEP7QObjectP6QEventi_ptr", "QCoreApplication::postEvent(QObject*, QEvent*, int)");
-mu_demangle(325, cxx, "_ZN16QCoreApplication9translateEPKcS1_S1_i_ptr", "QCoreApplication::translate(char const*, char const*, char const*, int)");
-mu_demangle(326, cxx, "_ZN16QDesktopServices7openUrlERK4QUrl_ptr", "QDesktopServices::openUrl(QUrl const&)");
-mu_demangle(327, cxx, "_ZN16QKeySequenceEdit14setKeySequenceERK12QKeySequence_ptr", "QKeySequenceEdit::setKeySequence(QKeySequence const&)");
-mu_demangle(328, cxx, "_ZN16QKeySequenceEdit16staticMetaObjectE_ptr", "QKeySequenceEdit::staticMetaObject");
-mu_demangle(329, cxx, "_ZN16QKeySequenceEditC1EP7QWidget_ptr", "QKeySequenceEdit::QKeySequenceEdit(QWidget*)");
-mu_demangle(330, cxx, "_ZN16QWebEngineScript10setWorldIdEj_ptr", "QWebEngineScript::setWorldId(unsigned int)");
-mu_demangle(331, cxx, "_ZN16QWebEngineScript13setSourceCodeERK7QString_ptr", "QWebEngineScript::setSourceCode(QString const&)");
-mu_demangle(332, cxx, "_ZN16QWebEngineScript17setInjectionPointENS_14InjectionPointE_ptr", "QWebEngineScript::setInjectionPoint(QWebEngineScript::InjectionPoint)");
-mu_demangle(333, cxx, "_ZN16QWebEngineScript18setRunsOnSubFramesEb_ptr", "QWebEngineScript::setRunsOnSubFrames(bool)");
-mu_demangle(334, cxx, "_ZN16QWebEngineScript7setNameERK7QString_ptr", "QWebEngineScript::setName(QString const&)");
-mu_demangle(335, cxx, "_ZN16QWebEngineScriptC1Ev_ptr", "QWebEngineScript::QWebEngineScript()");
-mu_demangle(336, cxx, "_ZN16QWebEngineScriptD1Ev_ptr", "QWebEngineScript::~QWebEngineScript()");
-mu_demangle(337, cxx, "_ZN16ScriptingConsoleC1EP7QWidgetRK7QStringS4_N11BinaryNinja3RefINS5_17ScriptingInstanceEEE_ptr", "ScriptingConsole::ScriptingConsole(QWidget*, QString const&, QString const&, BinaryNinja::Ref<BinaryNinja::ScriptingInstance>)");
-mu_demangle(338, cxx, "_ZN16UIContextHandlerD2Ev_ptr", "UIContextHandler::~UIContextHandler()");
-mu_demangle(339, cxx, "_ZN17QAbstractItemView11resizeEventEP12QResizeEvent_ptr", "QAbstractItemView::resizeEvent(QResizeEvent*)");
-mu_demangle(340, cxx, "_ZN17QAbstractItemView11scrollToTopEv_ptr", "QAbstractItemView::scrollToTop()");
-mu_demangle(341, cxx, "_ZN17QAbstractItemView13keyPressEventEP9QKeyEvent_ptr", "QAbstractItemView::keyPressEvent(QKeyEvent*)");
-mu_demangle(342, cxx, "_ZN17QAbstractItemView14clearSelectionEv_ptr", "QAbstractItemView::clearSelection()");
-mu_demangle(343, cxx, "_ZN17QAbstractItemView15mousePressEventEP11QMouseEvent_ptr", "QAbstractItemView::mousePressEvent(QMouseEvent*)");
-mu_demangle(344, cxx, "_ZN17QAbstractItemView15setCurrentIndexERK11QModelIndex_ptr", "QAbstractItemView::setCurrentIndex(QModelIndex const&)");
-mu_demangle(345, cxx, "_ZN17QAbstractItemView15setEditTriggersE6QFlagsINS_11EditTriggerEE_ptr", "QAbstractItemView::setEditTriggers(QFlags<QAbstractItemView::EditTrigger>)");
-mu_demangle(346, cxx, "_ZN17QAbstractItemView15setItemDelegateEP21QAbstractItemDelegate_ptr", "QAbstractItemView::setItemDelegate(QAbstractItemDelegate*)");
-mu_demangle(347, cxx, "_ZN17QAbstractItemView16setSelectionModeENS_13SelectionModeE_ptr", "QAbstractItemView::setSelectionMode(QAbstractItemView::SelectionMode)");
-mu_demangle(348, cxx, "_ZN17QAbstractItemView20openPersistentEditorERK11QModelIndex_ptr", "QAbstractItemView::openPersistentEditor(QModelIndex const&)");
-mu_demangle(349, cxx, "_ZN17QAbstractItemView20setSelectionBehaviorENS_17SelectionBehaviorE_ptr", "QAbstractItemView::setSelectionBehavior(QAbstractItemView::SelectionBehavior)");
-mu_demangle(350, cxx, "_ZN17QAbstractItemView21closePersistentEditorERK11QModelIndex_ptr", "QAbstractItemView::closePersistentEditor(QModelIndex const&)");
-mu_demangle(351, cxx, "_ZN17QAbstractItemView21setVerticalScrollModeENS_10ScrollModeE_ptr", "QAbstractItemView::setVerticalScrollMode(QAbstractItemView::ScrollMode)");
-mu_demangle(352, cxx, "_ZN17QAbstractItemView23setHorizontalScrollModeENS_10ScrollModeE_ptr", "QAbstractItemView::setHorizontalScrollMode(QAbstractItemView::ScrollMode)");
-mu_demangle(353, cxx, "_ZN17QAbstractItemView4editERK11QModelIndex_ptr", "QAbstractItemView::edit(QModelIndex const&)");
-mu_demangle(354, cxx, "_ZN17QVariantAnimation11setDurationEi_ptr", "QVariantAnimation::setDuration(int)");
-mu_demangle(355, cxx, "_ZN17QVariantAnimation11setEndValueERK8QVariant_ptr", "QVariantAnimation::setEndValue(QVariant const&)");
-mu_demangle(356, cxx, "_ZN17QVariantAnimation13setStartValueERK8QVariant_ptr", "QVariantAnimation::setStartValue(QVariant const&)");
-mu_demangle(357, cxx, "_ZN17QVariantAnimation14setEasingCurveERK12QEasingCurve_ptr", "QVariantAnimation::setEasingCurve(QEasingCurve const&)");
-mu_demangle(358, cxx, "_ZN17QWebEngineProfile16setHttpCacheTypeENS_13HttpCacheTypeE_ptr", "QWebEngineProfile::setHttpCacheType(QWebEngineProfile::HttpCacheType)");
-mu_demangle(359, cxx, "_ZN18ContextMenuManager4showEP4MenuP15UIActionHandler_ptr", "ContextMenuManager::show(Menu*, UIActionHandler*)");
-mu_demangle(360, cxx, "_ZN18ContextMenuManager6createEv_ptr", "ContextMenuManager::create()");
-mu_demangle(361, cxx, "_ZN18ContextMenuManagerC1EP7QWidget_ptr", "ContextMenuManager::ContextMenuManager(QWidget*)");
-mu_demangle(362, cxx, "_ZN18ContextMenuManagerD1Ev_ptr", "ContextMenuManager::~ContextMenuManager()");
-mu_demangle(363, cxx, "_ZN18QAbstractAnimation12setDirectionENS_9DirectionE_ptr", "QAbstractAnimation::setDirection(QAbstractAnimation::Direction)");
-mu_demangle(364, cxx, "_ZN18QAbstractAnimation4stopEv_ptr", "QAbstractAnimation::stop()");
-mu_demangle(365, cxx, "_ZN18QAbstractAnimation5startENS_14DeletionPolicyE_ptr", "QAbstractAnimation::start(QAbstractAnimation::DeletionPolicy)");
-mu_demangle(366, cxx, "_ZN18QAbstractItemModel11dataChangedERK11QModelIndexS2_RK7QVectorIiE_ptr", "QAbstractItemModel::dataChanged(QModelIndex const&, QModelIndex const&, QVector<int> const&)");
-mu_demangle(367, cxx, "_ZN18QAbstractItemModel11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QAbstractItemModel::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(368, cxx, "_ZN18QAbstractItemModel11qt_metacastEPKc_ptr", "QAbstractItemModel::qt_metacast(char const*)");
-mu_demangle(369, cxx, "_ZN18QAbstractItemModel13endResetModelEv_ptr", "QAbstractItemModel::endResetModel()");
-mu_demangle(370, cxx, "_ZN18QAbstractItemModel13layoutChangedERK5QListI21QPersistentModelIndexENS_16LayoutChangeHintE_ptr", "QAbstractItemModel::layoutChanged(QList<QPersistentModelIndex> const&, QAbstractItemModel::LayoutChangeHint)");
-mu_demangle(371, cxx, "_ZN18QAbstractItemModel15beginResetModelEv_ptr", "QAbstractItemModel::beginResetModel()");
-mu_demangle(372, cxx, "_ZN18QAbstractItemModel16staticMetaObjectE_ptr", "QAbstractItemModel::staticMetaObject");
-mu_demangle(373, cxx, "_ZN18QAbstractItemModel22layoutAboutToBeChangedERK5QListI21QPersistentModelIndexENS_16LayoutChangeHintE_ptr", "QAbstractItemModel::layoutAboutToBeChanged(QList<QPersistentModelIndex> const&, QAbstractItemModel::LayoutChangeHint)");
-mu_demangle(374, cxx, "_ZN18QAbstractItemModelC2EP7QObject_ptr", "QAbstractItemModel::QAbstractItemModel(QObject*)");
-mu_demangle(375, cxx, "_ZN18QAbstractItemModelD2Ev_ptr", "QAbstractItemModel::~QAbstractItemModel()");
-mu_demangle(376, cxx, "_ZN18QAbstractListModel11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QAbstractListModel::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(377, cxx, "_ZN18QAbstractListModel11qt_metacastEPKc_ptr", "QAbstractListModel::qt_metacast(char const*)");
-mu_demangle(378, cxx, "_ZN18QAbstractListModelC2EP7QObject_ptr", "QAbstractListModel::QAbstractListModel(QObject*)");
-mu_demangle(379, cxx, "_ZN18QAbstractListModelD2Ev_ptr", "QAbstractListModel::~QAbstractListModel()");
-mu_demangle(380, cxx, "_ZN18QCommandLineOptionC1ERK11QStringListRK7QStringS5_S5__ptr", "QCommandLineOption::QCommandLineOption(QStringList const&, QString const&, QString const&, QString const&)");
-mu_demangle(381, cxx, "_ZN18QCommandLineOptionD1Ev_ptr", "QCommandLineOption::~QCommandLineOption()");
-mu_demangle(382, cxx, "_ZN18QCommandLineParser13addHelpOptionEv_ptr", "QCommandLineParser::addHelpOption()");
-mu_demangle(383, cxx, "_ZN18QCommandLineParser16addVersionOptionEv_ptr", "QCommandLineParser::addVersionOption()");
-mu_demangle(384, cxx, "_ZN18QCommandLineParser25setApplicationDescriptionERK7QString_ptr", "QCommandLineParser::setApplicationDescription(QString const&)");
-mu_demangle(385, cxx, "_ZN18QCommandLineParser7processERK16QCoreApplication_ptr", "QCommandLineParser::process(QCoreApplication const&)");
-mu_demangle(386, cxx, "_ZN18QCommandLineParser9addOptionERK18QCommandLineOption_ptr", "QCommandLineParser::addOption(QCommandLineOption const&)");
-mu_demangle(387, cxx, "_ZN18QCommandLineParserC1Ev_ptr", "QCommandLineParser::QCommandLineParser()");
-mu_demangle(388, cxx, "_ZN18QCommandLineParserD1Ev_ptr", "QCommandLineParser::~QCommandLineParser()");
-mu_demangle(389, cxx, "_ZN18QProgressIndicator14startAnimationEv_ptr", "QProgressIndicator::startAnimation()");
-mu_demangle(390, cxx, "_ZN18QProgressIndicator17setAnimationDelayEi_ptr", "QProgressIndicator::setAnimationDelay(int)");
-mu_demangle(391, cxx, "_ZN18QProgressIndicator8setColorERK6QColor_ptr", "QProgressIndicator::setColor(QColor const&)");
-mu_demangle(392, cxx, "_ZN18QProgressIndicatorC1EP7QWidget_ptr", "QProgressIndicator::QProgressIndicator(QWidget*)");
-mu_demangle(393, cxx, "_ZN18QPropertyAnimationC1EP7QObjectRK10QByteArrayS1__ptr", "QPropertyAnimation::QPropertyAnimation(QObject*, QByteArray const&, QObject*)");
-mu_demangle(394, cxx, "_ZN18QRegularExpression10setPatternERK7QString_ptr", "QRegularExpression::setPattern(QString const&)");
-mu_demangle(395, cxx, "_ZN18QRegularExpression17setPatternOptionsE6QFlagsINS_13PatternOptionEE_ptr", "QRegularExpression::setPatternOptions(QFlags<QRegularExpression::PatternOption>)");
-mu_demangle(396, cxx, "_ZN18QRegularExpressionC1ERK7QString6QFlagsINS_13PatternOptionEE_ptr", "QRegularExpression::QRegularExpression(QString const&, QFlags<QRegularExpression::PatternOption>)");
-mu_demangle(397, cxx, "_ZN18QRegularExpressionC1Ev_ptr", "QRegularExpression::QRegularExpression()");
-mu_demangle(398, cxx, "_ZN18QRegularExpressionD1Ev_ptr", "QRegularExpression::~QRegularExpression()");
-mu_demangle(399, cxx, "_ZN18QWebEngineSettings12setAttributeENS_12WebAttributeEb_ptr", "QWebEngineSettings::setAttribute(QWebEngineSettings::WebAttribute, bool)");
-mu_demangle(400, cxx, "_ZN19HighlightTokenStateC1Ev_ptr", "HighlightTokenState::HighlightTokenState()");
-mu_demangle(401, cxx, "_ZN19QAbstractScrollArea26setVerticalScrollBarPolicyEN2Qt15ScrollBarPolicyE_ptr", "QAbstractScrollArea::setVerticalScrollBarPolicy(Qt::ScrollBarPolicy)");
-mu_demangle(402, cxx, "_ZN19QAbstractScrollArea28setHorizontalScrollBarPolicyEN2Qt15ScrollBarPolicyE_ptr", "QAbstractScrollArea::setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy)");
-mu_demangle(403, cxx, "_ZN19QAbstractTableModel11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QAbstractTableModel::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(404, cxx, "_ZN19QAbstractTableModel11qt_metacastEPKc_ptr", "QAbstractTableModel::qt_metacast(char const*)");
-mu_demangle(405, cxx, "_ZN19QAbstractTableModelC2EP7QObject_ptr", "QAbstractTableModel::QAbstractTableModel(QObject*)");
-mu_demangle(406, cxx, "_ZN19QAbstractTableModelD2Ev_ptr", "QAbstractTableModel::~QAbstractTableModel()");
-mu_demangle(407, cxx, "_ZN19QStyledItemDelegate11eventFilterEP7QObjectP6QEvent_ptr", "QStyledItemDelegate::eventFilter(QObject*, QEvent*)");
-mu_demangle(408, cxx, "_ZN19QStyledItemDelegate11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QStyledItemDelegate::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(409, cxx, "_ZN19QStyledItemDelegate11qt_metacastEPKc_ptr", "QStyledItemDelegate::qt_metacast(char const*)");
-mu_demangle(410, cxx, "_ZN19QStyledItemDelegateC2EP7QObject_ptr", "QStyledItemDelegate::QStyledItemDelegate(QObject*)");
-mu_demangle(411, cxx, "_ZN19QStyledItemDelegateD2Ev_ptr", "QStyledItemDelegate::~QStyledItemDelegate()");
-mu_demangle(412, cxx, "_ZN20CrossReferenceWidgetC1EP9ViewFrameN11BinaryNinja3RefINS2_10BinaryViewEEEb_ptr", "CrossReferenceWidget::CrossReferenceWidget(ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>, bool)");
-mu_demangle(413, cxx, "_ZN21QAbstractItemDelegate10commitDataEP7QWidget_ptr", "QAbstractItemDelegate::commitData(QWidget*)");
-mu_demangle(414, cxx, "_ZN21QAbstractItemDelegate11closeEditorEP7QWidgetNS_11EndEditHintE_ptr", "QAbstractItemDelegate::closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)");
-mu_demangle(415, cxx, "_ZN21QNetworkAccessManager17sendCustomRequestERK15QNetworkRequestRK10QByteArrayP9QIODevice_ptr", "QNetworkAccessManager::sendCustomRequest(QNetworkRequest const&, QByteArray const&, QIODevice*)");
-mu_demangle(416, cxx, "_ZN21QNetworkAccessManager17setRedirectPolicyEN15QNetworkRequest14RedirectPolicyE_ptr", "QNetworkAccessManager::setRedirectPolicy(QNetworkRequest::RedirectPolicy)");
-mu_demangle(417, cxx, "_ZN21QNetworkAccessManager3getERK15QNetworkRequest_ptr", "QNetworkAccessManager::get(QNetworkRequest const&)");
-mu_demangle(418, cxx, "_ZN21QNetworkAccessManagerC1EP7QObject_ptr", "QNetworkAccessManager::QNetworkAccessManager(QObject*)");
-mu_demangle(419, cxx, "_ZN21QNetworkAccessManagerD1Ev_ptr", "QNetworkAccessManager::~QNetworkAccessManager()");
-mu_demangle(420, cxx, "_ZN21QPersistentModelIndexC1ERKS__ptr", "QPersistentModelIndex::QPersistentModelIndex(QPersistentModelIndex const&)");
-mu_demangle(421, cxx, "_ZN21QPersistentModelIndexD1Ev_ptr", "QPersistentModelIndex::~QPersistentModelIndex()");
-mu_demangle(422, cxx, "_ZN21QSortFilterProxyModel10invalidateEv_ptr", "QSortFilterProxyModel::invalidate()");
-mu_demangle(423, cxx, "_ZN21QSortFilterProxyModel11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QSortFilterProxyModel::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(424, cxx, "_ZN21QSortFilterProxyModel11qt_metacastEPKc_ptr", "QSortFilterProxyModel::qt_metacast(char const*)");
-mu_demangle(425, cxx, "_ZN21QSortFilterProxyModel13setFilterRoleEi_ptr", "QSortFilterProxyModel::setFilterRole(int)");
-mu_demangle(426, cxx, "_ZN21QSortFilterProxyModel14setSourceModelEP18QAbstractItemModel_ptr", "QSortFilterProxyModel::setSourceModel(QAbstractItemModel*)");
-mu_demangle(427, cxx, "_ZN21QSortFilterProxyModel15setFilterRegExpERK7QRegExp_ptr", "QSortFilterProxyModel::setFilterRegExp(QRegExp const&)");
-mu_demangle(428, cxx, "_ZN21QSortFilterProxyModel16invalidateFilterEv_ptr", "QSortFilterProxyModel::invalidateFilter()");
-mu_demangle(429, cxx, "_ZN21QSortFilterProxyModel20setDynamicSortFilterEb_ptr", "QSortFilterProxyModel::setDynamicSortFilter(bool)");
-mu_demangle(430, cxx, "_ZN21QSortFilterProxyModel26setFilterRegularExpressionERK18QRegularExpression_ptr", "QSortFilterProxyModel::setFilterRegularExpression(QRegularExpression const&)");
-mu_demangle(431, cxx, "_ZN21QSortFilterProxyModel28setRecursiveFilteringEnabledEb_ptr", "QSortFilterProxyModel::setRecursiveFilteringEnabled(bool)");
-mu_demangle(432, cxx, "_ZN21QSortFilterProxyModelC2EP7QObject_ptr", "QSortFilterProxyModel::QSortFilterProxyModel(QObject*)");
-mu_demangle(433, cxx, "_ZN21QSortFilterProxyModelD2Ev_ptr", "QSortFilterProxyModel::~QSortFilterProxyModel()");
-mu_demangle(434, cxx, "_ZN22QGraphicsOpacityEffectC1EP7QObject_ptr", "QGraphicsOpacityEffect::QGraphicsOpacityEffect(QObject*)");
-mu_demangle(435, cxx, "_ZN22ReportCollectionWidgetC1EP7QWidgetN11BinaryNinja3RefINS2_16ReportCollectionEEERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE_ptr", "ReportCollectionWidget::ReportCollectionWidget(QWidget*, BinaryNinja::Ref<BinaryNinja::ReportCollection>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)");
-mu_demangle(436, cxx, "_ZN23QRegularExpressionMatchC1Ev_ptr", "QRegularExpressionMatch::QRegularExpressionMatch()");
-mu_demangle(437, cxx, "_ZN23QRegularExpressionMatchD1Ev_ptr", "QRegularExpressionMatch::~QRegularExpressionMatch()");
-mu_demangle(438, cxx, "_ZN26QWebEngineScriptCollection6insertERK16QWebEngineScript_ptr", "QWebEngineScriptCollection::insert(QWebEngineScript const&)");
-mu_demangle(439, cxx, "_ZN4Menu11setOrderingERK7QStringS2_h_ptr", "Menu::setOrdering(QString const&, QString const&, unsigned char)");
-mu_demangle(440, cxx, "_ZN4Menu12removeActionERK7QString_ptr", "Menu::removeAction(QString const&)");
-mu_demangle(441, cxx, "_ZN4Menu13setVisibilityERK7QString18MenuItemVisibility_ptr", "Menu::setVisibility(QString const&, MenuItemVisibility)");
-mu_demangle(442, cxx, "_ZN4Menu16addCopyAsActionsERK7QStringh_ptr", "Menu::addCopyAsActions(QString const&, unsigned char)");
-mu_demangle(443, cxx, "_ZN4Menu16setGroupOrderingERK7QStringh_ptr", "Menu::setGroupOrdering(QString const&, unsigned char)");
-mu_demangle(444, cxx, "_ZN4Menu16setMainMenuOrderERK7QStringh_ptr", "Menu::setMainMenuOrder(QString const&, unsigned char)");
-mu_demangle(445, cxx, "_ZN4Menu19addPasteFromActionsERK7QStringh_ptr", "Menu::addPasteFromActions(QString const&, unsigned char)");
-mu_demangle(446, cxx, "_ZN4Menu19addTransformActionsERK7QStringh_ptr", "Menu::addTransformActions(QString const&, unsigned char)");
-mu_demangle(447, cxx, "_ZN4Menu30addPluginCommandSubmenuActionsERK7QStringS2__ptr", "Menu::addPluginCommandSubmenuActions(QString const&, QString const&)");
-mu_demangle(448, cxx, "_ZN4Menu7setRoleERK7QStringN7QAction8MenuRoleE_ptr", "Menu::setRole(QString const&, QAction::MenuRole)");
-mu_demangle(449, cxx, "_ZN4Menu8mainMenuERK7QString_ptr", "Menu::mainMenu(QString const&)");
-mu_demangle(450, cxx, "_ZN4Menu9addActionERK7QStringS2_h_ptr", "Menu::addAction(QString const&, QString const&, unsigned char)");
-mu_demangle(451, cxx, "_ZN4Menu9addActionERK7QStringS2_S2_h_ptr", "Menu::addAction(QString const&, QString const&, QString const&, unsigned char)");
-mu_demangle(452, cxx, "_ZN4MenuC1Ev_ptr", "Menu::Menu()");
-mu_demangle(453, cxx, "_ZN4QDirC1ERK7QString_ptr", "QDir::QDir(QString const&)");
-mu_demangle(454, cxx, "_ZN4QDirD1Ev_ptr", "QDir::~QDir()");
-mu_demangle(455, cxx, "_ZN4QPenC1ERK6QBrushdN2Qt8PenStyleENS3_11PenCapStyleENS3_12PenJoinStyleE_ptr", "QPen::QPen(QBrush const&, double, Qt::PenStyle, Qt::PenCapStyle, Qt::PenJoinStyle)");
-mu_demangle(456, cxx, "_ZN4QPenC1ERK6QColor_ptr", "QPen::QPen(QColor const&)");
-mu_demangle(457, cxx, "_ZN4QPenD1Ev_ptr", "QPen::~QPen()");
-mu_demangle(458, cxx, "_ZN4QUrl13fromLocalFileERK7QString_ptr", "QUrl::fromLocalFile(QString const&)");
-mu_demangle(459, cxx, "_ZN4QUrl8setQueryERK7QStringNS_11ParsingModeE_ptr", "QUrl::setQuery(QString const&, QUrl::ParsingMode)");
-mu_demangle(460, cxx, "_ZN4QUrlC1ERK7QStringNS_11ParsingModeE_ptr", "QUrl::QUrl(QString const&, QUrl::ParsingMode)");
-mu_demangle(461, cxx, "_ZN4QUrlC1ERKS__ptr", "QUrl::QUrl(QUrl const&)");
-mu_demangle(462, cxx, "_ZN4QUrlD1Ev_ptr", "QUrl::~QUrl()");
-mu_demangle(463, cxx, "_ZN4View17getViewFromWidgetEP7QWidget_ptr", "View::getViewFromWidget(QWidget*)");
-mu_demangle(464, cxx, "_ZN4View22getDisassemblySettingsEv_ptr", "View::getDisassemblySettings()");
-mu_demangle(465, cxx, "_ZN5QFile4copyERK7QString_ptr", "QFile::copy(QString const&)");
-mu_demangle(466, cxx, "_ZN5QFile4openE6QFlagsIN9QIODevice12OpenModeFlagEE_ptr", "QFile::open(QFlags<QIODevice::OpenModeFlag>)");
-mu_demangle(467, cxx, "_ZN5QFile6existsERK7QString_ptr", "QFile::exists(QString const&)");
-mu_demangle(468, cxx, "_ZN5QFile6removeERK7QString_ptr", "QFile::remove(QString const&)");
-mu_demangle(469, cxx, "_ZN5QFileC1ERK7QString_ptr", "QFile::QFile(QString const&)");
-mu_demangle(470, cxx, "_ZN5QFileD1Ev_ptr", "QFile::~QFile()");
-mu_demangle(471, cxx, "_ZN5QFont12setPointSizeEi_ptr", "QFont::setPointSize(int)");
-mu_demangle(472, cxx, "_ZN5QFont12setStyleNameERK7QString_ptr", "QFont::setStyleName(QString const&)");
-mu_demangle(473, cxx, "_ZN5QFont9setWeightEi_ptr", "QFont::setWeight(int)");
-mu_demangle(474, cxx, "_ZN5QFontC1ERK7QStringiib_ptr", "QFont::QFont(QString const&, int, int, bool)");
-mu_demangle(475, cxx, "_ZN5QFontC1ERKS__ptr", "QFont::QFont(QFont const&)");
-mu_demangle(476, cxx, "_ZN5QFontC1Ev_ptr", "QFont::QFont()");
-mu_demangle(477, cxx, "_ZN5QFontD1Ev_ptr", "QFont::~QFont()");
-mu_demangle(478, cxx, "_ZN5QIconC1ERK7QString_ptr", "QIcon::QIcon(QString const&)");
-mu_demangle(479, cxx, "_ZN5QIconC1Ev_ptr", "QIcon::QIcon()");
-mu_demangle(480, cxx, "_ZN5QIconD1Ev_ptr", "QIcon::~QIcon()");
-mu_demangle(481, cxx, "_ZN5QListIP13QOpenGLShaderED2Ev_47_0", "QList<QOpenGLShader*>::~QList()");
-mu_demangle(482, cxx, "_ZN5QMenu12addSeparatorEv_ptr", "QMenu::addSeparator()");
-mu_demangle(483, cxx, "_ZN5QMenu4execERK6QPointP7QAction_ptr", "QMenu::exec(QPoint const&, QAction*)");
-mu_demangle(484, cxx, "_ZN5QMenu5popupERK6QPointP7QAction_ptr", "QMenu::popup(QPoint const&, QAction*)");
-mu_demangle(485, cxx, "_ZN5QMenuC1EP7QWidget_ptr", "QMenu::QMenu(QWidget*)");
-mu_demangle(486, cxx, "_ZN6QBrushC1ERK6QColorN2Qt10BrushStyleE_ptr", "QBrush::QBrush(QColor const&, Qt::BrushStyle)");
-mu_demangle(487, cxx, "_ZN6QBrushD1Ev_ptr", "QBrush::~QBrush()");
-mu_demangle(488, cxx, "_ZN6QColor13setNamedColorERK7QString_ptr", "QColor::setNamedColor(QString const&)");
-mu_demangle(489, cxx, "_ZN6QColor6setRgbEiiii_ptr", "QColor::setRgb(int, int, int, int)");
-mu_demangle(490, cxx, "_ZN6QColor8setAlphaEi_ptr", "QColor::setAlpha(int)");
-mu_demangle(491, cxx, "_ZN6QColoraSERKS__ptr", "QColor::operator=(QColor const&)");
-mu_demangle(492, cxx, "_ZN6QEvent17registerEventTypeEi_ptr", "QEvent::registerEventType(int)");
-mu_demangle(493, cxx, "_ZN6QEventC1ENS_4TypeE_ptr", "QEvent::QEvent(QEvent::Type)");
-mu_demangle(494, cxx, "_ZN6QEventC2ENS_4TypeE_ptr", "QEvent::QEvent(QEvent::Type)");
-mu_demangle(495, cxx, "_ZN6QEventD2Ev_ptr", "QEvent::~QEvent()");
-mu_demangle(496, cxx, "_ZN6QFrame11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QFrame::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(497, cxx, "_ZN6QFrame11qt_metacastEPKc_ptr", "QFrame::qt_metacast(char const*)");
-mu_demangle(498, cxx, "_ZN6QFrame13setFrameShapeENS_5ShapeE_ptr", "QFrame::setFrameShape(QFrame::Shape)");
-mu_demangle(499, cxx, "_ZN6QFrame13setFrameStyleEi_ptr", "QFrame::setFrameStyle(int)");
-mu_demangle(500, cxx, "_ZN6QFrame14setFrameShadowENS_6ShadowE_ptr", "QFrame::setFrameShadow(QFrame::Shadow)");
-mu_demangle(501, cxx, "_ZN6QFrameC1EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QFrame::QFrame(QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(502, cxx, "_ZN6QFrameC2EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QFrame::QFrame(QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(503, cxx, "_ZN6QFrameD2Ev_ptr", "QFrame::~QFrame()");
-mu_demangle(504, cxx, "_ZN6QLabel10setPictureERK8QPicture_ptr", "QLabel::setPicture(QPicture const&)");
-mu_demangle(505, cxx, "_ZN6QLabel11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QLabel::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(506, cxx, "_ZN6QLabel11qt_metacastEPKc_ptr", "QLabel::qt_metacast(char const*)");
-mu_demangle(507, cxx, "_ZN6QLabel11setWordWrapEb_ptr", "QLabel::setWordWrap(bool)");
-mu_demangle(508, cxx, "_ZN6QLabel12setAlignmentE6QFlagsIN2Qt13AlignmentFlagEE_ptr", "QLabel::setAlignment(QFlags<Qt::AlignmentFlag>)");
-mu_demangle(509, cxx, "_ZN6QLabel13linkActivatedERK7QString_ptr", "QLabel::linkActivated(QString const&)");
-mu_demangle(510, cxx, "_ZN6QLabel13setTextFormatEN2Qt10TextFormatE_ptr", "QLabel::setTextFormat(Qt::TextFormat)");
-mu_demangle(511, cxx, "_ZN6QLabel16staticMetaObjectE_ptr", "QLabel::staticMetaObject");
-mu_demangle(512, cxx, "_ZN6QLabel20setOpenExternalLinksEb_ptr", "QLabel::setOpenExternalLinks(bool)");
-mu_demangle(513, cxx, "_ZN6QLabel23setTextInteractionFlagsE6QFlagsIN2Qt19TextInteractionFlagEE_ptr", "QLabel::setTextInteractionFlags(QFlags<Qt::TextInteractionFlag>)");
-mu_demangle(514, cxx, "_ZN6QLabel7setTextERK7QString_ptr", "QLabel::setText(QString const&)");
-mu_demangle(515, cxx, "_ZN6QLabel9setPixmapERK7QPixmap_ptr", "QLabel::setPixmap(QPixmap const&)");
-mu_demangle(516, cxx, "_ZN6QLabelC1EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QLabel::QLabel(QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(517, cxx, "_ZN6QLabelC1ERK7QStringP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QLabel::QLabel(QString const&, QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(518, cxx, "_ZN6QLabelC2EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QLabel::QLabel(QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(519, cxx, "_ZN6QLabelC2ERK7QStringP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QLabel::QLabel(QString const&, QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(520, cxx, "_ZN6QLabelD2Ev_ptr", "QLabel::~QLabel()");
-mu_demangle(521, cxx, "_ZN6QStyle11alignedRectEN2Qt15LayoutDirectionE6QFlagsINS0_13AlignmentFlagEERK5QSizeRK5QRect_ptr", "QStyle::alignedRect(Qt::LayoutDirection, QFlags<Qt::AlignmentFlag>, QSize const&, QRect const&)");
-mu_demangle(522, cxx, "_ZN6QTimer10singleShotEiPK7QObjectPKc_ptr", "QTimer::singleShot(int, QObject const*, char const*)");
-mu_demangle(523, cxx, "_ZN6QTimer11setIntervalEi_ptr", "QTimer::setInterval(int)");
-mu_demangle(524, cxx, "_ZN6QTimer14singleShotImplEiN2Qt9TimerTypeEPK7QObjectPN9QtPrivate15QSlotObjectBaseE_ptr", "QTimer::singleShotImpl(int, Qt::TimerType, QObject const*, QtPrivate::QSlotObjectBase*)");
-mu_demangle(525, cxx, "_ZN6QTimer16staticMetaObjectE_ptr", "QTimer::staticMetaObject");
-mu_demangle(526, cxx, "_ZN6QTimer4stopEv_ptr", "QTimer::stop()");
-mu_demangle(527, cxx, "_ZN6QTimer5startEi_ptr", "QTimer::start(int)");
-mu_demangle(528, cxx, "_ZN6QTimer5startEv_ptr", "QTimer::start()");
-mu_demangle(529, cxx, "_ZN6QTimer7timeoutENS_14QPrivateSignalE_ptr", "QTimer::timeout(QTimer::QPrivateSignal)");
-mu_demangle(530, cxx, "_ZN6QTimerC1EP7QObject_ptr", "QTimer::QTimer(QObject*)");
-mu_demangle(531, cxx, "_ZN7LogView10SetLogSizeEm_ptr", "LogView::SetLogSize(unsigned long)");
-mu_demangle(532, cxx, "_ZN7LogView11SetLogLevelE10BNLogLevel_ptr", "LogView::SetLogLevel(BNLogLevel)");
-mu_demangle(533, cxx, "_ZN7LogViewC1EP7QWidgetP9LogStatus_ptr", "LogView::LogView(QWidget*, LogStatus*)");
-mu_demangle(534, cxx, "_ZN7QAction10setCheckedEb_ptr", "QAction::setChecked(bool)");
-mu_demangle(535, cxx, "_ZN7QAction10setEnabledEb_ptr", "QAction::setEnabled(bool)");
-mu_demangle(536, cxx, "_ZN7QAction12setCheckableEb_ptr", "QAction::setCheckable(bool)");
-mu_demangle(537, cxx, "_ZN7QAction16staticMetaObjectE_ptr", "QAction::staticMetaObject");
-mu_demangle(538, cxx, "_ZN7QAction7setDataERK8QVariant_ptr", "QAction::setData(QVariant const&)");
-mu_demangle(539, cxx, "_ZN7QAction9triggeredEb_ptr", "QAction::triggered(bool)");
-mu_demangle(540, cxx, "_ZN7QActionC1ERK7QStringP7QObject_ptr", "QAction::QAction(QString const&, QObject*)");
-mu_demangle(541, cxx, "_ZN7QCursor3posEv_ptr", "QCursor::pos()");
-mu_demangle(542, cxx, "_ZN7QDialog11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QDialog::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(543, cxx, "_ZN7QDialog11qt_metacastEPKc_ptr", "QDialog::qt_metacast(char const*)");
-mu_demangle(544, cxx, "_ZN7QDialog16staticMetaObjectE_ptr", "QDialog::staticMetaObject");
-mu_demangle(545, cxx, "_ZN7QDialog4doneEi_ptr", "QDialog::done(int)");
-mu_demangle(546, cxx, "_ZN7QDialog4execEv_ptr", "QDialog::exec()");
-mu_demangle(547, cxx, "_ZN7QDialog6acceptEv_ptr", "QDialog::accept()");
-mu_demangle(548, cxx, "_ZN7QDialog8setModalEb_ptr", "QDialog::setModal(bool)");
-mu_demangle(549, cxx, "_ZN7QDialogC2EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QDialog::QDialog(QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(550, cxx, "_ZN7QDialogD2Ev_ptr", "QDialog::~QDialog()");
-mu_demangle(551, cxx, "_ZN7QLayout17setSizeConstraintENS_14SizeConstraintE_ptr", "QLayout::setSizeConstraint(QLayout::SizeConstraint)");
-mu_demangle(552, cxx, "_ZN7QLayout18setContentsMarginsEiiii_ptr", "QLayout::setContentsMargins(int, int, int, int)");
-mu_demangle(553, cxx, "_ZN7QLayout18setContentsMarginsERK8QMargins_ptr", "QLayout::setContentsMargins(QMargins const&)");
-mu_demangle(554, cxx, "_ZN7QLayout9addWidgetEP7QWidget_ptr", "QLayout::addWidget(QWidget*)");
-mu_demangle(555, cxx, "_ZN7QLocale6systemEv_ptr", "QLocale::system()");
-mu_demangle(556, cxx, "_ZN7QLocaleC1Ev_ptr", "QLocale::QLocale()");
-mu_demangle(557, cxx, "_ZN7QLocaleD1Ev_ptr", "QLocale::~QLocale()");
-mu_demangle(558, cxx, "_ZN7QObject11connectImplEPKS_PPvS1_S3_PN9QtPrivate15QSlotObjectBaseEN2Qt14ConnectionTypeEPKiPK11QMetaObject_ptr", "QObject::connectImpl(QObject const*, void**, QObject const*, void**, QtPrivate::QSlotObjectBase*, Qt::ConnectionType, int const*, QMetaObject const*)");
-mu_demangle(559, cxx, "_ZN7QObject11deleteLaterEv_ptr", "QObject::deleteLater()");
-mu_demangle(560, cxx, "_ZN7QObject11eventFilterEPS_P6QEvent_ptr", "QObject::eventFilter(QObject*, QEvent*)");
-mu_demangle(561, cxx, "_ZN7QObject11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QObject::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(562, cxx, "_ZN7QObject11qt_metacastEPKc_ptr", "QObject::qt_metacast(char const*)");
-mu_demangle(563, cxx, "_ZN7QObject12blockSignalsEb_ptr", "QObject::blockSignals(bool)");
-mu_demangle(564, cxx, "_ZN7QObject18installEventFilterEPS__ptr", "QObject::installEventFilter(QObject*)");
-mu_demangle(565, cxx, "_ZN7QObject7connectEPKS_PKcS1_S3_N2Qt14ConnectionTypeE_ptr", "QObject::connect(QObject const*, char const*, QObject const*, char const*, Qt::ConnectionType)");
-mu_demangle(566, cxx, "_ZN7QObjectC2EPS__ptr", "QObject::QObject(QObject*)");
-mu_demangle(567, cxx, "_ZN7QObjectD2Ev_ptr", "QObject::~QObject()");
-mu_demangle(568, cxx, "_ZN7QPixmap4fillERK6QColor_ptr", "QPixmap::fill(QColor const&)");
-mu_demangle(569, cxx, "_ZN7QPixmapC1Eii_ptr", "QPixmap::QPixmap(int, int)");
-mu_demangle(570, cxx, "_ZN7QPixmapC1ERK7QStringPKc6QFlagsIN2Qt19ImageConversionFlagEE_ptr", "QPixmap::QPixmap(QString const&, char const*, QFlags<Qt::ImageConversionFlag>)");
-mu_demangle(571, cxx, "_ZN7QPixmapD1Ev_ptr", "QPixmap::~QPixmap()");
-mu_demangle(572, cxx, "_ZN7QRegExpC1ERK7QStringN2Qt15CaseSensitivityENS_13PatternSyntaxE_ptr", "QRegExp::QRegExp(QString const&, Qt::CaseSensitivity, QRegExp::PatternSyntax)");
-mu_demangle(573, cxx, "_ZN7QRegExpD1Ev_ptr", "QRegExp::~QRegExp()");
-mu_demangle(574, cxx, "_ZN7QString11reallocDataEjb_ptr", "QString::reallocData(unsigned int, bool)");
-mu_demangle(575, cxx, "_ZN7QString13toUtf8_helperERKS__ptr", "QString::toUtf8_helper(QString const&)");
-mu_demangle(576, cxx, "_ZN7QString14compare_helperEPK5QChariPKciN2Qt15CaseSensitivityE_ptr", "QString::compare_helper(QChar const*, int, char const*, int, Qt::CaseSensitivity)");
-mu_demangle(577, cxx, "_ZN7QString14trimmed_helperERKS__ptr", "QString::trimmed_helper(QString const&)");
-mu_demangle(578, cxx, "_ZN7QString14trimmed_helperERS__ptr", "QString::trimmed_helper(QString&)");
-mu_demangle(579, cxx, "_ZN7QString15fromUtf8_helperEPKci_ptr", "QString::fromUtf8_helper(char const*, int)");
-mu_demangle(580, cxx, "_ZN7QString16fromAscii_helperEPKci_ptr", "QString::fromAscii_helper(char const*, int)");
-mu_demangle(581, cxx, "_ZN7QString17fromLatin1_helperEPKci_ptr", "QString::fromLatin1_helper(char const*, int)");
-mu_demangle(582, cxx, "_ZN7QString17simplified_helperERKS__ptr", "QString::simplified_helper(QString const&)");
-mu_demangle(583, cxx, "_ZN7QString20fromLocal8Bit_helperEPKci_ptr", "QString::fromLocal8Bit_helper(char const*, int)");
-mu_demangle(584, cxx, "_ZN7QString4chopEi_ptr", "QString::chop(int)");
-mu_demangle(585, cxx, "_ZN7QString6appendERKS__ptr", "QString::append(QString const&)");
-mu_demangle(586, cxx, "_ZN7QString6numberEii_ptr", "QString::number(int, int)");
-mu_demangle(587, cxx, "_ZN7QString6numberEmi_ptr", "QString::number(unsigned long, int)");
-mu_demangle(588, cxx, "_ZN7QString7replaceERK18QRegularExpressionRKS__ptr", "QString::replace(QRegularExpression const&, QString const&)");
-mu_demangle(589, cxx, "_ZN7QString7replaceERKS_S1_N2Qt15CaseSensitivityE_ptr", "QString::replace(QString const&, QString const&, Qt::CaseSensitivity)");
-mu_demangle(590, cxx, "_ZN7QStringaSERKS__ptr", "QString::operator=(QString const&)");
-mu_demangle(591, cxx, "_ZN7QTabBar11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QTabBar::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(592, cxx, "_ZN7QTabBar11qt_metacastEPKc_ptr", "QTabBar::qt_metacast(char const*)");
-mu_demangle(593, cxx, "_ZN7QTabBar13setTabToolTipEiRK7QString_ptr", "QTabBar::setTabToolTip(int, QString const&)");
-mu_demangle(594, cxx, "_ZN7QTabBar17mouseReleaseEventEP11QMouseEvent_ptr", "QTabBar::mouseReleaseEvent(QMouseEvent*)");
-mu_demangle(595, cxx, "_ZN7QTabBar17tabCloseRequestedEi_ptr", "QTabBar::tabCloseRequested(int)");
-mu_demangle(596, cxx, "_ZN7QTabBarC2EP7QWidget_ptr", "QTabBar::QTabBar(QWidget*)");
-mu_demangle(597, cxx, "_ZN7QTabBarD2Ev_ptr", "QTabBar::~QTabBar()");
-mu_demangle(598, cxx, "_ZN7QThread11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QThread::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(599, cxx, "_ZN7QThread11qt_metacastEPKc_ptr", "QThread::qt_metacast(char const*)");
-mu_demangle(600, cxx, "_ZN7QThread13currentThreadEv_ptr", "QThread::currentThread()");
-mu_demangle(601, cxx, "_ZN7QThread19requestInterruptionEv_ptr", "QThread::requestInterruption()");
-mu_demangle(602, cxx, "_ZN7QThread4waitE14QDeadlineTimer_ptr", "QThread::wait(QDeadlineTimer)");
-mu_demangle(603, cxx, "_ZN7QThread5startENS_8PriorityE_ptr", "QThread::start(QThread::Priority)");
-mu_demangle(604, cxx, "_ZN7QThread6msleepEm_ptr", "QThread::msleep(unsigned long)");
-mu_demangle(605, cxx, "_ZN7QThreadC2EP7QObject_ptr", "QThread::QThread(QObject*)");
-mu_demangle(606, cxx, "_ZN7QThreadD2Ev_ptr", "QThread::~QThread()");
-mu_demangle(607, cxx, "_ZN7QWidget10clearFocusEv_ptr", "QWidget::clearFocus()");
-mu_demangle(608, cxx, "_ZN7QWidget10enterEventEP6QEvent_ptr", "QWidget::enterEvent(QEvent*)");
-mu_demangle(609, cxx, "_ZN7QWidget10leaveEventEP6QEvent_ptr", "QWidget::leaveEvent(QEvent*)");
-mu_demangle(610, cxx, "_ZN7QWidget10setEnabledEb_ptr", "QWidget::setEnabled(bool)");
-mu_demangle(611, cxx, "_ZN7QWidget10setPaletteERK8QPalette_ptr", "QWidget::setPalette(QPalette const&)");
-mu_demangle(612, cxx, "_ZN7QWidget10setToolTipERK7QString_ptr", "QWidget::setToolTip(QString const&)");
-mu_demangle(613, cxx, "_ZN7QWidget11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QWidget::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(614, cxx, "_ZN7QWidget11qt_metacastEPKc_ptr", "QWidget::qt_metacast(char const*)");
-mu_demangle(615, cxx, "_ZN7QWidget11resizeEventEP12QResizeEvent_ptr", "QWidget::resizeEvent(QResizeEvent*)");
-mu_demangle(616, cxx, "_ZN7QWidget11setDisabledEb_ptr", "QWidget::setDisabled(bool)");
-mu_demangle(617, cxx, "_ZN7QWidget11setGeometryERK5QRect_ptr", "QWidget::setGeometry(QRect const&)");
-mu_demangle(618, cxx, "_ZN7QWidget12setAttributeEN2Qt15WidgetAttributeEb_ptr", "QWidget::setAttribute(Qt::WidgetAttribute, bool)");
-mu_demangle(619, cxx, "_ZN7QWidget12setFixedSizeEii_ptr", "QWidget::setFixedSize(int, int)");
-mu_demangle(620, cxx, "_ZN7QWidget13keyPressEventEP9QKeyEvent_ptr", "QWidget::keyPressEvent(QKeyEvent*)");
-mu_demangle(621, cxx, "_ZN7QWidget13setFixedWidthEi_ptr", "QWidget::setFixedWidth(int)");
-mu_demangle(622, cxx, "_ZN7QWidget13setSizePolicyE11QSizePolicy_ptr", "QWidget::setSizePolicy(QSizePolicy)");
-mu_demangle(623, cxx, "_ZN7QWidget13setStyleSheetERK7QString_ptr", "QWidget::setStyleSheet(QString const&)");
-mu_demangle(624, cxx, "_ZN7QWidget13setWindowIconERK5QIcon_ptr", "QWidget::setWindowIcon(QIcon const&)");
-mu_demangle(625, cxx, "_ZN7QWidget14activateWindowEv_ptr", "QWidget::activateWindow()");
-mu_demangle(626, cxx, "_ZN7QWidget14setAcceptDropsEb_ptr", "QWidget::setAcceptDrops(bool)");
-mu_demangle(627, cxx, "_ZN7QWidget14setFocusPolicyEN2Qt11FocusPolicyE_ptr", "QWidget::setFocusPolicy(Qt::FocusPolicy)");
-mu_demangle(628, cxx, "_ZN7QWidget14setMaximumSizeEii_ptr", "QWidget::setMaximumSize(int, int)");
-mu_demangle(629, cxx, "_ZN7QWidget14setMinimumSizeEii_ptr", "QWidget::setMinimumSize(int, int)");
-mu_demangle(630, cxx, "_ZN7QWidget14setWindowFlagsE6QFlagsIN2Qt10WindowTypeEE_ptr", "QWidget::setWindowFlags(QFlags<Qt::WindowType>)");
-mu_demangle(631, cxx, "_ZN7QWidget14setWindowTitleERK7QString_ptr", "QWidget::setWindowTitle(QString const&)");
-mu_demangle(632, cxx, "_ZN7QWidget14updateGeometryEv_ptr", "QWidget::updateGeometry()");
-mu_demangle(633, cxx, "_ZN7QWidget15restoreGeometryERK10QByteArray_ptr", "QWidget::restoreGeometry(QByteArray const&)");
-mu_demangle(634, cxx, "_ZN7QWidget15setMinimumWidthEi_ptr", "QWidget::setMinimumWidth(int)");
-mu_demangle(635, cxx, "_ZN7QWidget16setMaximumHeightEi_ptr", "QWidget::setMaximumHeight(int)");
-mu_demangle(636, cxx, "_ZN7QWidget16staticMetaObjectE_ptr", "QWidget::staticMetaObject");
-mu_demangle(637, cxx, "_ZN7QWidget17setForegroundRoleEN8QPalette9ColorRoleE_ptr", "QWidget::setForegroundRole(QPalette::ColorRole)");
-mu_demangle(638, cxx, "_ZN7QWidget17setGraphicsEffectEP15QGraphicsEffect_ptr", "QWidget::setGraphicsEffect(QGraphicsEffect*)");
-mu_demangle(639, cxx, "_ZN7QWidget17setWindowFilePathERK7QString_ptr", "QWidget::setWindowFilePath(QString const&)");
-mu_demangle(640, cxx, "_ZN7QWidget17setWindowModalityEN2Qt14WindowModalityE_ptr", "QWidget::setWindowModality(Qt::WindowModality)");
-mu_demangle(641, cxx, "_ZN7QWidget18setContentsMarginsEiiii_ptr", "QWidget::setContentsMargins(int, int, int, int)");
-mu_demangle(642, cxx, "_ZN7QWidget20setContextMenuPolicyEN2Qt17ContextMenuPolicyE_ptr", "QWidget::setContextMenuPolicy(Qt::ContextMenuPolicy)");
-mu_demangle(643, cxx, "_ZN7QWidget21setAutoFillBackgroundEb_ptr", "QWidget::setAutoFillBackground(bool)");
-mu_demangle(644, cxx, "_ZN7QWidget4hideEv_ptr", "QWidget::hide()");
-mu_demangle(645, cxx, "_ZN7QWidget4moveERK6QPoint_ptr", "QWidget::move(QPoint const&)");
-mu_demangle(646, cxx, "_ZN7QWidget4showEv_ptr", "QWidget::show()");
-mu_demangle(647, cxx, "_ZN7QWidget5closeEv_ptr", "QWidget::close()");
-mu_demangle(648, cxx, "_ZN7QWidget5eventEP6QEvent_ptr", "QWidget::event(QEvent*)");
-mu_demangle(649, cxx, "_ZN7QWidget5raiseEv_ptr", "QWidget::raise()");
-mu_demangle(650, cxx, "_ZN7QWidget6resizeERK5QSize_ptr", "QWidget::resize(QSize const&)");
-mu_demangle(651, cxx, "_ZN7QWidget6updateEv_ptr", "QWidget::update()");
-mu_demangle(652, cxx, "_ZN7QWidget7setFontERK5QFont_ptr", "QWidget::setFont(QFont const&)");
-mu_demangle(653, cxx, "_ZN7QWidget8setFocusEN2Qt11FocusReasonE_ptr", "QWidget::setFocus(Qt::FocusReason)");
-mu_demangle(654, cxx, "_ZN7QWidget9addActionEP7QAction_ptr", "QWidget::addAction(QAction*)");
-mu_demangle(655, cxx, "_ZN7QWidget9hideEventEP10QHideEvent_ptr", "QWidget::hideEvent(QHideEvent*)");
-mu_demangle(656, cxx, "_ZN7QWidget9setLayoutEP7QLayout_ptr", "QWidget::setLayout(QLayout*)");
-mu_demangle(657, cxx, "_ZN7QWidget9setParentEPS__ptr", "QWidget::setParent(QWidget*)");
-mu_demangle(658, cxx, "_ZN7QWidgetC1EPS_6QFlagsIN2Qt10WindowTypeEE_ptr", "QWidget::QWidget(QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(659, cxx, "_ZN7QWidgetC2EPS_6QFlagsIN2Qt10WindowTypeEE_ptr", "QWidget::QWidget(QWidget*, QFlags<Qt::WindowType>)");
-mu_demangle(660, cxx, "_ZN7QWidgetD2Ev_ptr", "QWidget::~QWidget()");
-mu_demangle(661, cxx, "_ZN8QPainter10drawPixmapERK6QRectFRK7QPixmapS2__ptr", "QPainter::drawPixmap(QRectF const&, QPixmap const&, QRectF const&)");
-mu_demangle(662, cxx, "_ZN8QPainter13setRenderHintENS_10RenderHintEb_ptr", "QPainter::setRenderHint(QPainter::RenderHint, bool)");
-mu_demangle(663, cxx, "_ZN8QPainter3endEv_ptr", "QPainter::end()");
-mu_demangle(664, cxx, "_ZN8QPainter4saveEv_ptr", "QPainter::save()");
-mu_demangle(665, cxx, "_ZN8QPainter5beginEP12QPaintDevice_ptr", "QPainter::begin(QPaintDevice*)");
-mu_demangle(666, cxx, "_ZN8QPainter6setPenEN2Qt8PenStyleE_ptr", "QPainter::setPen(Qt::PenStyle)");
-mu_demangle(667, cxx, "_ZN8QPainter6setPenERK4QPen_ptr", "QPainter::setPen(QPen const&)");
-mu_demangle(668, cxx, "_ZN8QPainter6setPenERK6QColor_ptr", "QPainter::setPen(QColor const&)");
-mu_demangle(669, cxx, "_ZN8QPainter7restoreEv_ptr", "QPainter::restore()");
-mu_demangle(670, cxx, "_ZN8QPainter7setFontERK5QFont_ptr", "QPainter::setFont(QFont const&)");
-mu_demangle(671, cxx, "_ZN8QPainter8drawTextERK5QRectiRK7QStringPS0__ptr", "QPainter::drawText(QRect const&, int, QString const&, QRect*)");
-mu_demangle(672, cxx, "_ZN8QPainter8drawTextERK7QPointFRK7QString_ptr", "QPainter::drawText(QPointF const&, QString const&)");
-mu_demangle(673, cxx, "_ZN8QPainter8fillRectERK5QRectRK6QColor_ptr", "QPainter::fillRect(QRect const&, QColor const&)");
-mu_demangle(674, cxx, "_ZN8QPainter8setBrushERK6QBrush_ptr", "QPainter::setBrush(QBrush const&)");
-mu_demangle(675, cxx, "_ZN8QPainter9drawLinesEPK5QLinei_ptr", "QPainter::drawLines(QLine const*, int)");
-mu_demangle(676, cxx, "_ZN8QPainter9drawRectsEPK5QRecti_ptr", "QPainter::drawRects(QRect const*, int)");
-mu_demangle(677, cxx, "_ZN8QPainterC1EP12QPaintDevice_ptr", "QPainter::QPainter(QPaintDevice*)");
-mu_demangle(678, cxx, "_ZN8QPainterC1Ev_ptr", "QPainter::QPainter()");
-mu_demangle(679, cxx, "_ZN8QPainterD1Ev_ptr", "QPainter::~QPainter()");
-mu_demangle(680, cxx, "_ZN8QPalette8setBrushENS_10ColorGroupENS_9ColorRoleERK6QBrush_ptr", "QPalette::setBrush(QPalette::ColorGroup, QPalette::ColorRole, QBrush const&)");
-mu_demangle(681, cxx, "_ZN8QPaletteC1ERKS__ptr", "QPalette::QPalette(QPalette const&)");
-mu_demangle(682, cxx, "_ZN8QPaletteD1Ev_ptr", "QPalette::~QPalette()");
-mu_demangle(683, cxx, "_ZN8QPictureC1Ei_ptr", "QPicture::QPicture(int)");
-mu_demangle(684, cxx, "_ZN8QPictureD1Ev_ptr", "QPicture::~QPicture()");
-mu_demangle(685, cxx, "_ZN8QProcess13startDetachedERK7QStringRK11QStringList_ptr", "QProcess::startDetached(QString const&, QStringList const&)");
-mu_demangle(686, cxx, "_ZN8QSpinBox10setMaximumEi_ptr", "QSpinBox::setMaximum(int)");
-mu_demangle(687, cxx, "_ZN8QSpinBox10setMinimumEi_ptr", "QSpinBox::setMinimum(int)");
-mu_demangle(688, cxx, "_ZN8QSpinBox8setValueEi_ptr", "QSpinBox::setValue(int)");
-mu_demangle(689, cxx, "_ZN8QSpinBoxC1EP7QWidget_ptr", "QSpinBox::QSpinBox(QWidget*)");
-mu_demangle(690, cxx, "_ZN8QSysInfo17prettyProductNameEv_ptr", "QSysInfo::prettyProductName()");
-mu_demangle(691, cxx, "_ZN8QToolBar10setMovableEb_ptr", "QToolBar::setMovable(bool)");
-mu_demangle(692, cxx, "_ZN8QToolBar11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QToolBar::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(693, cxx, "_ZN8QToolBar11qt_metacastEPKc_ptr", "QToolBar::qt_metacast(char const*)");
-mu_demangle(694, cxx, "_ZN8QToolBarC2ERK7QStringP7QWidget_ptr", "QToolBar::QToolBar(QString const&, QWidget*)");
-mu_demangle(695, cxx, "_ZN8QToolBarD2Ev_ptr", "QToolBar::~QToolBar()");
-mu_demangle(696, cxx, "_ZN8QToolTip8showTextERK6QPointRK7QStringP7QWidget_ptr", "QToolTip::showText(QPoint const&, QString const&, QWidget*)");
-mu_demangle(697, cxx, "_ZN8QVariantC1Eb_ptr", "QVariant::QVariant(bool)");
-mu_demangle(698, cxx, "_ZN8QVariantC1Ei_ptr", "QVariant::QVariant(int)");
-mu_demangle(699, cxx, "_ZN8QVariantC1EiPKvj_ptr", "QVariant::QVariant(int, void const*, unsigned int)");
-mu_demangle(700, cxx, "_ZN8QVariantC1EPKc_ptr", "QVariant::QVariant(char const*)");
-mu_demangle(701, cxx, "_ZN8QVariantC1ERK10QByteArray_ptr", "QVariant::QVariant(QByteArray const&)");
-mu_demangle(702, cxx, "_ZN8QVariantC1ERK5QListIS_E_ptr", "QVariant::QVariant(QList<QVariant> const&)");
-mu_demangle(703, cxx, "_ZN8QVariantC1ERK7QString_ptr", "QVariant::QVariant(QString const&)");
-mu_demangle(704, cxx, "_ZN8QVariantC1ERKS__ptr", "QVariant::QVariant(QVariant const&)");
-mu_demangle(705, cxx, "_ZN8QVariantD1Ev_ptr", "QVariant::~QVariant()");
-mu_demangle(706, cxx, "_ZN8UIAction13getKeyBindingERK7QString_ptr", "UIAction::getKeyBinding(QString const&)");
-mu_demangle(707, cxx, "_ZN8UIAction14registerActionERK7QStringRK12QKeySequence_ptr", "UIAction::registerAction(QString const&, QKeySequence const&)");
-mu_demangle(708, cxx, "_ZN8UIAction14registerActionERK7QStringRK5QListI12QKeySequenceE_ptr", "UIAction::registerAction(QString const&, QList<QKeySequence> const&)");
-mu_demangle(709, cxx, "_ZN8UIAction16unregisterActionERK7QString_ptr", "UIAction::unregisterAction(QString const&)");
-mu_demangle(710, cxx, "_ZN8UIAction17setUserKeyBindingERK7QStringRK5QListI12QKeySequenceE_ptr", "UIAction::setUserKeyBinding(QString const&, QList<QKeySequence> const&)");
-mu_demangle(711, cxx, "_ZN8UIAction19readKeyBindingsFileEv_ptr", "UIAction::readKeyBindingsFile()");
-mu_demangle(712, cxx, "_ZN8UIAction20getActionDisplayNameERK7QStringRK15UIActionContext_ptr", "UIAction::getActionDisplayName(QString const&, UIActionContext const&)");
-mu_demangle(713, cxx, "_ZN8UIAction20getDefaultKeyBindingERK7QString_ptr", "UIAction::getDefaultKeyBinding(QString const&)");
-mu_demangle(714, cxx, "_ZN8UIAction20setActionDisplayNameERK7QStringRKSt8functionIFS0_vEE_ptr", "UIAction::setActionDisplayName(QString const&, std::function<QString ()> const&)");
-mu_demangle(715, cxx, "_ZN8UIAction20writeKeyBindingsFileEv_ptr", "UIAction::writeKeyBindingsFile()");
-mu_demangle(716, cxx, "_ZN8UIAction23getAllRegisteredActionsEv_ptr", "UIAction::getAllRegisteredActions()");
-mu_demangle(717, cxx, "_ZN8UIAction24registerTransformActionsEv_ptr", "UIAction::registerTransformActions()");
-mu_demangle(718, cxx, "_ZN8UIAction24resetKeyBindingToDefaultERK7QString_ptr", "UIAction::resetKeyBindingToDefault(QString const&)");
-mu_demangle(719, cxx, "_ZN8UIAction28registerPluginCommandActionsEv_ptr", "UIAction::registerPluginCommandActions()");
-mu_demangle(720, cxx, "_ZN8UIActionC1ERKSt8functionIFvvEE_ptr", "UIAction::UIAction(std::function<void ()> const&)");
-mu_demangle(721, cxx, "_ZN8UIActionC1ERKSt8functionIFvvEERKS0_IFbRK15UIActionContextEE_ptr", "UIAction::UIAction(std::function<void ()> const&, std::function<bool (UIActionContext const&)> const&)");
-mu_demangle(722, cxx, "_ZN8UIActionC1ERKSt8functionIFvvEERKS0_IFbvEE_ptr", "UIAction::UIAction(std::function<void ()> const&, std::function<bool ()> const&)");
-mu_demangle(723, cxx, "_ZN8ViewType8getTypesEv_ptr", "ViewType::getTypes()");
-mu_demangle(724, cxx, "_ZN8WebPage211linkClickedERK4QUrl_4_0", "WebPage2::linkClicked(QUrl const&)");
-mu_demangle(725, cxx, "_ZN9LogStatus15clearIndicatorsEv_ptr", "LogStatus::clearIndicators()");
-mu_demangle(726, cxx, "_ZN9LogStatus19incrementErrorCountEi_ptr", "LogStatus::incrementErrorCount(int)");
-mu_demangle(727, cxx, "_ZN9LogStatus21incrementWarningCountEi_ptr", "LogStatus::incrementWarningCount(int)");
-mu_demangle(728, cxx, "_ZN9LogStatusC1EP7QWidget_ptr", "LogStatus::LogStatus(QWidget*)");
-mu_demangle(729, cxx, "_ZN9MiniGraphC1EP9ViewFrame_ptr", "MiniGraph::MiniGraph(ViewFrame*)");
-mu_demangle(730, cxx, "_ZN9QCheckBox13setCheckStateEN2Qt10CheckStateE_ptr", "QCheckBox::setCheckState(Qt::CheckState)");
-mu_demangle(731, cxx, "_ZN9QCheckBoxC1EP7QWidget_ptr", "QCheckBox::QCheckBox(QWidget*)");
-mu_demangle(732, cxx, "_ZN9QCheckBoxC1ERK7QStringP7QWidget_ptr", "QCheckBox::QCheckBox(QString const&, QWidget*)");
-mu_demangle(733, cxx, "_ZN9QComboBox10insertItemEiRK5QIconRK7QStringRK8QVariant_ptr", "QComboBox::insertItem(int, QIcon const&, QString const&, QVariant const&)");
-mu_demangle(734, cxx, "_ZN9QComboBox14setCurrentTextERK7QString_ptr", "QComboBox::setCurrentText(QString const&)");
-mu_demangle(735, cxx, "_ZN9QComboBox15setCurrentIndexEi_ptr", "QComboBox::setCurrentIndex(int)");
-mu_demangle(736, cxx, "_ZN9QComboBox16staticMetaObjectE_ptr", "QComboBox::staticMetaObject");
-mu_demangle(737, cxx, "_ZN9QComboBox19setSizeAdjustPolicyENS_16SizeAdjustPolicyE_ptr", "QComboBox::setSizeAdjustPolicy(QComboBox::SizeAdjustPolicy)");
-mu_demangle(738, cxx, "_ZN9QComboBox5clearEv_ptr", "QComboBox::clear()");
-mu_demangle(739, cxx, "_ZN9QComboBox9activatedEi_ptr", "QComboBox::activated(int)");
-mu_demangle(740, cxx, "_ZN9QComboBoxC1EP7QWidget_ptr", "QComboBox::QComboBox(QWidget*)");
-mu_demangle(741, cxx, "_ZN9QDateTime11setTimeSpecEN2Qt8TimeSpecE_ptr", "QDateTime::setTimeSpec(Qt::TimeSpec)");
-mu_demangle(742, cxx, "_ZN9QDateTime18currentDateTimeUtcEv_ptr", "QDateTime::currentDateTimeUtc()");
-mu_demangle(743, cxx, "_ZN9QDateTime18fromSecsSinceEpochExN2Qt8TimeSpecEi_ptr", "QDateTime::fromSecsSinceEpoch(long long, Qt::TimeSpec, int)");
-mu_demangle(744, cxx, "_ZN9QDateTime9setTime_tEj_ptr", "QDateTime::setTime_t(unsigned int)");
-mu_demangle(745, cxx, "_ZN9QDateTimeC1Ev_ptr", "QDateTime::QDateTime()");
-mu_demangle(746, cxx, "_ZN9QDateTimeD1Ev_ptr", "QDateTime::~QDateTime()");
-mu_demangle(747, cxx, "_ZN9QFileInfoC1ERK7QString_ptr", "QFileInfo::QFileInfo(QString const&)");
-mu_demangle(748, cxx, "_ZN9QFileInfoD1Ev_ptr", "QFileInfo::~QFileInfo()");
-mu_demangle(749, cxx, "_ZN9QGroupBox12setAlignmentEi_ptr", "QGroupBox::setAlignment(int)");
-mu_demangle(750, cxx, "_ZN9QGroupBoxC1EP7QWidget_ptr", "QGroupBox::QGroupBox(QWidget*)");
-mu_demangle(751, cxx, "_ZN9QGroupBoxC1ERK7QStringP7QWidget_ptr", "QGroupBox::QGroupBox(QString const&, QWidget*)");
-mu_demangle(752, cxx, "_ZN9QIODevice4openE6QFlagsINS_12OpenModeFlagEE_ptr", "QIODevice::open(QFlags<QIODevice::OpenModeFlag>)");
-mu_demangle(753, cxx, "_ZN9QIODevice4readEPcx_ptr", "QIODevice::read(char*, long long)");
-mu_demangle(754, cxx, "_ZN9QIODevice5writeEPKcx_ptr", "QIODevice::write(char const*, long long)");
-mu_demangle(755, cxx, "_ZN9QIODevice7readAllEv_ptr", "QIODevice::readAll()");
-mu_demangle(756, cxx, "_ZN9QIODeviceC2Ev_ptr", "QIODevice::QIODevice()");
-mu_demangle(757, cxx, "_ZN9QIODeviceD2Ev_ptr", "QIODevice::~QIODevice()");
-mu_demangle(758, cxx, "_ZN9QLineEdit11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QLineEdit::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(759, cxx, "_ZN9QLineEdit11qt_metacastEPKc_ptr", "QLineEdit::qt_metacast(char const*)");
-mu_demangle(760, cxx, "_ZN9QLineEdit11setReadOnlyEb_ptr", "QLineEdit::setReadOnly(bool)");
-mu_demangle(761, cxx, "_ZN9QLineEdit11textChangedERK7QString_ptr", "QLineEdit::textChanged(QString const&)");
-mu_demangle(762, cxx, "_ZN9QLineEdit12setCompleterEP10QCompleter_ptr", "QLineEdit::setCompleter(QCompleter*)");
-mu_demangle(763, cxx, "_ZN9QLineEdit13keyPressEventEP9QKeyEvent_ptr", "QLineEdit::keyPressEvent(QKeyEvent*)");
-mu_demangle(764, cxx, "_ZN9QLineEdit16staticMetaObjectE_ptr", "QLineEdit::staticMetaObject");
-mu_demangle(765, cxx, "_ZN9QLineEdit18setPlaceholderTextERK7QString_ptr", "QLineEdit::setPlaceholderText(QString const&)");
-mu_demangle(766, cxx, "_ZN9QLineEdit3cutEv_ptr", "QLineEdit::cut()");
-mu_demangle(767, cxx, "_ZN9QLineEdit4redoEv_ptr", "QLineEdit::redo()");
-mu_demangle(768, cxx, "_ZN9QLineEdit4undoEv_ptr", "QLineEdit::undo()");
-mu_demangle(769, cxx, "_ZN9QLineEdit5pasteEv_ptr", "QLineEdit::paste()");
-mu_demangle(770, cxx, "_ZN9QLineEdit7setTextERK7QString_ptr", "QLineEdit::setText(QString const&)");
-mu_demangle(771, cxx, "_ZN9QLineEdit9selectAllEv_ptr", "QLineEdit::selectAll()");
-mu_demangle(772, cxx, "_ZN9QLineEditC1EP7QWidget_ptr", "QLineEdit::QLineEdit(QWidget*)");
-mu_demangle(773, cxx, "_ZN9QLineEditC2EP7QWidget_ptr", "QLineEdit::QLineEdit(QWidget*)");
-mu_demangle(774, cxx, "_ZN9QLineEditD2Ev_ptr", "QLineEdit::~QLineEdit()");
-mu_demangle(775, cxx, "_ZN9QListData11detach_growEPii_ptr", "QListData::detach_grow(int*, int)");
-mu_demangle(776, cxx, "_ZN9QListData11shared_nullE_ptr", "QListData::shared_null");
-mu_demangle(777, cxx, "_ZN9QListData6appendEv_ptr", "QListData::append()");
-mu_demangle(778, cxx, "_ZN9QListData6detachEi_ptr", "QListData::detach(int)");
-mu_demangle(779, cxx, "_ZN9QListData6removeEii_ptr", "QListData::remove(int, int)");
-mu_demangle(780, cxx, "_ZN9QListData7disposeEPNS_4DataE_ptr", "QListData::dispose(QListData::Data*)");
-mu_demangle(781, cxx, "_ZN9QListData7reallocEi_ptr", "QListData::realloc(int)");
-mu_demangle(782, cxx, "_ZN9QListView11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QListView::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(783, cxx, "_ZN9QListView11qt_metacastEPKc_ptr", "QListView::qt_metacast(char const*)");
-mu_demangle(784, cxx, "_ZN9QListView14currentChangedERK11QModelIndexS2__ptr", "QListView::currentChanged(QModelIndex const&, QModelIndex const&)");
-mu_demangle(785, cxx, "_ZN9QListViewC2EP7QWidget_ptr", "QListView::QListView(QWidget*)");
-mu_demangle(786, cxx, "_ZN9QListViewD2Ev_ptr", "QListView::~QListView()");
-mu_demangle(787, cxx, "_ZN9QMetaType22registerNormalizedTypeERK10QByteArrayPFvPvEPFS3_S3_PKvEi6QFlagsINS_8TypeFlagEEPK11QMetaObject_ptr", "QMetaType::registerNormalizedType(QByteArray const&, void (*)(void*), void* (*)(void*, void const*), int, QFlags<QMetaType::TypeFlag>, QMetaObject const*)");
-mu_demangle(788, cxx, "_ZN9QMetaType25registerConverterFunctionEPKN9QtPrivate25AbstractConverterFunctionEii_ptr", "QMetaType::registerConverterFunction(QtPrivate::AbstractConverterFunction const*, int, int)");
-mu_demangle(789, cxx, "_ZN9QMetaType25registerNormalizedTypedefERK10QByteArrayi_ptr", "QMetaType::registerNormalizedTypedef(QByteArray const&, int)");
-mu_demangle(790, cxx, "_ZN9QMetaType27unregisterConverterFunctionEii_ptr", "QMetaType::unregisterConverterFunction(int, int)");
-mu_demangle(791, cxx, "_ZN9QMetaType30hasRegisteredConverterFunctionEii_ptr", "QMetaType::hasRegisteredConverterFunction(int, int)");
-mu_demangle(792, cxx, "_ZN9QMetaType8typeNameEi_ptr", "QMetaType::typeName(int)");
-mu_demangle(793, cxx, "_ZN9QMimeData7setTextERK7QString_ptr", "QMimeData::setText(QString const&)");
-mu_demangle(794, cxx, "_ZN9QMimeDataC1Ev_ptr", "QMimeData::QMimeData()");
-mu_demangle(795, cxx, "_ZN9QResource11setFileNameERK7QString_ptr", "QResource::setFileName(QString const&)");
-mu_demangle(796, cxx, "_ZN9QResourceC1ERK7QStringRK7QLocale_ptr", "QResource::QResource(QString const&, QLocale const&)");
-mu_demangle(797, cxx, "_ZN9QResourceD1Ev_ptr", "QResource::~QResource()");
-mu_demangle(798, cxx, "_ZN9QRunnableD2Ev_ptr", "QRunnable::~QRunnable()");
-mu_demangle(799, cxx, "_ZN9QSettings10beginGroupERK7QString_ptr", "QSettings::beginGroup(QString const&)");
-mu_demangle(800, cxx, "_ZN9QSettings6removeERK7QString_ptr", "QSettings::remove(QString const&)");
-mu_demangle(801, cxx, "_ZN9QSettings8setValueERK7QStringRK8QVariant_ptr", "QSettings::setValue(QString const&, QVariant const&)");
-mu_demangle(802, cxx, "_ZN9QSettingsC1EP7QObject_ptr", "QSettings::QSettings(QObject*)");
-mu_demangle(803, cxx, "_ZN9QSettingsD1Ev_ptr", "QSettings::~QSettings()");
-mu_demangle(804, cxx, "_ZN9QSplitter14setCollapsibleEib_ptr", "QSplitter::setCollapsible(int, bool)");
-mu_demangle(805, cxx, "_ZN9QSplitter14setHandleWidthEi_ptr", "QSplitter::setHandleWidth(int)");
-mu_demangle(806, cxx, "_ZN9QSplitter16setStretchFactorEii_ptr", "QSplitter::setStretchFactor(int, int)");
-mu_demangle(807, cxx, "_ZN9QSplitter9addWidgetEP7QWidget_ptr", "QSplitter::addWidget(QWidget*)");
-mu_demangle(808, cxx, "_ZN9QSplitterC1EP7QWidget_ptr", "QSplitter::QSplitter(QWidget*)");
-mu_demangle(809, cxx, "_ZN9QTextEdit17setAcceptRichTextEb_ptr", "QTextEdit::setAcceptRichText(bool)");
-mu_demangle(810, cxx, "_ZN9QTextEdit18setPlaceholderTextERK7QString_ptr", "QTextEdit::setPlaceholderText(QString const&)");
-mu_demangle(811, cxx, "_ZN9QTextEdit23setTextInteractionFlagsE6QFlagsIN2Qt19TextInteractionFlagEE_ptr", "QTextEdit::setTextInteractionFlags(QFlags<Qt::TextInteractionFlag>)");
-mu_demangle(812, cxx, "_ZN9QTextEdit3cutEv_ptr", "QTextEdit::cut()");
-mu_demangle(813, cxx, "_ZN9QTextEdit4copyEv_ptr", "QTextEdit::copy()");
-mu_demangle(814, cxx, "_ZN9QTextEdit4redoEv_ptr", "QTextEdit::redo()");
-mu_demangle(815, cxx, "_ZN9QTextEdit4undoEv_ptr", "QTextEdit::undo()");
-mu_demangle(816, cxx, "_ZN9QTextEdit5pasteEv_ptr", "QTextEdit::paste()");
-mu_demangle(817, cxx, "_ZN9QTextEdit6appendERK7QString_ptr", "QTextEdit::append(QString const&)");
-mu_demangle(818, cxx, "_ZN9QTextEdit7setTextERK7QString_ptr", "QTextEdit::setText(QString const&)");
-mu_demangle(819, cxx, "_ZN9QTextEdit9selectAllEv_ptr", "QTextEdit::selectAll()");
-mu_demangle(820, cxx, "_ZN9QTextEditC1EP7QWidget_ptr", "QTextEdit::QTextEdit(QWidget*)");
-mu_demangle(821, cxx, "_ZN9QtPrivate12argToQStringE11QStringViewmPPKNS_7ArgBaseE_ptr", "QtPrivate::argToQString(QStringView, unsigned long, QtPrivate::ArgBase const**)");
-mu_demangle(822, cxx, "_ZN9QtPrivate16QStringList_joinEPK11QStringListPK5QChari_ptr", "QtPrivate::QStringList_join(QStringList const*, QChar const*, int)");
-mu_demangle(823, cxx, "_ZN9QtPrivate20QContainerImplHelper3midEiPiS1__ptr", "QtPrivate::QContainerImplHelper::mid(int, int*, int*)");
-mu_demangle(824, cxx, "_ZN9QTreeView11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QTreeView::qt_metacall(QMetaObject::Call, int, void**)");
-mu_demangle(825, cxx, "_ZN9QTreeView11qt_metacastEPKc_ptr", "QTreeView::qt_metacast(char const*)");
-mu_demangle(826, cxx, "_ZN9QTreeView14setIndentationEi_ptr", "QTreeView::setIndentation(int)");
-mu_demangle(827, cxx, "_ZN9QTreeView17setSortingEnabledEb_ptr", "QTreeView::setSortingEnabled(bool)");
-mu_demangle(828, cxx, "_ZN9QTreeView20setUniformRowHeightsEb_ptr", "QTreeView::setUniformRowHeights(bool)");
-mu_demangle(829, cxx, "_ZN9QTreeView22resizeColumnToContentsEi_ptr", "QTreeView::resizeColumnToContents(int)");
-mu_demangle(830, cxx, "_ZN9QTreeView9expandAllEv_ptr", "QTreeView::expandAll()");
-mu_demangle(831, cxx, "_ZN9QTreeViewC1EP7QWidget_ptr", "QTreeView::QTreeView(QWidget*)");
-mu_demangle(832, cxx, "_ZN9QTreeViewC2EP7QWidget_ptr", "QTreeView::QTreeView(QWidget*)");
-mu_demangle(833, cxx, "_ZN9QTreeViewD2Ev_ptr", "QTreeView::~QTreeView()");
-mu_demangle(834, cxx, "_ZN9QUrlQueryC1ERK7QString_ptr", "QUrlQuery::QUrlQuery(QString const&)");
-mu_demangle(835, cxx, "_ZN9QUrlQueryD1Ev_ptr", "QUrlQuery::~QUrlQuery()");
-mu_demangle(836, cxx, "_ZN9UIContext10setHandlerEP16UIContextHandler_ptr", "UIContext::setHandler(UIContextHandler*)");
-mu_demangle(837, cxx, "_ZN9UIContext12updateStatusEb_ptr", "UIContext::updateStatus(bool)");
-mu_demangle(838, cxx, "_ZN9UIContext14setupUIContextEP7QWidget_ptr", "UIContext::setupUIContext(QWidget*)");
-mu_demangle(839, cxx, "_ZN9UIContext18NotifyOnViewChangeEP9ViewFrameRK7QString_ptr", "UIContext::NotifyOnViewChange(ViewFrame*, QString const&)");
-mu_demangle(840, cxx, "_ZN9UIContext19getScaledWindowSizeEii_ptr", "UIContext::getScaledWindowSize(int, int)");
-mu_demangle(841, cxx, "_ZN9UIContext19NotifyOnContextOpenEv_ptr", "UIContext::NotifyOnContextOpen()");
-mu_demangle(842, cxx, "_ZN9UIContext20NotifyOnContextCloseEv_ptr", "UIContext::NotifyOnContextClose()");
-mu_demangle(843, cxx, "_ZN9UIContext21NotifyOnAddressChangeEP9ViewFrameP4ViewRK12ViewLocation_ptr", "UIContext::NotifyOnAddressChange(ViewFrame*, View*, ViewLocation const&)");
-mu_demangle(844, cxx, "_ZN9UIContext21NotifyOnAfterOpenFileEP11FileContextP9ViewFrame_ptr", "UIContext::NotifyOnAfterOpenFile(FileContext*, ViewFrame*)");
-mu_demangle(845, cxx, "_ZN9UIContext21NotifyOnAfterSaveFileEP11FileContextP9ViewFrame_ptr", "UIContext::NotifyOnAfterSaveFile(FileContext*, ViewFrame*)");
-mu_demangle(846, cxx, "_ZN9UIContext22NotifyOnAfterCloseFileEP11FileContextP9ViewFrame_ptr", "UIContext::NotifyOnAfterCloseFile(FileContext*, ViewFrame*)");
-mu_demangle(847, cxx, "_ZN9UIContext22NotifyOnBeforeOpenFileEP11FileContext_ptr", "UIContext::NotifyOnBeforeOpenFile(FileContext*)");
-mu_demangle(848, cxx, "_ZN9UIContext22NotifyOnBeforeSaveFileEP11FileContextP9ViewFrame_ptr", "UIContext::NotifyOnBeforeSaveFile(FileContext*, ViewFrame*)");
-mu_demangle(849, cxx, "_ZN9UIContext23NotifyOnBeforeCloseFileEP11FileContextP9ViewFrame_ptr", "UIContext::NotifyOnBeforeCloseFile(FileContext*, ViewFrame*)");
-mu_demangle(850, cxx, "_ZN9UIContext25NotifyOnAfterOpenDatabaseEN11BinaryNinja3RefINS0_12FileMetadataEEENS1_INS0_10BinaryViewEEE_ptr", "UIContext::NotifyOnAfterOpenDatabase(BinaryNinja::Ref<BinaryNinja::FileMetadata>, BinaryNinja::Ref<BinaryNinja::BinaryView>)");
-mu_demangle(851, cxx, "_ZN9UIContext26NotifyOnBeforeOpenDatabaseEN11BinaryNinja3RefINS0_12FileMetadataEEE_ptr", "UIContext::NotifyOnBeforeOpenDatabase(BinaryNinja::Ref<BinaryNinja::FileMetadata>)");
-mu_demangle(852, cxx, "_ZN9UIContextC2Ev_ptr", "UIContext::UIContext()");
-mu_demangle(853, cxx, "_ZN9UIContextD2Ev_ptr", "UIContext::~UIContext()");
-mu_demangle(854, cxx, "_ZN9ViewFrame10getTabNameEv_ptr", "ViewFrame::getTabName()");
-mu_demangle(855, cxx, "_ZN9ViewFrame11setViewTypeERK7QString_ptr", "ViewFrame::setViewType(QString const&)");
-mu_demangle(856, cxx, "_ZN9ViewFrame11updateFontsEv_ptr", "ViewFrame::updateFonts()");
-mu_demangle(857, cxx, "_ZN9ViewFrame11updateThemeEv_ptr", "ViewFrame::updateTheme()");
-mu_demangle(858, cxx, "_ZN9ViewFrame12closeRequestEv_ptr", "ViewFrame::closeRequest()");
-mu_demangle(859, cxx, "_ZN9ViewFrame14getCurrentViewEv_ptr", "ViewFrame::getCurrentView()");
-mu_demangle(860, cxx, "_ZN9ViewFrame15getViewLocationEv_ptr", "ViewFrame::getViewLocation()");
-mu_demangle(861, cxx, "_ZN9ViewFrame15setViewLocationERK12ViewLocation_ptr", "ViewFrame::setViewLocation(ViewLocation const&)");
-mu_demangle(862, cxx, "_ZN9ViewFrame16getShortFileNameEv_ptr", "ViewFrame::getShortFileName()");
-mu_demangle(863, cxx, "_ZN9ViewFrame18getCurrentDataTypeEv_ptr", "ViewFrame::getCurrentDataType()");
-mu_demangle(864, cxx, "_ZN9ViewFrame19getAddressFromInputEP7QWidgetN11BinaryNinja3RefINS2_10BinaryViewEEERmmRK7QStringS9_b_ptr", "ViewFrame::getAddressFromInput(QWidget*, BinaryNinja::Ref<BinaryNinja::BinaryView>, unsigned long&, unsigned long, QString const&, QString const&, bool)");
-mu_demangle(865, cxx, "_ZN9ViewFrame21setFileContentsLockedEb_ptr", "ViewFrame::setFileContentsLocked(bool)");
-mu_demangle(866, cxx, "_ZN9ViewFrame21updateCrossReferencesEv_ptr", "ViewFrame::updateCrossReferences()");
-mu_demangle(867, cxx, "_ZN9ViewFrame25getFileContentsLockStatusEv_ptr", "ViewFrame::getFileContentsLockStatus()");
-mu_demangle(868, cxx, "_ZN9ViewFrame4backEv_ptr", "ViewFrame::back()");
-mu_demangle(869, cxx, "_ZN9ViewFrame5focusEv_ptr", "ViewFrame::focus()");
-mu_demangle(870, cxx, "_ZN9ViewFrame7closingEv_ptr", "ViewFrame::closing()");
-mu_demangle(871, cxx, "_ZN9ViewFrame7forwardEv_ptr", "ViewFrame::forward()");
-mu_demangle(872, cxx, "_ZN9ViewFrame8navigateERK7QStringmbb_ptr", "ViewFrame::navigate(QString const&, unsigned long, bool, bool)");
-mu_demangle(873, cxx, "_ZN9ViewFrameC1EP7QWidgetP11FileContextRK7QStringb_ptr", "ViewFrame::ViewFrame(QWidget*, FileContext*, QString const&, bool)");
-mu_demangle(874, cxx, "_Znam_ptr", "operator new[](unsigned long)");
-mu_demangle(875, cxx, "_ZNK10QByteArray8endsWithEc_ptr", "QByteArray::endsWith(char) const");
-mu_demangle(876, cxx, "_ZNK10QJsonValue5toIntEi_ptr", "QJsonValue::toInt(int) const");
-mu_demangle(877, cxx, "_ZNK10QTableView14verticalHeaderEv_ptr", "QTableView::verticalHeader() const");
-mu_demangle(878, cxx, "_ZNK10QTableView16horizontalHeaderEv_ptr", "QTableView::horizontalHeader() const");
-mu_demangle(879, cxx, "_ZNK10QTableView9gridStyleEv_ptr", "QTableView::gridStyle() const");
-mu_demangle(880, cxx, "_ZNK10QTabWidget12currentIndexEv_ptr", "QTabWidget::currentIndex() const");
-mu_demangle(881, cxx, "_ZNK10QTabWidget13currentWidgetEv_ptr", "QTabWidget::currentWidget() const");
-mu_demangle(882, cxx, "_ZNK10QTabWidget5countEv_ptr", "QTabWidget::count() const");
-mu_demangle(883, cxx, "_ZNK10QTabWidget6tabBarEv_ptr", "QTabWidget::tabBar() const");
-mu_demangle(884, cxx, "_ZNK10QTabWidget6widgetEi_ptr", "QTabWidget::widget(int) const");
-mu_demangle(885, cxx, "_ZNK10QTabWidget7indexOfEP7QWidget_ptr", "QTabWidget::indexOf(QWidget*) const");
-mu_demangle(886, cxx, "_ZNK10QTabWidget7tabTextEi_ptr", "QTabWidget::tabText(int) const");
-mu_demangle(887, cxx, "_ZNK11BinaryNinja13FlowGraphNode12GetHighlightEv_5_0", "BinaryNinja::FlowGraphNode::GetHighlight() const");
-mu_demangle(888, cxx, "_ZNK11BinaryNinja13FlowGraphNode12GetHighlightEv_5_1", "BinaryNinja::FlowGraphNode::GetHighlight() const");
-mu_demangle(889, cxx, "_ZNK11BinaryNinja13FlowGraphNode12GetHighlightEv_5_2", "BinaryNinja::FlowGraphNode::GetHighlight() const");
-mu_demangle(890, cxx, "_ZNK11BinaryNinja13FlowGraphNode12GetHighlightEv_5_3", "BinaryNinja::FlowGraphNode::GetHighlight() const");
-mu_demangle(891, cxx, "_ZNK11QJsonObject8containsERK7QString_ptr", "QJsonObject::contains(QString const&) const");
-mu_demangle(892, cxx, "_ZNK11QMainWindow20isDockNestingEnabledEv_ptr", "QMainWindow::isDockNestingEnabled() const");
-mu_demangle(893, cxx, "_ZNK11QMainWindow6cornerEN2Qt6CornerE_ptr", "QMainWindow::corner(Qt::Corner) const");
-mu_demangle(894, cxx, "_ZNK11QMainWindow7menuBarEv_ptr", "QMainWindow::menuBar() const");
-mu_demangle(895, cxx, "_ZNK11QMainWindow9saveStateEi_ptr", "QMainWindow::saveState(int) const");
-mu_demangle(896, cxx, "_ZNK11QMainWindow9statusBarEv_ptr", "QMainWindow::statusBar() const");
-mu_demangle(897, cxx, "_ZNK11QMetaObject2trEPKcS1_i_ptr", "QMetaObject::tr(char const*, char const*, int) const");
-mu_demangle(898, cxx, "_ZNK11QMetaObject4castEP7QObject_ptr", "QMetaObject::cast(QObject*) const");
-mu_demangle(899, cxx, "_ZNK11QMetaObject4castEPK7QObject_ptr", "QMetaObject::cast(QObject const*) const");
-mu_demangle(900, cxx, "_ZNK11QMetaObject9classNameEv_ptr", "QMetaObject::className() const");
-mu_demangle(901, cxx, "_ZNK11QObjectData17dynamicMetaObjectEv_ptr", "QObjectData::dynamicMetaObject() const");
-mu_demangle(902, cxx, "_ZNK12QDirIterator7hasNextEv_ptr", "QDirIterator::hasNext() const");
-mu_demangle(903, cxx, "_ZNK12QDirIterator8fileInfoEv_ptr", "QDirIterator::fileInfo() const");
-mu_demangle(904, cxx, "_ZNK12QDirIterator8fileNameEv_ptr", "QDirIterator::fileName() const");
-mu_demangle(905, cxx, "_ZNK12QFontMetrics17horizontalAdvanceERK7QStringi_ptr", "QFontMetrics::horizontalAdvance(QString const&, int) const");
-mu_demangle(906, cxx, "_ZNK12QFontMetrics6ascentEv_ptr", "QFontMetrics::ascent() const");
-mu_demangle(907, cxx, "_ZNK12QFontMetrics6heightEv_ptr", "QFontMetrics::height() const");
-mu_demangle(908, cxx, "_ZNK12QInputDialog9textValueEv_ptr", "QInputDialog::textValue() const");
-mu_demangle(909, cxx, "_ZNK12QKeySequence7isEmptyEv_ptr", "QKeySequence::isEmpty() const");
-mu_demangle(910, cxx, "_ZNK12QKeySequence8toStringENS_14SequenceFormatE_ptr", "QKeySequence::toString(QKeySequence::SequenceFormat) const");
-mu_demangle(911, cxx, "_ZNK12QKeySequenceeqERKS__ptr", "QKeySequence::operator==(QKeySequence const&) const");
-mu_demangle(912, cxx, "_ZNK12QKeySequenceltERKS__ptr", "QKeySequence::operator<(QKeySequence const&) const");
-mu_demangle(913, cxx, "_ZNK13QFileAccessor7IsValidEv_ptr", "QFileAccessor::IsValid() const");
-mu_demangle(914, cxx, "_ZNK13QFontMetricsF6heightEv_ptr", "QFontMetricsF::height() const");
-mu_demangle(915, cxx, "_ZNK13QItemDelegate5paintEP8QPainterRK20QStyleOptionViewItemRK11QModelIndex_ptr", "QItemDelegate::paint(QPainter*, QStyleOptionViewItem const&, QModelIndex const&) const");
-mu_demangle(916, cxx, "_ZNK13QJsonDocument6objectEv_ptr", "QJsonDocument::object() const");
-mu_demangle(917, cxx, "_ZNK13QJsonDocumentixERK7QString_ptr", "QJsonDocument::operator[](QString const&) const");
-mu_demangle(918, cxx, "_ZNK13QNetworkReply10isFinishedEv_ptr", "QNetworkReply::isFinished() const");
-mu_demangle(919, cxx, "_ZNK13QNetworkReply12hasRawHeaderERK10QByteArray_ptr", "QNetworkReply::hasRawHeader(QByteArray const&) const");
-mu_demangle(920, cxx, "_ZNK13QNetworkReply14rawHeaderPairsEv_ptr", "QNetworkReply::rawHeaderPairs() const");
-mu_demangle(921, cxx, "_ZNK13QNetworkReply5errorEv_ptr", "QNetworkReply::error() const");
-mu_demangle(922, cxx, "_ZNK13QNetworkReply6headerEN15QNetworkRequest12KnownHeadersE_ptr", "QNetworkReply::header(QNetworkRequest::KnownHeaders) const");
-mu_demangle(923, cxx, "_ZNK13QNetworkReply9attributeEN15QNetworkRequest9AttributeE_ptr", "QNetworkReply::attribute(QNetworkRequest::Attribute) const");
-mu_demangle(924, cxx, "_ZNK13QNetworkReply9rawHeaderERK10QByteArray_ptr", "QNetworkReply::rawHeader(QByteArray const&) const");
-mu_demangle(925, cxx, "_ZNK14QItemSelection7indexesEv_ptr", "QItemSelection::indexes() const");
-mu_demangle(926, cxx, "_ZNK14QWebEnginePage7profileEv_ptr", "QWebEnginePage::profile() const");
-mu_demangle(927, cxx, "_ZNK14QWebEngineView4pageEv_ptr", "QWebEngineView::page() const");
-mu_demangle(928, cxx, "_ZNK14QWebEngineView8settingsEv_ptr", "QWebEngineView::settings() const");
-mu_demangle(929, cxx, "_ZNK15QAbstractButton9isCheckedEv_ptr", "QAbstractButton::isChecked() const");
-mu_demangle(930, cxx, "_ZNK15QProgressDialog11wasCanceledEv_ptr", "QProgressDialog::wasCanceled() const");
-mu_demangle(931, cxx, "_ZNK15QProgressDialog7maximumEv_ptr", "QProgressDialog::maximum() const");
-mu_demangle(932, cxx, "_ZNK15QProgressDialog7minimumEv_ptr", "QProgressDialog::minimum() const");
-mu_demangle(933, cxx, "_ZNK16QKeySequenceEdit11keySequenceEv_ptr", "QKeySequenceEdit::keySequence() const");
-mu_demangle(934, cxx, "_ZNK17QAbstractItemView12itemDelegateEv_ptr", "QAbstractItemView::itemDelegate() const");
-mu_demangle(935, cxx, "_ZNK17QAbstractItemView14selectionModelEv_ptr", "QAbstractItemView::selectionModel() const");
-mu_demangle(936, cxx, "_ZNK17QAbstractItemView5modelEv_ptr", "QAbstractItemView::model() const");
-mu_demangle(937, cxx, "_ZNK18QAbstractAnimation9directionEv_ptr", "QAbstractAnimation::direction() const");
-mu_demangle(938, cxx, "_ZNK18QAbstractItemModel5flagsERK11QModelIndex_ptr", "QAbstractItemModel::flags(QModelIndex const&) const");
-mu_demangle(939, cxx, "_ZNK18QCommandLineParser19positionalArgumentsEv_ptr", "QCommandLineParser::positionalArguments() const");
-mu_demangle(940, cxx, "_ZNK18QCommandLineParser5isSetERK18QCommandLineOption_ptr", "QCommandLineParser::isSet(QCommandLineOption const&) const");
-mu_demangle(941, cxx, "_ZNK18QCommandLineParser5valueERK18QCommandLineOption_ptr", "QCommandLineParser::value(QCommandLineOption const&) const");
-mu_demangle(942, cxx, "_ZNK18QRegularExpression5matchERK7QStringiNS_9MatchTypeE6QFlagsINS_11MatchOptionEE_ptr", "QRegularExpression::match(QString const&, int, QRegularExpression::MatchType, QFlags<QRegularExpression::MatchOption>) const");
-mu_demangle(943, cxx, "_ZNK18QRegularExpression7isValidEv_ptr", "QRegularExpression::isValid() const");
-mu_demangle(944, cxx, "_ZNK18QRegularExpression7patternEv_ptr", "QRegularExpression::pattern() const");
-mu_demangle(945, cxx, "_ZNK19QAbstractProxyModel11sourceModelEv_ptr", "QAbstractProxyModel::sourceModel() const");
-mu_demangle(946, cxx, "_ZNK19QAbstractScrollArea17verticalScrollBarEv_ptr", "QAbstractScrollArea::verticalScrollBar() const");
-mu_demangle(947, cxx, "_ZNK19QAbstractScrollArea19horizontalScrollBarEv_ptr", "QAbstractScrollArea::horizontalScrollBar() const");
-mu_demangle(948, cxx, "_ZNK19QItemSelectionModel9selectionEv_ptr", "QItemSelectionModel::selection() const");
-mu_demangle(949, cxx, "_ZNK19QStyledItemDelegate12createEditorEP7QWidgetRK20QStyleOptionViewItemRK11QModelIndex_ptr", "QStyledItemDelegate::createEditor(QWidget*, QStyleOptionViewItem const&, QModelIndex const&) const");
-mu_demangle(950, cxx, "_ZNK19QStyledItemDelegate12setModelDataEP7QWidgetP18QAbstractItemModelRK11QModelIndex_ptr", "QStyledItemDelegate::setModelData(QWidget*, QAbstractItemModel*, QModelIndex const&) const");
-mu_demangle(951, cxx, "_ZNK19QStyledItemDelegate13setEditorDataEP7QWidgetRK11QModelIndex_ptr", "QStyledItemDelegate::setEditorData(QWidget*, QModelIndex const&) const");
-mu_demangle(952, cxx, "_ZNK21QSortFilterProxyModel12filterRegExpEv_ptr", "QSortFilterProxyModel::filterRegExp() const");
-mu_demangle(953, cxx, "_ZNK21QSortFilterProxyModel23filterRegularExpressionEv_ptr", "QSortFilterProxyModel::filterRegularExpression() const");
-mu_demangle(954, cxx, "_ZNK21QSortFilterProxyModel4dataERK11QModelIndexi_ptr", "QSortFilterProxyModel::data(QModelIndex const&, int) const");
-mu_demangle(955, cxx, "_ZNK21QSortFilterProxyModel8lessThanERK11QModelIndexS2__ptr", "QSortFilterProxyModel::lessThan(QModelIndex const&, QModelIndex const&) const");
-mu_demangle(956, cxx, "_ZNK23QRegularExpressionMatch13capturedTextsEv_ptr", "QRegularExpressionMatch::capturedTexts() const");
-mu_demangle(957, cxx, "_ZNK23QRegularExpressionMatch8hasMatchEv_ptr", "QRegularExpressionMatch::hasMatch() const");
-mu_demangle(958, cxx, "_ZNK4QDir16absoluteFilePathERK7QString_ptr", "QDir::absoluteFilePath(QString const&) const");
-mu_demangle(959, cxx, "_ZNK4QDir6existsEv_ptr", "QDir::exists() const");
-mu_demangle(960, cxx, "_ZNK4QDir6mkpathERK7QString_ptr", "QDir::mkpath(QString const&) const");
-mu_demangle(961, cxx, "_ZNK4QUrl11isLocalFileEv_ptr", "QUrl::isLocalFile() const");
-mu_demangle(962, cxx, "_ZNK4QUrl11toLocalFileEv_ptr", "QUrl::toLocalFile() const");
-mu_demangle(963, cxx, "_ZNK4QUrl4pathE6QFlagsINS_25ComponentFormattingOptionEE_ptr", "QUrl::path(QFlags<QUrl::ComponentFormattingOption>) const");
-mu_demangle(964, cxx, "_ZNK4QUrl5queryE6QFlagsINS_25ComponentFormattingOptionEE_ptr", "QUrl::query(QFlags<QUrl::ComponentFormattingOption>) const");
-mu_demangle(965, cxx, "_ZNK4QUrl6schemeEv_ptr", "QUrl::scheme() const");
-mu_demangle(966, cxx, "_ZNK4QUrl7isValidEv_ptr", "QUrl::isValid() const");
-mu_demangle(967, cxx, "_ZNK4QUrl8adjustedE12QUrlTwoFlagsINS_19UrlFormattingOptionENS_25ComponentFormattingOptionEE_ptr", "QUrl::adjusted(QUrlTwoFlags<QUrl::UrlFormattingOption, QUrl::ComponentFormattingOption>) const");
-mu_demangle(968, cxx, "_ZNK4QUrl8toStringE12QUrlTwoFlagsINS_19UrlFormattingOptionENS_25ComponentFormattingOptionEE_ptr", "QUrl::toString(QUrlTwoFlags<QUrl::UrlFormattingOption, QUrl::ComponentFormattingOption>) const");
-mu_demangle(969, cxx, "_ZNK5QFile4sizeEv_ptr", "QFile::size() const");
-mu_demangle(970, cxx, "_ZNK5QFile6existsEv_ptr", "QFile::exists() const");
-mu_demangle(971, cxx, "_ZNK5QFont6familyEv_ptr", "QFont::family() const");
-mu_demangle(972, cxx, "_ZNK5QFont9pointSizeEv_ptr", "QFont::pointSize() const");
-mu_demangle(973, cxx, "_ZNK5QFont9styleNameEv_ptr", "QFont::styleName() const");
-mu_demangle(974, cxx, "_ZNK5QIcon6pixmapERK5QSizeNS_4ModeENS_5StateE_ptr", "QIcon::pixmap(QSize const&, QIcon::Mode, QIcon::State) const");
-mu_demangle(975, cxx, "_ZNK5QRect8containsERKS_b_ptr", "QRect::contains(QRect const&, bool) const");
-mu_demangle(976, cxx, "_ZNK6QColor4nameENS_10NameFormatE_ptr", "QColor::name(QColor::NameFormat) const");
-mu_demangle(977, cxx, "_ZNK6QColor4nameEv_ptr", "QColor::name() const");
-mu_demangle(978, cxx, "_ZNK6QColor6darkerEi_ptr", "QColor::darker(int) const");
-mu_demangle(979, cxx, "_ZNK6QColor9lightnessEv_ptr", "QColor::lightness() const");
-mu_demangle(980, cxx, "_ZNK6QLabel20textInteractionFlagsEv_ptr", "QLabel::textInteractionFlags() const");
-mu_demangle(981, cxx, "_ZNK6QLabel4textEv_ptr", "QLabel::text() const");
-mu_demangle(982, cxx, "_ZNK7QAction4dataEv_ptr", "QAction::data() const");
-mu_demangle(983, cxx, "_ZNK7QLocale8toStringERK9QDateTimeNS_10FormatTypeE_ptr", "QLocale::toString(QDateTime const&, QLocale::FormatType) const");
-mu_demangle(984, cxx, "_ZNK7QObject6senderEv_ptr", "QObject::sender() const");
-mu_demangle(985, cxx, "_ZNK7QRegExp10exactMatchERK7QString_ptr", "QRegExp::exactMatch(QString const&) const");
-mu_demangle(986, cxx, "_ZNK7QRegExp7indexInERK7QStringiNS_9CaretModeE_ptr", "QRegExp::indexIn(QString const&, int, QRegExp::CaretMode) const");
-mu_demangle(987, cxx, "_ZNK7QRegExp7isEmptyEv_ptr", "QRegExp::isEmpty() const");
-mu_demangle(988, cxx, "_ZNK7QScreen4sizeEv_ptr", "QScreen::size() const");
-mu_demangle(989, cxx, "_ZNK7QScreen8geometryEv_ptr", "QScreen::geometry() const");
-mu_demangle(990, cxx, "_ZNK7QString10startsWithERKS_N2Qt15CaseSensitivityE_ptr", "QString::startsWith(QString const&, Qt::CaseSensitivity) const");
-mu_demangle(991, cxx, "_ZNK7QString10toLongLongEPbi_ptr", "QString::toLongLong(bool*, int) const");
-mu_demangle(992, cxx, "_ZNK7QString11toULongLongEPbi_ptr", "QString::toULongLong(bool*, int) const");
-mu_demangle(993, cxx, "_ZNK7QString13toHtmlEscapedEv_ptr", "QString::toHtmlEscaped() const");
-mu_demangle(994, cxx, "_ZNK7QString3argERKS_i5QChar_ptr", "QString::arg(QString const&, int, QChar) const");
-mu_demangle(995, cxx, "_ZNK7QString3argExii5QChar_ptr", "QString::arg(long long, int, int, QChar) const");
-mu_demangle(996, cxx, "_ZNK7QString3argEyii5QChar_ptr", "QString::arg(unsigned long long, int, int, QChar) const");
-mu_demangle(997, cxx, "_ZNK7QString3midEii_ptr", "QString::mid(int, int) const");
-mu_demangle(998, cxx, "_ZNK7QString5splitE5QChar6QFlagsIN2Qt18SplitBehaviorFlagsEENS2_15CaseSensitivityE_ptr", "QString::split(QChar, QFlags<Qt::SplitBehaviorFlags>, Qt::CaseSensitivity) const");
-mu_demangle(999, cxx, "_ZNK7QString5splitERKS_6QFlagsIN2Qt18SplitBehaviorFlagsEENS3_15CaseSensitivityE_ptr", "QString::split(QString const&, QFlags<Qt::SplitBehaviorFlags>, Qt::CaseSensitivity) const");
-mu_demangle(1000, cxx, "_ZNK7QString5toIntEPbi_ptr", "QString::toInt(bool*, int) const");
-mu_demangle(1001, cxx, "_ZNK7QString7indexOfERKS_iN2Qt15CaseSensitivityE_ptr", "QString::indexOf(QString const&, int, Qt::CaseSensitivity) const");
-mu_demangle(1002, cxx, "_ZNK7QString8containsERK18QRegularExpressionP23QRegularExpressionMatch_ptr", "QString::contains(QRegularExpression const&, QRegularExpressionMatch*) const");
-mu_demangle(1003, cxx, "_ZNK7QString8endsWithERKS_N2Qt15CaseSensitivityE_ptr", "QString::endsWith(QString const&, Qt::CaseSensitivity) const");
-mu_demangle(1004, cxx, "_ZNK7QTabBar5tabAtERK6QPoint_ptr", "QTabBar::tabAt(QPoint const&) const");
-mu_demangle(1005, cxx, "_ZNK7QThread23isInterruptionRequestedEv_ptr", "QThread::isInterruptionRequested() const");
-mu_demangle(1006, cxx, "_ZNK7QWidget10sizePolicyEv_ptr", "QWidget::sizePolicy() const");
-mu_demangle(1007, cxx, "_ZNK7QWidget11focusWidgetEv_ptr", "QWidget::focusWidget() const");
-mu_demangle(1008, cxx, "_ZNK7QWidget12contentsRectEv_ptr", "QWidget::contentsRect() const");
-mu_demangle(1009, cxx, "_ZNK7QWidget12saveGeometryEv_ptr", "QWidget::saveGeometry() const");
-mu_demangle(1010, cxx, "_ZNK7QWidget13frameGeometryEv_ptr", "QWidget::frameGeometry() const");
-mu_demangle(1011, cxx, "_ZNK7QWidget14isActiveWindowEv_ptr", "QWidget::isActiveWindow() const");
-mu_demangle(1012, cxx, "_ZNK7QWidget5styleEv_ptr", "QWidget::style() const");
-mu_demangle(1013, cxx, "_ZNK7QWidget6layoutEv_ptr", "QWidget::layout() const");
-mu_demangle(1014, cxx, "_ZNK7QWidget6screenEv_ptr", "QWidget::screen() const");
-mu_demangle(1015, cxx, "_ZNK7QWidget7paletteEv_ptr", "QWidget::palette() const");
-mu_demangle(1016, cxx, "_ZNK7QWidget8hasFocusEv_ptr", "QWidget::hasFocus() const");
-mu_demangle(1017, cxx, "_ZNK8QPalette5brushENS_10ColorGroupENS_9ColorRoleE_ptr", "QPalette::brush(QPalette::ColorGroup, QPalette::ColorRole) const");
-mu_demangle(1018, cxx, "_ZNK8QVariant10canConvertEi_ptr", "QVariant::canConvert(int) const");
-mu_demangle(1019, cxx, "_ZNK8QVariant11toByteArrayEv_ptr", "QVariant::toByteArray() const");
-mu_demangle(1020, cxx, "_ZNK8QVariant3cmpERKS__ptr", "QVariant::cmp(QVariant const&) const");
-mu_demangle(1021, cxx, "_ZNK8QVariant5toIntEPb_ptr", "QVariant::toInt(bool*) const");
-mu_demangle(1022, cxx, "_ZNK8QVariant6toBoolEv_ptr", "QVariant::toBool() const");
-mu_demangle(1023, cxx, "_ZNK8QVariant6toListEv_ptr", "QVariant::toList() const");
-mu_demangle(1024, cxx, "_ZNK8QVariant7convertEiPv_ptr", "QVariant::convert(int, void*) const");
-mu_demangle(1025, cxx, "_ZNK8QVariant8toStringEv_ptr", "QVariant::toString() const");
-mu_demangle(1026, cxx, "_ZNK8QVariant8userTypeEv_ptr", "QVariant::userType() const");
-mu_demangle(1027, cxx, "_ZNK8QVariant9constDataEv_ptr", "QVariant::constData() const");
-mu_demangle(1028, cxx, "_ZNK9QCheckBox10checkStateEv_ptr", "QCheckBox::checkState() const");
-mu_demangle(1029, cxx, "_ZNK9QComboBox11currentTextEv_ptr", "QComboBox::currentText() const");
-mu_demangle(1030, cxx, "_ZNK9QComboBox5countEv_ptr", "QComboBox::count() const");
-mu_demangle(1031, cxx, "_ZNK9QComboBox8findDataERK8QVarianti6QFlagsIN2Qt9MatchFlagEE_ptr", "QComboBox::findData(QVariant const&, int, QFlags<Qt::MatchFlag>) const");
-mu_demangle(1032, cxx, "_ZNK9QComboBox8itemDataEii_ptr", "QComboBox::itemData(int, int) const");
-mu_demangle(1033, cxx, "_ZNK9QComboBox8itemTextEi_ptr", "QComboBox::itemText(int) const");
-mu_demangle(1034, cxx, "_ZNK9QDateTime10toTimeSpecEN2Qt8TimeSpecE_ptr", "QDateTime::toTimeSpec(Qt::TimeSpec) const");
-mu_demangle(1035, cxx, "_ZNK9QDateTime6daysToERKS__ptr", "QDateTime::daysTo(QDateTime const&) const");
-mu_demangle(1036, cxx, "_ZNK9QDateTime8toStringEN2Qt10DateFormatE_ptr", "QDateTime::toString(Qt::DateFormat) const");
-mu_demangle(1037, cxx, "_ZNK9QDateTimeltERKS__ptr", "QDateTime::operator<(QDateTime const&) const");
-mu_demangle(1038, cxx, "_ZNK9QFileInfo12absolutePathEv_ptr", "QFileInfo::absolutePath() const");
-mu_demangle(1039, cxx, "_ZNK9QFileInfo17canonicalFilePathEv_ptr", "QFileInfo::canonicalFilePath() const");
-mu_demangle(1040, cxx, "_ZNK9QFileInfo4pathEv_ptr", "QFileInfo::path() const");
-mu_demangle(1041, cxx, "_ZNK9QFileInfo5isDirEv_ptr", "QFileInfo::isDir() const");
-mu_demangle(1042, cxx, "_ZNK9QFileInfo6existsEv_ptr", "QFileInfo::exists() const");
-mu_demangle(1043, cxx, "_ZNK9QFileInfo6suffixEv_ptr", "QFileInfo::suffix() const");
-mu_demangle(1044, cxx, "_ZNK9QFileInfo8fileNameEv_ptr", "QFileInfo::fileName() const");
-mu_demangle(1045, cxx, "_ZNK9QIODevice11errorStringEv_ptr", "QIODevice::errorString() const");
-mu_demangle(1046, cxx, "_ZNK9QKeyEvent9modifiersEv_ptr", "QKeyEvent::modifiers() const");
-mu_demangle(1047, cxx, "_ZNK9QLineEdit10isReadOnlyEv_ptr", "QLineEdit::isReadOnly() const");
-mu_demangle(1048, cxx, "_ZNK9QLineEdit4copyEv_ptr", "QLineEdit::copy() const");
-mu_demangle(1049, cxx, "_ZNK9QLineEdit4textEv_ptr", "QLineEdit::text() const");
-mu_demangle(1050, cxx, "_ZNK9QMimeData4urlsEv_ptr", "QMimeData::urls() const");
-mu_demangle(1051, cxx, "_ZNK9QResource16uncompressedDataEv_ptr", "QResource::uncompressedData() const");
-mu_demangle(1052, cxx, "_ZNK9QResource16uncompressedSizeEv_ptr", "QResource::uncompressedSize() const");
-mu_demangle(1053, cxx, "_ZNK9QSettings5valueERK7QStringRK8QVariant_ptr", "QSettings::value(QString const&, QVariant const&) const");
-mu_demangle(1054, cxx, "_ZNK9QSettings7allKeysEv_ptr", "QSettings::allKeys() const");
-mu_demangle(1055, cxx, "_ZNK9QSettings8containsERK7QString_ptr", "QSettings::contains(QString const&) const");
-mu_demangle(1056, cxx, "_ZNK9QTextEdit10isReadOnlyEv_ptr", "QTextEdit::isReadOnly() const");
-mu_demangle(1057, cxx, "_ZNK9QTextEdit11toPlainTextEv_ptr", "QTextEdit::toPlainText() const");
-mu_demangle(1058, cxx, "_ZNK9QTreeView6headerEv_ptr", "QTreeView::header() const");
-mu_demangle(1059, cxx, "_ZNK9QUrlQuery12hasQueryItemERK7QString_ptr", "QUrlQuery::hasQueryItem(QString const&) const");
-mu_demangle(1060, cxx, "_ZNK9QUrlQuery14queryItemValueERK7QString6QFlagsIN4QUrl25ComponentFormattingOptionEE_ptr", "QUrlQuery::queryItemValue(QString const&, QFlags<QUrl::ComponentFormattingOption>) const");
-mu_demangle(1061, cxx, "_ZNK9ViewFrame17getAvailableTypesEv_ptr", "ViewFrame::getAvailableTypes() const");
-mu_demangle(1062, cxx, "_ZNKSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEE3strEv_ptr", "std::__cxx11::basic_stringbuf<char, std::char_traits<char>, std::allocator<char> >::str() const");
-mu_demangle(1063, cxx, "_ZNKSt8__detail20_Prime_rehash_policy11_M_next_bktEm_ptr", "std::__detail::_Prime_rehash_policy::_M_next_bkt(unsigned long) const");
-mu_demangle(1064, cxx, "_ZNKSt8__detail20_Prime_rehash_policy14_M_need_rehashEmmm_ptr", "std::__detail::_Prime_rehash_policy::_M_need_rehash(unsigned long, unsigned long, unsigned long) const");
-mu_demangle(1065, cxx, "_ZNSi10_M_extractIdEERSiRT__ptr", "std::istream& std::istream::_M_extract<double>(double&)");
-mu_demangle(1066, cxx, "_ZNSo9_M_insertImEERSoT__ptr", "std::ostream& std::ostream::_M_insert<unsigned long>(unsigned long)");
-mu_demangle(1067, cxx, "_ZNSolsEPSt15basic_streambufIcSt11char_traitsIcEE_ptr", "std::ostream::operator<<(std::basic_streambuf<char, std::char_traits<char> >*)");
-mu_demangle(1068, cxx, "_ZNSt11logic_errorC1EPKc_ptr", "std::logic_error::logic_error(char const*)");
-mu_demangle(1069, cxx, "_ZNSt11logic_errorD1Ev_ptr", "std::logic_error::~logic_error()");
-mu_demangle(1070, cxx, "_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_100", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)");
-mu_demangle(1071, cxx, "_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_101", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)");
-mu_demangle(1072, cxx, "_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_102", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)");
-mu_demangle(1073, cxx, "_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_103", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)");
-mu_demangle(1074, cxx, "_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_104", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)");
-mu_demangle(1075, cxx, "_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_105", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)");
-mu_demangle(1076, cxx, "_ZNSt6chrono3_V212steady_clock3nowEv_ptr", "std::chrono::_V2::steady_clock::now()");
-mu_demangle(1077, cxx, "_ZNSt6chrono3_V212system_clock3nowEv_ptr", "std::chrono::_V2::system_clock::now()");
-mu_demangle(1078, cxx, "_ZNSt6localeC1Ev_ptr", "std::locale::locale()");
-mu_demangle(1079, cxx, "_ZNSt6localeD1Ev_ptr", "std::locale::~locale()");
-mu_demangle(1080, cxx, "_ZNSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEE7_M_syncEPcmm_ptr", "std::__cxx11::basic_stringbuf<char, std::char_traits<char>, std::allocator<char> >::_M_sync(char*, unsigned long, unsigned long)");
-mu_demangle(1081, cxx, "_ZNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEED1Ev_ptr", "std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >::~basic_stringstream()");
-mu_demangle(1082, cxx, "_ZNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEED1Ev_ptr", "std::__cxx11::basic_istringstream<char, std::char_traits<char>, std::allocator<char> >::~basic_istringstream()");
-mu_demangle(1083, cxx, "_ZNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEC1ESt13_Ios_Openmode_ptr", "std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char> >::basic_ostringstream(std::_Ios_Openmode)");
-mu_demangle(1084, cxx, "_ZNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEED1Ev_ptr", "std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char> >::~basic_ostringstream()");
-mu_demangle(1085, cxx, "_ZNSt8ios_baseC2Ev_ptr", "std::ios_base::ios_base()");
-mu_demangle(1086, cxx, "_ZNSt8ios_baseD2Ev_ptr", "std::ios_base::~ios_base()");
-mu_demangle(1087, cxx, "_ZNSt9basic_iosIcSt11char_traitsIcEE4initEPSt15basic_streambufIcS1_E_ptr", "std::basic_ios<char, std::char_traits<char> >::init(std::basic_streambuf<char, std::char_traits<char> >*)");
-mu_demangle(1088, cxx, "_ZNSt9exceptionD2Ev_ptr", "std::exception::~exception()");
-mu_demangle(1089, cxx, "_Znwm_ptr", "operator new(unsigned long)");
-mu_demangle(1090, cxx, "_ZSt11_Hash_bytesPKvmm_ptr", "std::_Hash_bytes(void const*, unsigned long, unsigned long)");
-mu_demangle(1091, cxx, "_ZSt16__ostream_insertIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_PKS3_l_ptr", "std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)");
-mu_demangle(1092, cxx, "_ZSt17__throw_bad_allocv_ptr", "std::__throw_bad_alloc()");
-mu_demangle(1093, cxx, "_ZSt18_Rb_tree_decrementPKSt18_Rb_tree_node_base_ptr", "std::_Rb_tree_decrement(std::_Rb_tree_node_base const*)");
-mu_demangle(1094, cxx, "_ZSt18_Rb_tree_decrementPSt18_Rb_tree_node_base_ptr", "std::_Rb_tree_decrement(std::_Rb_tree_node_base*)");
-mu_demangle(1095, cxx, "_ZSt18_Rb_tree_incrementPKSt18_Rb_tree_node_base_ptr", "std::_Rb_tree_increment(std::_Rb_tree_node_base const*)");
-mu_demangle(1096, cxx, "_ZSt18_Rb_tree_incrementPSt18_Rb_tree_node_base_ptr", "std::_Rb_tree_increment(std::_Rb_tree_node_base*)");
-mu_demangle(1097, cxx, "_ZSt19__throw_logic_errorPKc_ptr", "std::__throw_logic_error(char const*)");
-mu_demangle(1098, cxx, "_ZSt20__throw_length_errorPKc_ptr", "std::__throw_length_error(char const*)");
-mu_demangle(1099, cxx, "_ZSt20__throw_out_of_rangePKc_ptr", "std::__throw_out_of_range(char const*)");
-mu_demangle(1100, cxx, "_ZSt20__throw_system_errori_ptr", "std::__throw_system_error(int)");
-mu_demangle(1101, cxx, "_ZSt24__throw_out_of_range_fmtPKcz_ptr", "std::__throw_out_of_range_fmt(char const*, ...)");
-mu_demangle(1102, cxx, "_ZSt25__throw_bad_function_callv_ptr", "std::__throw_bad_function_call()");
-mu_demangle(1103, cxx, "_ZSt28_Rb_tree_rebalance_for_erasePSt18_Rb_tree_node_baseRS__ptr", "std::_Rb_tree_rebalance_for_erase(std::_Rb_tree_node_base*, std::_Rb_tree_node_base&)");
-mu_demangle(1104, cxx, "_ZSt29_Rb_tree_insert_and_rebalancebPSt18_Rb_tree_node_baseS0_RS__ptr", "std::_Rb_tree_insert_and_rebalance(bool, std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::_Rb_tree_node_base&)");
-mu_demangle(1105, cxx, "_ZSt7getlineIcSt11char_traitsIcESaIcEERSt13basic_istreamIT_T0_ES7_RNSt7__cxx1112basic_stringIS4_S5_T1_EES4__ptr", "std::basic_istream<char, std::char_traits<char> >& std::getline<char, std::char_traits<char>, std::allocator<char> >(std::basic_istream<char, std::char_traits<char> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, char)");
-mu_demangle(1106, cxx, "_ZSt9terminatev_ptr", "std::terminate()");
-mu_demangle(1107, cxx, "_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc_ptr", "std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)");
-mu_demangle(1108, cxx, "_ZTI12QApplication_ptr", "typeinfo for QApplication");
-mu_demangle(1109, cxx, "_ZTI12QTextBrowser_ptr", "typeinfo for QTextBrowser");
-mu_demangle(1110, cxx, "_ZTI12ReportWidget_ptr", "typeinfo for ReportWidget");
-mu_demangle(1111, cxx, "_ZTI15FlowGraphWidget_ptr", "typeinfo for FlowGraphWidget");
-mu_demangle(1112, cxx, "_ZTI22ReportCollectionWidget_ptr", "typeinfo for ReportCollectionWidget");
-mu_demangle(1113, cxx, "_ZTI4View_ptr", "typeinfo for View");
-mu_demangle(1114, cxx, "_ZTI6QEvent_ptr", "typeinfo for QEvent");
-mu_demangle(1115, cxx, "_ZTI9QLineEdit_ptr", "typeinfo for QLineEdit");
-mu_demangle(1116, cxx, "_ZTI9ViewFrame_ptr", "typeinfo for ViewFrame");
-mu_demangle(1117, cxx, "_ZTTNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr", "VTT for std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >");
-mu_demangle(1118, cxx, "_ZTTNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEE_ptr", "VTT for std::__cxx11::basic_istringstream<char, std::char_traits<char>, std::allocator<char> >");
-mu_demangle(1119, cxx, "_ZTTNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEE_ptr", "VTT for std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char> >");
-mu_demangle(1120, cxx, "_ZTV10MenuHelper_ptr", "vtable for MenuHelper");
-mu_demangle(1121, cxx, "_ZTV14ClickableLabel_ptr", "vtable for ClickableLabel");
-mu_demangle(1122, cxx, "_ZTV15FormInputDialog_ptr", "vtable for FormInputDialog");
-mu_demangle(1123, cxx, "_ZTVNSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEEE_ptr", "vtable for std::__cxx11::basic_stringbuf<char, std::char_traits<char>, std::allocator<char> >");
-mu_demangle(1124, cxx, "_ZTVNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr", "vtable for std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >");
-mu_demangle(1125, cxx, "_ZTVNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEE_ptr", "vtable for std::__cxx11::basic_istringstream<char, std::char_traits<char>, std::allocator<char> >");
-mu_demangle(1126, cxx, "_ZTVNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEE_ptr", "vtable for std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char> >");
-mu_demangle(1127, cxx, "_ZTVSt15basic_streambufIcSt11char_traitsIcEE_ptr", "vtable for std::basic_streambuf<char, std::char_traits<char> >");
-mu_demangle(1128, cxx, "_ZTVSt9basic_iosIcSt11char_traitsIcEE_ptr", "vtable for std::basic_ios<char, std::char_traits<char> >");
-mu_demangle(1129, cxx, "_Z14getPackageNameP7_JNIEnvP8_jobject", "getPackageName(_JNIEnv*, _jobject*)");
-mu_demangle(1130, cxx, "_Z15JstringToStringP7_JNIEnvP8_jstring", "JstringToString(_JNIEnv*, _jstring*)");
-mu_demangle(1131, cxx, "_Z13CharTojstringP7_JNIEnvPKc", "CharTojstring(_JNIEnv*, char const*)");
-mu_demangle(1132, cxx, "_Z20invokeStaticMethodssP7_JNIEnvP8_jstringS2_", "invokeStaticMethodss(_JNIEnv*, _jstring*, _jstring*)");
-mu_demangle(1133, cxx, "_Z16getFieldOjbectExP7_JNIEnvP7_jclassP8_jobjectP8_jstring", "getFieldOjbectEx(_JNIEnv*, _jclass*, _jobject*, _jstring*)");
-mu_demangle(1134, cxx, "_Z14getFieldOjbectP7_JNIEnvP8_jstringP8_jobjectS2_", "getFieldOjbect(_JNIEnv*, _jstring*, _jobject*, _jstring*)");
-mu_demangle(1135, cxx, "_Z16setFieldOjbectExP7_JNIEnvP7_jclassP8_jstringP8_jobjectS6_", "setFieldOjbectEx(_JNIEnv*, _jclass*, _jstring*, _jobject*, _jobject*)");
-mu_demangle(1136, cxx, "_Z14setFieldOjbectP7_JNIEnvP8_jstringS2_P8_jobjectS4_", "setFieldOjbect(_JNIEnv*, _jstring*, _jstring*, _jobject*, _jobject*)");
-mu_demangle(1137, cxx, "_Z14checkExceptionP7_JNIEnv", "checkException(_JNIEnv*)");
-mu_demangle(1138, cxx, "_Z7forNameP7_JNIEnvP8_jstring", "forName(_JNIEnv*, _jstring*)");
-mu_demangle(1139, cxx, "_Z11GetFileNamePc", "GetFileName(char*)");
-mu_demangle(1140, cxx, "_Z10replaceAllPKcS0_S0_", "replaceAll(char const*, char const*, char const*)");
-mu_demangle(1141, cxx, "_Z6decodeP7_JNIEnvP8_jstringS2_", "decode(_JNIEnv*, _jstring*, _jstring*)");
-mu_demangle(1142, cxx, "_Z7sub_444P7_JNIEnvP8_jobjectS2_P8_jstringS4_", "sub_444(_JNIEnv*, _jobject*, _jobject*, _jstring*, _jstring*)");
-mu_demangle(1143, cxx, "_Z7sub_333P7_JNIEnvP8_jobjectS2_P8_jstringS4_", "sub_333(_JNIEnv*, _jobject*, _jobject*, _jstring*, _jstring*)");
-mu_demangle(1144, cxx, "_ZN25SystemClassLoaderInjector6injectEP7_JNIEnvP8_jobjectP8_jstringS5_", "SystemClassLoaderInjector::inject(_JNIEnv*, _jobject*, _jstring*, _jstring*)");
-mu_demangle(1145, cxx, "_Z21registerNativeMethodsP7_JNIEnvPKcP15JNINativeMethodi", "registerNativeMethods(_JNIEnv*, char const*, JNINativeMethod*, int)");
-mu_demangle(1146, cxx, "_Z17register_ndk_loadP7_JNIEnv", "register_ndk_load(_JNIEnv*)");
+mu_demangle_tests(gpl,
+	mu_demangle_test("_ZNSt2147483648ios_base4InitD1Ev", NULL),
+	mu_demangle_test("_Z10initThemesv_ptr", "initThemes()"),
+	mu_demangle_test("_Z11InitUIViewsv_ptr", "InitUIViews()"),
+	mu_demangle_test("_Z13getThemeColor12BNThemeColor_ptr", "getThemeColor(BNThemeColor)"),
+	mu_demangle_test("_Z13InitUIActionsv_ptr", "InitUIActions()"),
+	mu_demangle_test("_Z13InitUIPluginsv_ptr", "InitUIPlugins()"),
+	mu_demangle_test("_Z14getActiveThemev_ptr", "getActiveTheme()"),
+	mu_demangle_test("_Z14setActiveThemeRK7QStringb_ptr", "setActiveTheme(QString const&, bool)"),
+	mu_demangle_test("_Z15resetUserThemesv_ptr", "resetUserThemes()"),
+	mu_demangle_test("_Z16getMonospaceFontP7QWidget_ptr", "getMonospaceFont(QWidget*)"),
+	mu_demangle_test("_Z16setMonospaceFontRK5QFont_ptr", "setMonospaceFont(QFont const&)"),
+	mu_demangle_test("_Z17setAllowBoldFontsb_ptr", "setAllowBoldFonts(bool)"),
+	mu_demangle_test("_Z17setColorBlindModeb_ptr", "setColorBlindMode(bool)"),
+	mu_demangle_test("_Z19getExtraFontSpacingv_ptr", "getExtraFontSpacing()"),
+	mu_demangle_test("_Z19setExtraFontSpacingi_ptr", "setExtraFontSpacing(int)"),
+	mu_demangle_test("_Z20setAntialiasingStyle17AntialiasingStyle_ptr", "setAntialiasingStyle(AntialiasingStyle)"),
+	mu_demangle_test("_Z21qRegisterResourceDataiPKhS0_S0__ptr", "qRegisterResourceData(int, unsigned char const*, unsigned char const*, unsigned char const*)"),
+	mu_demangle_test("_Z23getDefaultMonospaceFontv_ptr", "getDefaultMonospaceFont()"),
+	mu_demangle_test("_Z23qUnregisterResourceDataiPKhS0_S0__ptr", "qUnregisterResourceData(int, unsigned char const*, unsigned char const*, unsigned char const*)"),
+	mu_demangle_test("_Z26getDefaultExtraFontSpacingv_ptr", "getDefaultExtraFontSpacing()"),
+	mu_demangle_test("_Z33adjustFontForAntialiasingSettingsR5QFontP7QWidget_ptr", "adjustFontForAntialiasingSettings(QFont&, QWidget*)"),
+	mu_demangle_test("_ZdaPv_ptr", "operator delete[](void*)"),
+	mu_demangle_test("_ZdaPvm_ptr", "operator delete[](void*, unsigned long)"),
+	mu_demangle_test("_ZdlPv_ptr", "operator delete(void*)"),
+	mu_demangle_test("_ZdlPvm_ptr", "operator delete(void*, unsigned long)"),
+	mu_demangle_test("_ZeqRK7QStringS1__ptr", "operator==(QString const&, QString const&)"),
+	mu_demangle_test("_ZltRK7QStringS1__ptr", "operator<(QString const&, QString const&)"),
+	mu_demangle_test("_ZN10FeatureMapC1EP9ViewFrameN11BinaryNinja3RefINS2_10BinaryViewEEE_ptr", "FeatureMap::FeatureMap(ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)"),
+	mu_demangle_test("_ZN10MenuHelper11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "MenuHelper::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN10MenuHelper11qt_metacastEPKc_ptr", "MenuHelper::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN10MenuHelper22setBackgroundColorRoleEN8QPalette9ColorRoleE_ptr", "MenuHelper::setBackgroundColorRole(QPalette::ColorRole)"),
+	mu_demangle_test("_ZN10MenuHelperC2EP7QWidgetb_ptr", "MenuHelper::MenuHelper(QWidget*, bool)"),
+	mu_demangle_test("_ZN10QArrayData10deallocateEPS_mm_ptr", "QArrayData::deallocate(QArrayData*, unsigned long, unsigned long)"),
+	mu_demangle_test("_ZN10QArrayData11shared_nullE_ptr", "QArrayData::shared_null"),
+	mu_demangle_test("_ZN10QBoxLayout10addSpacingEi_ptr", "QBoxLayout::addSpacing(int)"),
+	mu_demangle_test("_ZN10QBoxLayout10addStretchEi_ptr", "QBoxLayout::addStretch(int)"),
+	mu_demangle_test("_ZN10QBoxLayout10setSpacingEi_ptr", "QBoxLayout::setSpacing(int)"),
+	mu_demangle_test("_ZN10QBoxLayout9addLayoutEP7QLayouti_ptr", "QBoxLayout::addLayout(QLayout*, int)"),
+	mu_demangle_test("_ZN10QBoxLayout9addWidgetEP7QWidgeti6QFlagsIN2Qt13AlignmentFlagEE_ptr", "QBoxLayout::addWidget(QWidget*, int, QFlags<Qt::AlignmentFlag>)"),
+	mu_demangle_test("_ZN10QByteArray11reallocDataEj6QFlagsIN10QArrayData16AllocationOptionEE_ptr", "QByteArray::reallocData(unsigned int, QFlags<QArrayData::AllocationOption>)"),
+	mu_demangle_test("_ZN10QByteArray6appendEc_ptr", "QByteArray::append(char)"),
+	mu_demangle_test("_ZN10QByteArray6appendEPKc_ptr", "QByteArray::append(char const*)"),
+	mu_demangle_test("_ZN10QByteArray6appendEPKci_ptr", "QByteArray::append(char const*, int)"),
+	mu_demangle_test("_ZN10QByteArrayC1EPKci_ptr", "QByteArray::QByteArray(char const*, int)"),
+	mu_demangle_test("_ZN10QClipboard11setMimeDataEP9QMimeDataNS_4ModeE_ptr", "QClipboard::setMimeData(QMimeData*, QClipboard::Mode)"),
+	mu_demangle_test("_ZN10QClipboard5clearENS_4ModeE_ptr", "QClipboard::clear(QClipboard::Mode)"),
+	mu_demangle_test("_ZN10QCompleter18setCaseSensitivityEN2Qt15CaseSensitivityE_ptr", "QCompleter::setCaseSensitivity(Qt::CaseSensitivity)"),
+	mu_demangle_test("_ZN10QCompleterC1ERK11QStringListP7QObject_ptr", "QCompleter::QCompleter(QStringList const&, QObject*)"),
+	mu_demangle_test("_ZN10QEventLoop4execE6QFlagsINS_17ProcessEventsFlagEE_ptr", "QEventLoop::exec(QFlags<QEventLoop::ProcessEventsFlag>)"),
+	mu_demangle_test("_ZN10QEventLoopC1EP7QObject_ptr", "QEventLoop::QEventLoop(QObject*)"),
+	mu_demangle_test("_ZN10QEventLoopD1Ev_ptr", "QEventLoop::~QEventLoop()"),
+	mu_demangle_test("_ZN10QJsonValueD1Ev_ptr", "QJsonValue::~QJsonValue()"),
+	mu_demangle_test("_ZN10QStatusBar11showMessageERK7QStringi_ptr", "QStatusBar::showMessage(QString const&, int)"),
+	mu_demangle_test("_ZN10QStatusBar12clearMessageEv_ptr", "QStatusBar::clearMessage()"),
+	mu_demangle_test("_ZN10QStatusBar12removeWidgetEP7QWidget_ptr", "QStatusBar::removeWidget(QWidget*)"),
+	mu_demangle_test("_ZN10QStatusBar18addPermanentWidgetEP7QWidgeti_ptr", "QStatusBar::addPermanentWidget(QWidget*, int)"),
+	mu_demangle_test("_ZN10QStatusBar9addWidgetEP7QWidgeti_ptr", "QStatusBar::addWidget(QWidget*, int)"),
+	mu_demangle_test("_ZN10QTableView11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QTableView::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN10QTableView11qt_metacastEPKc_ptr", "QTableView::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN10QTableView11setShowGridEb_ptr", "QTableView::setShowGrid(bool)"),
+	mu_demangle_test("_ZN10QTableView12sortByColumnEiN2Qt9SortOrderE_ptr", "QTableView::sortByColumn(int, Qt::SortOrder)"),
+	mu_demangle_test("_ZN10QTableView16staticMetaObjectE_ptr", "QTableView::staticMetaObject"),
+	mu_demangle_test("_ZN10QTableView17setSortingEnabledEb_ptr", "QTableView::setSortingEnabled(bool)"),
+	mu_demangle_test("_ZN10QTableView23resizeColumnsToContentsEv_ptr", "QTableView::resizeColumnsToContents()"),
+	mu_demangle_test("_ZN10QTableView8setModelEP18QAbstractItemModel_ptr", "QTableView::setModel(QAbstractItemModel*)"),
+	mu_demangle_test("_ZN10QTableView9selectRowEi_ptr", "QTableView::selectRow(int)"),
+	mu_demangle_test("_ZN10QTableViewC2EP7QWidget_ptr", "QTableView::QTableView(QWidget*)"),
+	mu_demangle_test("_ZN10QTableViewD2Ev_ptr", "QTableView::~QTableView()"),
+	mu_demangle_test("_ZN10QTabWidget10setMovableEb_ptr", "QTabWidget::setMovable(bool)"),
+	mu_demangle_test("_ZN10QTabWidget10setTabTextEiRK7QString_ptr", "QTabWidget::setTabText(int, QString const&)"),
+	mu_demangle_test("_ZN10QTabWidget11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QTabWidget::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN10QTabWidget11qt_metacastEPKc_ptr", "QTabWidget::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN10QTabWidget15setCornerWidgetEP7QWidgetN2Qt6CornerE_ptr", "QTabWidget::setCornerWidget(QWidget*, Qt::Corner)"),
+	mu_demangle_test("_ZN10QTabWidget15setCurrentIndexEi_ptr", "QTabWidget::setCurrentIndex(int)"),
+	mu_demangle_test("_ZN10QTabWidget15setDocumentModeEb_ptr", "QTabWidget::setDocumentMode(bool)"),
+	mu_demangle_test("_ZN10QTabWidget15setTabsClosableEb_ptr", "QTabWidget::setTabsClosable(bool)"),
+	mu_demangle_test("_ZN10QTabWidget17setTabBarAutoHideEb_ptr", "QTabWidget::setTabBarAutoHide(bool)"),
+	mu_demangle_test("_ZN10QTabWidget6addTabEP7QWidgetRK7QString_ptr", "QTabWidget::addTab(QWidget*, QString const&)"),
+	mu_demangle_test("_ZN10QTabWidget9insertTabEiP7QWidgetRK7QString_ptr", "QTabWidget::insertTab(int, QWidget*, QString const&)"),
+	mu_demangle_test("_ZN10QTabWidget9removeTabEi_ptr", "QTabWidget::removeTab(int)"),
+	mu_demangle_test("_ZN10QTabWidget9setTabBarEP7QTabBar_ptr", "QTabWidget::setTabBar(QTabBar*)"),
+	mu_demangle_test("_ZN10QTabWidgetC1EP7QWidget_ptr", "QTabWidget::QTabWidget(QWidget*)"),
+	mu_demangle_test("_ZN10QTabWidgetC2EP7QWidget_ptr", "QTabWidget::QTabWidget(QWidget*)"),
+	mu_demangle_test("_ZN10QTabWidgetD2Ev_ptr", "QTabWidget::~QTabWidget()"),
+	mu_demangle_test("_ZN11DockHandler10setVisibleERK7QStringb_ptr", "DockHandler::setVisible(QString const&, bool)"),
+	mu_demangle_test("_ZN11DockHandler11updateFontsEv_ptr", "DockHandler::updateFonts()"),
+	mu_demangle_test("_ZN11DockHandler11updateThemeEv_ptr", "DockHandler::updateTheme()"),
+	mu_demangle_test("_ZN11DockHandler11viewChangedEP9ViewFrame_ptr", "DockHandler::viewChanged(ViewFrame*)"),
+	mu_demangle_test("_ZN11DockHandler12restoreStateER9QSettingsRK7QString_ptr", "DockHandler::restoreState(QSettings&, QString const&)"),
+	mu_demangle_test("_ZN11DockHandler13addDockWidgetEP7QWidgetN2Qt14DockWidgetAreaENS2_11OrientationEb_ptr", "DockHandler::addDockWidget(QWidget*, Qt::DockWidgetArea, Qt::Orientation, bool)"),
+	mu_demangle_test("_ZN11DockHandler13addDockWidgetERK7QStringRKSt8functionIFP7QWidgetS2_P9ViewFrameN11BinaryNinja3RefINS8_10BinaryViewEEEEEN2Qt14DockWidgetAreaENSG_11OrientationEb_ptr", "DockHandler::addDockWidget(QString const&, std::function<QWidget* (QString const&, ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)> const&, Qt::DockWidgetArea, Qt::Orientation, bool)"),
+	mu_demangle_test("_ZN11DockHandler13getDockWidgetERK7QString_ptr", "DockHandler::getDockWidget(QString const&)"),
+	mu_demangle_test("_ZN11DockHandler15addActionOnShowERK7QStringRKSt8functionIFvvEE_ptr", "DockHandler::addActionOnShow(QString const&, std::function<void ()> const&)"),
+	mu_demangle_test("_ZN11DockHandler17shouldResizeDocksEv_ptr", "DockHandler::shouldResizeDocks()"),
+	mu_demangle_test("_ZN11DockHandler18updateViewLocationEP4ViewRK12ViewLocation_ptr", "DockHandler::updateViewLocation(View*, ViewLocation const&)"),
+	mu_demangle_test("_ZN11DockHandler23notifyRestoredFromStateEv_ptr", "DockHandler::notifyRestoredFromState()"),
+	mu_demangle_test("_ZN11DockHandler5closeEv_ptr", "DockHandler::close()"),
+	mu_demangle_test("_ZN11DockHandler5resetEb_ptr", "DockHandler::reset(bool)"),
+	mu_demangle_test("_ZN11DockHandler5resetERK7QString_ptr", "DockHandler::reset(QString const&)"),
+	mu_demangle_test("_ZN11DockHandler9isVisibleERK7QString_ptr", "DockHandler::isVisible(QString const&)"),
+	mu_demangle_test("_ZN11DockHandler9saveStateER9QSettingsRK7QString_ptr", "DockHandler::saveState(QSettings&, QString const&)"),
+	mu_demangle_test("_ZN11DockHandlerC1EP7QObjecti_ptr", "DockHandler::DockHandler(QObject*, int)"),
+	mu_demangle_test("_ZN11FileContext10isModifiedEv_ptr", "FileContext::isModified()"),
+	mu_demangle_test("_ZN11FileContext11getBestTypeEv_ptr", "FileContext::getBestType()"),
+	mu_demangle_test("_ZN11FileContext11getDataViewERK7QStringb_ptr", "FileContext::getDataView(QString const&, bool)"),
+	mu_demangle_test("_ZN11FileContext11markAsSavedERK7QString_ptr", "FileContext::markAsSaved(QString const&)"),
+	mu_demangle_test("_ZN11FileContext11resolveTypeERK7QStringRP8ViewTypeRN11BinaryNinja3RefINS6_14BinaryViewTypeEEE_ptr", "FileContext::resolveType(QString const&, ViewType*&, BinaryNinja::Ref<BinaryNinja::BinaryViewType>&)"),
+	mu_demangle_test("_ZN11FileContext14createDataViewERK7QString_ptr", "FileContext::createDataView(QString const&)"),
+	mu_demangle_test("_ZN11FileContext15isTypeAvailableERK7QString_ptr", "FileContext::isTypeAvailable(QString const&)"),
+	mu_demangle_test("_ZN11FileContext17closeAllOpenFilesEv_ptr", "FileContext::closeAllOpenFiles()"),
+	mu_demangle_test("_ZN11FileContext17getAvailableTypesEv_ptr", "FileContext::getAvailableTypes()"),
+	mu_demangle_test("_ZN11FileContext17registerReferenceEP7QWidget_ptr", "FileContext::registerReference(QWidget*)"),
+	mu_demangle_test("_ZN11FileContext19getOpenFileContextsEv_ptr", "FileContext::getOpenFileContexts()"),
+	mu_demangle_test("_ZN11FileContext19setCurrentViewFrameEP9ViewFrame_ptr", "FileContext::setCurrentViewFrame(ViewFrame*)"),
+	mu_demangle_test("_ZN11FileContext20refreshDataViewCacheEv_ptr", "FileContext::refreshDataViewCache()"),
+	mu_demangle_test("_ZN11FileContext7newFileEv_ptr", "FileContext::newFile()"),
+	mu_demangle_test("_ZN11FileContextC1EN11BinaryNinja3RefINS0_12FileMetadataEEENS1_INS0_10BinaryViewEEERK7QStringbb_ptr", "FileContext::FileContext(BinaryNinja::Ref<BinaryNinja::FileMetadata>, BinaryNinja::Ref<BinaryNinja::BinaryView>, QString const&, bool, bool)"),
+	mu_demangle_test("_ZN11QFileDevice5closeEv_ptr", "QFileDevice::close()"),
+	mu_demangle_test("_ZN11QFileDialog15getOpenFileNameEP7QWidgetRK7QStringS4_S4_PS2_6QFlagsINS_6OptionEE_ptr", "QFileDialog::getOpenFileName(QWidget*, QString const&, QString const&, QString const&, QString*, QFlags<QFileDialog::Option>)"),
+	mu_demangle_test("_ZN11QFileDialog15getSaveFileNameEP7QWidgetRK7QStringS4_S4_PS2_6QFlagsINS_6OptionEE_ptr", "QFileDialog::getSaveFileName(QWidget*, QString const&, QString const&, QString const&, QString*, QFlags<QFileDialog::Option>)"),
+	mu_demangle_test("_ZN11QFileDialog16getOpenFileNamesEP7QWidgetRK7QStringS4_S4_PS2_6QFlagsINS_6OptionEE_ptr", "QFileDialog::getOpenFileNames(QWidget*, QString const&, QString const&, QString const&, QString*, QFlags<QFileDialog::Option>)"),
+	mu_demangle_test("_ZN11QFileDialog20getExistingDirectoryEP7QWidgetRK7QStringS4_6QFlagsINS_6OptionEE_ptr", "QFileDialog::getExistingDirectory(QWidget*, QString const&, QString const&, QFlags<QFileDialog::Option>)"),
+	mu_demangle_test("_ZN11QFontDialog7getFontEPbRK5QFontP7QWidgetRK7QString6QFlagsINS_16FontDialogOptionEE_ptr", "QFontDialog::getFont(bool*, QFont const&, QWidget*, QString const&, QFlags<QFontDialog::FontDialogOption>)"),
+	mu_demangle_test("_ZN11QGridLayout16setColumnStretchEii_ptr", "QGridLayout::setColumnStretch(int, int)"),
+	mu_demangle_test("_ZN11QGridLayout19setRowMinimumHeightEii_ptr", "QGridLayout::setRowMinimumHeight(int, int)"),
+	mu_demangle_test("_ZN11QGridLayout9addWidgetEP7QWidgetii6QFlagsIN2Qt13AlignmentFlagEE_ptr", "QGridLayout::addWidget(QWidget*, int, int, QFlags<Qt::AlignmentFlag>)"),
+	mu_demangle_test("_ZN11QGridLayoutC1EP7QWidget_ptr", "QGridLayout::QGridLayout(QWidget*)"),
+	mu_demangle_test("_ZN11QGridLayoutC1Ev_ptr", "QGridLayout::QGridLayout()"),
+	mu_demangle_test("_ZN11QHBoxLayoutC1EP7QWidget_ptr", "QHBoxLayout::QHBoxLayout(QWidget*)"),
+	mu_demangle_test("_ZN11QHBoxLayoutC1Ev_ptr", "QHBoxLayout::QHBoxLayout()"),
+	mu_demangle_test("_ZN11QHeaderView20setSectionResizeModeEiNS_10ResizeModeE_ptr", "QHeaderView::setSectionResizeMode(int, QHeaderView::ResizeMode)"),
+	mu_demangle_test("_ZN11QHeaderView20setSectionResizeModeENS_10ResizeModeE_ptr", "QHeaderView::setSectionResizeMode(QHeaderView::ResizeMode)"),
+	mu_demangle_test("_ZN11QHeaderView21setDefaultSectionSizeEi_ptr", "QHeaderView::setDefaultSectionSize(int)"),
+	mu_demangle_test("_ZN11QHeaderView21setStretchLastSectionEb_ptr", "QHeaderView::setStretchLastSection(bool)"),
+	mu_demangle_test("_ZN11QJsonObjectD1Ev_ptr", "QJsonObject::~QJsonObject()"),
+	mu_demangle_test("_ZN11QMainWindow10addToolBarEN2Qt11ToolBarAreaEP8QToolBar_ptr", "QMainWindow::addToolBar(Qt::ToolBarArea, QToolBar*)"),
+	mu_demangle_test("_ZN11QMainWindow11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QMainWindow::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN11QMainWindow11qt_metacastEPKc_ptr", "QMainWindow::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN11QMainWindow11resizeDocksERK5QListIP11QDockWidgetERKS0_IiEN2Qt11OrientationE_ptr", "QMainWindow::resizeDocks(QList<QDockWidget*> const&, QList<int> const&, Qt::Orientation)"),
+	mu_demangle_test("_ZN11QMainWindow12restoreStateERK10QByteArrayi_ptr", "QMainWindow::restoreState(QByteArray const&, int)"),
+	mu_demangle_test("_ZN11QMainWindow15splitDockWidgetEP11QDockWidgetS1_N2Qt11OrientationE_ptr", "QMainWindow::splitDockWidget(QDockWidget*, QDockWidget*, Qt::Orientation)"),
+	mu_demangle_test("_ZN11QMainWindow16setCentralWidgetEP7QWidget_ptr", "QMainWindow::setCentralWidget(QWidget*)"),
+	mu_demangle_test("_ZN11QMainWindow16tabifyDockWidgetEP11QDockWidgetS1__ptr", "QMainWindow::tabifyDockWidget(QDockWidget*, QDockWidget*)"),
+	mu_demangle_test("_ZN11QMainWindow21setDockNestingEnabledEb_ptr", "QMainWindow::setDockNestingEnabled(bool)"),
+	mu_demangle_test("_ZN11QMainWindow9setCornerEN2Qt6CornerENS0_14DockWidgetAreaE_ptr", "QMainWindow::setCorner(Qt::Corner, Qt::DockWidgetArea)"),
+	mu_demangle_test("_ZN11QMainWindowC2EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QMainWindow::QMainWindow(QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN11QMainWindowD2Ev_ptr", "QMainWindow::~QMainWindow()"),
+	mu_demangle_test("_ZN11QMessageBox11informationEP7QWidgetRK7QStringS4_6QFlagsINS_14StandardButtonEES6__ptr", "QMessageBox::information(QWidget*, QString const&, QString const&, QFlags<QMessageBox::StandardButton>, QMessageBox::StandardButton)"),
+	mu_demangle_test("_ZN11QMessageBox14setWindowTitleERK7QString_ptr", "QMessageBox::setWindowTitle(QString const&)"),
+	mu_demangle_test("_ZN11QMessageBox16setDefaultButtonENS_14StandardButtonE_ptr", "QMessageBox::setDefaultButton(QMessageBox::StandardButton)"),
+	mu_demangle_test("_ZN11QMessageBox18setInformativeTextERK7QString_ptr", "QMessageBox::setInformativeText(QString const&)"),
+	mu_demangle_test("_ZN11QMessageBox18setStandardButtonsE6QFlagsINS_14StandardButtonEE_ptr", "QMessageBox::setStandardButtons(QFlags<QMessageBox::StandardButton>)"),
+	mu_demangle_test("_ZN11QMessageBox7setIconENS_4IconE_ptr", "QMessageBox::setIcon(QMessageBox::Icon)"),
+	mu_demangle_test("_ZN11QMessageBox7setTextERK7QString_ptr", "QMessageBox::setText(QString const&)"),
+	mu_demangle_test("_ZN11QMessageBox7warningEP7QWidgetRK7QStringS4_6QFlagsINS_14StandardButtonEES6__ptr", "QMessageBox::warning(QWidget*, QString const&, QString const&, QFlags<QMessageBox::StandardButton>, QMessageBox::StandardButton)"),
+	mu_demangle_test("_ZN11QMessageBox8criticalEP7QWidgetRK7QStringS4_6QFlagsINS_14StandardButtonEES6__ptr", "QMessageBox::critical(QWidget*, QString const&, QString const&, QFlags<QMessageBox::StandardButton>, QMessageBox::StandardButton)"),
+	mu_demangle_test("_ZN11QMessageBox8questionEP7QWidgetRK7QStringS4_6QFlagsINS_14StandardButtonEES6__ptr", "QMessageBox::question(QWidget*, QString const&, QString const&, QFlags<QMessageBox::StandardButton>, QMessageBox::StandardButton)"),
+	mu_demangle_test("_ZN11QMessageBox9addButtonENS_14StandardButtonE_ptr", "QMessageBox::addButton(QMessageBox::StandardButton)"),
+	mu_demangle_test("_ZN11QMessageBox9addButtonERK7QStringNS_10ButtonRoleE_ptr", "QMessageBox::addButton(QString const&, QMessageBox::ButtonRole)"),
+	mu_demangle_test("_ZN11QMessageBoxC1ENS_4IconERK7QStringS3_6QFlagsINS_14StandardButtonEEP7QWidgetS4_IN2Qt10WindowTypeEE_ptr", "QMessageBox::QMessageBox(QMessageBox::Icon, QString const&, QString const&, QFlags<QMessageBox::StandardButton>, QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN11QMessageBoxC1EP7QWidget_ptr", "QMessageBox::QMessageBox(QWidget*)"),
+	mu_demangle_test("_ZN11QMessageBoxD1Ev_ptr", "QMessageBox::~QMessageBox()"),
+	mu_demangle_test("_ZN11QMetaObject10ConnectionD1Ev_ptr", "QMetaObject::Connection::~Connection()"),
+	mu_demangle_test("_ZN11QMetaObject14normalizedTypeEPKc_ptr", "QMetaObject::normalizedType(char const*)"),
+	mu_demangle_test("_ZN11QMetaObject8activateEP7QObjectPKS_iPPv_ptr", "QMetaObject::activate(QObject*, QMetaObject const*, int, void**)"),
+	mu_demangle_test("_ZN11QPushButton10setDefaultEb_ptr", "QPushButton::setDefault(bool)"),
+	mu_demangle_test("_ZN11QPushButtonC1EP7QWidget_ptr", "QPushButton::QPushButton(QWidget*)"),
+	mu_demangle_test("_ZN11QPushButtonC1ERK7QStringP7QWidget_ptr", "QPushButton::QPushButton(QString const&, QWidget*)"),
+	mu_demangle_test("_ZN11QScrollArea11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QScrollArea::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN11QScrollArea11qt_metacastEPKc_ptr", "QScrollArea::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN11QScrollArea18setWidgetResizableEb_ptr", "QScrollArea::setWidgetResizable(bool)"),
+	mu_demangle_test("_ZN11QScrollArea9setWidgetEP7QWidget_ptr", "QScrollArea::setWidget(QWidget*)"),
+	mu_demangle_test("_ZN11QScrollAreaC2EP7QWidget_ptr", "QScrollArea::QScrollArea(QWidget*)"),
+	mu_demangle_test("_ZN11QScrollAreaD2Ev_ptr", "QScrollArea::~QScrollArea()"),
+	mu_demangle_test("_ZN11QTextStream7readAllEv_ptr", "QTextStream::readAll()"),
+	mu_demangle_test("_ZN11QTextStreamC1EP7QString6QFlagsIN9QIODevice12OpenModeFlagEE_ptr", "QTextStream::QTextStream(QString*, QFlags<QIODevice::OpenModeFlag>)"),
+	mu_demangle_test("_ZN11QTextStreamC1EP9QIODevice_ptr", "QTextStream::QTextStream(QIODevice*)"),
+	mu_demangle_test("_ZN11QTextStreamD1Ev_ptr", "QTextStream::~QTextStream()"),
+	mu_demangle_test("_ZN11QTextStreamlsEl_ptr", "QTextStream::operator<<(long)"),
+	mu_demangle_test("_ZN11QTextStreamlsEm_ptr", "QTextStream::operator<<(unsigned long)"),
+	mu_demangle_test("_ZN11QTextStreamlsEPKc_ptr", "QTextStream::operator<<(char const*)"),
+	mu_demangle_test("_ZN11QTextStreamlsERK7QString_ptr", "QTextStream::operator<<(QString const&)"),
+	mu_demangle_test("_ZN11QThreadPool5startEP9QRunnablei_ptr", "QThreadPool::start(QRunnable*, int)"),
+	mu_demangle_test("_ZN11QThreadPoolC1EP7QObject_ptr", "QThreadPool::QThreadPool(QObject*)"),
+	mu_demangle_test("_ZN11QToolButton12setArrowTypeEN2Qt9ArrowTypeE_ptr", "QToolButton::setArrowType(Qt::ArrowType)"),
+	mu_demangle_test("_ZN11QToolButtonC1EP7QWidget_ptr", "QToolButton::QToolButton(QWidget*)"),
+	mu_demangle_test("_ZN11QVBoxLayoutC1EP7QWidget_ptr", "QVBoxLayout::QVBoxLayout(QWidget*)"),
+	mu_demangle_test("_ZN11QVBoxLayoutC1Ev_ptr", "QVBoxLayout::QVBoxLayout()"),
+	mu_demangle_test("_ZN11SymbolsViewC1EP9ViewFrameN11BinaryNinja3RefINS2_10BinaryViewEEE_ptr", "SymbolsView::SymbolsView(ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)"),
+	mu_demangle_test("_ZN12FilteredView10showFilterERK7QString_ptr", "FilteredView::showFilter(QString const&)"),
+	mu_demangle_test("_ZN12FilteredView5matchERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES7__ptr", "FilteredView::match(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)"),
+	mu_demangle_test("_ZN12FilteredViewC1EP7QWidgetS1_P12FilterTarget_ptr", "FilteredView::FilteredView(QWidget*, QWidget*, FilterTarget*)"),
+	mu_demangle_test("_ZN12LogListModel16staticMetaObjectE_ptr", "LogListModel::staticMetaObject"),
+	mu_demangle_test("_ZN12QApplication11focusWidgetEv_ptr", "QApplication::focusWidget()"),
+	mu_demangle_test("_ZN12QApplication11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QApplication::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN12QApplication11qt_metacastEPKc_ptr", "QApplication::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN12QApplication12activeWindowEv_ptr", "QApplication::activeWindow()"),
+	mu_demangle_test("_ZN12QApplication17activeModalWidgetEv_ptr", "QApplication::activeModalWidget()"),
+	mu_demangle_test("_ZN12QApplication4execEv_ptr", "QApplication::exec()"),
+	mu_demangle_test("_ZN12QApplication4fontEv_ptr", "QApplication::font()"),
+	mu_demangle_test("_ZN12QApplication7setFontERK5QFontPKc_ptr", "QApplication::setFont(QFont const&, char const*)"),
+	mu_demangle_test("_ZN12QApplicationC2ERiPPci_ptr", "QApplication::QApplication(int&, char**, int)"),
+	mu_demangle_test("_ZN12QApplicationD2Ev_ptr", "QApplication::~QApplication()"),
+	mu_demangle_test("_ZN12QDirIterator4nextEv_ptr", "QDirIterator::next()"),
+	mu_demangle_test("_ZN12QDirIteratorC1ERK7QString6QFlagsINS_12IteratorFlagEE_ptr", "QDirIterator::QDirIterator(QString const&, QFlags<QDirIterator::IteratorFlag>)"),
+	mu_demangle_test("_ZN12QDirIteratorD1Ev_ptr", "QDirIterator::~QDirIterator()"),
+	mu_demangle_test("_ZN12QEasingCurveC1ENS_4TypeE_ptr", "QEasingCurve::QEasingCurve(QEasingCurve::Type)"),
+	mu_demangle_test("_ZN12QEasingCurveD1Ev_ptr", "QEasingCurve::~QEasingCurve()"),
+	mu_demangle_test("_ZN12QFontMetricsC1ERK5QFont_ptr", "QFontMetrics::QFontMetrics(QFont const&)"),
+	mu_demangle_test("_ZN12QFontMetricsD1Ev_ptr", "QFontMetrics::~QFontMetrics()"),
+	mu_demangle_test("_ZN12QInputDialog12setLabelTextERK7QString_ptr", "QInputDialog::setLabelText(QString const&)"),
+	mu_demangle_test("_ZN12QInputDialog15setTextEchoModeEN9QLineEdit8EchoModeE_ptr", "QInputDialog::setTextEchoMode(QLineEdit::EchoMode)"),
+	mu_demangle_test("_ZN12QInputDialog7getItemEP7QWidgetRK7QStringS4_RK11QStringListibPb6QFlagsIN2Qt10WindowTypeEES9_INSA_15InputMethodHintEE_ptr", "QInputDialog::getItem(QWidget*, QString const&, QString const&, QStringList const&, int, bool, bool*, QFlags<Qt::WindowType>, QFlags<Qt::InputMethodHint>)"),
+	mu_demangle_test("_ZN12QInputDialog7getTextEP7QWidgetRK7QStringS4_N9QLineEdit8EchoModeES4_Pb6QFlagsIN2Qt10WindowTypeEES8_INS9_15InputMethodHintEE_ptr", "QInputDialog::getText(QWidget*, QString const&, QString const&, QLineEdit::EchoMode, QString const&, bool*, QFlags<Qt::WindowType>, QFlags<Qt::InputMethodHint>)"),
+	mu_demangle_test("_ZN12QInputDialogC1EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QInputDialog::QInputDialog(QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN12QInputDialogD1Ev_ptr", "QInputDialog::~QInputDialog()"),
+	mu_demangle_test("_ZN12QKeySequenceC1Eiiii_ptr", "QKeySequence::QKeySequence(int, int, int, int)"),
+	mu_demangle_test("_ZN12QKeySequenceC1ENS_11StandardKeyE_ptr", "QKeySequence::QKeySequence(QKeySequence::StandardKey)"),
+	mu_demangle_test("_ZN12QKeySequenceC1ERK7QStringNS_14SequenceFormatE_ptr", "QKeySequence::QKeySequence(QString const&, QKeySequence::SequenceFormat)"),
+	mu_demangle_test("_ZN12QKeySequenceC1ERKS__ptr", "QKeySequence::QKeySequence(QKeySequence const&)"),
+	mu_demangle_test("_ZN12QKeySequenceC1Ev_ptr", "QKeySequence::QKeySequence()"),
+	mu_demangle_test("_ZN12QKeySequenceD1Ev_ptr", "QKeySequence::~QKeySequence()"),
+	mu_demangle_test("_ZN12QRadioButtonC1ERK7QStringP7QWidget_ptr", "QRadioButton::QRadioButton(QString const&, QWidget*)"),
+	mu_demangle_test("_ZN12QStyleOption4initEPK7QWidget_ptr", "QStyleOption::init(QWidget const*)"),
+	mu_demangle_test("_ZN12QStyleOptionC1Eii_ptr", "QStyleOption::QStyleOption(int, int)"),
+	mu_demangle_test("_ZN12QStyleOptionD1Ev_ptr", "QStyleOption::~QStyleOption()"),
+	mu_demangle_test("_ZN12QTextBrowser20setOpenExternalLinksEb_ptr", "QTextBrowser::setOpenExternalLinks(bool)"),
+	mu_demangle_test("_ZN12QTextBrowserC1EP7QWidget_ptr", "QTextBrowser::QTextBrowser(QWidget*)"),
+	mu_demangle_test("_ZN12ReportWidgetC1EP7QWidgetN11BinaryNinja3RefINS2_10BinaryViewEEERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE12BNReportTypeSD_SD__ptr", "ReportWidget::ReportWidget(QWidget*, BinaryNinja::Ref<BinaryNinja::BinaryView>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, BNReportType, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)"),
+	mu_demangle_test("_ZN13QFileAccessor5CloseEv_ptr", "QFileAccessor::Close()"),
+	mu_demangle_test("_ZN13QFileAccessorC1ERK7QStringb_ptr", "QFileAccessor::QFileAccessor(QString const&, bool)"),
+	mu_demangle_test("_ZN13QFileAccessorD1Ev_ptr", "QFileAccessor::~QFileAccessor()"),
+	mu_demangle_test("_ZN13QFontDatabase18addApplicationFontERK7QString_ptr", "QFontDatabase::addApplicationFont(QString const&)"),
+	mu_demangle_test("_ZN13QFontMetricsFC1ERK5QFont_ptr", "QFontMetricsF::QFontMetricsF(QFont const&)"),
+	mu_demangle_test("_ZN13QFontMetricsFD1Ev_ptr", "QFontMetricsF::~QFontMetricsF()"),
+	mu_demangle_test("_ZN13QItemDelegate11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QItemDelegate::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN13QItemDelegate11qt_metacastEPKc_ptr", "QItemDelegate::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN13QItemDelegateC2EP7QObject_ptr", "QItemDelegate::QItemDelegate(QObject*)"),
+	mu_demangle_test("_ZN13QItemDelegateD2Ev_ptr", "QItemDelegate::~QItemDelegate()"),
+	mu_demangle_test("_ZN13QJsonDocument8fromJsonERK10QByteArrayP15QJsonParseError_ptr", "QJsonDocument::fromJson(QByteArray const&, QJsonParseError*)"),
+	mu_demangle_test("_ZN13QJsonDocumentD1Ev_ptr", "QJsonDocument::~QJsonDocument()"),
+	mu_demangle_test("_ZN13RenderContext19drawDisassemblyLineER8QPainteriiRKSt6vectorIN11BinaryNinja20InstructionTextTokenESaIS4_EER19HighlightTokenStateb_ptr", "RenderContext::drawDisassemblyLine(QPainter&, int, int, std::vector<BinaryNinja::InstructionTextToken, std::allocator<BinaryNinja::InstructionTextToken> > const&, HighlightTokenState&, bool)"),
+	mu_demangle_test("_ZN13RenderContext7setFontERK5QFont_ptr", "RenderContext::setFont(QFont const&)"),
+	mu_demangle_test("_ZN13RenderContextC1EP7QWidgetf_ptr", "RenderContext::RenderContext(QWidget*, float)"),
+	mu_demangle_test("_ZN13TagListWidgetC1EP7QWidgetP9ViewFrameN11BinaryNinja3RefINS4_10BinaryViewEEE_ptr", "TagListWidget::TagListWidget(QWidget*, ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)"),
+	mu_demangle_test("_ZN14ClickableLabel16staticMetaObjectE_ptr", "ClickableLabel::staticMetaObject"),
+	mu_demangle_test("_ZN14ClickableLabel7clickedEv_ptr", "ClickableLabel::clicked()"),
+	mu_demangle_test("_ZN14CommandPalette10focusInputEv_ptr", "CommandPalette::focusInput()"),
+	mu_demangle_test("_ZN14CommandPaletteC1EP7QWidgetP15UIActionHandler_ptr", "CommandPalette::CommandPalette(QWidget*, UIActionHandler*)"),
+	mu_demangle_test("_ZN14QDoubleSpinBox10setMaximumEd_ptr", "QDoubleSpinBox::setMaximum(double)"),
+	mu_demangle_test("_ZN14QDoubleSpinBox10setMinimumEd_ptr", "QDoubleSpinBox::setMinimum(double)"),
+	mu_demangle_test("_ZN14QDoubleSpinBox11setDecimalsEi_ptr", "QDoubleSpinBox::setDecimals(int)"),
+	mu_demangle_test("_ZN14QDoubleSpinBox8setValueEd_ptr", "QDoubleSpinBox::setValue(double)"),
+	mu_demangle_test("_ZN14QDoubleSpinBoxC1EP7QWidget_ptr", "QDoubleSpinBox::QDoubleSpinBox(QWidget*)"),
+	mu_demangle_test("_ZN14QWebEnginePage11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QWebEnginePage::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN14QWebEnginePage11qt_metacastEPKc_ptr", "QWebEnginePage::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN14QWebEnginePage13runJavaScriptERK7QStringj_ptr", "QWebEnginePage::runJavaScript(QString const&, unsigned int)"),
+	mu_demangle_test("_ZN14QWebEnginePage13runJavaScriptERK7QStringRK18QWebEngineCallbackIRK8QVariantE_ptr", "QWebEnginePage::runJavaScript(QString const&, QWebEngineCallback<QVariant const&> const&)"),
+	mu_demangle_test("_ZN14QWebEnginePage16staticMetaObjectE_ptr", "QWebEnginePage::staticMetaObject"),
+	mu_demangle_test("_ZN14QWebEnginePage18setBackgroundColorERK6QColor_ptr", "QWebEnginePage::setBackgroundColor(QColor const&)"),
+	mu_demangle_test("_ZN14QWebEnginePage19contentsSizeChangedERK6QSizeF_ptr", "QWebEnginePage::contentsSizeChanged(QSizeF const&)"),
+	mu_demangle_test("_ZN14QWebEnginePage23acceptNavigationRequestERK4QUrlNS_14NavigationTypeEb_ptr", "QWebEnginePage::acceptNavigationRequest(QUrl const&, QWebEnginePage::NavigationType, bool)"),
+	mu_demangle_test("_ZN14QWebEnginePage7scriptsEv_ptr", "QWebEnginePage::scripts()"),
+	mu_demangle_test("_ZN14QWebEnginePageC2EP7QObject_ptr", "QWebEnginePage::QWebEnginePage(QObject*)"),
+	mu_demangle_test("_ZN14QWebEnginePageD2Ev_ptr", "QWebEnginePage::~QWebEnginePage()"),
+	mu_demangle_test("_ZN14QWebEngineView13setZoomFactorEd_ptr", "QWebEngineView::setZoomFactor(double)"),
+	mu_demangle_test("_ZN14QWebEngineView6setUrlERK4QUrl_ptr", "QWebEngineView::setUrl(QUrl const&)"),
+	mu_demangle_test("_ZN14QWebEngineView7setHtmlERK7QStringRK4QUrl_ptr", "QWebEngineView::setHtml(QString const&, QUrl const&)"),
+	mu_demangle_test("_ZN14QWebEngineView7setPageEP14QWebEnginePage_ptr", "QWebEngineView::setPage(QWebEnginePage*)"),
+	mu_demangle_test("_ZN14QWebEngineViewC1EP7QWidget_ptr", "QWebEngineView::QWebEngineView(QWidget*)"),
+	mu_demangle_test("_ZN14ReflectionViewC1EP9ViewFrameN11BinaryNinja3RefINS2_10BinaryViewEEE_ptr", "ReflectionView::ReflectionView(ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)"),
+	mu_demangle_test("_ZN15FlowGraphWidgetC1EP7QWidgetN11BinaryNinja3RefINS2_10BinaryViewEEENS3_INS2_9FlowGraphEEE_ptr", "FlowGraphWidget::FlowGraphWidget(QWidget*, BinaryNinja::Ref<BinaryNinja::BinaryView>, BinaryNinja::Ref<BinaryNinja::FlowGraph>)"),
+	mu_demangle_test("_ZN15FormInputDialogC1EP7QWidgetPSt6vectorIN11BinaryNinja14FormInputFieldESaIS4_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE_ptr", "FormInputDialog::FormInputDialog(QWidget*, std::vector<BinaryNinja::FormInputField, std::allocator<BinaryNinja::FormInputField> >*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)"),
+	mu_demangle_test("_ZN15QAbstractButton10setCheckedEb_ptr", "QAbstractButton::setChecked(bool)"),
+	mu_demangle_test("_ZN15QAbstractButton16staticMetaObjectE_ptr", "QAbstractButton::staticMetaObject"),
+	mu_demangle_test("_ZN15QAbstractButton7clickedEb_ptr", "QAbstractButton::clicked(bool)"),
+	mu_demangle_test("_ZN15QAbstractButton7setTextERK7QString_ptr", "QAbstractButton::setText(QString const&)"),
+	mu_demangle_test("_ZN15QAbstractSlider13setSingleStepEi_ptr", "QAbstractSlider::setSingleStep(int)"),
+	mu_demangle_test("_ZN15QGuiApplication22queryKeyboardModifiersEv_ptr", "QGuiApplication::queryKeyboardModifiers()"),
+	mu_demangle_test("_ZN15QGuiApplication7screensEv_ptr", "QGuiApplication::screens()"),
+	mu_demangle_test("_ZN15QGuiApplication9clipboardEv_ptr", "QGuiApplication::clipboard()"),
+	mu_demangle_test("_ZN15QNetworkRequest12setAttributeENS_9AttributeERK8QVariant_ptr", "QNetworkRequest::setAttribute(QNetworkRequest::Attribute, QVariant const&)"),
+	mu_demangle_test("_ZN15QNetworkRequest12setRawHeaderERK10QByteArrayS2__ptr", "QNetworkRequest::setRawHeader(QByteArray const&, QByteArray const&)"),
+	mu_demangle_test("_ZN15QNetworkRequest18setTransferTimeoutEi_ptr", "QNetworkRequest::setTransferTimeout(int)"),
+	mu_demangle_test("_ZN15QNetworkRequestC1ERK4QUrl_ptr", "QNetworkRequest::QNetworkRequest(QUrl const&)"),
+	mu_demangle_test("_ZN15QNetworkRequestD1Ev_ptr", "QNetworkRequest::~QNetworkRequest()"),
+	mu_demangle_test("_ZN15QProgressDialog10setMaximumEi_ptr", "QProgressDialog::setMaximum(int)"),
+	mu_demangle_test("_ZN15QProgressDialog12setLabelTextERK7QString_ptr", "QProgressDialog::setLabelText(QString const&)"),
+	mu_demangle_test("_ZN15QProgressDialog18setMinimumDurationEi_ptr", "QProgressDialog::setMinimumDuration(int)"),
+	mu_demangle_test("_ZN15QProgressDialog19setCancelButtonTextERK7QString_ptr", "QProgressDialog::setCancelButtonText(QString const&)"),
+	mu_demangle_test("_ZN15QProgressDialog6cancelEv_ptr", "QProgressDialog::cancel()"),
+	mu_demangle_test("_ZN15QProgressDialog8setValueEi_ptr", "QProgressDialog::setValue(int)"),
+	mu_demangle_test("_ZN15QProgressDialogC1EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QProgressDialog::QProgressDialog(QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN15QProgressDialogD1Ev_ptr", "QProgressDialog::~QProgressDialog()"),
+	mu_demangle_test("_ZN15QtSharedPointer20ExternalRefCountData9getAndRefEPK7QObject_ptr", "QtSharedPointer::ExternalRefCountData::getAndRef(QObject const*)"),
+	mu_demangle_test("_ZN15UIActionContextC1Ev_ptr", "UIActionContext::UIActionContext()"),
+	mu_demangle_test("_ZN15UIActionHandler10bindActionERK7QStringRK8UIAction14ActionPriority_ptr", "UIActionHandler::bindAction(QString const&, UIAction const&, ActionPriority)"),
+	mu_demangle_test("_ZN15UIActionHandler10bindActionERK7QStringRK8UIAction_ptr", "UIActionHandler::bindAction(QString const&, UIAction const&)"),
+	mu_demangle_test("_ZN15UIActionHandler10setCheckedERK7QStringRKSt8functionIFbvEE_ptr", "UIActionHandler::setChecked(QString const&, std::function<bool ()> const&)"),
+	mu_demangle_test("_ZN15UIActionHandler12unbindActionERK7QString_ptr", "UIActionHandler::unbindAction(QString const&)"),
+	mu_demangle_test("_ZN15UIActionHandler13executeActionERK7QString_ptr", "UIActionHandler::executeAction(QString const&)"),
+	mu_demangle_test("_ZN15UIActionHandler14reparentWidgetEP7QWidget_ptr", "UIActionHandler::reparentWidget(QWidget*)"),
+	mu_demangle_test("_ZN15UIActionHandler18setupActionHandlerEP7QWidgetb_ptr", "UIActionHandler::setupActionHandler(QWidget*, bool)"),
+	mu_demangle_test("_ZN15UIActionHandler20setActionDisplayNameERK7QStringRKSt8functionIFS0_vEE_ptr", "UIActionHandler::setActionDisplayName(QString const&, std::function<QString ()> const&)"),
+	mu_demangle_test("_ZN15UIActionHandler23actionHandlerFromWidgetEP7QWidget_ptr", "UIActionHandler::actionHandlerFromWidget(QWidget*)"),
+	mu_demangle_test("_ZN15UIActionHandler24bindPluginCommandActionsEv_ptr", "UIActionHandler::bindPluginCommandActions()"),
+	mu_demangle_test("_ZN15UIActionHandlerC1Eb_ptr", "UIActionHandler::UIActionHandler(bool)"),
+	mu_demangle_test("_ZN15UIActionHandlerD1Ev_ptr", "UIActionHandler::~UIActionHandler()"),
+	mu_demangle_test("_ZN16AddressIndicator10setOffsetsEmm_ptr", "AddressIndicator::setOffsets(unsigned long, unsigned long)"),
+	mu_demangle_test("_ZN16AddressIndicatorC1EP7QWidget_ptr", "AddressIndicator::AddressIndicator(QWidget*)"),
+	mu_demangle_test("_ZN16MainMenuInstance6updateEP15UIActionHandler_ptr", "MainMenuInstance::update(UIActionHandler*)"),
+	mu_demangle_test("_ZN16MainMenuInstance6updateEP15UIActionHandlerRK15UIActionContext_ptr", "MainMenuInstance::update(UIActionHandler*, UIActionContext const&)"),
+	mu_demangle_test("_ZN16MainMenuInstanceC1EP8QMenuBar_ptr", "MainMenuInstance::MainMenuInstance(QMenuBar*)"),
+	mu_demangle_test("_ZN16MainMenuInstanceD1Ev_ptr", "MainMenuInstance::~MainMenuInstance()"),
+	mu_demangle_test("_ZN16QAbstractSpinBox11setWrappingEb_ptr", "QAbstractSpinBox::setWrapping(bool)"),
+	mu_demangle_test("_ZN16QCoreApplication12setAttributeEN2Qt20ApplicationAttributeEb_ptr", "QCoreApplication::setAttribute(Qt::ApplicationAttribute, bool)"),
+	mu_demangle_test("_ZN16QCoreApplication13processEventsE6QFlagsIN10QEventLoop17ProcessEventsFlagEE_ptr", "QCoreApplication::processEvents(QFlags<QEventLoop::ProcessEventsFlag>)"),
+	mu_demangle_test("_ZN16QCoreApplication18applicationDirPathEv_ptr", "QCoreApplication::applicationDirPath()"),
+	mu_demangle_test("_ZN16QCoreApplication18setApplicationNameERK7QString_ptr", "QCoreApplication::setApplicationName(QString const&)"),
+	mu_demangle_test("_ZN16QCoreApplication19setOrganizationNameERK7QString_ptr", "QCoreApplication::setOrganizationName(QString const&)"),
+	mu_demangle_test("_ZN16QCoreApplication21setApplicationVersionERK7QString_ptr", "QCoreApplication::setApplicationVersion(QString const&)"),
+	mu_demangle_test("_ZN16QCoreApplication21setOrganizationDomainERK7QString_ptr", "QCoreApplication::setOrganizationDomain(QString const&)"),
+	mu_demangle_test("_ZN16QCoreApplication4selfE_ptr", "QCoreApplication::self"),
+	mu_demangle_test("_ZN16QCoreApplication9argumentsEv_ptr", "QCoreApplication::arguments()"),
+	mu_demangle_test("_ZN16QCoreApplication9postEventEP7QObjectP6QEventi_ptr", "QCoreApplication::postEvent(QObject*, QEvent*, int)"),
+	mu_demangle_test("_ZN16QCoreApplication9translateEPKcS1_S1_i_ptr", "QCoreApplication::translate(char const*, char const*, char const*, int)"),
+	mu_demangle_test("_ZN16QDesktopServices7openUrlERK4QUrl_ptr", "QDesktopServices::openUrl(QUrl const&)"),
+	mu_demangle_test("_ZN16QKeySequenceEdit14setKeySequenceERK12QKeySequence_ptr", "QKeySequenceEdit::setKeySequence(QKeySequence const&)"),
+	mu_demangle_test("_ZN16QKeySequenceEdit16staticMetaObjectE_ptr", "QKeySequenceEdit::staticMetaObject"),
+	mu_demangle_test("_ZN16QKeySequenceEditC1EP7QWidget_ptr", "QKeySequenceEdit::QKeySequenceEdit(QWidget*)"),
+	mu_demangle_test("_ZN16QWebEngineScript10setWorldIdEj_ptr", "QWebEngineScript::setWorldId(unsigned int)"),
+	mu_demangle_test("_ZN16QWebEngineScript13setSourceCodeERK7QString_ptr", "QWebEngineScript::setSourceCode(QString const&)"),
+	mu_demangle_test("_ZN16QWebEngineScript17setInjectionPointENS_14InjectionPointE_ptr", "QWebEngineScript::setInjectionPoint(QWebEngineScript::InjectionPoint)"),
+	mu_demangle_test("_ZN16QWebEngineScript18setRunsOnSubFramesEb_ptr", "QWebEngineScript::setRunsOnSubFrames(bool)"),
+	mu_demangle_test("_ZN16QWebEngineScript7setNameERK7QString_ptr", "QWebEngineScript::setName(QString const&)"),
+	mu_demangle_test("_ZN16QWebEngineScriptC1Ev_ptr", "QWebEngineScript::QWebEngineScript()"),
+	mu_demangle_test("_ZN16QWebEngineScriptD1Ev_ptr", "QWebEngineScript::~QWebEngineScript()"),
+	mu_demangle_test("_ZN16ScriptingConsoleC1EP7QWidgetRK7QStringS4_N11BinaryNinja3RefINS5_17ScriptingInstanceEEE_ptr", "ScriptingConsole::ScriptingConsole(QWidget*, QString const&, QString const&, BinaryNinja::Ref<BinaryNinja::ScriptingInstance>)"),
+	mu_demangle_test("_ZN16UIContextHandlerD2Ev_ptr", "UIContextHandler::~UIContextHandler()"),
+	mu_demangle_test("_ZN17QAbstractItemView11resizeEventEP12QResizeEvent_ptr", "QAbstractItemView::resizeEvent(QResizeEvent*)"),
+	mu_demangle_test("_ZN17QAbstractItemView11scrollToTopEv_ptr", "QAbstractItemView::scrollToTop()"),
+	mu_demangle_test("_ZN17QAbstractItemView13keyPressEventEP9QKeyEvent_ptr", "QAbstractItemView::keyPressEvent(QKeyEvent*)"),
+	mu_demangle_test("_ZN17QAbstractItemView14clearSelectionEv_ptr", "QAbstractItemView::clearSelection()"),
+	mu_demangle_test("_ZN17QAbstractItemView15mousePressEventEP11QMouseEvent_ptr", "QAbstractItemView::mousePressEvent(QMouseEvent*)"),
+	mu_demangle_test("_ZN17QAbstractItemView15setCurrentIndexERK11QModelIndex_ptr", "QAbstractItemView::setCurrentIndex(QModelIndex const&)"),
+	mu_demangle_test("_ZN17QAbstractItemView15setEditTriggersE6QFlagsINS_11EditTriggerEE_ptr", "QAbstractItemView::setEditTriggers(QFlags<QAbstractItemView::EditTrigger>)"),
+	mu_demangle_test("_ZN17QAbstractItemView15setItemDelegateEP21QAbstractItemDelegate_ptr", "QAbstractItemView::setItemDelegate(QAbstractItemDelegate*)"),
+	mu_demangle_test("_ZN17QAbstractItemView16setSelectionModeENS_13SelectionModeE_ptr", "QAbstractItemView::setSelectionMode(QAbstractItemView::SelectionMode)"),
+	mu_demangle_test("_ZN17QAbstractItemView20openPersistentEditorERK11QModelIndex_ptr", "QAbstractItemView::openPersistentEditor(QModelIndex const&)"),
+	mu_demangle_test("_ZN17QAbstractItemView20setSelectionBehaviorENS_17SelectionBehaviorE_ptr", "QAbstractItemView::setSelectionBehavior(QAbstractItemView::SelectionBehavior)"),
+	mu_demangle_test("_ZN17QAbstractItemView21closePersistentEditorERK11QModelIndex_ptr", "QAbstractItemView::closePersistentEditor(QModelIndex const&)"),
+	mu_demangle_test("_ZN17QAbstractItemView21setVerticalScrollModeENS_10ScrollModeE_ptr", "QAbstractItemView::setVerticalScrollMode(QAbstractItemView::ScrollMode)"),
+	mu_demangle_test("_ZN17QAbstractItemView23setHorizontalScrollModeENS_10ScrollModeE_ptr", "QAbstractItemView::setHorizontalScrollMode(QAbstractItemView::ScrollMode)"),
+	mu_demangle_test("_ZN17QAbstractItemView4editERK11QModelIndex_ptr", "QAbstractItemView::edit(QModelIndex const&)"),
+	mu_demangle_test("_ZN17QVariantAnimation11setDurationEi_ptr", "QVariantAnimation::setDuration(int)"),
+	mu_demangle_test("_ZN17QVariantAnimation11setEndValueERK8QVariant_ptr", "QVariantAnimation::setEndValue(QVariant const&)"),
+	mu_demangle_test("_ZN17QVariantAnimation13setStartValueERK8QVariant_ptr", "QVariantAnimation::setStartValue(QVariant const&)"),
+	mu_demangle_test("_ZN17QVariantAnimation14setEasingCurveERK12QEasingCurve_ptr", "QVariantAnimation::setEasingCurve(QEasingCurve const&)"),
+	mu_demangle_test("_ZN17QWebEngineProfile16setHttpCacheTypeENS_13HttpCacheTypeE_ptr", "QWebEngineProfile::setHttpCacheType(QWebEngineProfile::HttpCacheType)"),
+	mu_demangle_test("_ZN18ContextMenuManager4showEP4MenuP15UIActionHandler_ptr", "ContextMenuManager::show(Menu*, UIActionHandler*)"),
+	mu_demangle_test("_ZN18ContextMenuManager6createEv_ptr", "ContextMenuManager::create()"),
+	mu_demangle_test("_ZN18ContextMenuManagerC1EP7QWidget_ptr", "ContextMenuManager::ContextMenuManager(QWidget*)"),
+	mu_demangle_test("_ZN18ContextMenuManagerD1Ev_ptr", "ContextMenuManager::~ContextMenuManager()"),
+	mu_demangle_test("_ZN18QAbstractAnimation12setDirectionENS_9DirectionE_ptr", "QAbstractAnimation::setDirection(QAbstractAnimation::Direction)"),
+	mu_demangle_test("_ZN18QAbstractAnimation4stopEv_ptr", "QAbstractAnimation::stop()"),
+	mu_demangle_test("_ZN18QAbstractAnimation5startENS_14DeletionPolicyE_ptr", "QAbstractAnimation::start(QAbstractAnimation::DeletionPolicy)"),
+	mu_demangle_test("_ZN18QAbstractItemModel11dataChangedERK11QModelIndexS2_RK7QVectorIiE_ptr", "QAbstractItemModel::dataChanged(QModelIndex const&, QModelIndex const&, QVector<int> const&)"),
+	mu_demangle_test("_ZN18QAbstractItemModel11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QAbstractItemModel::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN18QAbstractItemModel11qt_metacastEPKc_ptr", "QAbstractItemModel::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN18QAbstractItemModel13endResetModelEv_ptr", "QAbstractItemModel::endResetModel()"),
+	mu_demangle_test("_ZN18QAbstractItemModel13layoutChangedERK5QListI21QPersistentModelIndexENS_16LayoutChangeHintE_ptr", "QAbstractItemModel::layoutChanged(QList<QPersistentModelIndex> const&, QAbstractItemModel::LayoutChangeHint)"),
+	mu_demangle_test("_ZN18QAbstractItemModel15beginResetModelEv_ptr", "QAbstractItemModel::beginResetModel()"),
+	mu_demangle_test("_ZN18QAbstractItemModel16staticMetaObjectE_ptr", "QAbstractItemModel::staticMetaObject"),
+	mu_demangle_test("_ZN18QAbstractItemModel22layoutAboutToBeChangedERK5QListI21QPersistentModelIndexENS_16LayoutChangeHintE_ptr", "QAbstractItemModel::layoutAboutToBeChanged(QList<QPersistentModelIndex> const&, QAbstractItemModel::LayoutChangeHint)"),
+	mu_demangle_test("_ZN18QAbstractItemModelC2EP7QObject_ptr", "QAbstractItemModel::QAbstractItemModel(QObject*)"),
+	mu_demangle_test("_ZN18QAbstractItemModelD2Ev_ptr", "QAbstractItemModel::~QAbstractItemModel()"),
+	mu_demangle_test("_ZN18QAbstractListModel11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QAbstractListModel::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN18QAbstractListModel11qt_metacastEPKc_ptr", "QAbstractListModel::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN18QAbstractListModelC2EP7QObject_ptr", "QAbstractListModel::QAbstractListModel(QObject*)"),
+	mu_demangle_test("_ZN18QAbstractListModelD2Ev_ptr", "QAbstractListModel::~QAbstractListModel()"),
+	mu_demangle_test("_ZN18QCommandLineOptionC1ERK11QStringListRK7QStringS5_S5__ptr", "QCommandLineOption::QCommandLineOption(QStringList const&, QString const&, QString const&, QString const&)"),
+	mu_demangle_test("_ZN18QCommandLineOptionD1Ev_ptr", "QCommandLineOption::~QCommandLineOption()"),
+	mu_demangle_test("_ZN18QCommandLineParser13addHelpOptionEv_ptr", "QCommandLineParser::addHelpOption()"),
+	mu_demangle_test("_ZN18QCommandLineParser16addVersionOptionEv_ptr", "QCommandLineParser::addVersionOption()"),
+	mu_demangle_test("_ZN18QCommandLineParser25setApplicationDescriptionERK7QString_ptr", "QCommandLineParser::setApplicationDescription(QString const&)"),
+	mu_demangle_test("_ZN18QCommandLineParser7processERK16QCoreApplication_ptr", "QCommandLineParser::process(QCoreApplication const&)"),
+	mu_demangle_test("_ZN18QCommandLineParser9addOptionERK18QCommandLineOption_ptr", "QCommandLineParser::addOption(QCommandLineOption const&)"),
+	mu_demangle_test("_ZN18QCommandLineParserC1Ev_ptr", "QCommandLineParser::QCommandLineParser()"),
+	mu_demangle_test("_ZN18QCommandLineParserD1Ev_ptr", "QCommandLineParser::~QCommandLineParser()"),
+	mu_demangle_test("_ZN18QProgressIndicator14startAnimationEv_ptr", "QProgressIndicator::startAnimation()"),
+	mu_demangle_test("_ZN18QProgressIndicator17setAnimationDelayEi_ptr", "QProgressIndicator::setAnimationDelay(int)"),
+	mu_demangle_test("_ZN18QProgressIndicator8setColorERK6QColor_ptr", "QProgressIndicator::setColor(QColor const&)"),
+	mu_demangle_test("_ZN18QProgressIndicatorC1EP7QWidget_ptr", "QProgressIndicator::QProgressIndicator(QWidget*)"),
+	mu_demangle_test("_ZN18QPropertyAnimationC1EP7QObjectRK10QByteArrayS1__ptr", "QPropertyAnimation::QPropertyAnimation(QObject*, QByteArray const&, QObject*)"),
+	mu_demangle_test("_ZN18QRegularExpression10setPatternERK7QString_ptr", "QRegularExpression::setPattern(QString const&)"),
+	mu_demangle_test("_ZN18QRegularExpression17setPatternOptionsE6QFlagsINS_13PatternOptionEE_ptr", "QRegularExpression::setPatternOptions(QFlags<QRegularExpression::PatternOption>)"),
+	mu_demangle_test("_ZN18QRegularExpressionC1ERK7QString6QFlagsINS_13PatternOptionEE_ptr", "QRegularExpression::QRegularExpression(QString const&, QFlags<QRegularExpression::PatternOption>)"),
+	mu_demangle_test("_ZN18QRegularExpressionC1Ev_ptr", "QRegularExpression::QRegularExpression()"),
+	mu_demangle_test("_ZN18QRegularExpressionD1Ev_ptr", "QRegularExpression::~QRegularExpression()"),
+	mu_demangle_test("_ZN18QWebEngineSettings12setAttributeENS_12WebAttributeEb_ptr", "QWebEngineSettings::setAttribute(QWebEngineSettings::WebAttribute, bool)"),
+	mu_demangle_test("_ZN19HighlightTokenStateC1Ev_ptr", "HighlightTokenState::HighlightTokenState()"),
+	mu_demangle_test("_ZN19QAbstractScrollArea26setVerticalScrollBarPolicyEN2Qt15ScrollBarPolicyE_ptr", "QAbstractScrollArea::setVerticalScrollBarPolicy(Qt::ScrollBarPolicy)"),
+	mu_demangle_test("_ZN19QAbstractScrollArea28setHorizontalScrollBarPolicyEN2Qt15ScrollBarPolicyE_ptr", "QAbstractScrollArea::setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy)"),
+	mu_demangle_test("_ZN19QAbstractTableModel11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QAbstractTableModel::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN19QAbstractTableModel11qt_metacastEPKc_ptr", "QAbstractTableModel::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN19QAbstractTableModelC2EP7QObject_ptr", "QAbstractTableModel::QAbstractTableModel(QObject*)"),
+	mu_demangle_test("_ZN19QAbstractTableModelD2Ev_ptr", "QAbstractTableModel::~QAbstractTableModel()"),
+	mu_demangle_test("_ZN19QStyledItemDelegate11eventFilterEP7QObjectP6QEvent_ptr", "QStyledItemDelegate::eventFilter(QObject*, QEvent*)"),
+	mu_demangle_test("_ZN19QStyledItemDelegate11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QStyledItemDelegate::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN19QStyledItemDelegate11qt_metacastEPKc_ptr", "QStyledItemDelegate::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN19QStyledItemDelegateC2EP7QObject_ptr", "QStyledItemDelegate::QStyledItemDelegate(QObject*)"),
+	mu_demangle_test("_ZN19QStyledItemDelegateD2Ev_ptr", "QStyledItemDelegate::~QStyledItemDelegate()"),
+	mu_demangle_test("_ZN20CrossReferenceWidgetC1EP9ViewFrameN11BinaryNinja3RefINS2_10BinaryViewEEEb_ptr", "CrossReferenceWidget::CrossReferenceWidget(ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>, bool)"),
+	mu_demangle_test("_ZN21QAbstractItemDelegate10commitDataEP7QWidget_ptr", "QAbstractItemDelegate::commitData(QWidget*)"),
+	mu_demangle_test("_ZN21QAbstractItemDelegate11closeEditorEP7QWidgetNS_11EndEditHintE_ptr", "QAbstractItemDelegate::closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)"),
+	mu_demangle_test("_ZN21QNetworkAccessManager17sendCustomRequestERK15QNetworkRequestRK10QByteArrayP9QIODevice_ptr", "QNetworkAccessManager::sendCustomRequest(QNetworkRequest const&, QByteArray const&, QIODevice*)"),
+	mu_demangle_test("_ZN21QNetworkAccessManager17setRedirectPolicyEN15QNetworkRequest14RedirectPolicyE_ptr", "QNetworkAccessManager::setRedirectPolicy(QNetworkRequest::RedirectPolicy)"),
+	mu_demangle_test("_ZN21QNetworkAccessManager3getERK15QNetworkRequest_ptr", "QNetworkAccessManager::get(QNetworkRequest const&)"),
+	mu_demangle_test("_ZN21QNetworkAccessManagerC1EP7QObject_ptr", "QNetworkAccessManager::QNetworkAccessManager(QObject*)"),
+	mu_demangle_test("_ZN21QNetworkAccessManagerD1Ev_ptr", "QNetworkAccessManager::~QNetworkAccessManager()"),
+	mu_demangle_test("_ZN21QPersistentModelIndexC1ERKS__ptr", "QPersistentModelIndex::QPersistentModelIndex(QPersistentModelIndex const&)"),
+	mu_demangle_test("_ZN21QPersistentModelIndexD1Ev_ptr", "QPersistentModelIndex::~QPersistentModelIndex()"),
+	mu_demangle_test("_ZN21QSortFilterProxyModel10invalidateEv_ptr", "QSortFilterProxyModel::invalidate()"),
+	mu_demangle_test("_ZN21QSortFilterProxyModel11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QSortFilterProxyModel::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN21QSortFilterProxyModel11qt_metacastEPKc_ptr", "QSortFilterProxyModel::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN21QSortFilterProxyModel13setFilterRoleEi_ptr", "QSortFilterProxyModel::setFilterRole(int)"),
+	mu_demangle_test("_ZN21QSortFilterProxyModel14setSourceModelEP18QAbstractItemModel_ptr", "QSortFilterProxyModel::setSourceModel(QAbstractItemModel*)"),
+	mu_demangle_test("_ZN21QSortFilterProxyModel15setFilterRegExpERK7QRegExp_ptr", "QSortFilterProxyModel::setFilterRegExp(QRegExp const&)"),
+	mu_demangle_test("_ZN21QSortFilterProxyModel16invalidateFilterEv_ptr", "QSortFilterProxyModel::invalidateFilter()"),
+	mu_demangle_test("_ZN21QSortFilterProxyModel20setDynamicSortFilterEb_ptr", "QSortFilterProxyModel::setDynamicSortFilter(bool)"),
+	mu_demangle_test("_ZN21QSortFilterProxyModel26setFilterRegularExpressionERK18QRegularExpression_ptr", "QSortFilterProxyModel::setFilterRegularExpression(QRegularExpression const&)"),
+	mu_demangle_test("_ZN21QSortFilterProxyModel28setRecursiveFilteringEnabledEb_ptr", "QSortFilterProxyModel::setRecursiveFilteringEnabled(bool)"),
+	mu_demangle_test("_ZN21QSortFilterProxyModelC2EP7QObject_ptr", "QSortFilterProxyModel::QSortFilterProxyModel(QObject*)"),
+	mu_demangle_test("_ZN21QSortFilterProxyModelD2Ev_ptr", "QSortFilterProxyModel::~QSortFilterProxyModel()"),
+	mu_demangle_test("_ZN22QGraphicsOpacityEffectC1EP7QObject_ptr", "QGraphicsOpacityEffect::QGraphicsOpacityEffect(QObject*)"),
+	mu_demangle_test("_ZN22ReportCollectionWidgetC1EP7QWidgetN11BinaryNinja3RefINS2_16ReportCollectionEEERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE_ptr", "ReportCollectionWidget::ReportCollectionWidget(QWidget*, BinaryNinja::Ref<BinaryNinja::ReportCollection>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)"),
+	mu_demangle_test("_ZN23QRegularExpressionMatchC1Ev_ptr", "QRegularExpressionMatch::QRegularExpressionMatch()"),
+	mu_demangle_test("_ZN23QRegularExpressionMatchD1Ev_ptr", "QRegularExpressionMatch::~QRegularExpressionMatch()"),
+	mu_demangle_test("_ZN26QWebEngineScriptCollection6insertERK16QWebEngineScript_ptr", "QWebEngineScriptCollection::insert(QWebEngineScript const&)"),
+	mu_demangle_test("_ZN4Menu11setOrderingERK7QStringS2_h_ptr", "Menu::setOrdering(QString const&, QString const&, unsigned char)"),
+	mu_demangle_test("_ZN4Menu12removeActionERK7QString_ptr", "Menu::removeAction(QString const&)"),
+	mu_demangle_test("_ZN4Menu13setVisibilityERK7QString18MenuItemVisibility_ptr", "Menu::setVisibility(QString const&, MenuItemVisibility)"),
+	mu_demangle_test("_ZN4Menu16addCopyAsActionsERK7QStringh_ptr", "Menu::addCopyAsActions(QString const&, unsigned char)"),
+	mu_demangle_test("_ZN4Menu16setGroupOrderingERK7QStringh_ptr", "Menu::setGroupOrdering(QString const&, unsigned char)"),
+	mu_demangle_test("_ZN4Menu16setMainMenuOrderERK7QStringh_ptr", "Menu::setMainMenuOrder(QString const&, unsigned char)"),
+	mu_demangle_test("_ZN4Menu19addPasteFromActionsERK7QStringh_ptr", "Menu::addPasteFromActions(QString const&, unsigned char)"),
+	mu_demangle_test("_ZN4Menu19addTransformActionsERK7QStringh_ptr", "Menu::addTransformActions(QString const&, unsigned char)"),
+	mu_demangle_test("_ZN4Menu30addPluginCommandSubmenuActionsERK7QStringS2__ptr", "Menu::addPluginCommandSubmenuActions(QString const&, QString const&)"),
+	mu_demangle_test("_ZN4Menu7setRoleERK7QStringN7QAction8MenuRoleE_ptr", "Menu::setRole(QString const&, QAction::MenuRole)"),
+	mu_demangle_test("_ZN4Menu8mainMenuERK7QString_ptr", "Menu::mainMenu(QString const&)"),
+	mu_demangle_test("_ZN4Menu9addActionERK7QStringS2_h_ptr", "Menu::addAction(QString const&, QString const&, unsigned char)"),
+	mu_demangle_test("_ZN4Menu9addActionERK7QStringS2_S2_h_ptr", "Menu::addAction(QString const&, QString const&, QString const&, unsigned char)"),
+	mu_demangle_test("_ZN4MenuC1Ev_ptr", "Menu::Menu()"),
+	mu_demangle_test("_ZN4QDirC1ERK7QString_ptr", "QDir::QDir(QString const&)"),
+	mu_demangle_test("_ZN4QDirD1Ev_ptr", "QDir::~QDir()"),
+	mu_demangle_test("_ZN4QPenC1ERK6QBrushdN2Qt8PenStyleENS3_11PenCapStyleENS3_12PenJoinStyleE_ptr", "QPen::QPen(QBrush const&, double, Qt::PenStyle, Qt::PenCapStyle, Qt::PenJoinStyle)"),
+	mu_demangle_test("_ZN4QPenC1ERK6QColor_ptr", "QPen::QPen(QColor const&)"),
+	mu_demangle_test("_ZN4QPenD1Ev_ptr", "QPen::~QPen()"),
+	mu_demangle_test("_ZN4QUrl13fromLocalFileERK7QString_ptr", "QUrl::fromLocalFile(QString const&)"),
+	mu_demangle_test("_ZN4QUrl8setQueryERK7QStringNS_11ParsingModeE_ptr", "QUrl::setQuery(QString const&, QUrl::ParsingMode)"),
+	mu_demangle_test("_ZN4QUrlC1ERK7QStringNS_11ParsingModeE_ptr", "QUrl::QUrl(QString const&, QUrl::ParsingMode)"),
+	mu_demangle_test("_ZN4QUrlC1ERKS__ptr", "QUrl::QUrl(QUrl const&)"),
+	mu_demangle_test("_ZN4QUrlD1Ev_ptr", "QUrl::~QUrl()"),
+	mu_demangle_test("_ZN4View17getViewFromWidgetEP7QWidget_ptr", "View::getViewFromWidget(QWidget*)"),
+	mu_demangle_test("_ZN4View22getDisassemblySettingsEv_ptr", "View::getDisassemblySettings()"),
+	mu_demangle_test("_ZN5QFile4copyERK7QString_ptr", "QFile::copy(QString const&)"),
+	mu_demangle_test("_ZN5QFile4openE6QFlagsIN9QIODevice12OpenModeFlagEE_ptr", "QFile::open(QFlags<QIODevice::OpenModeFlag>)"),
+	mu_demangle_test("_ZN5QFile6existsERK7QString_ptr", "QFile::exists(QString const&)"),
+	mu_demangle_test("_ZN5QFile6removeERK7QString_ptr", "QFile::remove(QString const&)"),
+	mu_demangle_test("_ZN5QFileC1ERK7QString_ptr", "QFile::QFile(QString const&)"),
+	mu_demangle_test("_ZN5QFileD1Ev_ptr", "QFile::~QFile()"),
+	mu_demangle_test("_ZN5QFont12setPointSizeEi_ptr", "QFont::setPointSize(int)"),
+	mu_demangle_test("_ZN5QFont12setStyleNameERK7QString_ptr", "QFont::setStyleName(QString const&)"),
+	mu_demangle_test("_ZN5QFont9setWeightEi_ptr", "QFont::setWeight(int)"),
+	mu_demangle_test("_ZN5QFontC1ERK7QStringiib_ptr", "QFont::QFont(QString const&, int, int, bool)"),
+	mu_demangle_test("_ZN5QFontC1ERKS__ptr", "QFont::QFont(QFont const&)"),
+	mu_demangle_test("_ZN5QFontC1Ev_ptr", "QFont::QFont()"),
+	mu_demangle_test("_ZN5QFontD1Ev_ptr", "QFont::~QFont()"),
+	mu_demangle_test("_ZN5QIconC1ERK7QString_ptr", "QIcon::QIcon(QString const&)"),
+	mu_demangle_test("_ZN5QIconC1Ev_ptr", "QIcon::QIcon()"),
+	mu_demangle_test("_ZN5QIconD1Ev_ptr", "QIcon::~QIcon()"),
+	mu_demangle_test("_ZN5QListIP13QOpenGLShaderED2Ev_47_0", "QList<QOpenGLShader*>::~QList()"),
+	mu_demangle_test("_ZN5QMenu12addSeparatorEv_ptr", "QMenu::addSeparator()"),
+	mu_demangle_test("_ZN5QMenu4execERK6QPointP7QAction_ptr", "QMenu::exec(QPoint const&, QAction*)"),
+	mu_demangle_test("_ZN5QMenu5popupERK6QPointP7QAction_ptr", "QMenu::popup(QPoint const&, QAction*)"),
+	mu_demangle_test("_ZN5QMenuC1EP7QWidget_ptr", "QMenu::QMenu(QWidget*)"),
+	mu_demangle_test("_ZN6QBrushC1ERK6QColorN2Qt10BrushStyleE_ptr", "QBrush::QBrush(QColor const&, Qt::BrushStyle)"),
+	mu_demangle_test("_ZN6QBrushD1Ev_ptr", "QBrush::~QBrush()"),
+	mu_demangle_test("_ZN6QColor13setNamedColorERK7QString_ptr", "QColor::setNamedColor(QString const&)"),
+	mu_demangle_test("_ZN6QColor6setRgbEiiii_ptr", "QColor::setRgb(int, int, int, int)"),
+	mu_demangle_test("_ZN6QColor8setAlphaEi_ptr", "QColor::setAlpha(int)"),
+	mu_demangle_test("_ZN6QColoraSERKS__ptr", "QColor::operator=(QColor const&)"),
+	mu_demangle_test("_ZN6QEvent17registerEventTypeEi_ptr", "QEvent::registerEventType(int)"),
+	mu_demangle_test("_ZN6QEventC1ENS_4TypeE_ptr", "QEvent::QEvent(QEvent::Type)"),
+	mu_demangle_test("_ZN6QEventC2ENS_4TypeE_ptr", "QEvent::QEvent(QEvent::Type)"),
+	mu_demangle_test("_ZN6QEventD2Ev_ptr", "QEvent::~QEvent()"),
+	mu_demangle_test("_ZN6QFrame11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QFrame::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN6QFrame11qt_metacastEPKc_ptr", "QFrame::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN6QFrame13setFrameShapeENS_5ShapeE_ptr", "QFrame::setFrameShape(QFrame::Shape)"),
+	mu_demangle_test("_ZN6QFrame13setFrameStyleEi_ptr", "QFrame::setFrameStyle(int)"),
+	mu_demangle_test("_ZN6QFrame14setFrameShadowENS_6ShadowE_ptr", "QFrame::setFrameShadow(QFrame::Shadow)"),
+	mu_demangle_test("_ZN6QFrameC1EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QFrame::QFrame(QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN6QFrameC2EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QFrame::QFrame(QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN6QFrameD2Ev_ptr", "QFrame::~QFrame()"),
+	mu_demangle_test("_ZN6QLabel10setPictureERK8QPicture_ptr", "QLabel::setPicture(QPicture const&)"),
+	mu_demangle_test("_ZN6QLabel11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QLabel::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN6QLabel11qt_metacastEPKc_ptr", "QLabel::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN6QLabel11setWordWrapEb_ptr", "QLabel::setWordWrap(bool)"),
+	mu_demangle_test("_ZN6QLabel12setAlignmentE6QFlagsIN2Qt13AlignmentFlagEE_ptr", "QLabel::setAlignment(QFlags<Qt::AlignmentFlag>)"),
+	mu_demangle_test("_ZN6QLabel13linkActivatedERK7QString_ptr", "QLabel::linkActivated(QString const&)"),
+	mu_demangle_test("_ZN6QLabel13setTextFormatEN2Qt10TextFormatE_ptr", "QLabel::setTextFormat(Qt::TextFormat)"),
+	mu_demangle_test("_ZN6QLabel16staticMetaObjectE_ptr", "QLabel::staticMetaObject"),
+	mu_demangle_test("_ZN6QLabel20setOpenExternalLinksEb_ptr", "QLabel::setOpenExternalLinks(bool)"),
+	mu_demangle_test("_ZN6QLabel23setTextInteractionFlagsE6QFlagsIN2Qt19TextInteractionFlagEE_ptr", "QLabel::setTextInteractionFlags(QFlags<Qt::TextInteractionFlag>)"),
+	mu_demangle_test("_ZN6QLabel7setTextERK7QString_ptr", "QLabel::setText(QString const&)"),
+	mu_demangle_test("_ZN6QLabel9setPixmapERK7QPixmap_ptr", "QLabel::setPixmap(QPixmap const&)"),
+	mu_demangle_test("_ZN6QLabelC1EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QLabel::QLabel(QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN6QLabelC1ERK7QStringP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QLabel::QLabel(QString const&, QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN6QLabelC2EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QLabel::QLabel(QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN6QLabelC2ERK7QStringP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QLabel::QLabel(QString const&, QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN6QLabelD2Ev_ptr", "QLabel::~QLabel()"),
+	mu_demangle_test("_ZN6QStyle11alignedRectEN2Qt15LayoutDirectionE6QFlagsINS0_13AlignmentFlagEERK5QSizeRK5QRect_ptr", "QStyle::alignedRect(Qt::LayoutDirection, QFlags<Qt::AlignmentFlag>, QSize const&, QRect const&)"),
+	mu_demangle_test("_ZN6QTimer10singleShotEiPK7QObjectPKc_ptr", "QTimer::singleShot(int, QObject const*, char const*)"),
+	mu_demangle_test("_ZN6QTimer11setIntervalEi_ptr", "QTimer::setInterval(int)"),
+	mu_demangle_test("_ZN6QTimer14singleShotImplEiN2Qt9TimerTypeEPK7QObjectPN9QtPrivate15QSlotObjectBaseE_ptr", "QTimer::singleShotImpl(int, Qt::TimerType, QObject const*, QtPrivate::QSlotObjectBase*)"),
+	mu_demangle_test("_ZN6QTimer16staticMetaObjectE_ptr", "QTimer::staticMetaObject"),
+	mu_demangle_test("_ZN6QTimer4stopEv_ptr", "QTimer::stop()"),
+	mu_demangle_test("_ZN6QTimer5startEi_ptr", "QTimer::start(int)"),
+	mu_demangle_test("_ZN6QTimer5startEv_ptr", "QTimer::start()"),
+	mu_demangle_test("_ZN6QTimer7timeoutENS_14QPrivateSignalE_ptr", "QTimer::timeout(QTimer::QPrivateSignal)"),
+	mu_demangle_test("_ZN6QTimerC1EP7QObject_ptr", "QTimer::QTimer(QObject*)"),
+	mu_demangle_test("_ZN7LogView10SetLogSizeEm_ptr", "LogView::SetLogSize(unsigned long)"),
+	mu_demangle_test("_ZN7LogView11SetLogLevelE10BNLogLevel_ptr", "LogView::SetLogLevel(BNLogLevel)"),
+	mu_demangle_test("_ZN7LogViewC1EP7QWidgetP9LogStatus_ptr", "LogView::LogView(QWidget*, LogStatus*)"),
+	mu_demangle_test("_ZN7QAction10setCheckedEb_ptr", "QAction::setChecked(bool)"),
+	mu_demangle_test("_ZN7QAction10setEnabledEb_ptr", "QAction::setEnabled(bool)"),
+	mu_demangle_test("_ZN7QAction12setCheckableEb_ptr", "QAction::setCheckable(bool)"),
+	mu_demangle_test("_ZN7QAction16staticMetaObjectE_ptr", "QAction::staticMetaObject"),
+	mu_demangle_test("_ZN7QAction7setDataERK8QVariant_ptr", "QAction::setData(QVariant const&)"),
+	mu_demangle_test("_ZN7QAction9triggeredEb_ptr", "QAction::triggered(bool)"),
+	mu_demangle_test("_ZN7QActionC1ERK7QStringP7QObject_ptr", "QAction::QAction(QString const&, QObject*)"),
+	mu_demangle_test("_ZN7QCursor3posEv_ptr", "QCursor::pos()"),
+	mu_demangle_test("_ZN7QDialog11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QDialog::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN7QDialog11qt_metacastEPKc_ptr", "QDialog::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN7QDialog16staticMetaObjectE_ptr", "QDialog::staticMetaObject"),
+	mu_demangle_test("_ZN7QDialog4doneEi_ptr", "QDialog::done(int)"),
+	mu_demangle_test("_ZN7QDialog4execEv_ptr", "QDialog::exec()"),
+	mu_demangle_test("_ZN7QDialog6acceptEv_ptr", "QDialog::accept()"),
+	mu_demangle_test("_ZN7QDialog8setModalEb_ptr", "QDialog::setModal(bool)"),
+	mu_demangle_test("_ZN7QDialogC2EP7QWidget6QFlagsIN2Qt10WindowTypeEE_ptr", "QDialog::QDialog(QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN7QDialogD2Ev_ptr", "QDialog::~QDialog()"),
+	mu_demangle_test("_ZN7QLayout17setSizeConstraintENS_14SizeConstraintE_ptr", "QLayout::setSizeConstraint(QLayout::SizeConstraint)"),
+	mu_demangle_test("_ZN7QLayout18setContentsMarginsEiiii_ptr", "QLayout::setContentsMargins(int, int, int, int)"),
+	mu_demangle_test("_ZN7QLayout18setContentsMarginsERK8QMargins_ptr", "QLayout::setContentsMargins(QMargins const&)"),
+	mu_demangle_test("_ZN7QLayout9addWidgetEP7QWidget_ptr", "QLayout::addWidget(QWidget*)"),
+	mu_demangle_test("_ZN7QLocale6systemEv_ptr", "QLocale::system()"),
+	mu_demangle_test("_ZN7QLocaleC1Ev_ptr", "QLocale::QLocale()"),
+	mu_demangle_test("_ZN7QLocaleD1Ev_ptr", "QLocale::~QLocale()"),
+	mu_demangle_test("_ZN7QObject11connectImplEPKS_PPvS1_S3_PN9QtPrivate15QSlotObjectBaseEN2Qt14ConnectionTypeEPKiPK11QMetaObject_ptr", "QObject::connectImpl(QObject const*, void**, QObject const*, void**, QtPrivate::QSlotObjectBase*, Qt::ConnectionType, int const*, QMetaObject const*)"),
+	mu_demangle_test("_ZN7QObject11deleteLaterEv_ptr", "QObject::deleteLater()"),
+	mu_demangle_test("_ZN7QObject11eventFilterEPS_P6QEvent_ptr", "QObject::eventFilter(QObject*, QEvent*)"),
+	mu_demangle_test("_ZN7QObject11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QObject::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN7QObject11qt_metacastEPKc_ptr", "QObject::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN7QObject12blockSignalsEb_ptr", "QObject::blockSignals(bool)"),
+	mu_demangle_test("_ZN7QObject18installEventFilterEPS__ptr", "QObject::installEventFilter(QObject*)"),
+	mu_demangle_test("_ZN7QObject7connectEPKS_PKcS1_S3_N2Qt14ConnectionTypeE_ptr", "QObject::connect(QObject const*, char const*, QObject const*, char const*, Qt::ConnectionType)"),
+	mu_demangle_test("_ZN7QObjectC2EPS__ptr", "QObject::QObject(QObject*)"),
+	mu_demangle_test("_ZN7QObjectD2Ev_ptr", "QObject::~QObject()"),
+	mu_demangle_test("_ZN7QPixmap4fillERK6QColor_ptr", "QPixmap::fill(QColor const&)"),
+	mu_demangle_test("_ZN7QPixmapC1Eii_ptr", "QPixmap::QPixmap(int, int)"),
+	mu_demangle_test("_ZN7QPixmapC1ERK7QStringPKc6QFlagsIN2Qt19ImageConversionFlagEE_ptr", "QPixmap::QPixmap(QString const&, char const*, QFlags<Qt::ImageConversionFlag>)"),
+	mu_demangle_test("_ZN7QPixmapD1Ev_ptr", "QPixmap::~QPixmap()"),
+	mu_demangle_test("_ZN7QRegExpC1ERK7QStringN2Qt15CaseSensitivityENS_13PatternSyntaxE_ptr", "QRegExp::QRegExp(QString const&, Qt::CaseSensitivity, QRegExp::PatternSyntax)"),
+	mu_demangle_test("_ZN7QRegExpD1Ev_ptr", "QRegExp::~QRegExp()"),
+	mu_demangle_test("_ZN7QString11reallocDataEjb_ptr", "QString::reallocData(unsigned int, bool)"),
+	mu_demangle_test("_ZN7QString13toUtf8_helperERKS__ptr", "QString::toUtf8_helper(QString const&)"),
+	mu_demangle_test("_ZN7QString14compare_helperEPK5QChariPKciN2Qt15CaseSensitivityE_ptr", "QString::compare_helper(QChar const*, int, char const*, int, Qt::CaseSensitivity)"),
+	mu_demangle_test("_ZN7QString14trimmed_helperERKS__ptr", "QString::trimmed_helper(QString const&)"),
+	mu_demangle_test("_ZN7QString14trimmed_helperERS__ptr", "QString::trimmed_helper(QString&)"),
+	mu_demangle_test("_ZN7QString15fromUtf8_helperEPKci_ptr", "QString::fromUtf8_helper(char const*, int)"),
+	mu_demangle_test("_ZN7QString16fromAscii_helperEPKci_ptr", "QString::fromAscii_helper(char const*, int)"),
+	mu_demangle_test("_ZN7QString17fromLatin1_helperEPKci_ptr", "QString::fromLatin1_helper(char const*, int)"),
+	mu_demangle_test("_ZN7QString17simplified_helperERKS__ptr", "QString::simplified_helper(QString const&)"),
+	mu_demangle_test("_ZN7QString20fromLocal8Bit_helperEPKci_ptr", "QString::fromLocal8Bit_helper(char const*, int)"),
+	mu_demangle_test("_ZN7QString4chopEi_ptr", "QString::chop(int)"),
+	mu_demangle_test("_ZN7QString6appendERKS__ptr", "QString::append(QString const&)"),
+	mu_demangle_test("_ZN7QString6numberEii_ptr", "QString::number(int, int)"),
+	mu_demangle_test("_ZN7QString6numberEmi_ptr", "QString::number(unsigned long, int)"),
+	mu_demangle_test("_ZN7QString7replaceERK18QRegularExpressionRKS__ptr", "QString::replace(QRegularExpression const&, QString const&)"),
+	mu_demangle_test("_ZN7QString7replaceERKS_S1_N2Qt15CaseSensitivityE_ptr", "QString::replace(QString const&, QString const&, Qt::CaseSensitivity)"),
+	mu_demangle_test("_ZN7QStringaSERKS__ptr", "QString::operator=(QString const&)"),
+	mu_demangle_test("_ZN7QTabBar11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QTabBar::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN7QTabBar11qt_metacastEPKc_ptr", "QTabBar::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN7QTabBar13setTabToolTipEiRK7QString_ptr", "QTabBar::setTabToolTip(int, QString const&)"),
+	mu_demangle_test("_ZN7QTabBar17mouseReleaseEventEP11QMouseEvent_ptr", "QTabBar::mouseReleaseEvent(QMouseEvent*)"),
+	mu_demangle_test("_ZN7QTabBar17tabCloseRequestedEi_ptr", "QTabBar::tabCloseRequested(int)"),
+	mu_demangle_test("_ZN7QTabBarC2EP7QWidget_ptr", "QTabBar::QTabBar(QWidget*)"),
+	mu_demangle_test("_ZN7QTabBarD2Ev_ptr", "QTabBar::~QTabBar()"),
+	mu_demangle_test("_ZN7QThread11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QThread::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN7QThread11qt_metacastEPKc_ptr", "QThread::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN7QThread13currentThreadEv_ptr", "QThread::currentThread()"),
+	mu_demangle_test("_ZN7QThread19requestInterruptionEv_ptr", "QThread::requestInterruption()"),
+	mu_demangle_test("_ZN7QThread4waitE14QDeadlineTimer_ptr", "QThread::wait(QDeadlineTimer)"),
+	mu_demangle_test("_ZN7QThread5startENS_8PriorityE_ptr", "QThread::start(QThread::Priority)"),
+	mu_demangle_test("_ZN7QThread6msleepEm_ptr", "QThread::msleep(unsigned long)"),
+	mu_demangle_test("_ZN7QThreadC2EP7QObject_ptr", "QThread::QThread(QObject*)"),
+	mu_demangle_test("_ZN7QThreadD2Ev_ptr", "QThread::~QThread()"),
+	mu_demangle_test("_ZN7QWidget10clearFocusEv_ptr", "QWidget::clearFocus()"),
+	mu_demangle_test("_ZN7QWidget10enterEventEP6QEvent_ptr", "QWidget::enterEvent(QEvent*)"),
+	mu_demangle_test("_ZN7QWidget10leaveEventEP6QEvent_ptr", "QWidget::leaveEvent(QEvent*)"),
+	mu_demangle_test("_ZN7QWidget10setEnabledEb_ptr", "QWidget::setEnabled(bool)"),
+	mu_demangle_test("_ZN7QWidget10setPaletteERK8QPalette_ptr", "QWidget::setPalette(QPalette const&)"),
+	mu_demangle_test("_ZN7QWidget10setToolTipERK7QString_ptr", "QWidget::setToolTip(QString const&)"),
+	mu_demangle_test("_ZN7QWidget11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QWidget::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN7QWidget11qt_metacastEPKc_ptr", "QWidget::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN7QWidget11resizeEventEP12QResizeEvent_ptr", "QWidget::resizeEvent(QResizeEvent*)"),
+	mu_demangle_test("_ZN7QWidget11setDisabledEb_ptr", "QWidget::setDisabled(bool)"),
+	mu_demangle_test("_ZN7QWidget11setGeometryERK5QRect_ptr", "QWidget::setGeometry(QRect const&)"),
+	mu_demangle_test("_ZN7QWidget12setAttributeEN2Qt15WidgetAttributeEb_ptr", "QWidget::setAttribute(Qt::WidgetAttribute, bool)"),
+	mu_demangle_test("_ZN7QWidget12setFixedSizeEii_ptr", "QWidget::setFixedSize(int, int)"),
+	mu_demangle_test("_ZN7QWidget13keyPressEventEP9QKeyEvent_ptr", "QWidget::keyPressEvent(QKeyEvent*)"),
+	mu_demangle_test("_ZN7QWidget13setFixedWidthEi_ptr", "QWidget::setFixedWidth(int)"),
+	mu_demangle_test("_ZN7QWidget13setSizePolicyE11QSizePolicy_ptr", "QWidget::setSizePolicy(QSizePolicy)"),
+	mu_demangle_test("_ZN7QWidget13setStyleSheetERK7QString_ptr", "QWidget::setStyleSheet(QString const&)"),
+	mu_demangle_test("_ZN7QWidget13setWindowIconERK5QIcon_ptr", "QWidget::setWindowIcon(QIcon const&)"),
+	mu_demangle_test("_ZN7QWidget14activateWindowEv_ptr", "QWidget::activateWindow()"),
+	mu_demangle_test("_ZN7QWidget14setAcceptDropsEb_ptr", "QWidget::setAcceptDrops(bool)"),
+	mu_demangle_test("_ZN7QWidget14setFocusPolicyEN2Qt11FocusPolicyE_ptr", "QWidget::setFocusPolicy(Qt::FocusPolicy)"),
+	mu_demangle_test("_ZN7QWidget14setMaximumSizeEii_ptr", "QWidget::setMaximumSize(int, int)"),
+	mu_demangle_test("_ZN7QWidget14setMinimumSizeEii_ptr", "QWidget::setMinimumSize(int, int)"),
+	mu_demangle_test("_ZN7QWidget14setWindowFlagsE6QFlagsIN2Qt10WindowTypeEE_ptr", "QWidget::setWindowFlags(QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN7QWidget14setWindowTitleERK7QString_ptr", "QWidget::setWindowTitle(QString const&)"),
+	mu_demangle_test("_ZN7QWidget14updateGeometryEv_ptr", "QWidget::updateGeometry()"),
+	mu_demangle_test("_ZN7QWidget15restoreGeometryERK10QByteArray_ptr", "QWidget::restoreGeometry(QByteArray const&)"),
+	mu_demangle_test("_ZN7QWidget15setMinimumWidthEi_ptr", "QWidget::setMinimumWidth(int)"),
+	mu_demangle_test("_ZN7QWidget16setMaximumHeightEi_ptr", "QWidget::setMaximumHeight(int)"),
+	mu_demangle_test("_ZN7QWidget16staticMetaObjectE_ptr", "QWidget::staticMetaObject"),
+	mu_demangle_test("_ZN7QWidget17setForegroundRoleEN8QPalette9ColorRoleE_ptr", "QWidget::setForegroundRole(QPalette::ColorRole)"),
+	mu_demangle_test("_ZN7QWidget17setGraphicsEffectEP15QGraphicsEffect_ptr", "QWidget::setGraphicsEffect(QGraphicsEffect*)"),
+	mu_demangle_test("_ZN7QWidget17setWindowFilePathERK7QString_ptr", "QWidget::setWindowFilePath(QString const&)"),
+	mu_demangle_test("_ZN7QWidget17setWindowModalityEN2Qt14WindowModalityE_ptr", "QWidget::setWindowModality(Qt::WindowModality)"),
+	mu_demangle_test("_ZN7QWidget18setContentsMarginsEiiii_ptr", "QWidget::setContentsMargins(int, int, int, int)"),
+	mu_demangle_test("_ZN7QWidget20setContextMenuPolicyEN2Qt17ContextMenuPolicyE_ptr", "QWidget::setContextMenuPolicy(Qt::ContextMenuPolicy)"),
+	mu_demangle_test("_ZN7QWidget21setAutoFillBackgroundEb_ptr", "QWidget::setAutoFillBackground(bool)"),
+	mu_demangle_test("_ZN7QWidget4hideEv_ptr", "QWidget::hide()"),
+	mu_demangle_test("_ZN7QWidget4moveERK6QPoint_ptr", "QWidget::move(QPoint const&)"),
+	mu_demangle_test("_ZN7QWidget4showEv_ptr", "QWidget::show()"),
+	mu_demangle_test("_ZN7QWidget5closeEv_ptr", "QWidget::close()"),
+	mu_demangle_test("_ZN7QWidget5eventEP6QEvent_ptr", "QWidget::event(QEvent*)"),
+	mu_demangle_test("_ZN7QWidget5raiseEv_ptr", "QWidget::raise()"),
+	mu_demangle_test("_ZN7QWidget6resizeERK5QSize_ptr", "QWidget::resize(QSize const&)"),
+	mu_demangle_test("_ZN7QWidget6updateEv_ptr", "QWidget::update()"),
+	mu_demangle_test("_ZN7QWidget7setFontERK5QFont_ptr", "QWidget::setFont(QFont const&)"),
+	mu_demangle_test("_ZN7QWidget8setFocusEN2Qt11FocusReasonE_ptr", "QWidget::setFocus(Qt::FocusReason)"),
+	mu_demangle_test("_ZN7QWidget9addActionEP7QAction_ptr", "QWidget::addAction(QAction*)"),
+	mu_demangle_test("_ZN7QWidget9hideEventEP10QHideEvent_ptr", "QWidget::hideEvent(QHideEvent*)"),
+	mu_demangle_test("_ZN7QWidget9setLayoutEP7QLayout_ptr", "QWidget::setLayout(QLayout*)"),
+	mu_demangle_test("_ZN7QWidget9setParentEPS__ptr", "QWidget::setParent(QWidget*)"),
+	mu_demangle_test("_ZN7QWidgetC1EPS_6QFlagsIN2Qt10WindowTypeEE_ptr", "QWidget::QWidget(QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN7QWidgetC2EPS_6QFlagsIN2Qt10WindowTypeEE_ptr", "QWidget::QWidget(QWidget*, QFlags<Qt::WindowType>)"),
+	mu_demangle_test("_ZN7QWidgetD2Ev_ptr", "QWidget::~QWidget()"),
+	mu_demangle_test("_ZN8QPainter10drawPixmapERK6QRectFRK7QPixmapS2__ptr", "QPainter::drawPixmap(QRectF const&, QPixmap const&, QRectF const&)"),
+	mu_demangle_test("_ZN8QPainter13setRenderHintENS_10RenderHintEb_ptr", "QPainter::setRenderHint(QPainter::RenderHint, bool)"),
+	mu_demangle_test("_ZN8QPainter3endEv_ptr", "QPainter::end()"),
+	mu_demangle_test("_ZN8QPainter4saveEv_ptr", "QPainter::save()"),
+	mu_demangle_test("_ZN8QPainter5beginEP12QPaintDevice_ptr", "QPainter::begin(QPaintDevice*)"),
+	mu_demangle_test("_ZN8QPainter6setPenEN2Qt8PenStyleE_ptr", "QPainter::setPen(Qt::PenStyle)"),
+	mu_demangle_test("_ZN8QPainter6setPenERK4QPen_ptr", "QPainter::setPen(QPen const&)"),
+	mu_demangle_test("_ZN8QPainter6setPenERK6QColor_ptr", "QPainter::setPen(QColor const&)"),
+	mu_demangle_test("_ZN8QPainter7restoreEv_ptr", "QPainter::restore()"),
+	mu_demangle_test("_ZN8QPainter7setFontERK5QFont_ptr", "QPainter::setFont(QFont const&)"),
+	mu_demangle_test("_ZN8QPainter8drawTextERK5QRectiRK7QStringPS0__ptr", "QPainter::drawText(QRect const&, int, QString const&, QRect*)"),
+	mu_demangle_test("_ZN8QPainter8drawTextERK7QPointFRK7QString_ptr", "QPainter::drawText(QPointF const&, QString const&)"),
+	mu_demangle_test("_ZN8QPainter8fillRectERK5QRectRK6QColor_ptr", "QPainter::fillRect(QRect const&, QColor const&)"),
+	mu_demangle_test("_ZN8QPainter8setBrushERK6QBrush_ptr", "QPainter::setBrush(QBrush const&)"),
+	mu_demangle_test("_ZN8QPainter9drawLinesEPK5QLinei_ptr", "QPainter::drawLines(QLine const*, int)"),
+	mu_demangle_test("_ZN8QPainter9drawRectsEPK5QRecti_ptr", "QPainter::drawRects(QRect const*, int)"),
+	mu_demangle_test("_ZN8QPainterC1EP12QPaintDevice_ptr", "QPainter::QPainter(QPaintDevice*)"),
+	mu_demangle_test("_ZN8QPainterC1Ev_ptr", "QPainter::QPainter()"),
+	mu_demangle_test("_ZN8QPainterD1Ev_ptr", "QPainter::~QPainter()"),
+	mu_demangle_test("_ZN8QPalette8setBrushENS_10ColorGroupENS_9ColorRoleERK6QBrush_ptr", "QPalette::setBrush(QPalette::ColorGroup, QPalette::ColorRole, QBrush const&)"),
+	mu_demangle_test("_ZN8QPaletteC1ERKS__ptr", "QPalette::QPalette(QPalette const&)"),
+	mu_demangle_test("_ZN8QPaletteD1Ev_ptr", "QPalette::~QPalette()"),
+	mu_demangle_test("_ZN8QPictureC1Ei_ptr", "QPicture::QPicture(int)"),
+	mu_demangle_test("_ZN8QPictureD1Ev_ptr", "QPicture::~QPicture()"),
+	mu_demangle_test("_ZN8QProcess13startDetachedERK7QStringRK11QStringList_ptr", "QProcess::startDetached(QString const&, QStringList const&)"),
+	mu_demangle_test("_ZN8QSpinBox10setMaximumEi_ptr", "QSpinBox::setMaximum(int)"),
+	mu_demangle_test("_ZN8QSpinBox10setMinimumEi_ptr", "QSpinBox::setMinimum(int)"),
+	mu_demangle_test("_ZN8QSpinBox8setValueEi_ptr", "QSpinBox::setValue(int)"),
+	mu_demangle_test("_ZN8QSpinBoxC1EP7QWidget_ptr", "QSpinBox::QSpinBox(QWidget*)"),
+	mu_demangle_test("_ZN8QSysInfo17prettyProductNameEv_ptr", "QSysInfo::prettyProductName()"),
+	mu_demangle_test("_ZN8QToolBar10setMovableEb_ptr", "QToolBar::setMovable(bool)"),
+	mu_demangle_test("_ZN8QToolBar11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QToolBar::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN8QToolBar11qt_metacastEPKc_ptr", "QToolBar::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN8QToolBarC2ERK7QStringP7QWidget_ptr", "QToolBar::QToolBar(QString const&, QWidget*)"),
+	mu_demangle_test("_ZN8QToolBarD2Ev_ptr", "QToolBar::~QToolBar()"),
+	mu_demangle_test("_ZN8QToolTip8showTextERK6QPointRK7QStringP7QWidget_ptr", "QToolTip::showText(QPoint const&, QString const&, QWidget*)"),
+	mu_demangle_test("_ZN8QVariantC1Eb_ptr", "QVariant::QVariant(bool)"),
+	mu_demangle_test("_ZN8QVariantC1Ei_ptr", "QVariant::QVariant(int)"),
+	mu_demangle_test("_ZN8QVariantC1EiPKvj_ptr", "QVariant::QVariant(int, void const*, unsigned int)"),
+	mu_demangle_test("_ZN8QVariantC1EPKc_ptr", "QVariant::QVariant(char const*)"),
+	mu_demangle_test("_ZN8QVariantC1ERK10QByteArray_ptr", "QVariant::QVariant(QByteArray const&)"),
+	mu_demangle_test("_ZN8QVariantC1ERK5QListIS_E_ptr", "QVariant::QVariant(QList<QVariant> const&)"),
+	mu_demangle_test("_ZN8QVariantC1ERK7QString_ptr", "QVariant::QVariant(QString const&)"),
+	mu_demangle_test("_ZN8QVariantC1ERKS__ptr", "QVariant::QVariant(QVariant const&)"),
+	mu_demangle_test("_ZN8QVariantD1Ev_ptr", "QVariant::~QVariant()"),
+	mu_demangle_test("_ZN8UIAction13getKeyBindingERK7QString_ptr", "UIAction::getKeyBinding(QString const&)"),
+	mu_demangle_test("_ZN8UIAction14registerActionERK7QStringRK12QKeySequence_ptr", "UIAction::registerAction(QString const&, QKeySequence const&)"),
+	mu_demangle_test("_ZN8UIAction14registerActionERK7QStringRK5QListI12QKeySequenceE_ptr", "UIAction::registerAction(QString const&, QList<QKeySequence> const&)"),
+	mu_demangle_test("_ZN8UIAction16unregisterActionERK7QString_ptr", "UIAction::unregisterAction(QString const&)"),
+	mu_demangle_test("_ZN8UIAction17setUserKeyBindingERK7QStringRK5QListI12QKeySequenceE_ptr", "UIAction::setUserKeyBinding(QString const&, QList<QKeySequence> const&)"),
+	mu_demangle_test("_ZN8UIAction19readKeyBindingsFileEv_ptr", "UIAction::readKeyBindingsFile()"),
+	mu_demangle_test("_ZN8UIAction20getActionDisplayNameERK7QStringRK15UIActionContext_ptr", "UIAction::getActionDisplayName(QString const&, UIActionContext const&)"),
+	mu_demangle_test("_ZN8UIAction20getDefaultKeyBindingERK7QString_ptr", "UIAction::getDefaultKeyBinding(QString const&)"),
+	mu_demangle_test("_ZN8UIAction20setActionDisplayNameERK7QStringRKSt8functionIFS0_vEE_ptr", "UIAction::setActionDisplayName(QString const&, std::function<QString ()> const&)"),
+	mu_demangle_test("_ZN8UIAction20writeKeyBindingsFileEv_ptr", "UIAction::writeKeyBindingsFile()"),
+	mu_demangle_test("_ZN8UIAction23getAllRegisteredActionsEv_ptr", "UIAction::getAllRegisteredActions()"),
+	mu_demangle_test("_ZN8UIAction24registerTransformActionsEv_ptr", "UIAction::registerTransformActions()"),
+	mu_demangle_test("_ZN8UIAction24resetKeyBindingToDefaultERK7QString_ptr", "UIAction::resetKeyBindingToDefault(QString const&)"),
+	mu_demangle_test("_ZN8UIAction28registerPluginCommandActionsEv_ptr", "UIAction::registerPluginCommandActions()"),
+	mu_demangle_test("_ZN8UIActionC1ERKSt8functionIFvvEE_ptr", "UIAction::UIAction(std::function<void ()> const&)"),
+	mu_demangle_test("_ZN8UIActionC1ERKSt8functionIFvvEERKS0_IFbRK15UIActionContextEE_ptr", "UIAction::UIAction(std::function<void ()> const&, std::function<bool (UIActionContext const&)> const&)"),
+	mu_demangle_test("_ZN8UIActionC1ERKSt8functionIFvvEERKS0_IFbvEE_ptr", "UIAction::UIAction(std::function<void ()> const&, std::function<bool ()> const&)"),
+	mu_demangle_test("_ZN8ViewType8getTypesEv_ptr", "ViewType::getTypes()"),
+	mu_demangle_test("_ZN8WebPage211linkClickedERK4QUrl_4_0", "WebPage2::linkClicked(QUrl const&)"),
+	mu_demangle_test("_ZN9LogStatus15clearIndicatorsEv_ptr", "LogStatus::clearIndicators()"),
+	mu_demangle_test("_ZN9LogStatus19incrementErrorCountEi_ptr", "LogStatus::incrementErrorCount(int)"),
+	mu_demangle_test("_ZN9LogStatus21incrementWarningCountEi_ptr", "LogStatus::incrementWarningCount(int)"),
+	mu_demangle_test("_ZN9LogStatusC1EP7QWidget_ptr", "LogStatus::LogStatus(QWidget*)"),
+	mu_demangle_test("_ZN9MiniGraphC1EP9ViewFrame_ptr", "MiniGraph::MiniGraph(ViewFrame*)"),
+	mu_demangle_test("_ZN9QCheckBox13setCheckStateEN2Qt10CheckStateE_ptr", "QCheckBox::setCheckState(Qt::CheckState)"),
+	mu_demangle_test("_ZN9QCheckBoxC1EP7QWidget_ptr", "QCheckBox::QCheckBox(QWidget*)"),
+	mu_demangle_test("_ZN9QCheckBoxC1ERK7QStringP7QWidget_ptr", "QCheckBox::QCheckBox(QString const&, QWidget*)"),
+	mu_demangle_test("_ZN9QComboBox10insertItemEiRK5QIconRK7QStringRK8QVariant_ptr", "QComboBox::insertItem(int, QIcon const&, QString const&, QVariant const&)"),
+	mu_demangle_test("_ZN9QComboBox14setCurrentTextERK7QString_ptr", "QComboBox::setCurrentText(QString const&)"),
+	mu_demangle_test("_ZN9QComboBox15setCurrentIndexEi_ptr", "QComboBox::setCurrentIndex(int)"),
+	mu_demangle_test("_ZN9QComboBox16staticMetaObjectE_ptr", "QComboBox::staticMetaObject"),
+	mu_demangle_test("_ZN9QComboBox19setSizeAdjustPolicyENS_16SizeAdjustPolicyE_ptr", "QComboBox::setSizeAdjustPolicy(QComboBox::SizeAdjustPolicy)"),
+	mu_demangle_test("_ZN9QComboBox5clearEv_ptr", "QComboBox::clear()"),
+	mu_demangle_test("_ZN9QComboBox9activatedEi_ptr", "QComboBox::activated(int)"),
+	mu_demangle_test("_ZN9QComboBoxC1EP7QWidget_ptr", "QComboBox::QComboBox(QWidget*)"),
+	mu_demangle_test("_ZN9QDateTime11setTimeSpecEN2Qt8TimeSpecE_ptr", "QDateTime::setTimeSpec(Qt::TimeSpec)"),
+	mu_demangle_test("_ZN9QDateTime18currentDateTimeUtcEv_ptr", "QDateTime::currentDateTimeUtc()"),
+	mu_demangle_test("_ZN9QDateTime18fromSecsSinceEpochExN2Qt8TimeSpecEi_ptr", "QDateTime::fromSecsSinceEpoch(long long, Qt::TimeSpec, int)"),
+	mu_demangle_test("_ZN9QDateTime9setTime_tEj_ptr", "QDateTime::setTime_t(unsigned int)"),
+	mu_demangle_test("_ZN9QDateTimeC1Ev_ptr", "QDateTime::QDateTime()"),
+	mu_demangle_test("_ZN9QDateTimeD1Ev_ptr", "QDateTime::~QDateTime()"),
+	mu_demangle_test("_ZN9QFileInfoC1ERK7QString_ptr", "QFileInfo::QFileInfo(QString const&)"),
+	mu_demangle_test("_ZN9QFileInfoD1Ev_ptr", "QFileInfo::~QFileInfo()"),
+	mu_demangle_test("_ZN9QGroupBox12setAlignmentEi_ptr", "QGroupBox::setAlignment(int)"),
+	mu_demangle_test("_ZN9QGroupBoxC1EP7QWidget_ptr", "QGroupBox::QGroupBox(QWidget*)"),
+	mu_demangle_test("_ZN9QGroupBoxC1ERK7QStringP7QWidget_ptr", "QGroupBox::QGroupBox(QString const&, QWidget*)"),
+	mu_demangle_test("_ZN9QIODevice4openE6QFlagsINS_12OpenModeFlagEE_ptr", "QIODevice::open(QFlags<QIODevice::OpenModeFlag>)"),
+	mu_demangle_test("_ZN9QIODevice4readEPcx_ptr", "QIODevice::read(char*, long long)"),
+	mu_demangle_test("_ZN9QIODevice5writeEPKcx_ptr", "QIODevice::write(char const*, long long)"),
+	mu_demangle_test("_ZN9QIODevice7readAllEv_ptr", "QIODevice::readAll()"),
+	mu_demangle_test("_ZN9QIODeviceC2Ev_ptr", "QIODevice::QIODevice()"),
+	mu_demangle_test("_ZN9QIODeviceD2Ev_ptr", "QIODevice::~QIODevice()"),
+	mu_demangle_test("_ZN9QLineEdit11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QLineEdit::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN9QLineEdit11qt_metacastEPKc_ptr", "QLineEdit::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN9QLineEdit11setReadOnlyEb_ptr", "QLineEdit::setReadOnly(bool)"),
+	mu_demangle_test("_ZN9QLineEdit11textChangedERK7QString_ptr", "QLineEdit::textChanged(QString const&)"),
+	mu_demangle_test("_ZN9QLineEdit12setCompleterEP10QCompleter_ptr", "QLineEdit::setCompleter(QCompleter*)"),
+	mu_demangle_test("_ZN9QLineEdit13keyPressEventEP9QKeyEvent_ptr", "QLineEdit::keyPressEvent(QKeyEvent*)"),
+	mu_demangle_test("_ZN9QLineEdit16staticMetaObjectE_ptr", "QLineEdit::staticMetaObject"),
+	mu_demangle_test("_ZN9QLineEdit18setPlaceholderTextERK7QString_ptr", "QLineEdit::setPlaceholderText(QString const&)"),
+	mu_demangle_test("_ZN9QLineEdit3cutEv_ptr", "QLineEdit::cut()"),
+	mu_demangle_test("_ZN9QLineEdit4redoEv_ptr", "QLineEdit::redo()"),
+	mu_demangle_test("_ZN9QLineEdit4undoEv_ptr", "QLineEdit::undo()"),
+	mu_demangle_test("_ZN9QLineEdit5pasteEv_ptr", "QLineEdit::paste()"),
+	mu_demangle_test("_ZN9QLineEdit7setTextERK7QString_ptr", "QLineEdit::setText(QString const&)"),
+	mu_demangle_test("_ZN9QLineEdit9selectAllEv_ptr", "QLineEdit::selectAll()"),
+	mu_demangle_test("_ZN9QLineEditC1EP7QWidget_ptr", "QLineEdit::QLineEdit(QWidget*)"),
+	mu_demangle_test("_ZN9QLineEditC2EP7QWidget_ptr", "QLineEdit::QLineEdit(QWidget*)"),
+	mu_demangle_test("_ZN9QLineEditD2Ev_ptr", "QLineEdit::~QLineEdit()"),
+	mu_demangle_test("_ZN9QListData11detach_growEPii_ptr", "QListData::detach_grow(int*, int)"),
+	mu_demangle_test("_ZN9QListData11shared_nullE_ptr", "QListData::shared_null"),
+	mu_demangle_test("_ZN9QListData6appendEv_ptr", "QListData::append()"),
+	mu_demangle_test("_ZN9QListData6detachEi_ptr", "QListData::detach(int)"),
+	mu_demangle_test("_ZN9QListData6removeEii_ptr", "QListData::remove(int, int)"),
+	mu_demangle_test("_ZN9QListData7disposeEPNS_4DataE_ptr", "QListData::dispose(QListData::Data*)"),
+	mu_demangle_test("_ZN9QListData7reallocEi_ptr", "QListData::realloc(int)"),
+	mu_demangle_test("_ZN9QListView11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QListView::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN9QListView11qt_metacastEPKc_ptr", "QListView::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN9QListView14currentChangedERK11QModelIndexS2__ptr", "QListView::currentChanged(QModelIndex const&, QModelIndex const&)"),
+	mu_demangle_test("_ZN9QListViewC2EP7QWidget_ptr", "QListView::QListView(QWidget*)"),
+	mu_demangle_test("_ZN9QListViewD2Ev_ptr", "QListView::~QListView()"),
+	mu_demangle_test("_ZN9QMetaType22registerNormalizedTypeERK10QByteArrayPFvPvEPFS3_S3_PKvEi6QFlagsINS_8TypeFlagEEPK11QMetaObject_ptr", "QMetaType::registerNormalizedType(QByteArray const&, void (*)(void*), void* (*)(void*, void const*), int, QFlags<QMetaType::TypeFlag>, QMetaObject const*)"),
+	mu_demangle_test("_ZN9QMetaType25registerConverterFunctionEPKN9QtPrivate25AbstractConverterFunctionEii_ptr", "QMetaType::registerConverterFunction(QtPrivate::AbstractConverterFunction const*, int, int)"),
+	mu_demangle_test("_ZN9QMetaType25registerNormalizedTypedefERK10QByteArrayi_ptr", "QMetaType::registerNormalizedTypedef(QByteArray const&, int)"),
+	mu_demangle_test("_ZN9QMetaType27unregisterConverterFunctionEii_ptr", "QMetaType::unregisterConverterFunction(int, int)"),
+	mu_demangle_test("_ZN9QMetaType30hasRegisteredConverterFunctionEii_ptr", "QMetaType::hasRegisteredConverterFunction(int, int)"),
+	mu_demangle_test("_ZN9QMetaType8typeNameEi_ptr", "QMetaType::typeName(int)"),
+	mu_demangle_test("_ZN9QMimeData7setTextERK7QString_ptr", "QMimeData::setText(QString const&)"),
+	mu_demangle_test("_ZN9QMimeDataC1Ev_ptr", "QMimeData::QMimeData()"),
+	mu_demangle_test("_ZN9QResource11setFileNameERK7QString_ptr", "QResource::setFileName(QString const&)"),
+	mu_demangle_test("_ZN9QResourceC1ERK7QStringRK7QLocale_ptr", "QResource::QResource(QString const&, QLocale const&)"),
+	mu_demangle_test("_ZN9QResourceD1Ev_ptr", "QResource::~QResource()"),
+	mu_demangle_test("_ZN9QRunnableD2Ev_ptr", "QRunnable::~QRunnable()"),
+	mu_demangle_test("_ZN9QSettings10beginGroupERK7QString_ptr", "QSettings::beginGroup(QString const&)"),
+	mu_demangle_test("_ZN9QSettings6removeERK7QString_ptr", "QSettings::remove(QString const&)"),
+	mu_demangle_test("_ZN9QSettings8setValueERK7QStringRK8QVariant_ptr", "QSettings::setValue(QString const&, QVariant const&)"),
+	mu_demangle_test("_ZN9QSettingsC1EP7QObject_ptr", "QSettings::QSettings(QObject*)"),
+	mu_demangle_test("_ZN9QSettingsD1Ev_ptr", "QSettings::~QSettings()"),
+	mu_demangle_test("_ZN9QSplitter14setCollapsibleEib_ptr", "QSplitter::setCollapsible(int, bool)"),
+	mu_demangle_test("_ZN9QSplitter14setHandleWidthEi_ptr", "QSplitter::setHandleWidth(int)"),
+	mu_demangle_test("_ZN9QSplitter16setStretchFactorEii_ptr", "QSplitter::setStretchFactor(int, int)"),
+	mu_demangle_test("_ZN9QSplitter9addWidgetEP7QWidget_ptr", "QSplitter::addWidget(QWidget*)"),
+	mu_demangle_test("_ZN9QSplitterC1EP7QWidget_ptr", "QSplitter::QSplitter(QWidget*)"),
+	mu_demangle_test("_ZN9QTextEdit17setAcceptRichTextEb_ptr", "QTextEdit::setAcceptRichText(bool)"),
+	mu_demangle_test("_ZN9QTextEdit18setPlaceholderTextERK7QString_ptr", "QTextEdit::setPlaceholderText(QString const&)"),
+	mu_demangle_test("_ZN9QTextEdit23setTextInteractionFlagsE6QFlagsIN2Qt19TextInteractionFlagEE_ptr", "QTextEdit::setTextInteractionFlags(QFlags<Qt::TextInteractionFlag>)"),
+	mu_demangle_test("_ZN9QTextEdit3cutEv_ptr", "QTextEdit::cut()"),
+	mu_demangle_test("_ZN9QTextEdit4copyEv_ptr", "QTextEdit::copy()"),
+	mu_demangle_test("_ZN9QTextEdit4redoEv_ptr", "QTextEdit::redo()"),
+	mu_demangle_test("_ZN9QTextEdit4undoEv_ptr", "QTextEdit::undo()"),
+	mu_demangle_test("_ZN9QTextEdit5pasteEv_ptr", "QTextEdit::paste()"),
+	mu_demangle_test("_ZN9QTextEdit6appendERK7QString_ptr", "QTextEdit::append(QString const&)"),
+	mu_demangle_test("_ZN9QTextEdit7setTextERK7QString_ptr", "QTextEdit::setText(QString const&)"),
+	mu_demangle_test("_ZN9QTextEdit9selectAllEv_ptr", "QTextEdit::selectAll()"),
+	mu_demangle_test("_ZN9QTextEditC1EP7QWidget_ptr", "QTextEdit::QTextEdit(QWidget*)"),
+	mu_demangle_test("_ZN9QtPrivate12argToQStringE11QStringViewmPPKNS_7ArgBaseE_ptr", "QtPrivate::argToQString(QStringView, unsigned long, QtPrivate::ArgBase const**)"),
+	mu_demangle_test("_ZN9QtPrivate16QStringList_joinEPK11QStringListPK5QChari_ptr", "QtPrivate::QStringList_join(QStringList const*, QChar const*, int)"),
+	mu_demangle_test("_ZN9QtPrivate20QContainerImplHelper3midEiPiS1__ptr", "QtPrivate::QContainerImplHelper::mid(int, int*, int*)"),
+	mu_demangle_test("_ZN9QTreeView11qt_metacallEN11QMetaObject4CallEiPPv_ptr", "QTreeView::qt_metacall(QMetaObject::Call, int, void**)"),
+	mu_demangle_test("_ZN9QTreeView11qt_metacastEPKc_ptr", "QTreeView::qt_metacast(char const*)"),
+	mu_demangle_test("_ZN9QTreeView14setIndentationEi_ptr", "QTreeView::setIndentation(int)"),
+	mu_demangle_test("_ZN9QTreeView17setSortingEnabledEb_ptr", "QTreeView::setSortingEnabled(bool)"),
+	mu_demangle_test("_ZN9QTreeView20setUniformRowHeightsEb_ptr", "QTreeView::setUniformRowHeights(bool)"),
+	mu_demangle_test("_ZN9QTreeView22resizeColumnToContentsEi_ptr", "QTreeView::resizeColumnToContents(int)"),
+	mu_demangle_test("_ZN9QTreeView9expandAllEv_ptr", "QTreeView::expandAll()"),
+	mu_demangle_test("_ZN9QTreeViewC1EP7QWidget_ptr", "QTreeView::QTreeView(QWidget*)"),
+	mu_demangle_test("_ZN9QTreeViewC2EP7QWidget_ptr", "QTreeView::QTreeView(QWidget*)"),
+	mu_demangle_test("_ZN9QTreeViewD2Ev_ptr", "QTreeView::~QTreeView()"),
+	mu_demangle_test("_ZN9QUrlQueryC1ERK7QString_ptr", "QUrlQuery::QUrlQuery(QString const&)"),
+	mu_demangle_test("_ZN9QUrlQueryD1Ev_ptr", "QUrlQuery::~QUrlQuery()"),
+	mu_demangle_test("_ZN9UIContext10setHandlerEP16UIContextHandler_ptr", "UIContext::setHandler(UIContextHandler*)"),
+	mu_demangle_test("_ZN9UIContext12updateStatusEb_ptr", "UIContext::updateStatus(bool)"),
+	mu_demangle_test("_ZN9UIContext14setupUIContextEP7QWidget_ptr", "UIContext::setupUIContext(QWidget*)"),
+	mu_demangle_test("_ZN9UIContext18NotifyOnViewChangeEP9ViewFrameRK7QString_ptr", "UIContext::NotifyOnViewChange(ViewFrame*, QString const&)"),
+	mu_demangle_test("_ZN9UIContext19getScaledWindowSizeEii_ptr", "UIContext::getScaledWindowSize(int, int)"),
+	mu_demangle_test("_ZN9UIContext19NotifyOnContextOpenEv_ptr", "UIContext::NotifyOnContextOpen()"),
+	mu_demangle_test("_ZN9UIContext20NotifyOnContextCloseEv_ptr", "UIContext::NotifyOnContextClose()"),
+	mu_demangle_test("_ZN9UIContext21NotifyOnAddressChangeEP9ViewFrameP4ViewRK12ViewLocation_ptr", "UIContext::NotifyOnAddressChange(ViewFrame*, View*, ViewLocation const&)"),
+	mu_demangle_test("_ZN9UIContext21NotifyOnAfterOpenFileEP11FileContextP9ViewFrame_ptr", "UIContext::NotifyOnAfterOpenFile(FileContext*, ViewFrame*)"),
+	mu_demangle_test("_ZN9UIContext21NotifyOnAfterSaveFileEP11FileContextP9ViewFrame_ptr", "UIContext::NotifyOnAfterSaveFile(FileContext*, ViewFrame*)"),
+	mu_demangle_test("_ZN9UIContext22NotifyOnAfterCloseFileEP11FileContextP9ViewFrame_ptr", "UIContext::NotifyOnAfterCloseFile(FileContext*, ViewFrame*)"),
+	mu_demangle_test("_ZN9UIContext22NotifyOnBeforeOpenFileEP11FileContext_ptr", "UIContext::NotifyOnBeforeOpenFile(FileContext*)"),
+	mu_demangle_test("_ZN9UIContext22NotifyOnBeforeSaveFileEP11FileContextP9ViewFrame_ptr", "UIContext::NotifyOnBeforeSaveFile(FileContext*, ViewFrame*)"),
+	mu_demangle_test("_ZN9UIContext23NotifyOnBeforeCloseFileEP11FileContextP9ViewFrame_ptr", "UIContext::NotifyOnBeforeCloseFile(FileContext*, ViewFrame*)"),
+	mu_demangle_test("_ZN9UIContext25NotifyOnAfterOpenDatabaseEN11BinaryNinja3RefINS0_12FileMetadataEEENS1_INS0_10BinaryViewEEE_ptr", "UIContext::NotifyOnAfterOpenDatabase(BinaryNinja::Ref<BinaryNinja::FileMetadata>, BinaryNinja::Ref<BinaryNinja::BinaryView>)"),
+	mu_demangle_test("_ZN9UIContext26NotifyOnBeforeOpenDatabaseEN11BinaryNinja3RefINS0_12FileMetadataEEE_ptr", "UIContext::NotifyOnBeforeOpenDatabase(BinaryNinja::Ref<BinaryNinja::FileMetadata>)"),
+	mu_demangle_test("_ZN9UIContextC2Ev_ptr", "UIContext::UIContext()"),
+	mu_demangle_test("_ZN9UIContextD2Ev_ptr", "UIContext::~UIContext()"),
+	mu_demangle_test("_ZN9ViewFrame10getTabNameEv_ptr", "ViewFrame::getTabName()"),
+	mu_demangle_test("_ZN9ViewFrame11setViewTypeERK7QString_ptr", "ViewFrame::setViewType(QString const&)"),
+	mu_demangle_test("_ZN9ViewFrame11updateFontsEv_ptr", "ViewFrame::updateFonts()"),
+	mu_demangle_test("_ZN9ViewFrame11updateThemeEv_ptr", "ViewFrame::updateTheme()"),
+	mu_demangle_test("_ZN9ViewFrame12closeRequestEv_ptr", "ViewFrame::closeRequest()"),
+	mu_demangle_test("_ZN9ViewFrame14getCurrentViewEv_ptr", "ViewFrame::getCurrentView()"),
+	mu_demangle_test("_ZN9ViewFrame15getViewLocationEv_ptr", "ViewFrame::getViewLocation()"),
+	mu_demangle_test("_ZN9ViewFrame15setViewLocationERK12ViewLocation_ptr", "ViewFrame::setViewLocation(ViewLocation const&)"),
+	mu_demangle_test("_ZN9ViewFrame16getShortFileNameEv_ptr", "ViewFrame::getShortFileName()"),
+	mu_demangle_test("_ZN9ViewFrame18getCurrentDataTypeEv_ptr", "ViewFrame::getCurrentDataType()"),
+	mu_demangle_test("_ZN9ViewFrame19getAddressFromInputEP7QWidgetN11BinaryNinja3RefINS2_10BinaryViewEEERmmRK7QStringS9_b_ptr", "ViewFrame::getAddressFromInput(QWidget*, BinaryNinja::Ref<BinaryNinja::BinaryView>, unsigned long&, unsigned long, QString const&, QString const&, bool)"),
+	mu_demangle_test("_ZN9ViewFrame21setFileContentsLockedEb_ptr", "ViewFrame::setFileContentsLocked(bool)"),
+	mu_demangle_test("_ZN9ViewFrame21updateCrossReferencesEv_ptr", "ViewFrame::updateCrossReferences()"),
+	mu_demangle_test("_ZN9ViewFrame25getFileContentsLockStatusEv_ptr", "ViewFrame::getFileContentsLockStatus()"),
+	mu_demangle_test("_ZN9ViewFrame4backEv_ptr", "ViewFrame::back()"),
+	mu_demangle_test("_ZN9ViewFrame5focusEv_ptr", "ViewFrame::focus()"),
+	mu_demangle_test("_ZN9ViewFrame7closingEv_ptr", "ViewFrame::closing()"),
+	mu_demangle_test("_ZN9ViewFrame7forwardEv_ptr", "ViewFrame::forward()"),
+	mu_demangle_test("_ZN9ViewFrame8navigateERK7QStringmbb_ptr", "ViewFrame::navigate(QString const&, unsigned long, bool, bool)"),
+	mu_demangle_test("_ZN9ViewFrameC1EP7QWidgetP11FileContextRK7QStringb_ptr", "ViewFrame::ViewFrame(QWidget*, FileContext*, QString const&, bool)"),
+	mu_demangle_test("_Znam_ptr", "operator new[](unsigned long)"),
+	mu_demangle_test("_ZNK10QByteArray8endsWithEc_ptr", "QByteArray::endsWith(char) const"),
+	mu_demangle_test("_ZNK10QJsonValue5toIntEi_ptr", "QJsonValue::toInt(int) const"),
+	mu_demangle_test("_ZNK10QTableView14verticalHeaderEv_ptr", "QTableView::verticalHeader() const"),
+	mu_demangle_test("_ZNK10QTableView16horizontalHeaderEv_ptr", "QTableView::horizontalHeader() const"),
+	mu_demangle_test("_ZNK10QTableView9gridStyleEv_ptr", "QTableView::gridStyle() const"),
+	mu_demangle_test("_ZNK10QTabWidget12currentIndexEv_ptr", "QTabWidget::currentIndex() const"),
+	mu_demangle_test("_ZNK10QTabWidget13currentWidgetEv_ptr", "QTabWidget::currentWidget() const"),
+	mu_demangle_test("_ZNK10QTabWidget5countEv_ptr", "QTabWidget::count() const"),
+	mu_demangle_test("_ZNK10QTabWidget6tabBarEv_ptr", "QTabWidget::tabBar() const"),
+	mu_demangle_test("_ZNK10QTabWidget6widgetEi_ptr", "QTabWidget::widget(int) const"),
+	mu_demangle_test("_ZNK10QTabWidget7indexOfEP7QWidget_ptr", "QTabWidget::indexOf(QWidget*) const"),
+	mu_demangle_test("_ZNK10QTabWidget7tabTextEi_ptr", "QTabWidget::tabText(int) const"),
+	mu_demangle_test("_ZNK11BinaryNinja13FlowGraphNode12GetHighlightEv_5_0", "BinaryNinja::FlowGraphNode::GetHighlight() const"),
+	mu_demangle_test("_ZNK11BinaryNinja13FlowGraphNode12GetHighlightEv_5_1", "BinaryNinja::FlowGraphNode::GetHighlight() const"),
+	mu_demangle_test("_ZNK11BinaryNinja13FlowGraphNode12GetHighlightEv_5_2", "BinaryNinja::FlowGraphNode::GetHighlight() const"),
+	mu_demangle_test("_ZNK11BinaryNinja13FlowGraphNode12GetHighlightEv_5_3", "BinaryNinja::FlowGraphNode::GetHighlight() const"),
+	mu_demangle_test("_ZNK11QJsonObject8containsERK7QString_ptr", "QJsonObject::contains(QString const&) const"),
+	mu_demangle_test("_ZNK11QMainWindow20isDockNestingEnabledEv_ptr", "QMainWindow::isDockNestingEnabled() const"),
+	mu_demangle_test("_ZNK11QMainWindow6cornerEN2Qt6CornerE_ptr", "QMainWindow::corner(Qt::Corner) const"),
+	mu_demangle_test("_ZNK11QMainWindow7menuBarEv_ptr", "QMainWindow::menuBar() const"),
+	mu_demangle_test("_ZNK11QMainWindow9saveStateEi_ptr", "QMainWindow::saveState(int) const"),
+	mu_demangle_test("_ZNK11QMainWindow9statusBarEv_ptr", "QMainWindow::statusBar() const"),
+	mu_demangle_test("_ZNK11QMetaObject2trEPKcS1_i_ptr", "QMetaObject::tr(char const*, char const*, int) const"),
+	mu_demangle_test("_ZNK11QMetaObject4castEP7QObject_ptr", "QMetaObject::cast(QObject*) const"),
+	mu_demangle_test("_ZNK11QMetaObject4castEPK7QObject_ptr", "QMetaObject::cast(QObject const*) const"),
+	mu_demangle_test("_ZNK11QMetaObject9classNameEv_ptr", "QMetaObject::className() const"),
+	mu_demangle_test("_ZNK11QObjectData17dynamicMetaObjectEv_ptr", "QObjectData::dynamicMetaObject() const"),
+	mu_demangle_test("_ZNK12QDirIterator7hasNextEv_ptr", "QDirIterator::hasNext() const"),
+	mu_demangle_test("_ZNK12QDirIterator8fileInfoEv_ptr", "QDirIterator::fileInfo() const"),
+	mu_demangle_test("_ZNK12QDirIterator8fileNameEv_ptr", "QDirIterator::fileName() const"),
+	mu_demangle_test("_ZNK12QFontMetrics17horizontalAdvanceERK7QStringi_ptr", "QFontMetrics::horizontalAdvance(QString const&, int) const"),
+	mu_demangle_test("_ZNK12QFontMetrics6ascentEv_ptr", "QFontMetrics::ascent() const"),
+	mu_demangle_test("_ZNK12QFontMetrics6heightEv_ptr", "QFontMetrics::height() const"),
+	mu_demangle_test("_ZNK12QInputDialog9textValueEv_ptr", "QInputDialog::textValue() const"),
+	mu_demangle_test("_ZNK12QKeySequence7isEmptyEv_ptr", "QKeySequence::isEmpty() const"),
+	mu_demangle_test("_ZNK12QKeySequence8toStringENS_14SequenceFormatE_ptr", "QKeySequence::toString(QKeySequence::SequenceFormat) const"),
+	mu_demangle_test("_ZNK12QKeySequenceeqERKS__ptr", "QKeySequence::operator==(QKeySequence const&) const"),
+	mu_demangle_test("_ZNK12QKeySequenceltERKS__ptr", "QKeySequence::operator<(QKeySequence const&) const"),
+	mu_demangle_test("_ZNK13QFileAccessor7IsValidEv_ptr", "QFileAccessor::IsValid() const"),
+	mu_demangle_test("_ZNK13QFontMetricsF6heightEv_ptr", "QFontMetricsF::height() const"),
+	mu_demangle_test("_ZNK13QItemDelegate5paintEP8QPainterRK20QStyleOptionViewItemRK11QModelIndex_ptr", "QItemDelegate::paint(QPainter*, QStyleOptionViewItem const&, QModelIndex const&) const"),
+	mu_demangle_test("_ZNK13QJsonDocument6objectEv_ptr", "QJsonDocument::object() const"),
+	mu_demangle_test("_ZNK13QJsonDocumentixERK7QString_ptr", "QJsonDocument::operator[](QString const&) const"),
+	mu_demangle_test("_ZNK13QNetworkReply10isFinishedEv_ptr", "QNetworkReply::isFinished() const"),
+	mu_demangle_test("_ZNK13QNetworkReply12hasRawHeaderERK10QByteArray_ptr", "QNetworkReply::hasRawHeader(QByteArray const&) const"),
+	mu_demangle_test("_ZNK13QNetworkReply14rawHeaderPairsEv_ptr", "QNetworkReply::rawHeaderPairs() const"),
+	mu_demangle_test("_ZNK13QNetworkReply5errorEv_ptr", "QNetworkReply::error() const"),
+	mu_demangle_test("_ZNK13QNetworkReply6headerEN15QNetworkRequest12KnownHeadersE_ptr", "QNetworkReply::header(QNetworkRequest::KnownHeaders) const"),
+	mu_demangle_test("_ZNK13QNetworkReply9attributeEN15QNetworkRequest9AttributeE_ptr", "QNetworkReply::attribute(QNetworkRequest::Attribute) const"),
+	mu_demangle_test("_ZNK13QNetworkReply9rawHeaderERK10QByteArray_ptr", "QNetworkReply::rawHeader(QByteArray const&) const"),
+	mu_demangle_test("_ZNK14QItemSelection7indexesEv_ptr", "QItemSelection::indexes() const"),
+	mu_demangle_test("_ZNK14QWebEnginePage7profileEv_ptr", "QWebEnginePage::profile() const"),
+	mu_demangle_test("_ZNK14QWebEngineView4pageEv_ptr", "QWebEngineView::page() const"),
+	mu_demangle_test("_ZNK14QWebEngineView8settingsEv_ptr", "QWebEngineView::settings() const"),
+	mu_demangle_test("_ZNK15QAbstractButton9isCheckedEv_ptr", "QAbstractButton::isChecked() const"),
+	mu_demangle_test("_ZNK15QProgressDialog11wasCanceledEv_ptr", "QProgressDialog::wasCanceled() const"),
+	mu_demangle_test("_ZNK15QProgressDialog7maximumEv_ptr", "QProgressDialog::maximum() const"),
+	mu_demangle_test("_ZNK15QProgressDialog7minimumEv_ptr", "QProgressDialog::minimum() const"),
+	mu_demangle_test("_ZNK16QKeySequenceEdit11keySequenceEv_ptr", "QKeySequenceEdit::keySequence() const"),
+	mu_demangle_test("_ZNK17QAbstractItemView12itemDelegateEv_ptr", "QAbstractItemView::itemDelegate() const"),
+	mu_demangle_test("_ZNK17QAbstractItemView14selectionModelEv_ptr", "QAbstractItemView::selectionModel() const"),
+	mu_demangle_test("_ZNK17QAbstractItemView5modelEv_ptr", "QAbstractItemView::model() const"),
+	mu_demangle_test("_ZNK18QAbstractAnimation9directionEv_ptr", "QAbstractAnimation::direction() const"),
+	mu_demangle_test("_ZNK18QAbstractItemModel5flagsERK11QModelIndex_ptr", "QAbstractItemModel::flags(QModelIndex const&) const"),
+	mu_demangle_test("_ZNK18QCommandLineParser19positionalArgumentsEv_ptr", "QCommandLineParser::positionalArguments() const"),
+	mu_demangle_test("_ZNK18QCommandLineParser5isSetERK18QCommandLineOption_ptr", "QCommandLineParser::isSet(QCommandLineOption const&) const"),
+	mu_demangle_test("_ZNK18QCommandLineParser5valueERK18QCommandLineOption_ptr", "QCommandLineParser::value(QCommandLineOption const&) const"),
+	mu_demangle_test("_ZNK18QRegularExpression5matchERK7QStringiNS_9MatchTypeE6QFlagsINS_11MatchOptionEE_ptr", "QRegularExpression::match(QString const&, int, QRegularExpression::MatchType, QFlags<QRegularExpression::MatchOption>) const"),
+	mu_demangle_test("_ZNK18QRegularExpression7isValidEv_ptr", "QRegularExpression::isValid() const"),
+	mu_demangle_test("_ZNK18QRegularExpression7patternEv_ptr", "QRegularExpression::pattern() const"),
+	mu_demangle_test("_ZNK19QAbstractProxyModel11sourceModelEv_ptr", "QAbstractProxyModel::sourceModel() const"),
+	mu_demangle_test("_ZNK19QAbstractScrollArea17verticalScrollBarEv_ptr", "QAbstractScrollArea::verticalScrollBar() const"),
+	mu_demangle_test("_ZNK19QAbstractScrollArea19horizontalScrollBarEv_ptr", "QAbstractScrollArea::horizontalScrollBar() const"),
+	mu_demangle_test("_ZNK19QItemSelectionModel9selectionEv_ptr", "QItemSelectionModel::selection() const"),
+	mu_demangle_test("_ZNK19QStyledItemDelegate12createEditorEP7QWidgetRK20QStyleOptionViewItemRK11QModelIndex_ptr", "QStyledItemDelegate::createEditor(QWidget*, QStyleOptionViewItem const&, QModelIndex const&) const"),
+	mu_demangle_test("_ZNK19QStyledItemDelegate12setModelDataEP7QWidgetP18QAbstractItemModelRK11QModelIndex_ptr", "QStyledItemDelegate::setModelData(QWidget*, QAbstractItemModel*, QModelIndex const&) const"),
+	mu_demangle_test("_ZNK19QStyledItemDelegate13setEditorDataEP7QWidgetRK11QModelIndex_ptr", "QStyledItemDelegate::setEditorData(QWidget*, QModelIndex const&) const"),
+	mu_demangle_test("_ZNK21QSortFilterProxyModel12filterRegExpEv_ptr", "QSortFilterProxyModel::filterRegExp() const"),
+	mu_demangle_test("_ZNK21QSortFilterProxyModel23filterRegularExpressionEv_ptr", "QSortFilterProxyModel::filterRegularExpression() const"),
+	mu_demangle_test("_ZNK21QSortFilterProxyModel4dataERK11QModelIndexi_ptr", "QSortFilterProxyModel::data(QModelIndex const&, int) const"),
+	mu_demangle_test("_ZNK21QSortFilterProxyModel8lessThanERK11QModelIndexS2__ptr", "QSortFilterProxyModel::lessThan(QModelIndex const&, QModelIndex const&) const"),
+	mu_demangle_test("_ZNK23QRegularExpressionMatch13capturedTextsEv_ptr", "QRegularExpressionMatch::capturedTexts() const"),
+	mu_demangle_test("_ZNK23QRegularExpressionMatch8hasMatchEv_ptr", "QRegularExpressionMatch::hasMatch() const"),
+	mu_demangle_test("_ZNK4QDir16absoluteFilePathERK7QString_ptr", "QDir::absoluteFilePath(QString const&) const"),
+	mu_demangle_test("_ZNK4QDir6existsEv_ptr", "QDir::exists() const"),
+	mu_demangle_test("_ZNK4QDir6mkpathERK7QString_ptr", "QDir::mkpath(QString const&) const"),
+	mu_demangle_test("_ZNK4QUrl11isLocalFileEv_ptr", "QUrl::isLocalFile() const"),
+	mu_demangle_test("_ZNK4QUrl11toLocalFileEv_ptr", "QUrl::toLocalFile() const"),
+	mu_demangle_test("_ZNK4QUrl4pathE6QFlagsINS_25ComponentFormattingOptionEE_ptr", "QUrl::path(QFlags<QUrl::ComponentFormattingOption>) const"),
+	mu_demangle_test("_ZNK4QUrl5queryE6QFlagsINS_25ComponentFormattingOptionEE_ptr", "QUrl::query(QFlags<QUrl::ComponentFormattingOption>) const"),
+	mu_demangle_test("_ZNK4QUrl6schemeEv_ptr", "QUrl::scheme() const"),
+	mu_demangle_test("_ZNK4QUrl7isValidEv_ptr", "QUrl::isValid() const"),
+	mu_demangle_test("_ZNK4QUrl8adjustedE12QUrlTwoFlagsINS_19UrlFormattingOptionENS_25ComponentFormattingOptionEE_ptr", "QUrl::adjusted(QUrlTwoFlags<QUrl::UrlFormattingOption, QUrl::ComponentFormattingOption>) const"),
+	mu_demangle_test("_ZNK4QUrl8toStringE12QUrlTwoFlagsINS_19UrlFormattingOptionENS_25ComponentFormattingOptionEE_ptr", "QUrl::toString(QUrlTwoFlags<QUrl::UrlFormattingOption, QUrl::ComponentFormattingOption>) const"),
+	mu_demangle_test("_ZNK5QFile4sizeEv_ptr", "QFile::size() const"),
+	mu_demangle_test("_ZNK5QFile6existsEv_ptr", "QFile::exists() const"),
+	mu_demangle_test("_ZNK5QFont6familyEv_ptr", "QFont::family() const"),
+	mu_demangle_test("_ZNK5QFont9pointSizeEv_ptr", "QFont::pointSize() const"),
+	mu_demangle_test("_ZNK5QFont9styleNameEv_ptr", "QFont::styleName() const"),
+	mu_demangle_test("_ZNK5QIcon6pixmapERK5QSizeNS_4ModeENS_5StateE_ptr", "QIcon::pixmap(QSize const&, QIcon::Mode, QIcon::State) const"),
+	mu_demangle_test("_ZNK5QRect8containsERKS_b_ptr", "QRect::contains(QRect const&, bool) const"),
+	mu_demangle_test("_ZNK6QColor4nameENS_10NameFormatE_ptr", "QColor::name(QColor::NameFormat) const"),
+	mu_demangle_test("_ZNK6QColor4nameEv_ptr", "QColor::name() const"),
+	mu_demangle_test("_ZNK6QColor6darkerEi_ptr", "QColor::darker(int) const"),
+	mu_demangle_test("_ZNK6QColor9lightnessEv_ptr", "QColor::lightness() const"),
+	mu_demangle_test("_ZNK6QLabel20textInteractionFlagsEv_ptr", "QLabel::textInteractionFlags() const"),
+	mu_demangle_test("_ZNK6QLabel4textEv_ptr", "QLabel::text() const"),
+	mu_demangle_test("_ZNK7QAction4dataEv_ptr", "QAction::data() const"),
+	mu_demangle_test("_ZNK7QLocale8toStringERK9QDateTimeNS_10FormatTypeE_ptr", "QLocale::toString(QDateTime const&, QLocale::FormatType) const"),
+	mu_demangle_test("_ZNK7QObject6senderEv_ptr", "QObject::sender() const"),
+	mu_demangle_test("_ZNK7QRegExp10exactMatchERK7QString_ptr", "QRegExp::exactMatch(QString const&) const"),
+	mu_demangle_test("_ZNK7QRegExp7indexInERK7QStringiNS_9CaretModeE_ptr", "QRegExp::indexIn(QString const&, int, QRegExp::CaretMode) const"),
+	mu_demangle_test("_ZNK7QRegExp7isEmptyEv_ptr", "QRegExp::isEmpty() const"),
+	mu_demangle_test("_ZNK7QScreen4sizeEv_ptr", "QScreen::size() const"),
+	mu_demangle_test("_ZNK7QScreen8geometryEv_ptr", "QScreen::geometry() const"),
+	mu_demangle_test("_ZNK7QString10startsWithERKS_N2Qt15CaseSensitivityE_ptr", "QString::startsWith(QString const&, Qt::CaseSensitivity) const"),
+	mu_demangle_test("_ZNK7QString10toLongLongEPbi_ptr", "QString::toLongLong(bool*, int) const"),
+	mu_demangle_test("_ZNK7QString11toULongLongEPbi_ptr", "QString::toULongLong(bool*, int) const"),
+	mu_demangle_test("_ZNK7QString13toHtmlEscapedEv_ptr", "QString::toHtmlEscaped() const"),
+	mu_demangle_test("_ZNK7QString3argERKS_i5QChar_ptr", "QString::arg(QString const&, int, QChar) const"),
+	mu_demangle_test("_ZNK7QString3argExii5QChar_ptr", "QString::arg(long long, int, int, QChar) const"),
+	mu_demangle_test("_ZNK7QString3argEyii5QChar_ptr", "QString::arg(unsigned long long, int, int, QChar) const"),
+	mu_demangle_test("_ZNK7QString3midEii_ptr", "QString::mid(int, int) const"),
+	mu_demangle_test("_ZNK7QString5splitE5QChar6QFlagsIN2Qt18SplitBehaviorFlagsEENS2_15CaseSensitivityE_ptr", "QString::split(QChar, QFlags<Qt::SplitBehaviorFlags>, Qt::CaseSensitivity) const"),
+	mu_demangle_test("_ZNK7QString5splitERKS_6QFlagsIN2Qt18SplitBehaviorFlagsEENS3_15CaseSensitivityE_ptr", "QString::split(QString const&, QFlags<Qt::SplitBehaviorFlags>, Qt::CaseSensitivity) const"),
+	mu_demangle_test("_ZNK7QString5toIntEPbi_ptr", "QString::toInt(bool*, int) const"),
+	mu_demangle_test("_ZNK7QString7indexOfERKS_iN2Qt15CaseSensitivityE_ptr", "QString::indexOf(QString const&, int, Qt::CaseSensitivity) const"),
+	mu_demangle_test("_ZNK7QString8containsERK18QRegularExpressionP23QRegularExpressionMatch_ptr", "QString::contains(QRegularExpression const&, QRegularExpressionMatch*) const"),
+	mu_demangle_test("_ZNK7QString8endsWithERKS_N2Qt15CaseSensitivityE_ptr", "QString::endsWith(QString const&, Qt::CaseSensitivity) const"),
+	mu_demangle_test("_ZNK7QTabBar5tabAtERK6QPoint_ptr", "QTabBar::tabAt(QPoint const&) const"),
+	mu_demangle_test("_ZNK7QThread23isInterruptionRequestedEv_ptr", "QThread::isInterruptionRequested() const"),
+	mu_demangle_test("_ZNK7QWidget10sizePolicyEv_ptr", "QWidget::sizePolicy() const"),
+	mu_demangle_test("_ZNK7QWidget11focusWidgetEv_ptr", "QWidget::focusWidget() const"),
+	mu_demangle_test("_ZNK7QWidget12contentsRectEv_ptr", "QWidget::contentsRect() const"),
+	mu_demangle_test("_ZNK7QWidget12saveGeometryEv_ptr", "QWidget::saveGeometry() const"),
+	mu_demangle_test("_ZNK7QWidget13frameGeometryEv_ptr", "QWidget::frameGeometry() const"),
+	mu_demangle_test("_ZNK7QWidget14isActiveWindowEv_ptr", "QWidget::isActiveWindow() const"),
+	mu_demangle_test("_ZNK7QWidget5styleEv_ptr", "QWidget::style() const"),
+	mu_demangle_test("_ZNK7QWidget6layoutEv_ptr", "QWidget::layout() const"),
+	mu_demangle_test("_ZNK7QWidget6screenEv_ptr", "QWidget::screen() const"),
+	mu_demangle_test("_ZNK7QWidget7paletteEv_ptr", "QWidget::palette() const"),
+	mu_demangle_test("_ZNK7QWidget8hasFocusEv_ptr", "QWidget::hasFocus() const"),
+	mu_demangle_test("_ZNK8QPalette5brushENS_10ColorGroupENS_9ColorRoleE_ptr", "QPalette::brush(QPalette::ColorGroup, QPalette::ColorRole) const"),
+	mu_demangle_test("_ZNK8QVariant10canConvertEi_ptr", "QVariant::canConvert(int) const"),
+	mu_demangle_test("_ZNK8QVariant11toByteArrayEv_ptr", "QVariant::toByteArray() const"),
+	mu_demangle_test("_ZNK8QVariant3cmpERKS__ptr", "QVariant::cmp(QVariant const&) const"),
+	mu_demangle_test("_ZNK8QVariant5toIntEPb_ptr", "QVariant::toInt(bool*) const"),
+	mu_demangle_test("_ZNK8QVariant6toBoolEv_ptr", "QVariant::toBool() const"),
+	mu_demangle_test("_ZNK8QVariant6toListEv_ptr", "QVariant::toList() const"),
+	mu_demangle_test("_ZNK8QVariant7convertEiPv_ptr", "QVariant::convert(int, void*) const"),
+	mu_demangle_test("_ZNK8QVariant8toStringEv_ptr", "QVariant::toString() const"),
+	mu_demangle_test("_ZNK8QVariant8userTypeEv_ptr", "QVariant::userType() const"),
+	mu_demangle_test("_ZNK8QVariant9constDataEv_ptr", "QVariant::constData() const"),
+	mu_demangle_test("_ZNK9QCheckBox10checkStateEv_ptr", "QCheckBox::checkState() const"),
+	mu_demangle_test("_ZNK9QComboBox11currentTextEv_ptr", "QComboBox::currentText() const"),
+	mu_demangle_test("_ZNK9QComboBox5countEv_ptr", "QComboBox::count() const"),
+	mu_demangle_test("_ZNK9QComboBox8findDataERK8QVarianti6QFlagsIN2Qt9MatchFlagEE_ptr", "QComboBox::findData(QVariant const&, int, QFlags<Qt::MatchFlag>) const"),
+	mu_demangle_test("_ZNK9QComboBox8itemDataEii_ptr", "QComboBox::itemData(int, int) const"),
+	mu_demangle_test("_ZNK9QComboBox8itemTextEi_ptr", "QComboBox::itemText(int) const"),
+	mu_demangle_test("_ZNK9QDateTime10toTimeSpecEN2Qt8TimeSpecE_ptr", "QDateTime::toTimeSpec(Qt::TimeSpec) const"),
+	mu_demangle_test("_ZNK9QDateTime6daysToERKS__ptr", "QDateTime::daysTo(QDateTime const&) const"),
+	mu_demangle_test("_ZNK9QDateTime8toStringEN2Qt10DateFormatE_ptr", "QDateTime::toString(Qt::DateFormat) const"),
+	mu_demangle_test("_ZNK9QDateTimeltERKS__ptr", "QDateTime::operator<(QDateTime const&) const"),
+	mu_demangle_test("_ZNK9QFileInfo12absolutePathEv_ptr", "QFileInfo::absolutePath() const"),
+	mu_demangle_test("_ZNK9QFileInfo17canonicalFilePathEv_ptr", "QFileInfo::canonicalFilePath() const"),
+	mu_demangle_test("_ZNK9QFileInfo4pathEv_ptr", "QFileInfo::path() const"),
+	mu_demangle_test("_ZNK9QFileInfo5isDirEv_ptr", "QFileInfo::isDir() const"),
+	mu_demangle_test("_ZNK9QFileInfo6existsEv_ptr", "QFileInfo::exists() const"),
+	mu_demangle_test("_ZNK9QFileInfo6suffixEv_ptr", "QFileInfo::suffix() const"),
+	mu_demangle_test("_ZNK9QFileInfo8fileNameEv_ptr", "QFileInfo::fileName() const"),
+	mu_demangle_test("_ZNK9QIODevice11errorStringEv_ptr", "QIODevice::errorString() const"),
+	mu_demangle_test("_ZNK9QKeyEvent9modifiersEv_ptr", "QKeyEvent::modifiers() const"),
+	mu_demangle_test("_ZNK9QLineEdit10isReadOnlyEv_ptr", "QLineEdit::isReadOnly() const"),
+	mu_demangle_test("_ZNK9QLineEdit4copyEv_ptr", "QLineEdit::copy() const"),
+	mu_demangle_test("_ZNK9QLineEdit4textEv_ptr", "QLineEdit::text() const"),
+	mu_demangle_test("_ZNK9QMimeData4urlsEv_ptr", "QMimeData::urls() const"),
+	mu_demangle_test("_ZNK9QResource16uncompressedDataEv_ptr", "QResource::uncompressedData() const"),
+	mu_demangle_test("_ZNK9QResource16uncompressedSizeEv_ptr", "QResource::uncompressedSize() const"),
+	mu_demangle_test("_ZNK9QSettings5valueERK7QStringRK8QVariant_ptr", "QSettings::value(QString const&, QVariant const&) const"),
+	mu_demangle_test("_ZNK9QSettings7allKeysEv_ptr", "QSettings::allKeys() const"),
+	mu_demangle_test("_ZNK9QSettings8containsERK7QString_ptr", "QSettings::contains(QString const&) const"),
+	mu_demangle_test("_ZNK9QTextEdit10isReadOnlyEv_ptr", "QTextEdit::isReadOnly() const"),
+	mu_demangle_test("_ZNK9QTextEdit11toPlainTextEv_ptr", "QTextEdit::toPlainText() const"),
+	mu_demangle_test("_ZNK9QTreeView6headerEv_ptr", "QTreeView::header() const"),
+	mu_demangle_test("_ZNK9QUrlQuery12hasQueryItemERK7QString_ptr", "QUrlQuery::hasQueryItem(QString const&) const"),
+	mu_demangle_test("_ZNK9QUrlQuery14queryItemValueERK7QString6QFlagsIN4QUrl25ComponentFormattingOptionEE_ptr", "QUrlQuery::queryItemValue(QString const&, QFlags<QUrl::ComponentFormattingOption>) const"),
+	mu_demangle_test("_ZNK9ViewFrame17getAvailableTypesEv_ptr", "ViewFrame::getAvailableTypes() const"),
+	mu_demangle_test("_ZNKSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEE3strEv_ptr", "std::__cxx11::basic_stringbuf<char, std::char_traits<char>, std::allocator<char> >::str() const"),
+	mu_demangle_test("_ZNKSt8__detail20_Prime_rehash_policy11_M_next_bktEm_ptr", "std::__detail::_Prime_rehash_policy::_M_next_bkt(unsigned long) const"),
+	mu_demangle_test("_ZNKSt8__detail20_Prime_rehash_policy14_M_need_rehashEmmm_ptr", "std::__detail::_Prime_rehash_policy::_M_need_rehash(unsigned long, unsigned long, unsigned long) const"),
+	mu_demangle_test("_ZNSi10_M_extractIdEERSiRT__ptr", "std::istream& std::istream::_M_extract<double>(double&)"),
+	mu_demangle_test("_ZNSo9_M_insertImEERSoT__ptr", "std::ostream& std::ostream::_M_insert<unsigned long>(unsigned long)"),
+	mu_demangle_test("_ZNSolsEPSt15basic_streambufIcSt11char_traitsIcEE_ptr", "std::ostream::operator<<(std::basic_streambuf<char, std::char_traits<char> >*)"),
+	mu_demangle_test("_ZNSt11logic_errorC1EPKc_ptr", "std::logic_error::logic_error(char const*)"),
+	mu_demangle_test("_ZNSt11logic_errorD1Ev_ptr", "std::logic_error::~logic_error()"),
+	mu_demangle_test("_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_100", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)"),
+	mu_demangle_test("_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_101", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)"),
+	mu_demangle_test("_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_102", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)"),
+	mu_demangle_test("_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_103", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)"),
+	mu_demangle_test("_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_104", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)"),
+	mu_demangle_test("_ZNSt14_Function_base13_Base_managerIZN8appdebug20clPrintCmdQOccupancyEP17_cl_command_queueEUlvE_E10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation_105", "std::_Function_base::_Base_manager<appdebug::clPrintCmdQOccupancy(_cl_command_queue*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)"),
+	mu_demangle_test("_ZNSt6chrono3_V212steady_clock3nowEv_ptr", "std::chrono::_V2::steady_clock::now()"),
+	mu_demangle_test("_ZNSt6chrono3_V212system_clock3nowEv_ptr", "std::chrono::_V2::system_clock::now()"),
+	mu_demangle_test("_ZNSt6localeC1Ev_ptr", "std::locale::locale()"),
+	mu_demangle_test("_ZNSt6localeD1Ev_ptr", "std::locale::~locale()"),
+	mu_demangle_test("_ZNSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEE7_M_syncEPcmm_ptr", "std::__cxx11::basic_stringbuf<char, std::char_traits<char>, std::allocator<char> >::_M_sync(char*, unsigned long, unsigned long)"),
+	mu_demangle_test("_ZNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEED1Ev_ptr", "std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >::~basic_stringstream()"),
+	mu_demangle_test("_ZNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEED1Ev_ptr", "std::__cxx11::basic_istringstream<char, std::char_traits<char>, std::allocator<char> >::~basic_istringstream()"),
+	mu_demangle_test("_ZNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEC1ESt13_Ios_Openmode_ptr", "std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char> >::basic_ostringstream(std::_Ios_Openmode)"),
+	mu_demangle_test("_ZNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEED1Ev_ptr", "std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char> >::~basic_ostringstream()"),
+	mu_demangle_test("_ZNSt8ios_baseC2Ev_ptr", "std::ios_base::ios_base()"),
+	mu_demangle_test("_ZNSt8ios_baseD2Ev_ptr", "std::ios_base::~ios_base()"),
+	mu_demangle_test("_ZNSt9basic_iosIcSt11char_traitsIcEE4initEPSt15basic_streambufIcS1_E_ptr", "std::basic_ios<char, std::char_traits<char> >::init(std::basic_streambuf<char, std::char_traits<char> >*)"),
+	mu_demangle_test("_ZNSt9exceptionD2Ev_ptr", "std::exception::~exception()"),
+	mu_demangle_test("_Znwm_ptr", "operator new(unsigned long)"),
+	mu_demangle_test("_ZSt11_Hash_bytesPKvmm_ptr", "std::_Hash_bytes(void const*, unsigned long, unsigned long)"),
+	mu_demangle_test("_ZSt16__ostream_insertIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_PKS3_l_ptr", "std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)"),
+	mu_demangle_test("_ZSt17__throw_bad_allocv_ptr", "std::__throw_bad_alloc()"),
+	mu_demangle_test("_ZSt18_Rb_tree_decrementPKSt18_Rb_tree_node_base_ptr", "std::_Rb_tree_decrement(std::_Rb_tree_node_base const*)"),
+	mu_demangle_test("_ZSt18_Rb_tree_decrementPSt18_Rb_tree_node_base_ptr", "std::_Rb_tree_decrement(std::_Rb_tree_node_base*)"),
+	mu_demangle_test("_ZSt18_Rb_tree_incrementPKSt18_Rb_tree_node_base_ptr", "std::_Rb_tree_increment(std::_Rb_tree_node_base const*)"),
+	mu_demangle_test("_ZSt18_Rb_tree_incrementPSt18_Rb_tree_node_base_ptr", "std::_Rb_tree_increment(std::_Rb_tree_node_base*)"),
+	mu_demangle_test("_ZSt19__throw_logic_errorPKc_ptr", "std::__throw_logic_error(char const*)"),
+	mu_demangle_test("_ZSt20__throw_length_errorPKc_ptr", "std::__throw_length_error(char const*)"),
+	mu_demangle_test("_ZSt20__throw_out_of_rangePKc_ptr", "std::__throw_out_of_range(char const*)"),
+	mu_demangle_test("_ZSt20__throw_system_errori_ptr", "std::__throw_system_error(int)"),
+	mu_demangle_test("_ZSt24__throw_out_of_range_fmtPKcz_ptr", "std::__throw_out_of_range_fmt(char const*, ...)"),
+	mu_demangle_test("_ZSt25__throw_bad_function_callv_ptr", "std::__throw_bad_function_call()"),
+	mu_demangle_test("_ZSt28_Rb_tree_rebalance_for_erasePSt18_Rb_tree_node_baseRS__ptr", "std::_Rb_tree_rebalance_for_erase(std::_Rb_tree_node_base*, std::_Rb_tree_node_base&)"),
+	mu_demangle_test("_ZSt29_Rb_tree_insert_and_rebalancebPSt18_Rb_tree_node_baseS0_RS__ptr", "std::_Rb_tree_insert_and_rebalance(bool, std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::_Rb_tree_node_base&)"),
+	mu_demangle_test("_ZSt7getlineIcSt11char_traitsIcESaIcEERSt13basic_istreamIT_T0_ES7_RNSt7__cxx1112basic_stringIS4_S5_T1_EES4__ptr", "std::basic_istream<char, std::char_traits<char> >& std::getline<char, std::char_traits<char>, std::allocator<char> >(std::basic_istream<char, std::char_traits<char> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, char)"),
+	mu_demangle_test("_ZSt9terminatev_ptr", "std::terminate()"),
+	mu_demangle_test("_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc_ptr", "std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)"),
+	mu_demangle_test("_ZTI12QApplication_ptr", "typeinfo for QApplication"),
+	mu_demangle_test("_ZTI12QTextBrowser_ptr", "typeinfo for QTextBrowser"),
+	mu_demangle_test("_ZTI12ReportWidget_ptr", "typeinfo for ReportWidget"),
+	mu_demangle_test("_ZTI15FlowGraphWidget_ptr", "typeinfo for FlowGraphWidget"),
+	mu_demangle_test("_ZTI22ReportCollectionWidget_ptr", "typeinfo for ReportCollectionWidget"),
+	mu_demangle_test("_ZTI4View_ptr", "typeinfo for View"),
+	mu_demangle_test("_ZTI6QEvent_ptr", "typeinfo for QEvent"),
+	mu_demangle_test("_ZTI9QLineEdit_ptr", "typeinfo for QLineEdit"),
+	mu_demangle_test("_ZTI9ViewFrame_ptr", "typeinfo for ViewFrame"),
+	mu_demangle_test("_ZTTNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr", "VTT for std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >"),
+	mu_demangle_test("_ZTTNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEE_ptr", "VTT for std::__cxx11::basic_istringstream<char, std::char_traits<char>, std::allocator<char> >"),
+	mu_demangle_test("_ZTTNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEE_ptr", "VTT for std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char> >"),
+	mu_demangle_test("_ZTV10MenuHelper_ptr", "vtable for MenuHelper"),
+	mu_demangle_test("_ZTV14ClickableLabel_ptr", "vtable for ClickableLabel"),
+	mu_demangle_test("_ZTV15FormInputDialog_ptr", "vtable for FormInputDialog"),
+	mu_demangle_test("_ZTVNSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEEE_ptr", "vtable for std::__cxx11::basic_stringbuf<char, std::char_traits<char>, std::allocator<char> >"),
+	mu_demangle_test("_ZTVNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr", "vtable for std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >"),
+	mu_demangle_test("_ZTVNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEE_ptr", "vtable for std::__cxx11::basic_istringstream<char, std::char_traits<char>, std::allocator<char> >"),
+	mu_demangle_test("_ZTVNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEE_ptr", "vtable for std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char> >"),
+	mu_demangle_test("_ZTVSt15basic_streambufIcSt11char_traitsIcEE_ptr", "vtable for std::basic_streambuf<char, std::char_traits<char> >"),
+	mu_demangle_test("_ZTVSt9basic_iosIcSt11char_traitsIcEE_ptr", "vtable for std::basic_ios<char, std::char_traits<char> >"),
+	mu_demangle_test("_Z14getPackageNameP7_JNIEnvP8_jobject", "getPackageName(_JNIEnv*, _jobject*)"),
+	mu_demangle_test("_Z15JstringToStringP7_JNIEnvP8_jstring", "JstringToString(_JNIEnv*, _jstring*)"),
+	mu_demangle_test("_Z13CharTojstringP7_JNIEnvPKc", "CharTojstring(_JNIEnv*, char const*)"),
+	mu_demangle_test("_Z20invokeStaticMethodssP7_JNIEnvP8_jstringS2_", "invokeStaticMethodss(_JNIEnv*, _jstring*, _jstring*)"),
+	mu_demangle_test("_Z16getFieldOjbectExP7_JNIEnvP7_jclassP8_jobjectP8_jstring", "getFieldOjbectEx(_JNIEnv*, _jclass*, _jobject*, _jstring*)"),
+	mu_demangle_test("_Z14getFieldOjbectP7_JNIEnvP8_jstringP8_jobjectS2_", "getFieldOjbect(_JNIEnv*, _jstring*, _jobject*, _jstring*)"),
+	mu_demangle_test("_Z16setFieldOjbectExP7_JNIEnvP7_jclassP8_jstringP8_jobjectS6_", "setFieldOjbectEx(_JNIEnv*, _jclass*, _jstring*, _jobject*, _jobject*)"),
+	mu_demangle_test("_Z14setFieldOjbectP7_JNIEnvP8_jstringS2_P8_jobjectS4_", "setFieldOjbect(_JNIEnv*, _jstring*, _jstring*, _jobject*, _jobject*)"),
+	mu_demangle_test("_Z14checkExceptionP7_JNIEnv", "checkException(_JNIEnv*)"),
+	mu_demangle_test("_Z7forNameP7_JNIEnvP8_jstring", "forName(_JNIEnv*, _jstring*)"),
+	mu_demangle_test("_Z11GetFileNamePc", "GetFileName(char*)"),
+	mu_demangle_test("_Z10replaceAllPKcS0_S0_", "replaceAll(char const*, char const*, char const*)"),
+	mu_demangle_test("_Z6decodeP7_JNIEnvP8_jstringS2_", "decode(_JNIEnv*, _jstring*, _jstring*)"),
+	mu_demangle_test("_Z7sub_444P7_JNIEnvP8_jobjectS2_P8_jstringS4_", "sub_444(_JNIEnv*, _jobject*, _jobject*, _jstring*, _jstring*)"),
+	mu_demangle_test("_Z7sub_333P7_JNIEnvP8_jobjectS2_P8_jstringS4_", "sub_333(_JNIEnv*, _jobject*, _jobject*, _jstring*, _jstring*)"),
+	mu_demangle_test("_ZN25SystemClassLoaderInjector6injectEP7_JNIEnvP8_jobjectP8_jstringS5_", "SystemClassLoaderInjector::inject(_JNIEnv*, _jobject*, _jstring*, _jstring*)"),
+	mu_demangle_test("_Z21registerNativeMethodsP7_JNIEnvPKcP15JNINativeMethodi", "registerNativeMethods(_JNIEnv*, char const*, JNINativeMethod*, int)"),
+	mu_demangle_test("_Z17register_ndk_loadP7_JNIEnv", "register_ndk_load(_JNIEnv*)"),
+	// end
+);
 
-int all_tests() {
-	mu_demangle_run(0);
-	mu_demangle_run(1);
-	mu_demangle_run(2);
-	mu_demangle_run(3);
-	mu_demangle_run(4);
-	mu_demangle_run(5);
-	mu_demangle_run(6);
-	mu_demangle_run(7);
-	mu_demangle_run(8);
-	mu_demangle_run(9);
-	mu_demangle_run(10);
-	mu_demangle_run(11);
-	mu_demangle_run(12);
-	mu_demangle_run(13);
-	mu_demangle_run(14);
-	mu_demangle_run(15);
-	mu_demangle_run(16);
-	mu_demangle_run(17);
-	mu_demangle_run(18);
-	mu_demangle_run(19);
-	mu_demangle_run(20);
-	mu_demangle_run(21);
-	mu_demangle_run(22);
-	mu_demangle_run(23);
-	mu_demangle_run(24);
-	mu_demangle_run(25);
-	mu_demangle_run(26);
-	mu_demangle_run(27);
-	mu_demangle_run(28);
-	mu_demangle_run(29);
-	mu_demangle_run(30);
-	mu_demangle_run(31);
-	mu_demangle_run(32);
-	mu_demangle_run(33);
-	mu_demangle_run(34);
-	mu_demangle_run(35);
-	mu_demangle_run(36);
-	mu_demangle_run(37);
-	mu_demangle_run(38);
-	mu_demangle_run(39);
-	mu_demangle_run(40);
-	mu_demangle_run(41);
-	mu_demangle_run(42);
-	mu_demangle_run(43);
-	mu_demangle_run(44);
-	mu_demangle_run(45);
-	mu_demangle_run(46);
-	mu_demangle_run(47);
-	mu_demangle_run(48);
-	mu_demangle_run(49);
-	mu_demangle_run(50);
-	mu_demangle_run(51);
-	mu_demangle_run(52);
-	mu_demangle_run(53);
-	mu_demangle_run(54);
-	mu_demangle_run(55);
-	mu_demangle_run(56);
-	mu_demangle_run(57);
-	mu_demangle_run(58);
-	mu_demangle_run(59);
-	mu_demangle_run(60);
-	mu_demangle_run(61);
-	mu_demangle_run(62);
-	mu_demangle_run(63);
-	mu_demangle_run(64);
-	mu_demangle_run(65);
-	mu_demangle_run(66);
-	mu_demangle_run(67);
-	mu_demangle_run(68);
-	mu_demangle_run(69);
-	mu_demangle_run(70);
-	mu_demangle_run(71);
-	mu_demangle_run(72);
-	mu_demangle_run(73);
-	mu_demangle_run(74);
-	mu_demangle_run(75);
-	mu_demangle_run(76);
-	mu_demangle_run(77);
-	mu_demangle_run(78);
-	mu_demangle_run(79);
-	mu_demangle_run(80);
-	mu_demangle_run(81);
-	mu_demangle_run(82);
-	mu_demangle_run(83);
-	mu_demangle_run(84);
-	mu_demangle_run(85);
-	mu_demangle_run(86);
-	mu_demangle_run(87);
-	mu_demangle_run(88);
-	mu_demangle_run(89);
-	mu_demangle_run(90);
-	mu_demangle_run(91);
-	mu_demangle_run(92);
-	mu_demangle_run(93);
-	mu_demangle_run(94);
-	mu_demangle_run(95);
-	mu_demangle_run(96);
-	mu_demangle_run(97);
-	mu_demangle_run(98);
-	mu_demangle_run(99);
-	mu_demangle_run(100);
-	mu_demangle_run(101);
-	mu_demangle_run(102);
-	mu_demangle_run(103);
-	mu_demangle_run(104);
-	mu_demangle_run(105);
-	mu_demangle_run(106);
-	mu_demangle_run(107);
-	mu_demangle_run(108);
-	mu_demangle_run(109);
-	mu_demangle_run(110);
-	mu_demangle_run(111);
-	mu_demangle_run(112);
-	mu_demangle_run(113);
-	mu_demangle_run(114);
-	mu_demangle_run(115);
-	mu_demangle_run(116);
-	mu_demangle_run(117);
-	mu_demangle_run(118);
-	mu_demangle_run(119);
-	mu_demangle_run(120);
-	mu_demangle_run(121);
-	mu_demangle_run(122);
-	mu_demangle_run(123);
-	mu_demangle_run(124);
-	mu_demangle_run(125);
-	mu_demangle_run(126);
-	mu_demangle_run(127);
-	mu_demangle_run(128);
-	mu_demangle_run(129);
-	mu_demangle_run(130);
-	mu_demangle_run(131);
-	mu_demangle_run(132);
-	mu_demangle_run(133);
-	mu_demangle_run(134);
-	mu_demangle_run(135);
-	mu_demangle_run(136);
-	mu_demangle_run(137);
-	mu_demangle_run(138);
-	mu_demangle_run(139);
-	mu_demangle_run(140);
-	mu_demangle_run(141);
-	mu_demangle_run(142);
-	mu_demangle_run(143);
-	mu_demangle_run(144);
-	mu_demangle_run(145);
-	mu_demangle_run(146);
-	mu_demangle_run(147);
-	mu_demangle_run(148);
-	mu_demangle_run(149);
-	mu_demangle_run(150);
-	mu_demangle_run(151);
-	mu_demangle_run(152);
-	mu_demangle_run(153);
-	mu_demangle_run(154);
-	mu_demangle_run(155);
-	mu_demangle_run(156);
-	mu_demangle_run(157);
-	mu_demangle_run(158);
-	mu_demangle_run(159);
-	mu_demangle_run(160);
-	mu_demangle_run(161);
-	mu_demangle_run(162);
-	mu_demangle_run(163);
-	mu_demangle_run(164);
-	mu_demangle_run(165);
-	mu_demangle_run(166);
-	mu_demangle_run(167);
-	mu_demangle_run(168);
-	mu_demangle_run(169);
-	mu_demangle_run(170);
-	mu_demangle_run(171);
-	mu_demangle_run(172);
-	mu_demangle_run(173);
-	mu_demangle_run(174);
-	mu_demangle_run(175);
-	mu_demangle_run(176);
-	mu_demangle_run(177);
-	mu_demangle_run(178);
-	mu_demangle_run(179);
-	mu_demangle_run(180);
-	mu_demangle_run(181);
-	mu_demangle_run(182);
-	mu_demangle_run(183);
-	mu_demangle_run(184);
-	mu_demangle_run(185);
-	mu_demangle_run(186);
-	mu_demangle_run(187);
-	mu_demangle_run(188);
-	mu_demangle_run(189);
-	mu_demangle_run(190);
-	mu_demangle_run(191);
-	mu_demangle_run(192);
-	mu_demangle_run(193);
-	mu_demangle_run(194);
-	mu_demangle_run(195);
-	mu_demangle_run(196);
-	mu_demangle_run(197);
-	mu_demangle_run(198);
-	mu_demangle_run(199);
-	mu_demangle_run(200);
-	mu_demangle_run(201);
-	mu_demangle_run(202);
-	mu_demangle_run(203);
-	mu_demangle_run(204);
-	mu_demangle_run(205);
-	mu_demangle_run(206);
-	mu_demangle_run(207);
-	mu_demangle_run(208);
-	mu_demangle_run(209);
-	mu_demangle_run(210);
-	mu_demangle_run(211);
-	mu_demangle_run(212);
-	mu_demangle_run(213);
-	mu_demangle_run(214);
-	mu_demangle_run(215);
-	mu_demangle_run(216);
-	mu_demangle_run(217);
-	mu_demangle_run(218);
-	mu_demangle_run(219);
-	mu_demangle_run(220);
-	mu_demangle_run(221);
-	mu_demangle_run(222);
-	mu_demangle_run(223);
-	mu_demangle_run(224);
-	mu_demangle_run(225);
-	mu_demangle_run(226);
-	mu_demangle_run(227);
-	mu_demangle_run(228);
-	mu_demangle_run(229);
-	mu_demangle_run(230);
-	mu_demangle_run(231);
-	mu_demangle_run(232);
-	mu_demangle_run(233);
-	mu_demangle_run(234);
-	mu_demangle_run(235);
-	mu_demangle_run(236);
-	mu_demangle_run(237);
-	mu_demangle_run(238);
-	mu_demangle_run(239);
-	mu_demangle_run(240);
-	mu_demangle_run(241);
-	mu_demangle_run(242);
-	mu_demangle_run(243);
-	mu_demangle_run(244);
-	mu_demangle_run(245);
-	mu_demangle_run(246);
-	mu_demangle_run(247);
-	mu_demangle_run(248);
-	mu_demangle_run(249);
-	mu_demangle_run(250);
-	mu_demangle_run(251);
-	mu_demangle_run(252);
-	mu_demangle_run(253);
-	mu_demangle_run(254);
-	mu_demangle_run(255);
-	mu_demangle_run(256);
-	mu_demangle_run(257);
-	mu_demangle_run(258);
-	mu_demangle_run(259);
-	mu_demangle_run(260);
-	mu_demangle_run(261);
-	mu_demangle_run(262);
-	mu_demangle_run(263);
-	mu_demangle_run(264);
-	mu_demangle_run(265);
-	mu_demangle_run(266);
-	mu_demangle_run(267);
-	mu_demangle_run(268);
-	mu_demangle_run(269);
-	mu_demangle_run(270);
-	mu_demangle_run(271);
-	mu_demangle_run(272);
-	mu_demangle_run(273);
-	mu_demangle_run(274);
-	mu_demangle_run(275);
-	mu_demangle_run(276);
-	mu_demangle_run(277);
-	mu_demangle_run(278);
-	mu_demangle_run(279);
-	mu_demangle_run(280);
-	mu_demangle_run(281);
-	mu_demangle_run(282);
-	mu_demangle_run(283);
-	mu_demangle_run(284);
-	mu_demangle_run(285);
-	mu_demangle_run(286);
-	mu_demangle_run(287);
-	mu_demangle_run(288);
-	mu_demangle_run(289);
-	mu_demangle_run(290);
-	mu_demangle_run(291);
-	mu_demangle_run(292);
-	mu_demangle_run(293);
-	mu_demangle_run(294);
-	mu_demangle_run(295);
-	mu_demangle_run(296);
-	mu_demangle_run(297);
-	mu_demangle_run(298);
-	mu_demangle_run(299);
-	mu_demangle_run(300);
-	mu_demangle_run(301);
-	mu_demangle_run(302);
-	mu_demangle_run(303);
-	mu_demangle_run(304);
-	mu_demangle_run(305);
-	mu_demangle_run(306);
-	mu_demangle_run(307);
-	mu_demangle_run(308);
-	mu_demangle_run(309);
-	mu_demangle_run(310);
-	mu_demangle_run(311);
-	mu_demangle_run(312);
-	mu_demangle_run(313);
-	mu_demangle_run(314);
-	mu_demangle_run(315);
-	mu_demangle_run(316);
-	mu_demangle_run(317);
-	mu_demangle_run(318);
-	mu_demangle_run(319);
-	mu_demangle_run(320);
-	mu_demangle_run(321);
-	mu_demangle_run(322);
-	mu_demangle_run(323);
-	mu_demangle_run(324);
-	mu_demangle_run(325);
-	mu_demangle_run(326);
-	mu_demangle_run(327);
-	mu_demangle_run(328);
-	mu_demangle_run(329);
-	mu_demangle_run(330);
-	mu_demangle_run(331);
-	mu_demangle_run(332);
-	mu_demangle_run(333);
-	mu_demangle_run(334);
-	mu_demangle_run(335);
-	mu_demangle_run(336);
-	mu_demangle_run(337);
-	mu_demangle_run(338);
-	mu_demangle_run(339);
-	mu_demangle_run(340);
-	mu_demangle_run(341);
-	mu_demangle_run(342);
-	mu_demangle_run(343);
-	mu_demangle_run(344);
-	mu_demangle_run(345);
-	mu_demangle_run(346);
-	mu_demangle_run(347);
-	mu_demangle_run(348);
-	mu_demangle_run(349);
-	mu_demangle_run(350);
-	mu_demangle_run(351);
-	mu_demangle_run(352);
-	mu_demangle_run(353);
-	mu_demangle_run(354);
-	mu_demangle_run(355);
-	mu_demangle_run(356);
-	mu_demangle_run(357);
-	mu_demangle_run(358);
-	mu_demangle_run(359);
-	mu_demangle_run(360);
-	mu_demangle_run(361);
-	mu_demangle_run(362);
-	mu_demangle_run(363);
-	mu_demangle_run(364);
-	mu_demangle_run(365);
-	mu_demangle_run(366);
-	mu_demangle_run(367);
-	mu_demangle_run(368);
-	mu_demangle_run(369);
-	mu_demangle_run(370);
-	mu_demangle_run(371);
-	mu_demangle_run(372);
-	mu_demangle_run(373);
-	mu_demangle_run(374);
-	mu_demangle_run(375);
-	mu_demangle_run(376);
-	mu_demangle_run(377);
-	mu_demangle_run(378);
-	mu_demangle_run(379);
-	mu_demangle_run(380);
-	mu_demangle_run(381);
-	mu_demangle_run(382);
-	mu_demangle_run(383);
-	mu_demangle_run(384);
-	mu_demangle_run(385);
-	mu_demangle_run(386);
-	mu_demangle_run(387);
-	mu_demangle_run(388);
-	mu_demangle_run(389);
-	mu_demangle_run(390);
-	mu_demangle_run(391);
-	mu_demangle_run(392);
-	mu_demangle_run(393);
-	mu_demangle_run(394);
-	mu_demangle_run(395);
-	mu_demangle_run(396);
-	mu_demangle_run(397);
-	mu_demangle_run(398);
-	mu_demangle_run(399);
-	mu_demangle_run(400);
-	mu_demangle_run(401);
-	mu_demangle_run(402);
-	mu_demangle_run(403);
-	mu_demangle_run(404);
-	mu_demangle_run(405);
-	mu_demangle_run(406);
-	mu_demangle_run(407);
-	mu_demangle_run(408);
-	mu_demangle_run(409);
-	mu_demangle_run(410);
-	mu_demangle_run(411);
-	mu_demangle_run(412);
-	mu_demangle_run(413);
-	mu_demangle_run(414);
-	mu_demangle_run(415);
-	mu_demangle_run(416);
-	mu_demangle_run(417);
-	mu_demangle_run(418);
-	mu_demangle_run(419);
-	mu_demangle_run(420);
-	mu_demangle_run(421);
-	mu_demangle_run(422);
-	mu_demangle_run(423);
-	mu_demangle_run(424);
-	mu_demangle_run(425);
-	mu_demangle_run(426);
-	mu_demangle_run(427);
-	mu_demangle_run(428);
-	mu_demangle_run(429);
-	mu_demangle_run(430);
-	mu_demangle_run(431);
-	mu_demangle_run(432);
-	mu_demangle_run(433);
-	mu_demangle_run(434);
-	mu_demangle_run(435);
-	mu_demangle_run(436);
-	mu_demangle_run(437);
-	mu_demangle_run(438);
-	mu_demangle_run(439);
-	mu_demangle_run(440);
-	mu_demangle_run(441);
-	mu_demangle_run(442);
-	mu_demangle_run(443);
-	mu_demangle_run(444);
-	mu_demangle_run(445);
-	mu_demangle_run(446);
-	mu_demangle_run(447);
-	mu_demangle_run(448);
-	mu_demangle_run(449);
-	mu_demangle_run(450);
-	mu_demangle_run(451);
-	mu_demangle_run(452);
-	mu_demangle_run(453);
-	mu_demangle_run(454);
-	mu_demangle_run(455);
-	mu_demangle_run(456);
-	mu_demangle_run(457);
-	mu_demangle_run(458);
-	mu_demangle_run(459);
-	mu_demangle_run(460);
-	mu_demangle_run(461);
-	mu_demangle_run(462);
-	mu_demangle_run(463);
-	mu_demangle_run(464);
-	mu_demangle_run(465);
-	mu_demangle_run(466);
-	mu_demangle_run(467);
-	mu_demangle_run(468);
-	mu_demangle_run(469);
-	mu_demangle_run(470);
-	mu_demangle_run(471);
-	mu_demangle_run(472);
-	mu_demangle_run(473);
-	mu_demangle_run(474);
-	mu_demangle_run(475);
-	mu_demangle_run(476);
-	mu_demangle_run(477);
-	mu_demangle_run(478);
-	mu_demangle_run(479);
-	mu_demangle_run(480);
-	mu_demangle_run(481);
-	mu_demangle_run(482);
-	mu_demangle_run(483);
-	mu_demangle_run(484);
-	mu_demangle_run(485);
-	mu_demangle_run(486);
-	mu_demangle_run(487);
-	mu_demangle_run(488);
-	mu_demangle_run(489);
-	mu_demangle_run(490);
-	mu_demangle_run(491);
-	mu_demangle_run(492);
-	mu_demangle_run(493);
-	mu_demangle_run(494);
-	mu_demangle_run(495);
-	mu_demangle_run(496);
-	mu_demangle_run(497);
-	mu_demangle_run(498);
-	mu_demangle_run(499);
-	mu_demangle_run(500);
-	mu_demangle_run(501);
-	mu_demangle_run(502);
-	mu_demangle_run(503);
-	mu_demangle_run(504);
-	mu_demangle_run(505);
-	mu_demangle_run(506);
-	mu_demangle_run(507);
-	mu_demangle_run(508);
-	mu_demangle_run(509);
-	mu_demangle_run(510);
-	mu_demangle_run(511);
-	mu_demangle_run(512);
-	mu_demangle_run(513);
-	mu_demangle_run(514);
-	mu_demangle_run(515);
-	mu_demangle_run(516);
-	mu_demangle_run(517);
-	mu_demangle_run(518);
-	mu_demangle_run(519);
-	mu_demangle_run(520);
-	mu_demangle_run(521);
-	mu_demangle_run(522);
-	mu_demangle_run(523);
-	mu_demangle_run(524);
-	mu_demangle_run(525);
-	mu_demangle_run(526);
-	mu_demangle_run(527);
-	mu_demangle_run(528);
-	mu_demangle_run(529);
-	mu_demangle_run(530);
-	mu_demangle_run(531);
-	mu_demangle_run(532);
-	mu_demangle_run(533);
-	mu_demangle_run(534);
-	mu_demangle_run(535);
-	mu_demangle_run(536);
-	mu_demangle_run(537);
-	mu_demangle_run(538);
-	mu_demangle_run(539);
-	mu_demangle_run(540);
-	mu_demangle_run(541);
-	mu_demangle_run(542);
-	mu_demangle_run(543);
-	mu_demangle_run(544);
-	mu_demangle_run(545);
-	mu_demangle_run(546);
-	mu_demangle_run(547);
-	mu_demangle_run(548);
-	mu_demangle_run(549);
-	mu_demangle_run(550);
-	mu_demangle_run(551);
-	mu_demangle_run(552);
-	mu_demangle_run(553);
-	mu_demangle_run(554);
-	mu_demangle_run(555);
-	mu_demangle_run(556);
-	mu_demangle_run(557);
-	mu_demangle_run(558);
-	mu_demangle_run(559);
-	mu_demangle_run(560);
-	mu_demangle_run(561);
-	mu_demangle_run(562);
-	mu_demangle_run(563);
-	mu_demangle_run(564);
-	mu_demangle_run(565);
-	mu_demangle_run(566);
-	mu_demangle_run(567);
-	mu_demangle_run(568);
-	mu_demangle_run(569);
-	mu_demangle_run(570);
-	mu_demangle_run(571);
-	mu_demangle_run(572);
-	mu_demangle_run(573);
-	mu_demangle_run(574);
-	mu_demangle_run(575);
-	mu_demangle_run(576);
-	mu_demangle_run(577);
-	mu_demangle_run(578);
-	mu_demangle_run(579);
-	mu_demangle_run(580);
-	mu_demangle_run(581);
-	mu_demangle_run(582);
-	mu_demangle_run(583);
-	mu_demangle_run(584);
-	mu_demangle_run(585);
-	mu_demangle_run(586);
-	mu_demangle_run(587);
-	mu_demangle_run(588);
-	mu_demangle_run(589);
-	mu_demangle_run(590);
-	mu_demangle_run(591);
-	mu_demangle_run(592);
-	mu_demangle_run(593);
-	mu_demangle_run(594);
-	mu_demangle_run(595);
-	mu_demangle_run(596);
-	mu_demangle_run(597);
-	mu_demangle_run(598);
-	mu_demangle_run(599);
-	mu_demangle_run(600);
-	mu_demangle_run(601);
-	mu_demangle_run(602);
-	mu_demangle_run(603);
-	mu_demangle_run(604);
-	mu_demangle_run(605);
-	mu_demangle_run(606);
-	mu_demangle_run(607);
-	mu_demangle_run(608);
-	mu_demangle_run(609);
-	mu_demangle_run(610);
-	mu_demangle_run(611);
-	mu_demangle_run(612);
-	mu_demangle_run(613);
-	mu_demangle_run(614);
-	mu_demangle_run(615);
-	mu_demangle_run(616);
-	mu_demangle_run(617);
-	mu_demangle_run(618);
-	mu_demangle_run(619);
-	mu_demangle_run(620);
-	mu_demangle_run(621);
-	mu_demangle_run(622);
-	mu_demangle_run(623);
-	mu_demangle_run(624);
-	mu_demangle_run(625);
-	mu_demangle_run(626);
-	mu_demangle_run(627);
-	mu_demangle_run(628);
-	mu_demangle_run(629);
-	mu_demangle_run(630);
-	mu_demangle_run(631);
-	mu_demangle_run(632);
-	mu_demangle_run(633);
-	mu_demangle_run(634);
-	mu_demangle_run(635);
-	mu_demangle_run(636);
-	mu_demangle_run(637);
-	mu_demangle_run(638);
-	mu_demangle_run(639);
-	mu_demangle_run(640);
-	mu_demangle_run(641);
-	mu_demangle_run(642);
-	mu_demangle_run(643);
-	mu_demangle_run(644);
-	mu_demangle_run(645);
-	mu_demangle_run(646);
-	mu_demangle_run(647);
-	mu_demangle_run(648);
-	mu_demangle_run(649);
-	mu_demangle_run(650);
-	mu_demangle_run(651);
-	mu_demangle_run(652);
-	mu_demangle_run(653);
-	mu_demangle_run(654);
-	mu_demangle_run(655);
-	mu_demangle_run(656);
-	mu_demangle_run(657);
-	mu_demangle_run(658);
-	mu_demangle_run(659);
-	mu_demangle_run(660);
-	mu_demangle_run(661);
-	mu_demangle_run(662);
-	mu_demangle_run(663);
-	mu_demangle_run(664);
-	mu_demangle_run(665);
-	mu_demangle_run(666);
-	mu_demangle_run(667);
-	mu_demangle_run(668);
-	mu_demangle_run(669);
-	mu_demangle_run(670);
-	mu_demangle_run(671);
-	mu_demangle_run(672);
-	mu_demangle_run(673);
-	mu_demangle_run(674);
-	mu_demangle_run(675);
-	mu_demangle_run(676);
-	mu_demangle_run(677);
-	mu_demangle_run(678);
-	mu_demangle_run(679);
-	mu_demangle_run(680);
-	mu_demangle_run(681);
-	mu_demangle_run(682);
-	mu_demangle_run(683);
-	mu_demangle_run(684);
-	mu_demangle_run(685);
-	mu_demangle_run(686);
-	mu_demangle_run(687);
-	mu_demangle_run(688);
-	mu_demangle_run(689);
-	mu_demangle_run(690);
-	mu_demangle_run(691);
-	mu_demangle_run(692);
-	mu_demangle_run(693);
-	mu_demangle_run(694);
-	mu_demangle_run(695);
-	mu_demangle_run(696);
-	mu_demangle_run(697);
-	mu_demangle_run(698);
-	mu_demangle_run(699);
-	mu_demangle_run(700);
-	mu_demangle_run(701);
-	mu_demangle_run(702);
-	mu_demangle_run(703);
-	mu_demangle_run(704);
-	mu_demangle_run(705);
-	mu_demangle_run(706);
-	mu_demangle_run(707);
-	mu_demangle_run(708);
-	mu_demangle_run(709);
-	mu_demangle_run(710);
-	mu_demangle_run(711);
-	mu_demangle_run(712);
-	mu_demangle_run(713);
-	mu_demangle_run(714);
-	mu_demangle_run(715);
-	mu_demangle_run(716);
-	mu_demangle_run(717);
-	mu_demangle_run(718);
-	mu_demangle_run(719);
-	mu_demangle_run(720);
-	mu_demangle_run(721);
-	mu_demangle_run(722);
-	mu_demangle_run(723);
-	mu_demangle_run(724);
-	mu_demangle_run(725);
-	mu_demangle_run(726);
-	mu_demangle_run(727);
-	mu_demangle_run(728);
-	mu_demangle_run(729);
-	mu_demangle_run(730);
-	mu_demangle_run(731);
-	mu_demangle_run(732);
-	mu_demangle_run(733);
-	mu_demangle_run(734);
-	mu_demangle_run(735);
-	mu_demangle_run(736);
-	mu_demangle_run(737);
-	mu_demangle_run(738);
-	mu_demangle_run(739);
-	mu_demangle_run(740);
-	mu_demangle_run(741);
-	mu_demangle_run(742);
-	mu_demangle_run(743);
-	mu_demangle_run(744);
-	mu_demangle_run(745);
-	mu_demangle_run(746);
-	mu_demangle_run(747);
-	mu_demangle_run(748);
-	mu_demangle_run(749);
-	mu_demangle_run(750);
-	mu_demangle_run(751);
-	mu_demangle_run(752);
-	mu_demangle_run(753);
-	mu_demangle_run(754);
-	mu_demangle_run(755);
-	mu_demangle_run(756);
-	mu_demangle_run(757);
-	mu_demangle_run(758);
-	mu_demangle_run(759);
-	mu_demangle_run(760);
-	mu_demangle_run(761);
-	mu_demangle_run(762);
-	mu_demangle_run(763);
-	mu_demangle_run(764);
-	mu_demangle_run(765);
-	mu_demangle_run(766);
-	mu_demangle_run(767);
-	mu_demangle_run(768);
-	mu_demangle_run(769);
-	mu_demangle_run(770);
-	mu_demangle_run(771);
-	mu_demangle_run(772);
-	mu_demangle_run(773);
-	mu_demangle_run(774);
-	mu_demangle_run(775);
-	mu_demangle_run(776);
-	mu_demangle_run(777);
-	mu_demangle_run(778);
-	mu_demangle_run(779);
-	mu_demangle_run(780);
-	mu_demangle_run(781);
-	mu_demangle_run(782);
-	mu_demangle_run(783);
-	mu_demangle_run(784);
-	mu_demangle_run(785);
-	mu_demangle_run(786);
-	mu_demangle_run(787);
-	mu_demangle_run(788);
-	mu_demangle_run(789);
-	mu_demangle_run(790);
-	mu_demangle_run(791);
-	mu_demangle_run(792);
-	mu_demangle_run(793);
-	mu_demangle_run(794);
-	mu_demangle_run(795);
-	mu_demangle_run(796);
-	mu_demangle_run(797);
-	mu_demangle_run(798);
-	mu_demangle_run(799);
-	mu_demangle_run(800);
-	mu_demangle_run(801);
-	mu_demangle_run(802);
-	mu_demangle_run(803);
-	mu_demangle_run(804);
-	mu_demangle_run(805);
-	mu_demangle_run(806);
-	mu_demangle_run(807);
-	mu_demangle_run(808);
-	mu_demangle_run(809);
-	mu_demangle_run(810);
-	mu_demangle_run(811);
-	mu_demangle_run(812);
-	mu_demangle_run(813);
-	mu_demangle_run(814);
-	mu_demangle_run(815);
-	mu_demangle_run(816);
-	mu_demangle_run(817);
-	mu_demangle_run(818);
-	mu_demangle_run(819);
-	mu_demangle_run(820);
-	mu_demangle_run(821);
-	mu_demangle_run(822);
-	mu_demangle_run(823);
-	mu_demangle_run(824);
-	mu_demangle_run(825);
-	mu_demangle_run(826);
-	mu_demangle_run(827);
-	mu_demangle_run(828);
-	mu_demangle_run(829);
-	mu_demangle_run(830);
-	mu_demangle_run(831);
-	mu_demangle_run(832);
-	mu_demangle_run(833);
-	mu_demangle_run(834);
-	mu_demangle_run(835);
-	mu_demangle_run(836);
-	mu_demangle_run(837);
-	mu_demangle_run(838);
-	mu_demangle_run(839);
-	mu_demangle_run(840);
-	mu_demangle_run(841);
-	mu_demangle_run(842);
-	mu_demangle_run(843);
-	mu_demangle_run(844);
-	mu_demangle_run(845);
-	mu_demangle_run(846);
-	mu_demangle_run(847);
-	mu_demangle_run(848);
-	mu_demangle_run(849);
-	mu_demangle_run(850);
-	mu_demangle_run(851);
-	mu_demangle_run(852);
-	mu_demangle_run(853);
-	mu_demangle_run(854);
-	mu_demangle_run(855);
-	mu_demangle_run(856);
-	mu_demangle_run(857);
-	mu_demangle_run(858);
-	mu_demangle_run(859);
-	mu_demangle_run(860);
-	mu_demangle_run(861);
-	mu_demangle_run(862);
-	mu_demangle_run(863);
-	mu_demangle_run(864);
-	mu_demangle_run(865);
-	mu_demangle_run(866);
-	mu_demangle_run(867);
-	mu_demangle_run(868);
-	mu_demangle_run(869);
-	mu_demangle_run(870);
-	mu_demangle_run(871);
-	mu_demangle_run(872);
-	mu_demangle_run(873);
-	mu_demangle_run(874);
-	mu_demangle_run(875);
-	mu_demangle_run(876);
-	mu_demangle_run(877);
-	mu_demangle_run(878);
-	mu_demangle_run(879);
-	mu_demangle_run(880);
-	mu_demangle_run(881);
-	mu_demangle_run(882);
-	mu_demangle_run(883);
-	mu_demangle_run(884);
-	mu_demangle_run(885);
-	mu_demangle_run(886);
-	mu_demangle_run(887);
-	mu_demangle_run(888);
-	mu_demangle_run(889);
-	mu_demangle_run(890);
-	mu_demangle_run(891);
-	mu_demangle_run(892);
-	mu_demangle_run(893);
-	mu_demangle_run(894);
-	mu_demangle_run(895);
-	mu_demangle_run(896);
-	mu_demangle_run(897);
-	mu_demangle_run(898);
-	mu_demangle_run(899);
-	mu_demangle_run(900);
-	mu_demangle_run(901);
-	mu_demangle_run(902);
-	mu_demangle_run(903);
-	mu_demangle_run(904);
-	mu_demangle_run(905);
-	mu_demangle_run(906);
-	mu_demangle_run(907);
-	mu_demangle_run(908);
-	mu_demangle_run(909);
-	mu_demangle_run(910);
-	mu_demangle_run(911);
-	mu_demangle_run(912);
-	mu_demangle_run(913);
-	mu_demangle_run(914);
-	mu_demangle_run(915);
-	mu_demangle_run(916);
-	mu_demangle_run(917);
-	mu_demangle_run(918);
-	mu_demangle_run(919);
-	mu_demangle_run(920);
-	mu_demangle_run(921);
-	mu_demangle_run(922);
-	mu_demangle_run(923);
-	mu_demangle_run(924);
-	mu_demangle_run(925);
-	mu_demangle_run(926);
-	mu_demangle_run(927);
-	mu_demangle_run(928);
-	mu_demangle_run(929);
-	mu_demangle_run(930);
-	mu_demangle_run(931);
-	mu_demangle_run(932);
-	mu_demangle_run(933);
-	mu_demangle_run(934);
-	mu_demangle_run(935);
-	mu_demangle_run(936);
-	mu_demangle_run(937);
-	mu_demangle_run(938);
-	mu_demangle_run(939);
-	mu_demangle_run(940);
-	mu_demangle_run(941);
-	mu_demangle_run(942);
-	mu_demangle_run(943);
-	mu_demangle_run(944);
-	mu_demangle_run(945);
-	mu_demangle_run(946);
-	mu_demangle_run(947);
-	mu_demangle_run(948);
-	mu_demangle_run(949);
-	mu_demangle_run(950);
-	mu_demangle_run(951);
-	mu_demangle_run(952);
-	mu_demangle_run(953);
-	mu_demangle_run(954);
-	mu_demangle_run(955);
-	mu_demangle_run(956);
-	mu_demangle_run(957);
-	mu_demangle_run(958);
-	mu_demangle_run(959);
-	mu_demangle_run(960);
-	mu_demangle_run(961);
-	mu_demangle_run(962);
-	mu_demangle_run(963);
-	mu_demangle_run(964);
-	mu_demangle_run(965);
-	mu_demangle_run(966);
-	mu_demangle_run(967);
-	mu_demangle_run(968);
-	mu_demangle_run(969);
-	mu_demangle_run(970);
-	mu_demangle_run(971);
-	mu_demangle_run(972);
-	mu_demangle_run(973);
-	mu_demangle_run(974);
-	mu_demangle_run(975);
-	mu_demangle_run(976);
-	mu_demangle_run(977);
-	mu_demangle_run(978);
-	mu_demangle_run(979);
-	mu_demangle_run(980);
-	mu_demangle_run(981);
-	mu_demangle_run(982);
-	mu_demangle_run(983);
-	mu_demangle_run(984);
-	mu_demangle_run(985);
-	mu_demangle_run(986);
-	mu_demangle_run(987);
-	mu_demangle_run(988);
-	mu_demangle_run(989);
-	mu_demangle_run(990);
-	mu_demangle_run(991);
-	mu_demangle_run(992);
-	mu_demangle_run(993);
-	mu_demangle_run(994);
-	mu_demangle_run(995);
-	mu_demangle_run(996);
-	mu_demangle_run(997);
-	mu_demangle_run(998);
-	mu_demangle_run(999);
-	mu_demangle_run(1000);
-	mu_demangle_run(1001);
-	mu_demangle_run(1002);
-	mu_demangle_run(1003);
-	mu_demangle_run(1004);
-	mu_demangle_run(1005);
-	mu_demangle_run(1006);
-	mu_demangle_run(1007);
-	mu_demangle_run(1008);
-	mu_demangle_run(1009);
-	mu_demangle_run(1010);
-	mu_demangle_run(1011);
-	mu_demangle_run(1012);
-	mu_demangle_run(1013);
-	mu_demangle_run(1014);
-	mu_demangle_run(1015);
-	mu_demangle_run(1016);
-	mu_demangle_run(1017);
-	mu_demangle_run(1018);
-	mu_demangle_run(1019);
-	mu_demangle_run(1020);
-	mu_demangle_run(1021);
-	mu_demangle_run(1022);
-	mu_demangle_run(1023);
-	mu_demangle_run(1024);
-	mu_demangle_run(1025);
-	mu_demangle_run(1026);
-	mu_demangle_run(1027);
-	mu_demangle_run(1028);
-	mu_demangle_run(1029);
-	mu_demangle_run(1030);
-	mu_demangle_run(1031);
-	mu_demangle_run(1032);
-	mu_demangle_run(1033);
-	mu_demangle_run(1034);
-	mu_demangle_run(1035);
-	mu_demangle_run(1036);
-	mu_demangle_run(1037);
-	mu_demangle_run(1038);
-	mu_demangle_run(1039);
-	mu_demangle_run(1040);
-	mu_demangle_run(1041);
-	mu_demangle_run(1042);
-	mu_demangle_run(1043);
-	mu_demangle_run(1044);
-	mu_demangle_run(1045);
-	mu_demangle_run(1046);
-	mu_demangle_run(1047);
-	mu_demangle_run(1048);
-	mu_demangle_run(1049);
-	mu_demangle_run(1050);
-	mu_demangle_run(1051);
-	mu_demangle_run(1052);
-	mu_demangle_run(1053);
-	mu_demangle_run(1054);
-	mu_demangle_run(1055);
-	mu_demangle_run(1056);
-	mu_demangle_run(1057);
-	mu_demangle_run(1058);
-	mu_demangle_run(1059);
-	mu_demangle_run(1060);
-	mu_demangle_run(1061);
-	mu_demangle_run(1062);
-	mu_demangle_run(1063);
-	mu_demangle_run(1064);
-	mu_demangle_run(1065);
-	mu_demangle_run(1066);
-	mu_demangle_run(1067);
-	mu_demangle_run(1068);
-	mu_demangle_run(1069);
-	mu_demangle_run(1070);
-	mu_demangle_run(1071);
-	mu_demangle_run(1072);
-	mu_demangle_run(1073);
-	mu_demangle_run(1074);
-	mu_demangle_run(1075);
-	mu_demangle_run(1076);
-	mu_demangle_run(1077);
-	mu_demangle_run(1078);
-	mu_demangle_run(1079);
-	mu_demangle_run(1080);
-	mu_demangle_run(1081);
-	mu_demangle_run(1082);
-	mu_demangle_run(1083);
-	mu_demangle_run(1084);
-	mu_demangle_run(1085);
-	mu_demangle_run(1086);
-	mu_demangle_run(1087);
-	mu_demangle_run(1088);
-	mu_demangle_run(1089);
-	mu_demangle_run(1090);
-	mu_demangle_run(1091);
-	mu_demangle_run(1092);
-	mu_demangle_run(1093);
-	mu_demangle_run(1094);
-	mu_demangle_run(1095);
-	mu_demangle_run(1096);
-	mu_demangle_run(1097);
-	mu_demangle_run(1098);
-	mu_demangle_run(1099);
-	mu_demangle_run(1100);
-	mu_demangle_run(1101);
-	mu_demangle_run(1102);
-	mu_demangle_run(1103);
-	mu_demangle_run(1104);
-	mu_demangle_run(1105);
-	mu_demangle_run(1106);
-	mu_demangle_run(1107);
-	mu_demangle_run(1108);
-	mu_demangle_run(1109);
-	mu_demangle_run(1110);
-	mu_demangle_run(1111);
-	mu_demangle_run(1112);
-	mu_demangle_run(1113);
-	mu_demangle_run(1114);
-	mu_demangle_run(1115);
-	mu_demangle_run(1116);
-	mu_demangle_run(1117);
-	mu_demangle_run(1118);
-	mu_demangle_run(1119);
-	mu_demangle_run(1120);
-	mu_demangle_run(1121);
-	mu_demangle_run(1122);
-	mu_demangle_run(1123);
-	mu_demangle_run(1124);
-	mu_demangle_run(1125);
-	mu_demangle_run(1126);
-	mu_demangle_run(1127);
-	mu_demangle_run(1128);
-	mu_demangle_run(1129);
-	mu_demangle_run(1130);
-	mu_demangle_run(1131);
-	mu_demangle_run(1132);
-	mu_demangle_run(1133);
-	mu_demangle_run(1134);
-	mu_demangle_run(1135);
-	mu_demangle_run(1136);
-	mu_demangle_run(1137);
-	mu_demangle_run(1138);
-	mu_demangle_run(1139);
-	mu_demangle_run(1140);
-	mu_demangle_run(1141);
-	mu_demangle_run(1142);
-	mu_demangle_run(1143);
-	mu_demangle_run(1144);
-	mu_demangle_run(1145);
-	mu_demangle_run(1146);
-	return tests_passed != tests_run;
-}
-
-mu_main(all_tests)
+mu_main(gpl, cxx);
