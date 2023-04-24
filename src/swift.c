@@ -104,7 +104,7 @@ static const char *resolve(struct Type *t, const char *foo, const char **bar) {
 	return NULL;
 }
 
-char *libdemangle_handler_swift(const char *s) {
+RZ_API char *libdemangle_handler_swift(const char *s) {
 #define STRCAT_BOUNDS(x) \
 	if (((x) + 2 + strlen(out)) > sizeof(out)) \
 		break;
