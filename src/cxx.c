@@ -89,7 +89,7 @@ char *demangle_gpl_cxx(const char *str) {
 }
 #endif
 
-char *libdemangle_handler_cxx(const char *symbol) {
+RZ_API char *libdemangle_handler_cxx(const char *symbol) {
 	char *result = demangle_borland_delphi(symbol);
 	if (result) {
 		return result;
