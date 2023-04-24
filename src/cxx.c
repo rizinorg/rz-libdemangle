@@ -65,9 +65,7 @@ char *demangle_gpl_cxx(const char *str) {
 		bool expect_underscore = false;
 		for (i = len - 1; i > 0; i--) {
 			if (expect_digit && IS_DIGIT(p[i])) {
-				if (i == 0) {
-					break;
-				} else if (p[i - 1] == '_') {
+				if (p[i - 1] == '_') {
 					expect_underscore = true;
 					expect_digit = false;
 				} else if (!IS_DIGIT(p[i - 1])) {
