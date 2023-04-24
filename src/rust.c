@@ -184,7 +184,7 @@ char *libdemangle_handler_rust(const char *sym) {
 
 	char *demangled = dem_string_drain(result);
 	for (uint8_t i = 0; i < sizeof(special_symbols) / sizeof(special_symbols[0]); i++) {
-		dem_str_replace(demangled, special_symbols[i], replacements[i], 1);
+		demangled = dem_str_replace(demangled, special_symbols[i], replacements[i], 1);
 	}
 
 	DemString *utf_free = replace_utf(demangled);
