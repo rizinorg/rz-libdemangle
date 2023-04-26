@@ -7,7 +7,13 @@
 #include <rz_libdemangle.h>
 
 #if WITH_GPL
-#include "cxx/demangle.h"
+// ansidecl.h makes a mess with the definition of
+// const. thus we directly avoid to import the
+// demangle.h header and instead define the data here.
+#define DMGL_NO_OPTS 0 /* For readability... */
+#define DMGL_PARAMS  (1 << 0) /* Include function args */
+
+char *cplus_demangle_v3(const char *mangled, int options);
 
 #define SL(x) \
 	{ x, strlen(x) }
@@ -17,8 +23,7 @@ typedef struct cxx_prefix_t {
 	uint32_t size;
 } CxxPrefix;
 
-char *demangle_gpl_cxx(const char *str) {
-	// DMGL_TYPES | DMGL_PARAMS | DMGL_ANSI | DMGL_VERBOSE | DMGL_RET_POSTFIX | DMGL_TYPES;
+static char *demangle_gpl_cxx(const char *str) {
 	uint32_t i;
 
 	int flags = DMGL_NO_OPTS | DMGL_PARAMS;
