@@ -8,10 +8,10 @@
 
 #if WITH_GPL
 // ansidecl.h makes a mess with the definition of
-// const. thus we directly avoid to import the 
+// const. thus we directly avoid to import the
 // demangle.h header and instead define the data here.
-#define DMGL_NO_OPTS     0 /* For readability... */
-#define DMGL_PARAMS      (1 << 0) /* Include function args */
+#define DMGL_NO_OPTS 0 /* For readability... */
+#define DMGL_PARAMS  (1 << 0) /* Include function args */
 
 char *cplus_demangle_v3(const char *mangled, int options);
 
