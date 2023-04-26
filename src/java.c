@@ -344,7 +344,7 @@ static char *demangle_any(char *mangled) {
  * - myField.I                          myField:int
  * - Lsome/class/Object;.myMethod([F)I  int some.class.Object.myMethod(float[])
  */
-RZ_API char *libdemangle_handler_java(const char *mangled) {
+DEM_LIB_EXPORT char *libdemangle_handler_java(const char *mangled) {
 	if (!mangled) {
 		return NULL;
 	}

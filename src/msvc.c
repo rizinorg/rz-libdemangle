@@ -3,7 +3,7 @@
 #include "demangler.h"
 #include <rz_libdemangle.h>
 
-RZ_API char *libdemangle_handler_msvc(const char *str) {
+DEM_LIB_EXPORT char *libdemangle_handler_msvc(const char *str) {
 	char *out = NULL;
 	SDemangler *mangler = 0;
 
