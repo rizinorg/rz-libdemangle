@@ -31,14 +31,6 @@ typedef uint8_t ut8;
 typedef uint16_t ut16;
 typedef uint32_t ut32;
 
-#if defined(__GNUC__) && __GNUC__ >= 4
-#define RZ_API __attribute__((visibility("default")))
-#elif defined(_MSC_VER)
-#define RZ_API __declspec(dllexport)
-#else
-#define RZ_API
-#endif
-
 #define IS_UPPER(c)       ((c) >= 'A' && (c) <= 'Z')
 #define IS_LOWER(c)       ((c) >= 'a' && (c) <= 'z')
 #define IS_DIGIT(x)       ((x) >= '0' && (x) <= '9')

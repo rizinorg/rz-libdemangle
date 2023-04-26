@@ -3,7 +3,7 @@
 #include "demangler_util.h"
 #include <rz_libdemangle.h>
 
-RZ_API char *libdemangle_handler_objc(const char *sym) {
+DEM_LIB_EXPORT char *libdemangle_handler_objc(const char *sym) {
 	char *ret = NULL;
 	char *clas = NULL;
 	char *name = NULL;

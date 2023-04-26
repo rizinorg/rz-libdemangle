@@ -129,7 +129,7 @@ static char *replacements[] = {
  * We should not call the CXX demangler here because then this code will not be LGPL,
  * but GPL because CXX demangler is GPL
  */
-RZ_API char *libdemangle_handler_rust(const char *sym) {
+DEM_LIB_EXPORT char *libdemangle_handler_rust(const char *sym) {
 	const char *post = sym;
 	char *prefixes[] = { "_ZN", /* Windows */ "ZN", /* OSX */ "__ZN" };
 
