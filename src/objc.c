@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: 2012-2019 pancake <pancake@nopcode.org>
 // SPDX-License-Identifier: LGPL-3.0-only
 #include "demangler_util.h"
+#include "cxx.h"
 #include <rz_libdemangle.h>
 
-DEM_LIB_EXPORT char *libdemangle_handler_objc(const char *sym) {
+static char *demangle_objc(const char *sym) {
 	char *ret = NULL;
 	char *clas = NULL;
 	char *name = NULL;
@@ -122,4 +123,12 @@ DEM_LIB_EXPORT char *libdemangle_handler_objc(const char *sym) {
 	free(args);
 	free(name);
 	return ret;
+}
+
+DEM_LIB_EXPORT char *libdemangle_handler_objc(const char *symbol) {
+	char *res = demangle_objc(symbol);
+	if (res) {
+		return res;
+	}
+	return demangle_gpl_cxx(symbol);
 }
