@@ -4,6 +4,7 @@
 
 #include "demangler_util.h"
 #include "borland.h"
+#include "cxx.h"
 #include <rz_libdemangle.h>
 
 #if WITH_GPL
@@ -23,21 +24,18 @@ typedef struct cxx_prefix_t {
 	uint32_t size;
 } CxxPrefix;
 
-static char *demangle_gpl_cxx(const char *str) {
+char *demangle_gpl_cxx(const char *str) {
 	uint32_t i;
 
 	int flags = DMGL_NO_OPTS | DMGL_PARAMS;
 	CxxPrefix prefixes[] = {
 		SL("__symbol_stub1_"),
-		SL("reloc."),
-		SL("sym.imp."),
-		SL("imp."),
 		{ NULL, 0 }
 	};
 	char *tmpstr = strdup(str);
 	char *p = tmpstr;
 
-	if (p[0] == p[1] && *p == '_') {
+	while (p[0] == p[1] && *p == '_') {
 		p++;
 	}
 	for (i = 0; prefixes[i].name; i++) {

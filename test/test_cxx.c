@@ -1151,6 +1151,7 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN25SystemClassLoaderInjector6injectEP7_JNIEnvP8_jobjectP8_jstringS5_", "SystemClassLoaderInjector::inject(_JNIEnv*, _jobject*, _jstring*, _jstring*)"),
 	mu_demangle_test("_Z21registerNativeMethodsP7_JNIEnvPKcP15JNINativeMethodi", "registerNativeMethods(_JNIEnv*, char const*, JNINativeMethod*, int)"),
 	mu_demangle_test("_Z17register_ndk_loadP7_JNIEnv", "register_ndk_load(_JNIEnv*)"),
+	mu_demangle_test("_____Z17register_ndk_loadP7_JNIEnv", "register_ndk_load(_JNIEnv*)"),
 	// end
 );
 

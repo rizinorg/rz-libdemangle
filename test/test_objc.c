@@ -10,6 +10,11 @@ mu_demangle_tests(objc,
 	mu_demangle_test("_i_class1__method2_arg2_", "public int class1::method2(int, int)"),
 	mu_demangle_test("-[class1 method2:arg2:]", "public int class1::method2(int, int)"),
 	mu_demangle_test("+[Employee sayHello]", "static int Employee::sayHello()"),
+#if WITH_GPL
+	mu_demangle_test("_Z11GetFileNamePc", "GetFileName(char*)"),
+#else
+	mu_demangle_test("_Z11GetFileNamePc", NULL),
+#endif
 	// end
 );
 
