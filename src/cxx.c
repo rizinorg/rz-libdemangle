@@ -11,10 +11,10 @@
 // ansidecl.h makes a mess with the definition of
 // const. thus we directly avoid to import the
 // demangle.h header and instead define the data here.
-#define DMGL_NO_OPTS 0 /* For readability... */
-#define DMGL_PARAMS  (1 << 0) /* Include function args */
+#define DMGL_PARAMS (1 << 0) /* Include function args */
 
 char *cplus_demangle_v3(const char *mangled, int options);
+char *cplus_demangle_v2(const char *mangled, int options);
 
 #define SL(x) \
 	{ x, strlen(x) }
@@ -26,8 +26,6 @@ typedef struct cxx_prefix_t {
 
 char *demangle_gpl_cxx(const char *str) {
 	uint32_t i;
-
-	int flags = DMGL_NO_OPTS | DMGL_PARAMS;
 	CxxPrefix prefixes[] = {
 		SL("__symbol_stub1_"),
 		{ NULL, 0 }
@@ -86,7 +84,7 @@ char *demangle_gpl_cxx(const char *str) {
 		}
 	}
 
-	char *out = cplus_demangle_v3(p, flags);
+	char *out = cplus_demangle_v3(p, DMGL_PARAMS);
 	free(tmpstr);
 	return out;
 }
@@ -97,7 +95,12 @@ DEM_LIB_EXPORT char *libdemangle_handler_cxx(const char *symbol) {
 	if (result) {
 		return result;
 	}
+
 #if WITH_GPL
+	result = cplus_demangle_v2(symbol, DMGL_PARAMS);
+	if (result) {
+		return result;
+	}
 	return demangle_gpl_cxx(symbol);
 #else
 	return NULL;
