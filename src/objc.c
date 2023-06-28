@@ -4,27 +4,48 @@
 #include "cxx.h"
 #include <rz_libdemangle.h>
 
-static char *demangle_objc(const char *sym) {
+static char *demangle_objc(const char *symbol) {
 	char *ret = NULL;
 	char *clas = NULL;
 	char *name = NULL;
 	char *args = NULL;
 	int i, nargs = 0;
 	const char *type = NULL;
-	if (!sym) {
+	if (!symbol) {
 		return NULL;
 	}
 
+	char *sym = strdup(symbol);
 	/* classes */
 	if (!strncmp(sym, "_OBJC_Class_", 12)) {
 		const char *className = sym + 12;
 		ret = dem_str_newf("class %s", className);
+		free(sym);
 		return ret;
 	} else if (!strncmp(sym, "_OBJC_CLASS_$_", 14)) {
 		const char *className = sym + 14;
 		ret = dem_str_newf("class %s", className);
+		free(sym);
 		return ret;
+	} else if (sym[0] == '_') {
+		// find any prefix `___[0-9]+`
+		size_t i = 0, len = strlen(sym);
+		for (i = 1; i < len && sym[i] == '_'; ++i) {
+		}
+		for (; i < len && IS_DIGIT(sym[i]); ++i) {
+		}
+		if (IS_DIGIT(sym[i - 1])) {
+			// remove prefix `___[0-9]+`
+			memmove(sym, sym + i, len - i);
+			sym[len - i] = 0;
+		}
 	}
+
+	char *binvk = find_block_invoke(sym);
+	if (binvk) {
+		binvk[0] = ' ';
+	}
+
 	if (!strncmp(sym, "_OBJC_IVAR_$_", 13)) {
 		/* fields */
 		clas = strdup(sym + 13);
@@ -52,6 +73,7 @@ static char *demangle_objc(const char *sym) {
 				name = strdup(name);
 				if (!name) {
 					free(clas);
+					free(sym);
 					return NULL;
 				}
 				for (i = 0; name[i]; i++) {
@@ -75,6 +97,7 @@ static char *demangle_objc(const char *sym) {
 			if (name != clas) {
 				free(name);
 			}
+			free(sym);
 			return NULL;
 		}
 		*args = 0;
@@ -82,6 +105,7 @@ static char *demangle_objc(const char *sym) {
 		name = strdup(args + 2);
 		if (!name) {
 			free(clas);
+			free(sym);
 			return NULL;
 		}
 		args = NULL;
@@ -115,13 +139,14 @@ static char *demangle_objc(const char *sym) {
 				args = strdup("");
 			}
 			if (type && name && *name) {
-				ret = dem_str_newf("%s int %s::%s(%s)", type, clas, name, args);
+				ret = dem_str_newf("%s int %s::%s(%s)%s", type, clas, name, args, binvk ? binvk : "");
 			}
 		}
 	}
 	free(clas);
 	free(args);
 	free(name);
+	free(sym);
 	return ret;
 }
 
