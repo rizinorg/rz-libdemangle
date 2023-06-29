@@ -1152,6 +1152,13 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_Z21registerNativeMethodsP7_JNIEnvPKcP15JNINativeMethodi", "registerNativeMethods(_JNIEnv*, char const*, JNINativeMethod*, int)"),
 	mu_demangle_test("_Z17register_ndk_loadP7_JNIEnv", "register_ndk_load(_JNIEnv*)"),
 	mu_demangle_test("_____Z17register_ndk_loadP7_JNIEnv", "register_ndk_load(_JNIEnv*)"),
+	mu_demangle_test("___ZZN12foonamespace3Foo13inside_lambdaEvENKUlvE_clEv_block_invoke_7636", "foonamespace::Foo::inside_lambda()::{lambda()#1}::operator()() const block_invoke_7636"),
+	mu_demangle_test("___ZN12foonamespace3FooC2Ev_block_invoke_7636", "foonamespace::Foo::Foo() block_invoke_7636"),
+	mu_demangle_test("____Z20InstallSignalHandlerv_block_invoke", "InstallSignalHandler() block_invoke"),
+	mu_demangle_test("____Z20InstallSignalHandlerv_block_invoke_2", "InstallSignalHandler() block_invoke_2"),
+	mu_demangle_test("____ZN12_GLOBAL__N_117ScreenshotManagerC2Ev_block_invoke", "(anonymous namespace)::ScreenshotManager::ScreenshotManager() block_invoke"),
+	mu_demangle_test("____ZN10screenshot29TryPromptUserForScreenCaptureEv_block_invoke", "screenshot::TryPromptUserForScreenCapture() block_invoke"),
+
 	// end
 );
 

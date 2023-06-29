@@ -10,4 +10,6 @@ char *demangle_gpl_cxx(const char *str);
 #define demangle_gpl_cxx(x) (NULL)
 #endif
 
+char *find_block_invoke(char *p);
+
 #endif /* CXX_H */

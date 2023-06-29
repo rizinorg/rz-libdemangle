@@ -55,40 +55,65 @@ char *demangle_gpl_cxx(const char *str) {
 		}
 	}
 
-	uint32_t len = strlen(p);
-	uint32_t _ptrlen = strlen("_ptr");
-	if (len > _ptrlen && !strncmp(p + len - _ptrlen, "_ptr", _ptrlen)) {
-		// remove _ptr from the end
-		*(p + len - _ptrlen) = '\0';
-	} else if (len > 1 && IS_DIGIT(*(p + len - 1))) {
-		// removes version sequences like _5_2 or _18_4 etc... from the end
-		bool expect_digit = true;
-		bool expect_underscore = false;
-		for (i = len - 1; i > 0; i--) {
-			if (expect_digit && IS_DIGIT(p[i])) {
-				if (p[i - 1] == '_') {
-					expect_underscore = true;
-					expect_digit = false;
-				} else if (!IS_DIGIT(p[i - 1])) {
-					break;
-				}
-			} else if (expect_underscore && p[i] == '_') {
-				p[i] = '\0';
-				if (!IS_DIGIT(p[i - 1])) {
-					break;
-				} else {
-					expect_underscore = false;
-					expect_digit = true;
+	char *block_invoke = find_block_invoke(p);
+	if (block_invoke) {
+		block_invoke[0] = 0;
+	} else {
+		uint32_t len = strlen(p);
+		uint32_t _ptrlen = strlen("_ptr");
+		if (len > _ptrlen && !strncmp(p + len - _ptrlen, "_ptr", _ptrlen)) {
+			// remove _ptr from the end
+			*(p + len - _ptrlen) = '\0';
+		} else if (len > 1 && IS_DIGIT(*(p + len - 1))) {
+			// removes version sequences like _5_2 or _18_4 etc... from the end
+			bool expect_digit = true;
+			bool expect_underscore = false;
+			for (i = len - 1; i > 0; i--) {
+				if (expect_digit && IS_DIGIT(p[i])) {
+					if (p[i - 1] == '_') {
+						expect_underscore = true;
+						expect_digit = false;
+					} else if (!IS_DIGIT(p[i - 1])) {
+						break;
+					}
+				} else if (expect_underscore && p[i] == '_') {
+					p[i] = '\0';
+					if (!IS_DIGIT(p[i - 1])) {
+						break;
+					} else {
+						expect_underscore = false;
+						expect_digit = true;
+					}
 				}
 			}
 		}
 	}
 
 	char *out = cplus_demangle_v3(p, DMGL_PARAMS);
+
+	if (block_invoke && out) {
+		DemString *ds = dem_string_new();
+		dem_string_append(ds, out);
+		dem_string_appendf(ds, " %s", block_invoke + 1);
+		free(out);
+		out = dem_string_drain(ds);
+	}
 	free(tmpstr);
+
 	return out;
 }
 #endif
+
+char *find_block_invoke(char *p) {
+	const size_t kwlen = strlen("_block_invoke");
+	char *last = NULL;
+	char *next = p;
+	while ((next = strstr(next, "_block_invoke"))) {
+		last = next;
+		next += kwlen;
+	}
+	return last;
+}
 
 DEM_LIB_EXPORT char *libdemangle_handler_cxx(const char *symbol) {
 	char *result = demangle_borland_delphi(symbol);
