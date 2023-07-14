@@ -113,7 +113,7 @@ typedef int bool;
 
 #define mu_demangle_str_message(name, input, expected, line) \
 	do { \
-		char *output = libdemangle_handler_##name(input); \
+		char *output = libdemangle_handler_##name(input, RZ_DEMANGLE_OPT_ENABLE_ALL); \
 		if (expected) { \
 			mu_assert_streq_free(output, expected, line); \
 		} else { \

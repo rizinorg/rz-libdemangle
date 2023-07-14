@@ -332,6 +332,16 @@ static char *demangle_any(char *mangled) {
 	return dem_string_drain(sb);
 }
 
+static char *java_replace_base_classes(char *name) {
+	for (size_t i = 0; i < RZ_ARRAY_SIZE(java_replace_table); ++i) {
+		java_replace_t *rpl = &java_replace_table[i];
+		if (!(name = dem_str_replace(name, rpl->search, rpl->replace, 1))) {
+			break;
+		}
+	}
+	return name;
+}
+
 /**
  * \brief Demangles java classes/methods/fields
  *
@@ -344,7 +354,7 @@ static char *demangle_any(char *mangled) {
  * - myField.I                          myField:int
  * - Lsome/class/Object;.myMethod([F)I  int some.class.Object.myMethod(float[])
  */
-DEM_LIB_EXPORT char *libdemangle_handler_java(const char *mangled) {
+DEM_LIB_EXPORT char *libdemangle_handler_java(const char *mangled, RzDemangleOpts opts) {
 	if (!mangled) {
 		return NULL;
 	}
@@ -358,12 +368,8 @@ DEM_LIB_EXPORT char *libdemangle_handler_java(const char *mangled) {
 		return NULL;
 	}
 
-	for (size_t i = 0; i < RZ_ARRAY_SIZE(java_replace_table); ++i) {
-		if (!name) {
-			return NULL;
-		}
-		java_replace_t *rpl = &java_replace_table[i];
-		name = dem_str_replace(name, rpl->search, rpl->replace, 1);
+	if (opts & RZ_DEMANGLE_OPT_SIMPLIFY) {
+		name = java_replace_base_classes(name);
 	}
 
 	if ((arguments = strchr(name, '(')) && (return_type = strchr(arguments, ')'))) {
