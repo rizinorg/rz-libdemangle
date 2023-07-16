@@ -166,7 +166,7 @@ demangle_fail:
  *
  * Demangles pascal symbols
  */
-DEM_LIB_EXPORT char *libdemangle_handler_pascal(const char *mangled) {
+DEM_LIB_EXPORT char *libdemangle_handler_pascal(const char *mangled, RzDemangleOpts opts) {
 	if (!mangled || !strchr(mangled, '$')) {
 		return NULL;
 	}

@@ -150,10 +150,10 @@ static char *demangle_objc(const char *symbol) {
 	return ret;
 }
 
-DEM_LIB_EXPORT char *libdemangle_handler_objc(const char *symbol) {
+DEM_LIB_EXPORT char *libdemangle_handler_objc(const char *symbol, RzDemangleOpts opts) {
 	char *res = demangle_objc(symbol);
 	if (res) {
 		return res;
 	}
-	return demangle_gpl_cxx(symbol);
+	return demangle_gpl_cxx(symbol, opts & RZ_DEMANGLE_OPT_SIMPLIFY);
 }

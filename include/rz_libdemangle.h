@@ -17,17 +17,23 @@ extern "C" {
 #define DEM_LIB_EXPORT
 #endif
 
-DEM_LIB_EXPORT char *libdemangle_handler_cxx(const char *symbol);
-DEM_LIB_EXPORT char *libdemangle_handler_rust(const char *symbol);
+typedef enum {
+	RZ_DEMANGLE_OPT_BASE = 0,
+	RZ_DEMANGLE_OPT_SIMPLIFY = (1 << 0),
+	RZ_DEMANGLE_OPT_ENABLE_ALL = 0xFFFF,
+} RzDemangleOpts;
+
+DEM_LIB_EXPORT char *libdemangle_handler_cxx(const char *symbol, RzDemangleOpts opts);
+DEM_LIB_EXPORT char *libdemangle_handler_rust(const char *symbol, RzDemangleOpts opts);
 
 #if WITH_SWIFT_DEMANGLER
-DEM_LIB_EXPORT char *libdemangle_handler_swift(const char *symbol);
+DEM_LIB_EXPORT char *libdemangle_handler_swift(const char *symbol, RzDemangleOpts opts);
 #endif
 
-DEM_LIB_EXPORT char *libdemangle_handler_java(const char *symbol);
-DEM_LIB_EXPORT char *libdemangle_handler_msvc(const char *symbol);
-DEM_LIB_EXPORT char *libdemangle_handler_objc(const char *symbol);
-DEM_LIB_EXPORT char *libdemangle_handler_pascal(const char *symbol);
+DEM_LIB_EXPORT char *libdemangle_handler_java(const char *symbol, RzDemangleOpts opts);
+DEM_LIB_EXPORT char *libdemangle_handler_msvc(const char *symbol, RzDemangleOpts opts);
+DEM_LIB_EXPORT char *libdemangle_handler_objc(const char *symbol, RzDemangleOpts opts);
+DEM_LIB_EXPORT char *libdemangle_handler_pascal(const char *symbol, RzDemangleOpts opts);
 
 #ifdef __cplusplus
 }
