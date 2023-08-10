@@ -388,6 +388,7 @@ char *demangle_gpl_cxx(const char *str, bool simplify) {
 	uint32_t i;
 	CxxPrefix prefixes[] = {
 		PRFX("__symbol_stub1_"),
+		PRFX("stub."),
 	};
 	char *tmpstr = strdup(str);
 	char *p = tmpstr;
