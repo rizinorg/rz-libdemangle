@@ -420,7 +420,10 @@ static int
 	consume_count(type)
 		const char **type;
 {
-	int count = 0;
+	// Note by RizinOrg:
+	// to prevent the overflow check to be optimized out
+	// by the compiler, this variable needs to be volatile.
+	volatile int count = 0;
 
 	if (!isdigit((unsigned char)**type))
 		return -1;
