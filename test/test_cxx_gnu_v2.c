@@ -4,6 +4,9 @@
 #include "minunit.h"
 
 mu_demangle_tests(gnu_v2,
+	// fuzzed strings
+	mu_demangle_test("_ITM_deregisterTMCCCCCCCCCCCCCCCCCCCtart__5555555555555555CloneTable", NULL),
+	// normal
 	mu_demangle_test("_vt.foo", "foo virtual table"),
 	mu_demangle_test("_vt$foo", "foo virtual table"),
 	mu_demangle_test("_vt$foo$bar", "foo::bar virtual table"),
