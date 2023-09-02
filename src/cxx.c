@@ -50,6 +50,27 @@ typedef struct cxx_replace_pair_t {
 	STD_BASIC_WITH_ALLOC_TYPED(r, k, "char"), \
 		STD_BASIC_WITH_ALLOC_TYPED("w" r, k, "wchar_t")
 
+#define STD_BASIC_REGEX(p, t) \
+	{ "std::" p "regex", "std::basic_regex<" t ", std::regex_traits<" t "> >" }, \
+		{ "std::" p "csub_match", "std::sub_match<" t " const*>" }, \
+		{ "std::" p "ssub_match", "std::sub_match<std::" p "string>" }, \
+		{ "std::" p "csub_match", "std::sub_match<iterator<" t "> >" }, \
+		{ "std::" p "ssub_match", "std::sub_match<std::" p "string::const_iterator>" }, \
+		{ "std::" p "cmatch", "std::match_results<iterator<" t ">, std::allocator<std::" p "csub_match > >" }, \
+		{ "std::" p "smatch", "std::match_results<std::" p "string::const_iterator, std::allocator<std::" p "csub_match > >" }, \
+		{ "std::" p "cmatch", "std::match_results<" t " const*, std::allocator<std::" p "csub_match > >" }, \
+		{ "std::" p "smatch", "std::match_results<std::" p "string, std::allocator<std::" p "csub_match > >" }, \
+		{ "std::__detail::_Executor<" t ",", "std::__detail::_Executor<" t " const*, std::allocator<std::" p "csub_match >, std::regex_traits<" t ">," }, \
+		{ "std::__detail::_Executor<" t ",", "std::__detail::_Executor<iterator<" t ">, std::allocator<std::" p "csub_match >, std::regex_traits<" t ">," }, \
+		{ "std::regex_match<" t ">", "std::regex_match<" t ", std::allocator<std::" p "csub_match >, std::regex_traits<" t "> >" }, \
+		{ "std::regex_match<" t ">", "std::regex_match<" t " const*, std::allocator<std::" p "csub_match >, " t ", std::regex_traits<" t "> >" }, \
+		{ "std::regex_match<" t ">", "std::regex_match<iterator<" t ">, std::allocator<std::" p "csub_match >, " t ", std::regex_traits<" t "> >" }, \
+		{ "std::regex_match<std::" p "string>", "std::regex_match<std::char_traits<" t ">, std::allocator<" t ">, std::allocator<std::" p "csub_match >, " t ", std::regex_traits<" t "> >" }, \
+		{ "std::regex_search<" t ">", "std::regex_search<" t ", std::allocator<std::" p "csub_match >, std::regex_traits<" t "> >" }, \
+		{ "std::regex_search<" t ">", "std::regex_search<" t " const*, std::allocator<std::" p "csub_match >, " t ", std::regex_traits<" t "> >" }, \
+		{ "std::regex_search<" t ">", "std::regex_search<iterator<" t ">, std::allocator<std::" p "csub_match >, " t ", std::regex_traits<" t "> >" }, \
+	{ "std::regex_search<std::" p "string>", "std::regex_search<std::char_traits<" t ">, std::allocator<" t ">, std::allocator<std::" p "csub_match >, " t ", std::regex_traits<" t "> >" }
+
 static const CxxReplacePair cplus_typedefs[] = {
 	STD_BASIC_WITH_ALLOC_CHAR("string", "string"),
 	STD_BASIC_WITH_ALLOC_TYPED("u8string", "string", "char8_t"),
@@ -77,6 +98,16 @@ static const CxxReplacePair cplus_typedefs[] = {
 	{ "std::forward_list::iterator", "std::_Fwd_list_iterator" },
 	{ "std::deque::iterator", "std::_Deque_iterator" },
 	{ "iterator", "__normal_iterator" },
+	// known iterators
+	{ "iterator<char>", "iterator<char const*, std::string >" },
+	{ "iterator<wchar_t>", "iterator<wchar_t const*, std::wstring >" },
+	// usually operators
+	{ "<char>", "<char, std::char_traits<char>, iterator<char> >" },
+	{ "<wchar_t>", "<wchar_t, std::char_traits<wchar_t>, iterator<wchar_t> >" },
+	// regex
+	STD_BASIC_REGEX("w", "wchar_t"),
+	STD_BASIC_REGEX("", "char"),
+	STD_CTOR_DTOR("regex", "basic_regex"),
 };
 
 static size_t cplus_find_type_length(const char *input) {
