@@ -56,6 +56,7 @@ libdemangle = library('demangle', libdemangle_src,
     c_args : common_c_args + libdemangle_c_args,
     dependencies: [],
     implicit_include_directories: false,
+    install: get_option('install_lib'),
     include_directories: include_directories(['include', 'src']))
 
 libdemangle_dep = declare_dependency(
@@ -63,6 +64,19 @@ libdemangle_dep = declare_dependency(
     dependencies: [],
     include_directories: include_directories('include'),
 )
+
+if get_option('enable_cli')
+  bin_demangle = [
+    'bin' / 'demangle.c',
+  ]
+  executable('demangle', bin_demangle,
+    c_args : common_c_args,
+    dependencies: [libdemangle_dep],
+    include_directories: include_directories(['include', 'src']),
+    implicit_include_directories: false,
+    install: true,
+  )
+endif
 
 if get_option('enable_tests') and not meson.is_subproject()
   test_dependencies = [libdemangle_dep]

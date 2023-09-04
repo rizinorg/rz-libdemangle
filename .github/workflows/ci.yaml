@@ -17,8 +17,9 @@ jobs:
     - name: Run Unit Tests
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=release build
+        meson -Dbuildtype=release -Denable_cli=true build
         ninja -C build test
+        ./test/test-cli.sh ./build/demangle
 
   Normal-No-GPL:
     runs-on: ubuntu-20.04
@@ -30,8 +31,9 @@ jobs:
     - name: Run Unit Tests
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=release -Duse_gpl=false build
+        meson -Dbuildtype=release -Denable_cli=true -Duse_gpl=false build
         ninja -C build test
+        ./test/test-cli.sh ./build/demangle
 
   Normal-Minimal:
     runs-on: ubuntu-20.04
@@ -43,8 +45,9 @@ jobs:
     - name: Run Unit Tests
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=release -Duse_gpl=false -Duse_swift_demangler=false build
+        meson -Dbuildtype=release -Denable_cli=true -Duse_gpl=false -Duse_swift_demangler=false build
         ninja -C build test
+        ./test/test-cli.sh ./build/demangle
 
   Asan:
     runs-on: ubuntu-20.04
@@ -58,5 +61,6 @@ jobs:
         ASAN_OPTIONS: detect_leaks=0,detect_odr_violation=0,allocator_may_return_null=1
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=debugoptimized -Db_sanitize=address,undefined build
+        meson -Dbuildtype=debugoptimized -Denable_cli=true -Db_sanitize=address,undefined build
         ninja -C build test
+        ./test/test-cli.sh ./build/demangle
