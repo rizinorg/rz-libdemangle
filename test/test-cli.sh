@@ -11,6 +11,7 @@ if [ ! -f "$CLI" ]; then
 fi
 
 HAS_SWIFT=$("$CLI" | grep "swift")
+HAS_GPL=$("$CLI" | grep "gnu v3")
 
 # terminate on fail (!= 0)
 set -e
@@ -18,8 +19,9 @@ set -e
 "$CLI" 'java' 'makeConcatWithConstants(Ljava/lang/String;)Ljava/lang/String;'
 "$CLI" -s 'java' 'makeConcatWithConstants(Ljava/lang/String;)Ljava/lang/String;'
 
-"$CLI" 'c++' '_ZTTNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr'
-"$CLI" -s 'c++' '_ZTTNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr'
+## use borland which is always available even when gpl is disabled.
+"$CLI" 'c++' '@Bar@foo9$wxqv'
+"$CLI" -s 'c++' '@Bar@foo9$wxqv'
 
 "$CLI" 'rust' 'ZN13test$u20$test4foobE'
 "$CLI" -s 'rust' 'ZN13test$u20$test4foobE'
@@ -36,5 +38,10 @@ set -e
 if [ ! -z "$HAS_SWIFT" ]; then
     "$CLI" 'swift' '__TFC4main8FooClasss3barSS'
     "$CLI" -s 'swift' '__TFC4main8FooClasss3barSS'
+fi
+
+if [ ! -z "$HAS_GPL" ]]; then
+    "$CLI" 'c++' '_ZTTNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr'
+    "$CLI" -s 'c++' '_ZTTNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr'
 fi
 

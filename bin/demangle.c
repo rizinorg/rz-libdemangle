@@ -6,13 +6,19 @@
 #include "rz_libdemangle.h"
 #include "rz_libdemangle.h"
 
+#if WITH_GPL
+#define CPP "c++ (incl. borland, gnu v3 & v2)"
+#else
+#define CPP "c++ (only borland)"
+#endif
+
 #if WITH_SWIFT_DEMANGLER
 #define SWIFT "swift, "
 #else
 #define SWIFT ""
 #endif
 
-#define LANGUAGES "java, msvc, objc, " SWIFT "pascal, rust, c++ (incl. borland, gnu v3 & v2)"
+#define LANGUAGES "java, msvc, objc, " SWIFT "pascal, rust, " CPP
 
 typedef char *(*handler_t)(const char *symbol, RzDemangleOpts opts);
 
