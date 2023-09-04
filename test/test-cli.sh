@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# SPDX-FileCopyrightText: 2023 RizinOrg <info@rizin.re>
+# SPDX-FileCopyrightText: 2023 deroad <wargio@libero.it>
+# SPDX-License-Identifier: LGPL-3.0-only
+
 CLI="$1"
 if [ ! -f "$CLI" ]; then
     echo "$0 <path to demangle cli bin>"
