@@ -20,6 +20,7 @@ mu_demangle_tests(gnu_v2,
 	mu_demangle_test("foo__1Ai", "A::foo(int)"),
 	mu_demangle_test("foo__1Afe", "A::foo(float,...)"),
 	mu_demangle_test("_AddColor__10ZafDisplayUcUcUcUcUc", "ZafDisplay::_AddColor(unsigned char, unsigned char, unsigned char, unsigned char, unsigned char)"),
+	mu_demangle_test("I_EEEEET_PNS0_7IsolateENS0_7Runtime10FunctionIdEPKNS2_16TSCallDescriptorENS2_7OpIndexESU_RKT0_", NULL),
 	// end
 );
 

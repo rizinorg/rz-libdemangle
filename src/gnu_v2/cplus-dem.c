@@ -1187,7 +1187,7 @@ type_kind_t tk;
 			string_append(s, work->tmpl_argvec[idx]);
 		else {
 			char buf[10];
-			sprintf(buf, "T%d", idx);
+			snprintf(buf, sizeof(buf), "T%d", idx);
 			string_append(s, buf);
 		}
 	} else if (tk == tk_integral)
@@ -1328,7 +1328,7 @@ int remember;
 					string_append(trawname, work->tmpl_argvec[idx]);
 			} else {
 				char buf[10];
-				sprintf(buf, "T%d", idx);
+				snprintf(buf, sizeof(buf), "T%d", idx);
 				string_append(tname, buf);
 				if (trawname)
 					string_append(trawname, buf);
@@ -2056,7 +2056,7 @@ string *declp;
 
 			if (method) {
 				char buf[50];
-				sprintf(buf, "virtual function thunk (delta:%d) for ", -delta);
+				snprintf(buf, sizeof(buf), "virtual function thunk (delta:%d) for ", -delta);
 				string_append(declp, buf);
 				string_append(declp, method);
 				free(method);
@@ -2689,7 +2689,7 @@ string *result;
 					string_append(result, work->tmpl_argvec[idx]);
 				else {
 					char buf[10];
-					sprintf(buf, "T%d", idx);
+					snprintf(buf, sizeof(buf), "T%d", idx);
 					string_append(result, buf);
 				}
 
@@ -2863,8 +2863,9 @@ string *result;
 			(*mangled)++;
 			for (i = 0;
 				i < sizeof(buf) - 1 && **mangled && **mangled != '_';
-				(*mangled)++, i++)
+				(*mangled)++, i++) {
 				buf[i] = **mangled;
+			}
 			if (**mangled != '_') {
 				success = 0;
 				break;
@@ -2877,7 +2878,11 @@ string *result;
 			*mangled += min(strlen(*mangled), 2);
 		}
 		sscanf(buf, "%x", &dec);
-		sprintf(buf, "int%i_t", dec);
+		if (dec > 64 || dec < 8) {
+			success = 0;
+			break;
+		}
+		snprintf(buf, sizeof(buf), "int%i_t", dec);
 		APPEND_BLANK(result);
 		string_append(result, buf);
 		break;
