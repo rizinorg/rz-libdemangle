@@ -334,7 +334,7 @@ static void
 static int
 	get_count PARAMS((const char **, int *));
 
-static int
+static int64_t
 	consume_count PARAMS((const char **));
 
 static int
@@ -416,7 +416,7 @@ static const char *
 
    Overflow consumes the rest of the digits, and returns -1.  */
 
-static int
+static int64_t
 	consume_count(type)
 		const char **type;
 {
@@ -1653,11 +1653,11 @@ struct work_stuff *work;
 const char **mangled;
 string *declp;
 {
-	int n;
+	int64_t n;
 	int success = 0;
 
 	n = consume_count(mangled);
-	if (n == -1)
+	if (n < 0)
 		return 0;
 	if ((int)strlen(*mangled) >= n) {
 		demangle_arm_hp_template(work, mangled, n, declp);
