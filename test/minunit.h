@@ -112,9 +112,9 @@ typedef int bool;
 #define mu_demangle_func_name(name) demangle_with_##name
 #define mu_demangle_test_size(name) (sizeof(mu_demangle_test_name(name)) / sizeof((mu_demangle_test_name(name))[0]))
 
-#define mu_demangle_str_message(name, input, expected, line) \
+#define mu_demangle_str_message(name, input, expected, line, opts) \
 	do { \
-		char *output = libdemangle_handler_##name(input, RZ_DEMANGLE_OPT_ENABLE_ALL); \
+		char *output = libdemangle_handler_##name(input, opts); \
 		if (expected) { \
 			mu_assert_streq_free(input, output, expected, line); \
 		} else { \
@@ -122,9 +122,9 @@ typedef int bool;
 		} \
 	} while (0)
 
-#define mu_demangle_with(name) \
+#define mu_demangle_with(name, opts) \
 	bool mu_demangle_func_name(name)(mu_demangling_test_t * test) { \
-		mu_demangle_str_message(name, test->input, test->expected, test->line); \
+		mu_demangle_str_message(name, test->input, test->expected, test->line, opts); \
 		mu_end(test->line, test->input, test->expected); \
 	}
 
@@ -158,15 +158,15 @@ int tests_run = 0;
 int tests_passed = 0;
 int mu_test_status = MU_TEST_UNBROKEN;
 
-#define mu_main(name, demangler) \
-	mu_demangle_with(demangler); \
+#define mu_main(name, demangler, opts) \
+	mu_demangle_with(demangler, opts); \
 	int main(int argc, char **argv) { \
 		mu_demangle_loop(name, demangler); \
 		return tests_passed != tests_run; \
 	}
 
 #define mu_main2(name) \
-	mu_demangle_with(name); \
+	mu_demangle_with(name, RZ_DEMANGLE_OPT_ENABLE_ALL); \
 	int main(int argc, char **argv) { \
 		mu_demangle_loop(name, name); \
 		return tests_passed != tests_run; \

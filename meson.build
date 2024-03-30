@@ -14,6 +14,7 @@ libdemangle_src = [
   'src' / 'msvc.c',
   'src' / 'objc.c',
   'src' / 'pascal' / 'pascal.c',
+  'src' / 'rust' / 'punycode.c',
   'src' / 'rust' / 'rust.c',
   'src' / 'rust' / 'rust_legacy.c',
   'src' / 'rust' / 'rust_v0.c',

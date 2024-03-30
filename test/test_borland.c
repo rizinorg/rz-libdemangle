@@ -182,4 +182,4 @@ mu_demangle_tests(borland,
 	// end
 );
 
-mu_main(borland, cxx);
+mu_main(borland, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
