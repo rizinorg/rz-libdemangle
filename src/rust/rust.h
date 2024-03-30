@@ -8,6 +8,6 @@
 #include <rz_libdemangle.h>
 
 char *rust_demangle_legacy(const char *sym);
-char *rust_demangle_v0(const char *sym);
+char *rust_demangle_v0(const char *sym, bool simplified);
 
 #endif // RUST_H

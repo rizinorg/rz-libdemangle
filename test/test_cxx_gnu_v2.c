@@ -24,4 +24,4 @@ mu_demangle_tests(gnu_v2,
 	// end
 );
 
-mu_main(gnu_v2, cxx);
+mu_main(gnu_v2, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);

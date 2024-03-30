@@ -1176,4 +1176,4 @@ mu_demangle_tests(gpl,
 	// end
 );
 
-mu_main(gpl, cxx);
+mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);

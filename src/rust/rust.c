@@ -10,5 +10,5 @@ DEM_LIB_EXPORT char *libdemangle_handler_rust(const char *symbol, RzDemangleOpts
 		return result;
 	}
 
-	return rust_demangle_v0(symbol);
+	return rust_demangle_v0(symbol, opts & RZ_DEMANGLE_OPT_SIMPLIFY);
 }

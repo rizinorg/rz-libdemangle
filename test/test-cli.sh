@@ -35,6 +35,9 @@ set -e
 "$CLI" 'pascal' 'OUTPUT_$$_SQUARE$SMALLINT$$SMALLINT'
 "$CLI" -s 'pascal' 'OUTPUT_$$_SQUARE$SMALLINT$$SMALLINT'
 
+"$CLI" 'rust' '_RNvC6_123foo3bar'
+"$CLI" -s 'rust' '_RNvC6_123foo3bar'
+
 if [ ! -z "$HAS_SWIFT" ]; then
     "$CLI" 'swift' '__TFC4main8FooClasss3barSS'
     "$CLI" -s 'swift' '__TFC4main8FooClasss3barSS'
