@@ -60,7 +60,7 @@ typedef int bool;
 
 #define mu_perror(line, message) \
 	do { \
-		printf(TBOLD TRED "ERR\n[XX] Failed to demangle line %d: " TRESET "%s\n\n", line, message); \
+		printf(TBOLD TRED "ERR\n[XX] Failed to demangle line %d: " TRESET "\n%s\n\n", line, message); \
 	} while (0)
 
 #define mu_fail(line, message) \
@@ -93,15 +93,16 @@ typedef int bool;
 		mu_assert(line, _meqstr, (act__) == NULL); \
 	} while (0)
 
-#define mu_assert_streq_free(actual, expected, line) \
+#define mu_assert_streq_free(input, actual, expected, line) \
 	do { \
 		char *act2__ = (actual); \
 		char _meqstr[MU_BUF_SIZE]; \
+		const char *inp__ = (input); \
 		const char *act__ = (actual); \
 		act__ = act__ ? act__ : "(null)"; \
 		const char *exp__ = (expected); \
 		exp__ = exp__ ? exp__ : "(null)"; \
-		snprintf(_meqstr, MU_BUF_SIZE, "expected %s, got %s.", (exp__), (act__)); \
+		snprintf(_meqstr, MU_BUF_SIZE, "expected: %s\ngot:      %s\ninput:    %s", (exp__), (act__), (inp__)); \
 		int is_success = strcmp((exp__), (act__)) == 0; \
 		free(act2__); \
 		mu_assert(line, _meqstr, is_success); \
@@ -115,7 +116,7 @@ typedef int bool;
 	do { \
 		char *output = libdemangle_handler_##name(input, RZ_DEMANGLE_OPT_ENABLE_ALL); \
 		if (expected) { \
-			mu_assert_streq_free(output, expected, line); \
+			mu_assert_streq_free(input, output, expected, line); \
 		} else { \
 			mu_assert_null(output, input, line); \
 		} \
