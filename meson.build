@@ -5,8 +5,8 @@ cc = meson.get_compiler('c')
 common_c_args = []
 libdemangle_c_args = []
 libdemangle_src = [
-  'src' / 'cxx.c',
   'src' / 'cxx' / 'borland.c',
+  'src' / 'cxx.c',
   'src' / 'demangler.c',
   'src' / 'demangler_util.c',
   'src' / 'java.c',
@@ -14,7 +14,9 @@ libdemangle_src = [
   'src' / 'msvc.c',
   'src' / 'objc.c',
   'src' / 'pascal' / 'pascal.c',
-  'src' / 'rust.c',
+  'src' / 'rust' / 'rust.c',
+  'src' / 'rust' / 'rust_legacy.c',
+  'src' / 'rust' / 'rust_v0.c',
 ]
 
 tests = [
