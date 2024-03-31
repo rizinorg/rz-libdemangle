@@ -5,6 +5,7 @@
 #include "minunit.h"
 
 mu_demangle_tests(rust,
+	// Legacy tests.
 	mu_demangle_test("_ZN5alloc3oom3oom17h722648b727b8bcd0E", "alloc::oom::oom::h722648b727b8bcd0"),
 	mu_demangle_test("__ZN4core3fmt5Write10write_char17hcc5144a9a84f2b15E", "core::fmt::Write::write_char::hcc5144a9a84f2b15"),
 	mu_demangle_test("ZN14rustc_demangle6legacy8demangleE", "rustc_demangle::legacy::demangle"),
@@ -45,17 +46,22 @@ mu_demangle_tests(rust,
 	mu_demangle_test("_ZN2222222222222222222222EE", NULL),
 	mu_demangle_test("_ZN5*70527e27.ll34csaғE", NULL),
 	mu_demangle_test("_ZN5*70527a54.ll34_$b.1E", NULL),
+	mu_demangle_test("_ZNfooE", NULL),
+	mu_demangle_test("_ZN151_$LT$alloc..boxed..Box$LT$alloc..boxed..FnBox$LT$A$C$$u20$Output$u3d$R$GT$$u20$$u2b$$u20$$u27$a$GT$$u20$as$u20$core..ops..function..FnOnce$LT$A$GT$$GT$9call_once17h69e8f44b3723e1caE", "<alloc::boxed::Box<alloc::boxed::FnBox<A, Output=R> + 'a> as core::ops::function::FnOnce<A>>::call_once::h69e8f44b3723e1ca"),
+	mu_demangle_test("_ZN88_$LT$core..result..Result$LT$$u21$$C$$u20$E$GT$$u20$as$u20$std..process..Termination$GT$6report17hfc41d0da4a40b3e8E", "<core::result::Result<!, E> as std::process::Termination>::report::hfc41d0da4a40b3e8"),
+	mu_demangle_test("_ZN11utf8_idents157_$u10e1$$u10d0$$u10ed$$u10db$$u10d4$$u10da$$u10d0$$u10d3$_$u10d2$$u10d4$$u10db$$u10e0$$u10d8$$u10d4$$u10da$$u10d8$_$u10e1$$u10d0$$u10d3$$u10d8$$u10da$$u10d8$17h21634fd5714000aaE", "utf8_idents::საჭმელად_გემრიელი_სადილი::h21634fd5714000aa"),
+	mu_demangle_test("_ZN11issue_609253foo37Foo$LT$issue_60925..llv$u6d$..Foo$GT$3foo17h059a991a004536adE", "issue_60925::foo::Foo<issue_60925::llvm::Foo>::foo::h059a991a004536ad"),
+	mu_demangle_test("_ZN4test1a2bcE", "test::a::bc"),
+	mu_demangle_test("_ZN4testE", "test"),
 	mu_demangle_test("\
         _ZN5~saäb4e\n\
         2734cOsbE\n\
         5usage20h)3\0\0\0\0\0\0\07e2734cOsbE\
         ",
 		NULL),
-	mu_demangle_test("_ZNfooE", NULL),
-	mu_demangle_test("_ZN151_$LT$alloc..boxed..Box$LT$alloc..boxed..FnBox$LT$A$C$$u20$Output$u3d$R$GT$$u20$$u2b$$u20$$u27$a$GT$$u20$as$u20$core..ops..function..FnOnce$LT$A$GT$$GT$9call_once17h69e8f44b3723e1caE", "<alloc::boxed::Box<alloc::boxed::FnBox<A, Output=R> + 'a> as core::ops::function::FnOnce<A>>::call_once::h69e8f44b3723e1ca"),
-	mu_demangle_test("_ZN88_$LT$core..result..Result$LT$$u21$$C$$u20$E$GT$$u20$as$u20$std..process..Termination$GT$6report17hfc41d0da4a40b3e8E", "<core::result::Result<!, E> as std::process::Termination>::report::hfc41d0da4a40b3e8"),
-	mu_demangle_test("_ZN11utf8_idents157_$u10e1$$u10d0$$u10ed$$u10db$$u10d4$$u10da$$u10d0$$u10d3$_$u10d2$$u10d4$$u10db$$u10e0$$u10d8$$u10d4$$u10da$$u10d8$_$u10e1$$u10d0$$u10d3$$u10d8$$u10da$$u10d8$17h21634fd5714000aaE", "utf8_idents::საჭმელად_გემრიელი_სადილი::h21634fd5714000aa"),
-	mu_demangle_test("_ZN11issue_609253foo37Foo$LT$issue_60925..llv$u6d$..Foo$GT$3foo17h059a991a004536adE", "issue_60925::foo::Foo<issue_60925::llvm::Foo>::foo::h059a991a004536ad"),
+
+	// v0 tests.
+
 	// end
 );
 

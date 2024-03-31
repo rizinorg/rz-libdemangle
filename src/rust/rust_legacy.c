@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Dhruv Maroo <dhruvmaru007@gmail.com>
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "demangler_util.h"
-#include <rz_libdemangle.h>
+#include "rust.h"
 
 static uint32_t rebase_value(uint8_t char_code, uint8_t base) {
 	if ((char_code >= 'a' && char_code <= 'z') || (char_code >= 'A' && char_code <= 'Z')) {
@@ -129,7 +128,7 @@ static char *replacements[] = {
  * We should not call the CXX demangler here because then this code will not be LGPL,
  * but GPL because CXX demangler is GPL
  */
-DEM_LIB_EXPORT char *libdemangle_handler_rust(const char *sym, RzDemangleOpts opts) {
+char *rust_demangle_legacy(const char *sym) {
 	const char *post = sym;
 	char *prefixes[] = { "_ZN", /* Windows */ "ZN", /* OSX */ "__ZN" };
 
