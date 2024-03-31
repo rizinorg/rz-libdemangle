@@ -137,23 +137,48 @@ void dem_string_free(DemString *ds) {
 	free(ds);
 }
 
-DemString *dem_string_new() {
-	return RZ_NEW0(DemString);
+DemString *dem_string_new_with_capacity(size_t cap) {
+	if (cap < 1) {
+		return NULL;
+	}
+	DemString *ds = RZ_NEW0(DemString);
+	if (!ds) {
+		return NULL;
+	}
+	ds->buf = malloc(cap);
+	if (!ds->buf) {
+		free(ds);
+		return NULL;
+	}
+	ds->cap = cap;
+	ds->buf[0] = 0;
+	return ds;
 }
 
-static bool dem_string_realloc_no_len_update(DemString *ds, ssize_t size) {
+DemString *dem_string_new() {
+	return dem_string_new_with_capacity(256);
+}
+
+static bool dem_string_has_enough_capacity(DemString *ds, ssize_t size) {
+	return size < 1 || ((ds->len + size) < ds->cap);
+}
+
+static bool dem_string_increase_capacity(DemString *ds, ssize_t size) {
 	if (size < 0) {
 		return false;
+	} else if (dem_string_has_enough_capacity(ds, size)) {
+		return true;
 	}
 	char *tmp = NULL;
-	if (!ds->len) {
+	if (ds->cap < 1) {
 		tmp = malloc(size + 1);
 	} else {
-		tmp = realloc(ds->buf, ds->len + size + 1);
+		tmp = realloc(ds->buf, ds->cap + size + 1);
 	}
 	if (!tmp) {
 		return false;
 	}
+	ds->cap += size + 1;
 	ds->buf = tmp;
 	return true;
 }
@@ -161,6 +186,10 @@ static bool dem_string_realloc_no_len_update(DemString *ds, ssize_t size) {
 char *dem_string_drain(DemString *ds) {
 	dem_return_val_if_fail(ds, NULL);
 	char *ret = ds->buf;
+	if ((ds->len + 1) < ds->cap) {
+		// optimise memory space.
+		ret = realloc(ret, ds->len + 1);
+	}
 	free(ds);
 	return ret;
 }
@@ -175,7 +204,7 @@ bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size) 
 	dem_return_val_if_fail(ds && string, false);
 	if (!size) {
 		return true;
-	} else if (!dem_string_realloc_no_len_update(ds, size)) {
+	} else if (!dem_string_increase_capacity(ds, size)) {
 		return false;
 	}
 	memmove(ds->buf + size, ds->buf, ds->len);
@@ -190,7 +219,7 @@ bool dem_string_append_n(DemString *ds, const char *string, size_t size) {
 	dem_return_val_if_fail(ds && string, false);
 	if (!size) {
 		return true;
-	} else if (!dem_string_realloc_no_len_update(ds, size)) {
+	} else if (!dem_string_increase_capacity(ds, size)) {
 		return false;
 	}
 
@@ -204,7 +233,7 @@ bool dem_string_concat(DemString *dst, DemString *src) {
 	dem_return_val_if_fail(dst && src, false);
 	if (!src->len) {
 		return true;
-	} else if (!dem_string_realloc_no_len_update(dst, src->len)) {
+	} else if (!dem_string_increase_capacity(dst, src->len)) {
 		return false;
 	}
 
@@ -227,7 +256,7 @@ bool dem_string_appendf(DemString *ds, const char *fmt, ...) {
 	if (size < 1) {
 		// always success on empty strings
 		goto dem_string_appendf_end;
-	} else if (!dem_string_realloc_no_len_update(ds, size)) {
+	} else if (!dem_string_increase_capacity(ds, size)) {
 		res = false;
 		goto dem_string_appendf_end;
 	}
@@ -239,6 +268,22 @@ dem_string_appendf_end:
 	va_end(ap2);
 	va_end(ap1);
 	return res;
+}
+
+bool dem_string_append_char(DemString *ds, const char ch) {
+	dem_return_val_if_fail(ds, false);
+	if (!IS_PRINTABLE(ch)) {
+		// ignore non printable chars.
+		return false;
+	} else if (!dem_string_increase_capacity(ds, 1)) {
+		return false;
+	}
+
+	ds->buf[ds->len] = ch;
+
+	ds->len++;
+	ds->buf[ds->len] = 0;
+	return true;
 }
 
 void dem_string_replace_char(DemString *ds, char ch, char rp) {
