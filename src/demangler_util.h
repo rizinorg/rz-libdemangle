@@ -30,12 +30,32 @@ typedef SSIZE_T ssize_t;
 typedef uint8_t ut8;
 typedef uint16_t ut16;
 typedef uint32_t ut32;
+typedef uint64_t ut64;
+
+#define UT8_MAX  0xFFu
+#define UT16_MAX 0xFFFFu
+#define UT32_MAX 0xFFFFFFFFu
+#define UT64_MAX 0xFFFFFFFFFFFFFFFFlu
 
 #define IS_UPPER(c)       ((c) >= 'A' && (c) <= 'Z')
 #define IS_LOWER(c)       ((c) >= 'a' && (c) <= 'z')
 #define IS_DIGIT(x)       ((x) >= '0' && (x) <= '9')
+#define IS_HEX_ALPHA(x)   ((x) >= 'a' && (x) <= 'f')
+#define IS_HEX(x)         (IS_DIGIT(x) || IS_HEX_ALPHA(x))
+#define IS_ALPHA(x)       (IS_UPPER(x) || IS_LOWER(x))
+#define IS_PRINTABLE(x)   ((x) >= ' ' && (x) <= '~')
 #define RZ_MIN(x, y)      (((x) > (y)) ? (y) : (x))
 #define RZ_STR_ISEMPTY(x) (!(x) || !*(x))
+
+#if __WINDOWS__
+#define PFMT64x "I64x"
+#define PFMT64u "I64u"
+#define PFMTSZu "Iu"
+#else
+#define PFMT64x "llx"
+#define PFMT64u "llu"
+#define PFMTSZu "zu"
+#endif
 
 char *dem_str_ndup(const char *ptr, int len);
 char *dem_str_newf(const char *fmt, ...);
@@ -46,15 +66,18 @@ char *dem_str_replace(char *str, const char *key, const char *val, int g);
 typedef struct {
 	char *buf;
 	size_t len;
+	size_t cap;
 } DemString;
 
 void dem_string_free(DemString *ds);
 DemString *dem_string_new();
+DemString *dem_string_new_with_capacity(size_t cap);
 char *dem_string_drain(DemString *ds);
 bool dem_string_append(DemString *ds, const char *string);
 bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size);
 bool dem_string_append_n(DemString *ds, const char *string, size_t size);
 bool dem_string_appendf(DemString *ds, const char *fmt, ...);
+bool dem_string_append_char(DemString *ds, const char ch);
 bool dem_string_concat(DemString *dst, DemString *src);
 #define dem_string_buffer(d)            (d->buf)
 #define dem_string_length(d)            (d->len)
