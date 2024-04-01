@@ -37,6 +37,9 @@ Boston, MA 02111-1307, USA.  */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+
+#define UT32_MAX 0xffffffffu
 
 #include "cplus-dem.h"
 #undef CURRENT_DEMANGLING_STYLE
@@ -408,6 +411,20 @@ static const char *
 static const char *
 	demangle_qualifier PARAMS((int));
 
+#define overflow_check_mul(a, b) \
+	do { \
+		if ((b) && (a) > (UT32_MAX / (b))) { \
+			return -1; \
+		} \
+	} while (0)
+
+#define overflow_check_add(a, b) \
+	do { \
+		if ((a) > (UT32_MAX - (b))) { \
+			return -1; \
+		} \
+	} while (0)
+
 /* Translate count to integer, consuming tokens in the process.
    Conversion terminates on the first non-digit character.
 
@@ -423,26 +440,19 @@ static int
 	// Note by RizinOrg:
 	// to prevent the overflow check to be optimized out
 	// by the compiler, this variable needs to be volatile.
-	volatile int count = 0;
+	uint32_t count = 0;
 
 	if (!isdigit((unsigned char)**type))
 		return -1;
 
 	while (isdigit((unsigned char)**type)) {
+		overflow_check_mul(count, 10);
 		count *= 10;
 
-		/* Check for overflow.
-		   We assume that count is represented using two's-complement;
-		   no power of two is divisible by ten, so if an overflow occurs
-		   when multiplying by ten, the result will not be a multiple of
-		   ten.  */
-		if ((count % 10) != 0) {
-			while (isdigit((unsigned char)**type))
-				(*type)++;
-			return -1;
-		}
+		uint32_t num = **type - '0';
+		overflow_check_add(count, num);
+		count += num;
 
-		count += **type - '0';
 		(*type)++;
 	}
 
