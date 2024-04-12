@@ -195,17 +195,11 @@ static bool rust_v0_parse_basic_type(rust_v0_t *v0, char tag) {
 	case 'j':
 		rust_v0_print(v0, "usize");
 		break;
-	case 'k':
-		rust_v0_print(v0, "f16");
-		break;
 	case 'f':
 		rust_v0_print(v0, "f32");
 		break;
 	case 'd':
 		rust_v0_print(v0, "f64");
-		break;
-	case 'q':
-		rust_v0_print(v0, "f128");
 		break;
 	case 'z': // never
 		rust_v0_putc(v0, '!');
@@ -795,7 +789,7 @@ static bool rust_v0_parse_path(rust_v0_t *v0, bool is_type, bool no_trail) {
 			goto end;
 		}
 		rust_v0_print_substr(v0, &crate);
-		if (!v0->hide_disambiguator) {
+		if (!v0->hide_disambiguator && disambiguator) {
 			// https://doc.rust-lang.org/rustc/symbol-mangling/v0.html#path-crate-root
 			rust_v0_printf(v0, "[%" PFMT64x "]", disambiguator);
 		}
