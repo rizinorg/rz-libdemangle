@@ -8,7 +8,7 @@ on:
 
 jobs:
   Normal:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -22,7 +22,7 @@ jobs:
         ./test/test-cli.sh ./build/demangle
 
   Normal-No-GPL:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -36,7 +36,7 @@ jobs:
         ./test/test-cli.sh ./build-nogpl/demangle
 
   Normal-Minimal:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -50,7 +50,7 @@ jobs:
         ./test/test-cli.sh ./build-no-min/demangle
 
   Asan:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
