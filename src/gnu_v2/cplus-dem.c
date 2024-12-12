@@ -50,8 +50,7 @@ Boston, MA 02111-1307, USA.  */
 static const char *mystrstr PARAMS((const char *, const char *));
 
 static const char *
-	mystrstr(const char *s1, const char *s2)
-{
+mystrstr(const char *s1, const char *s2) {
 	register const char *p = s1;
 	register int len = strlen(s2);
 
@@ -432,8 +431,7 @@ static const char *
    Overflow consumes the rest of the digits, and returns -1.  */
 
 static int
-	consume_count(const char **type)
-{
+consume_count(const char **type) {
 	// Note by RizinOrg:
 	// to prevent the overflow check to be optimized out
 	// by the compiler, this variable needs to be volatile.
@@ -461,8 +459,7 @@ static int
    failure, since 0 can be a valid value.  */
 
 static int
-	consume_count_with_underscores(const char **mangled)
-{
+consume_count_with_underscores(const char **mangled) {
 	int idx;
 
 	if (**mangled == '_') {
@@ -491,8 +488,7 @@ static int
    corresponding to this qualifier.  */
 
 static int
-code_for_qualifier(int c)
-{
+code_for_qualifier(int c) {
 	switch (c) {
 	case 'C':
 		return TYPE_QUAL_CONST;
@@ -512,8 +508,7 @@ code_for_qualifier(int c)
    TYPE_QUALS.  */
 
 static const char *
-qualifier_string(int type_quals)
-{
+qualifier_string(int type_quals) {
 	switch (type_quals) {
 	case TYPE_UNQUALIFIED:
 		return "";
@@ -549,8 +544,7 @@ qualifier_string(int type_quals)
    called with a valid qualifier code.  */
 
 static const char *
-demangle_qualifier(int c)
-{
+demangle_qualifier(int c) {
 	return qualifier_string(code_for_qualifier(c));
 }
 
@@ -583,8 +577,7 @@ demangle_qualifier(int c)
    MANGLED.  */
 
 char *
-	cplus_demangle_v2(const char *mangled, int options)
-{
+cplus_demangle_v2(const char *mangled, int options) {
 	char *ret;
 	struct work_stuff work[1];
 	memset((char *)work, 0, sizeof(work));
@@ -604,8 +597,7 @@ char *
    calls go directly to this routine to avoid resetting that info. */
 
 static char *
-internal_cplus_demangle(struct work_stuff *work, const char *mangled)
-{
+internal_cplus_demangle(struct work_stuff *work, const char *mangled) {
 
 	string decl;
 	int success = 0;
@@ -659,8 +651,7 @@ internal_cplus_demangle(struct work_stuff *work, const char *mangled)
 
 /* Clear out and squangling related storage */
 static void
-	squangle_mop_up(struct work_stuff *work)
-{
+squangle_mop_up(struct work_stuff *work) {
 	/* clean up the B and K type mangling types. */
 	forget_B_and_K_types(work);
 	if (work->btypevec != NULL) {
@@ -674,8 +665,7 @@ static void
 /* Clear out any mangled storage */
 
 static char *
-mop_up(struct work_stuff *work, string *declp, int success)
-{
+mop_up(struct work_stuff *work, string *declp, int success) {
 	char *demangled = NULL;
 
 	/* Discard the remembered types, if any.  */
@@ -745,8 +735,7 @@ DESCRIPTION
 	argument list.  */
 
 static int
-demangle_signature(struct work_stuff *work, const char **mangled, string *declp)
-{
+demangle_signature(struct work_stuff *work, const char **mangled, string *declp) {
 	int success = 1;
 	int func_done = 0;
 	int expect_func = 0;
@@ -1032,8 +1021,7 @@ demangle_method_args (struct work_stuff *work, const char **mangled, string *dec
 #endif
 
 static int
-demangle_template_template_parm(struct work_stuff *work, const char **mangled, string *tname)
-{
+demangle_template_template_parm(struct work_stuff *work, const char **mangled, string *tname) {
 	int i;
 	int r;
 	int need_comma = 0;
@@ -1075,15 +1063,15 @@ demangle_template_template_parm(struct work_stuff *work, const char **mangled, s
 			need_comma = 1;
 		}
 	}
-	if (tname->p[-1] == '>')
-		string_append(tname, " ");
+	/* test cases failing due to this */
+	/* if (tname->p[-1] == '>') */
+	/* 	string_append(tname, " "); */
 	string_append(tname, "> class");
 	return (success);
 }
 
 static int
-demangle_integral_value(struct work_stuff *work, const char **mangled, string *s)
-{
+demangle_integral_value(struct work_stuff *work, const char **mangled, string *s) {
 	int success;
 
 	if (**mangled == 'E') {
@@ -1151,8 +1139,7 @@ demangle_integral_value(struct work_stuff *work, const char **mangled, string *s
 }
 
 static int
-demangle_template_value_parm(struct work_stuff *work, const char **mangled, string *s, type_kind_t tk)
-{
+demangle_template_value_parm(struct work_stuff *work, const char **mangled, string *s, type_kind_t tk) {
 	int success = 1;
 
 	if (**mangled == 'Y') {
@@ -1272,8 +1259,7 @@ demangle_template_value_parm(struct work_stuff *work, const char **mangled, stri
    types.  */
 
 static int
-demangle_template(struct work_stuff *work, const char **mangled, string *tname, string *trawname, int is_type, int remember)
-{
+demangle_template(struct work_stuff *work, const char **mangled, string *tname, string *trawname, int is_type, int remember) {
 	int i = 0;
 	int r = 0;
 	int need_comma = 0;
@@ -1422,8 +1408,9 @@ demangle_template(struct work_stuff *work, const char **mangled, string *tname, 
 	if (is_java_array) {
 		string_append(tname, "[]");
 	} else {
-		if (tname->p[-1] == '>')
-			string_append(tname, " ");
+		/* test cases failing due to this */
+		/* if (tname->p[-1] == '>') */
+		/* 	string_append(tname, " "); */
 		string_append(tname, ">");
 	}
 
@@ -1434,8 +1421,7 @@ demangle_template(struct work_stuff *work, const char **mangled, string *tname, 
 }
 
 static int
-arm_pt(struct work_stuff *work, const char *mangled, int n, const char **anchor, const char **args)
-{
+arm_pt(struct work_stuff *work, const char *mangled, int n, const char **anchor, const char **args) {
 	/* Check if ARM template with "__pt__" in it ("parameterized type") */
 	/* Allow HP also here, because HP's cfront compiler follows ARM to some extent */
 	if ((ARM_DEMANGLING || HP_DEMANGLING) && (*anchor = mystrstr(mangled, "__pt__"))) {
@@ -1477,8 +1463,7 @@ arm_pt(struct work_stuff *work, const char *mangled, int n, const char **anchor,
 }
 
 static void
-	demangle_arm_hp_template(struct work_stuff *work, const char **mangled, int n, string *declp)
-{
+demangle_arm_hp_template(struct work_stuff *work, const char **mangled, int n, string *declp) {
 	const char *p;
 	const char *args;
 	const char *e = *mangled + n;
@@ -1615,8 +1600,7 @@ static void
    already been dealt with */
 
 static int
-demangle_class_name(struct work_stuff *work, const char **mangled, string *declp)
-{
+demangle_class_name(struct work_stuff *work, const char **mangled, string *declp) {
 	int n;
 	int success = 0;
 
@@ -1667,8 +1651,7 @@ DESCRIPTION
 */
 
 static int
-demangle_class(struct work_stuff *work, const char **mangled, string *declp)
-{
+demangle_class(struct work_stuff *work, const char **mangled, string *declp) {
 	int success = 0;
 	int btype;
 	string class_name;
@@ -1734,8 +1717,7 @@ DESCRIPTION
  */
 
 static int
-demangle_prefix(struct work_stuff *work, const char **mangled, string *declp)
-{
+demangle_prefix(struct work_stuff *work, const char **mangled, string *declp) {
 	int success = 1;
 	const char *scan;
 	int i;
@@ -1908,8 +1890,7 @@ DESCRIPTION
  */
 
 static int
-gnu_special(struct work_stuff *work, const char **mangled, string *declp)
-{
+gnu_special(struct work_stuff *work, const char **mangled, string *declp) {
 	int n;
 	int success = 1;
 	const char *p;
@@ -2047,8 +2028,7 @@ gnu_special(struct work_stuff *work, const char **mangled, string *declp)
 }
 
 static void
-	recursively_demangle(struct work_stuff *work, const char **mangled, string *result, int namelength)
-{
+recursively_demangle(struct work_stuff *work, const char **mangled, string *result, int namelength) {
 	char *recurse = (char *)NULL;
 	char *recurse_dem = (char *)NULL;
 
@@ -2092,8 +2072,7 @@ DESCRIPTION
  */
 
 static int
-	arm_special(const char **mangled, string *declp)
-{
+arm_special(const char **mangled, string *declp) {
 	int n;
 	int success = 1;
 	const char *scan;
@@ -2167,8 +2146,7 @@ BUGS
  */
 
 static int
-demangle_qualified(struct work_stuff *work, const char **mangled, string *result, int isfuncname, int append)
-{
+demangle_qualified(struct work_stuff *work, const char **mangled, string *result, int isfuncname, int append) {
 	int qualifiers = 0;
 	int success = 1;
 	const char *p;
@@ -2382,8 +2360,7 @@ DESCRIPTION
 */
 
 static int
-	get_count(const char **type, int *count)
-{
+get_count(const char **type, int *count) {
 	const char *p;
 	int n;
 
@@ -2413,8 +2390,7 @@ static int
    value returned is really a type_kind_t.  */
 
 static int
-do_type(struct work_stuff *work, const char **mangled, string *result)
-{
+do_type(struct work_stuff *work, const char **mangled, string *result) {
 	int n;
 	int done;
 	int success;
@@ -2427,6 +2403,7 @@ do_type(struct work_stuff *work, const char **mangled, string *result)
 	string_init(&btype);
 	string_init(&decl);
 	string_init(result);
+	int need_qualifiers = 0;
 
 	done = 0;
 	success = 1;
@@ -2498,8 +2475,14 @@ do_type(struct work_stuff *work, const char **mangled, string *result)
 				(*mangled)++;
 			break;
 
-		case 'M':
-		case 'O': {
+		case 'O':
+			(*mangled)++;
+			string_prepend(&decl, "&&");
+			if (tk == tk_none)
+				tk = tk_reference;
+			break;
+
+		case 'M': {
 			type_quals = TYPE_UNQUALIFIED;
 
 			member = **mangled == 'M';
@@ -2575,6 +2558,7 @@ do_type(struct work_stuff *work, const char **mangled, string *result)
 		case 'V':
 		case 'u':
 			if (PRINT_ANSI_QUALIFIERS) {
+				need_qualifiers = 1;
 				if (!STRING_EMPTY(&decl))
 					string_prepend(&decl, " ");
 
@@ -2582,9 +2566,6 @@ do_type(struct work_stuff *work, const char **mangled, string *result)
 			}
 			(*mangled)++;
 			break;
-			/*
-			  }
-			  */
 
 			/* fall through */
 		default:
@@ -2674,8 +2655,7 @@ do_type(struct work_stuff *work, const char **mangled, string *result)
    The value returned is really a type_kind_t.  */
 
 static int
-demangle_fund_type(struct work_stuff *work, const char **mangled, string *result)
-{
+demangle_fund_type(struct work_stuff *work, const char **mangled, string *result) {
 	int done = 0;
 	int success = 1;
 	char buf[10];
@@ -2865,8 +2845,7 @@ demangle_fund_type(struct work_stuff *work, const char **mangled, string *result
  **mangled points to 'S' or 'U' */
 
 static int
-do_hpacc_template_const_value(struct work_stuff *work, const char **mangled, string *result)
-{
+do_hpacc_template_const_value(struct work_stuff *work, const char **mangled, string *result) {
 	int unsigned_const;
 
 	if (**mangled != 'U' && **mangled != 'S')
@@ -2917,8 +2896,7 @@ do_hpacc_template_const_value(struct work_stuff *work, const char **mangled, str
  **mangled is pointing to the 'A' */
 
 static int
-do_hpacc_template_literal(struct work_stuff *work, const char **mangled, string *result)
-{
+do_hpacc_template_literal(struct work_stuff *work, const char **mangled, string *result) {
 	int literal_len = 0;
 	char *recurse;
 	char *recurse_dem;
@@ -2957,8 +2935,7 @@ do_hpacc_template_literal(struct work_stuff *work, const char **mangled, string 
 }
 
 static int
-	snarf_numeric_literal(const char **args, string *arg)
-{
+snarf_numeric_literal(const char **args, string *arg) {
 	if (**args == '-') {
 		char_str[0] = '-';
 		string_append(arg, char_str);
@@ -2983,8 +2960,7 @@ static int
    and free'd should anything go wrong.  */
 
 static int
-do_arg(struct work_stuff *work, const char **mangled, string *result)
-{
+do_arg(struct work_stuff *work, const char **mangled, string *result) {
 	/* Remember where we started so that we can record the type, for
 	   non-squangling type remembering.  */
 	const char *start = *mangled;
@@ -3045,8 +3021,7 @@ do_arg(struct work_stuff *work, const char **mangled, string *result)
 }
 
 static void
-	remember_type(struct work_stuff *work, const char *start, int len)
-{
+remember_type(struct work_stuff *work, const char *start, int len) {
 	char *tem;
 
 	if (work->forgetting_types)
@@ -3070,8 +3045,7 @@ static void
 
 /* Remember a K type class qualifier. */
 static void
-	remember_Ktype(struct work_stuff *work, const char *start, int len)
-{
+remember_Ktype(struct work_stuff *work, const char *start, int len) {
 	char *tem;
 
 	if (work->numk >= work->ksize) {
@@ -3095,8 +3069,7 @@ static void
    registers map<temp<char> > as B0, and temp<char> as B1 */
 
 static int
-register_Btype(struct work_stuff *work)
-{
+register_Btype(struct work_stuff *work) {
 	int ret;
 
 	if (work->numb >= work->bsize) {
@@ -3117,8 +3090,7 @@ register_Btype(struct work_stuff *work)
 /* Store a value into a previously registered B code type. */
 
 static void
-	remember_Btype(struct work_stuff *work, const char *start, int len, int index)
-{
+remember_Btype(struct work_stuff *work, const char *start, int len, int index) {
 	char *tem;
 
 	tem = malloc(len + 1);
@@ -3129,8 +3101,7 @@ static void
 
 /* Lose all the info related to B and K type codes. */
 static void
-	forget_B_and_K_types(struct work_stuff *work)
-{
+forget_B_and_K_types(struct work_stuff *work) {
 	int i;
 
 	while (work->numk > 0) {
@@ -3152,8 +3123,7 @@ static void
 /* Forget the remembered types, but not the type vector itself.  */
 
 static void
-	forget_types(struct work_stuff *work)
-{
+forget_types(struct work_stuff *work) {
 	int i;
 
 	while (work->ntypes > 0) {
@@ -3208,8 +3178,7 @@ static void
  */
 
 static int
-demangle_args(struct work_stuff *work, const char **mangled, string *declp)
-{
+demangle_args(struct work_stuff *work, const char **mangled, string *declp) {
 	string arg;
 	int need_comma = 0;
 	int r;
@@ -3304,8 +3273,7 @@ demangle_args(struct work_stuff *work, const char **mangled, string *declp)
    and method pointers or references, not top-level declarations.  */
 
 static int
-demangle_nested_args(struct work_stuff *work, const char **mangled, string *declp)
-{
+demangle_nested_args(struct work_stuff *work, const char **mangled, string *declp) {
 	string *saved_previous_argument;
 	int result;
 	int saved_nrepeats;
@@ -3337,8 +3305,7 @@ demangle_nested_args(struct work_stuff *work, const char **mangled, string *decl
 }
 
 static void
-	demangle_function_name(struct work_stuff *work, const char **mangled, string *declp, const char *scan)
-{
+demangle_function_name(struct work_stuff *work, const char **mangled, string *declp, const char *scan) {
 	size_t i;
 	string type;
 	const char *tem;
@@ -3454,8 +3421,7 @@ static void
 /* a mini string-handling package */
 
 static void
-	string_need(string *s, int n)
-{
+string_need(string *s, int n) {
 	int tem;
 
 	if (s->b == NULL) {
@@ -3475,8 +3441,7 @@ static void
 }
 
 static void
-	string_delete(string *s)
-{
+string_delete(string *s) {
 	if (s->b != NULL) {
 		free(s->b);
 		s->b = s->e = s->p = NULL;
@@ -3484,14 +3449,12 @@ static void
 }
 
 static void
-	string_init(string *s)
-{
+string_init(string *s) {
 	s->b = s->p = s->e = NULL;
 }
 
 static void
-	string_clear(string *s)
-{
+string_clear(string *s) {
 	s->p = s->b;
 }
 
@@ -3506,8 +3469,7 @@ string_empty (string *s)
 #endif
 
 static void
-	string_append(string *p, const char *s)
-{
+string_append(string *p, const char *s) {
 	int n;
 	if (s == NULL || *s == '\0')
 		return;
@@ -3518,8 +3480,7 @@ static void
 }
 
 static void
-	string_appends(string *p, string *s)
-{
+string_appends(string *p, string *s) {
 	int n;
 
 	if (s->b != s->p) {
@@ -3531,8 +3492,7 @@ static void
 }
 
 static void
-	string_appendn(string *p, const char *s, int n)
-{
+string_appendn(string *p, const char *s, int n) {
 	if (n != 0) {
 		string_need(p, n);
 		memcpy(p->p, s, n);
@@ -3541,24 +3501,21 @@ static void
 }
 
 static void
-	string_prepend(string *p, const char *s)
-{
+string_prepend(string *p, const char *s) {
 	if (s != NULL && *s != '\0') {
 		string_prependn(p, s, strlen(s));
 	}
 }
 
 static void
-	string_prepends(string *p, string *s)
-{
+string_prepends(string *p, string *s) {
 	if (s->b != s->p) {
 		string_prependn(p, s->b, s->p - s->b);
 	}
 }
 
 static void
-	string_prependn(string *p, const char *s, int n)
-{
+string_prependn(string *p, const char *s, int n) {
 	char *q;
 
 	if (n != 0) {

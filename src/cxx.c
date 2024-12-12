@@ -11,7 +11,7 @@
 // ansidecl.h makes a mess with the definition of
 // const. thus we directly avoid to import the
 // demangle.h header and instead define the data here.
-#define DMGL_PARAMS (1 << 0) /* Include function args */
+#define DMGL_PARAMS (1 << 0) | (1 << 1) /* Include function args and ANSI qualifiers */
 
 char *cplus_demangle_v3(const char *mangled, int options);
 char *cplus_demangle_v2(const char *mangled, int options);
@@ -31,7 +31,9 @@ typedef struct cxx_replace_pair_t {
 
 #define STD_CTOR_DTOR(r, t) \
 	{ "std::" r "::" r, "std::" r "::" t }, \
-	{ "std::" r "::~" r, "std::" r "::~" t }
+	{ \
+		"std::" r "::~" r, "std::" r "::~" t \
+	}
 
 #define STD_BASIC_CHAR(r, k) \
 	{ "std::" r, "std::basic_" k "<char, std::char_traits<char> >" }, \
@@ -69,7 +71,7 @@ typedef struct cxx_replace_pair_t {
 		{ "std::regex_search<" t ">", "std::regex_search<" t ", std::allocator<std::" p "csub_match >, std::regex_traits<" t "> >" }, \
 		{ "std::regex_search<" t ">", "std::regex_search<" t " const*, std::allocator<std::" p "csub_match >, " t ", std::regex_traits<" t "> >" }, \
 		{ "std::regex_search<" t ">", "std::regex_search<iterator<" t ">, std::allocator<std::" p "csub_match >, " t ", std::regex_traits<" t "> >" }, \
-	{ "std::regex_search<std::" p "string>", "std::regex_search<std::char_traits<" t ">, std::allocator<" t ">, std::allocator<std::" p "csub_match >, " t ", std::regex_traits<" t "> >" }
+		{ "std::regex_search<std::" p "string>", "std::regex_search<std::char_traits<" t ">, std::allocator<" t ">, std::allocator<std::" p "csub_match >, " t ", std::regex_traits<" t "> >" }
 
 static const CxxReplacePair cplus_typedefs[] = {
 	STD_BASIC_WITH_ALLOC_CHAR("string", "string"),
