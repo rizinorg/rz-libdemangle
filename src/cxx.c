@@ -31,9 +31,7 @@ typedef struct cxx_replace_pair_t {
 
 #define STD_CTOR_DTOR(r, t) \
 	{ "std::" r "::" r, "std::" r "::" t }, \
-	{ \
-		"std::" r "::~" r, "std::" r "::~" t \
-	}
+	{ "std::" r "::~" r, "std::" r "::~" t }
 
 #define STD_BASIC_CHAR(r, k) \
 	{ "std::" r, "std::basic_" k "<char, std::char_traits<char> >" }, \
