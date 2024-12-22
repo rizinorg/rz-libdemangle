@@ -1075,7 +1075,7 @@ demangle_template_template_parm(struct work_stuff *work, const char **mangled, s
 			need_comma = 1;
 		}
 	}
-  // test cases failing because of this space
+	// test cases failing because of this space
 	// if (tname->p[-1] == '>')
 	// 	string_append(tname, " ");
 	string_append(tname, "> class");
