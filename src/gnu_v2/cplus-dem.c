@@ -1423,7 +1423,7 @@ demangle_template(struct work_stuff *work, const char **mangled, string *tname, 
 	if (is_java_array) {
 		string_append(tname, "[]");
 	} else {
-    // Test cases failing because of this extra space
+		// Test cases failing because of this extra space
 		// if (tname->p[-1] == '>')
 		// 	string_append(tname, " ");
 		string_append(tname, ">");
@@ -2501,7 +2501,7 @@ do_type(struct work_stuff *work, const char **mangled, string *result)
 			break;
 
 		case 'O': {
-      (*mangled)++;
+			(*mangled)++;
 			string_prepend(&decl, "&&");
 			if (tk == tk_none)
 				tk = tk_reference;
