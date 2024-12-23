@@ -2506,7 +2506,7 @@ do_type(struct work_stuff *work, const char **mangled, string *result)
 			if (tk == tk_none)
 				tk = tk_reference;
 			break;
-    }
+		}
 		case 'M': {
 			type_quals = TYPE_UNQUALIFIED;
 
