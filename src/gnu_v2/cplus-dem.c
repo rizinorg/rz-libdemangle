@@ -1075,8 +1075,9 @@ demangle_template_template_parm(struct work_stuff *work, const char **mangled, s
 			need_comma = 1;
 		}
 	}
-	if (tname->p[-1] == '>')
-		string_append(tname, " ");
+	// test cases failing because of this space
+	// if (tname->p[-1] == '>')
+	// 	string_append(tname, " ");
 	string_append(tname, "> class");
 	return (success);
 }
@@ -1422,8 +1423,9 @@ demangle_template(struct work_stuff *work, const char **mangled, string *tname, 
 	if (is_java_array) {
 		string_append(tname, "[]");
 	} else {
-		if (tname->p[-1] == '>')
-			string_append(tname, " ");
+		// Test cases failing because of this extra space
+		// if (tname->p[-1] == '>')
+		// 	string_append(tname, " ");
 		string_append(tname, ">");
 	}
 
@@ -2498,8 +2500,14 @@ do_type(struct work_stuff *work, const char **mangled, string *result)
 				(*mangled)++;
 			break;
 
-		case 'M':
 		case 'O': {
+			(*mangled)++;
+			string_prepend(&decl, "&&");
+			if (tk == tk_none)
+				tk = tk_reference;
+			break;
+		}
+		case 'M': {
 			type_quals = TYPE_UNQUALIFIED;
 
 			member = **mangled == 'M';
