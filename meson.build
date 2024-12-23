@@ -34,6 +34,7 @@ if get_option('use_gpl')
   libdemangle_src += 'src' / 'gnu_v2' / 'cplus-dem.c'
   common_c_args += '-DWITH_GPL=1'
   tests += 'cxx'
+  tests += 'cxx_base'
   tests += 'cxx_gnu_v2'
 endif
 
