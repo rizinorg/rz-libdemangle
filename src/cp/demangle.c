@@ -65,8 +65,7 @@ const char* cp_demangle (const char* mangled, CpDemOptions opts) {
 static CpDem* cpdem_deinit (CpDem* dem);
 static CpDem* cpdem_qualifiers_list (CpDem* dem);
 static CpDem* cpdem_name (CpDem* dem);
-static CpDem* cpdem_class_name (CpDem* dem);
-static CpDem* cpdem_param_type (CpDem* dem);
+static CpDem* cpdem_class_names (CpDem* dem, ut64 qualifiers_count);
 static CpDem* cpdem_func_params (CpDem* dem);
 
 // Current read position
@@ -145,7 +144,8 @@ CpDem* cpdem_public_name (CpDem* dem) {
         }
 
         // <name> __F [<parameter type>]+
-        if (strncmp (CUR (dem), "__F", 3)) {
+        if (!strncmp (CUR (dem), "__F", 3)) {
+            SET_CUR (dem, CUR (dem) + 3);
             return cpdem_func_params (dem);
         } else {
             // <name> __ <qualifiers list> [<parameter type>]+
@@ -193,10 +193,7 @@ CpDem* cpdem_qualifiers_list (CpDem* dem) {
 
     // get each qualifier
     // <qualifiers count> [<name length> <class name>]+
-    while (qualifier_count-- && (dem = cpdem_class_name (dem)))
-        ;
-
-    return dem;
+    return cpdem_class_names (dem, qualifier_count);
 }
 
 CpDem* cpdem_name (CpDem* dem) {
@@ -204,11 +201,12 @@ CpDem* cpdem_name (CpDem* dem) {
         return NULL;
     }
 
-
+    // match character by character
     while (PEEK (dem)) {
         dem_string_append_char (dem->demangled, READ (dem));
 
         // __ [F | Q | [0-9]]
+        // If a qualifier(s) list or a function parameter(s) list starts then name ends there
         if (IN_RANGE (dem, CUR (dem) + 2)) {
             const char* cur = CUR (dem);
             if (cur[0] == '_' && cur[1] == '_' &&
@@ -221,43 +219,135 @@ CpDem* cpdem_name (CpDem* dem) {
     return dem;
 }
 
-CpDem* cpdem_class_name (CpDem* dem) {
-    if (!dem) {
+CpDem* cpdem_class_names (CpDem* dem, ut64 qualifiers_count) {
+    if (!dem || !qualifiers_count) {
         return NULL;
     }
 
-    // <name length>
-    char* end         = NULL;
-    ut64  name_length = strtoull (CUR (dem), &end, 10);
-    if (!*end || !name_length) {
-        return NULL;
-    }
-    SET_CUR (dem, end);
+    // temporary string to append class/namespace names in order
+    DemString* class_names = dem_string_new();
 
-    // <name length> <class name>
-    dem_string_append_prefix_n (dem->demangled, "::", 2);
-    dem_string_append_prefix_n (dem->demangled, CUR (dem), name_length);
-    SET_CUR (dem, CUR (dem) + name_length);
+    // get each qualifier and append in class names list
+    while (qualifiers_count--) {
+        // <name length>
+        char* end         = NULL;
+        ut64  name_length = strtoull (CUR (dem), &end, 10);
+        if (!*end || !name_length) {
+            return NULL;
+        }
+        SET_CUR (dem, end);
+
+        // <name length> <class name>
+        dem_string_append_n (class_names, CUR (dem), name_length);
+        dem_string_append_n (class_names, "::", 2);
+        SET_CUR (dem, CUR (dem) + name_length);
+    }
+
+    dem_string_append_prefix_n (
+        dem->demangled,
+        dem_string_buffer (class_names),
+        dem_string_length (class_names)
+    );
+    dem_string_free (class_names);
 
     return dem;
 }
-
-CpDem* cpdem_param_type (CpDem* dem) {
-    if (!dem) {
-        return NULL;
-    }
-    return NULL;
-}
-
 
 CpDem* cpdem_func_params (CpDem* dem) {
     if (!dem) {
         return NULL;
     }
 
-    // function params
-    while (cpdem_param_type (dem))
-        ;
+    DemString* param_list = dem_string_new();
+    dem_string_append_char (param_list, '(');
+
+#define APPEND(x)                                                                                  \
+    {                                                                                              \
+        first_param = first_param ? (dem_string_append (param_list, x), false) :                   \
+                                    (dem_string_append (param_list, ", " x), false);               \
+        break;                                                                                     \
+    }
+
+    bool first_param = true;
+    while (PEEK (dem)) {
+        switch (READ (dem)) {
+            case 'b' :
+                APPEND ("bool");
+            case 'c' :
+                APPEND ("char");
+            case 'd' :
+                APPEND ("double");
+            case 'e' :
+                APPEND ("...");
+            case 'f' :
+                APPEND ("float");
+            case 'i' :
+                APPEND ("int");
+            case 'l' :
+                APPEND ("long int");
+            case 'r' :
+                APPEND ("long double");
+            case 's' :
+                APPEND ("short int");
+            case 'w' :
+                APPEND ("wchar_t");
+            case 'x' :
+                APPEND ("long long");
+            case 'U' :
+                switch (READ (dem)) {
+                    case 'c' :
+                        APPEND ("unsigned char");
+                    case 's' :
+                        APPEND ("unsigned short int");
+                    case 'i' :
+                        APPEND ("unsigned int");
+                    case 'l' :
+                        APPEND ("unsigned long int");
+                    case 'x' :
+                        APPEND ("unsigned long long");
+                    default :
+                        break;
+                }
+                break;
+            case 'S' :
+                switch (READ (dem)) {
+                    case 'c' :
+                        APPEND ("signed char");
+                    default :
+                        break;
+                }
+                break;
+            case 'J' :
+                switch (READ (dem)) {
+                    case 'f' :
+                        APPEND ("__complex__ float");
+                    case 'd' :
+                        APPEND ("__complex__ double");
+                    default :
+                        break;
+                }
+                break;
+            default :
+                break;
+        }
+    }
+
+#undef APPEND
+
+    // there mustn't be anything else after parsing all function param types
+    if (PEEK (dem)) {
+        dem_string_free (param_list);
+        return NULL;
+    }
+
+    dem_string_append_char (param_list, ')');
+
+    dem_string_append_n (
+        dem->demangled,
+        dem_string_buffer (param_list),
+        dem_string_length (param_list)
+    );
+    dem_string_free (param_list);
 
     return dem;
 }
