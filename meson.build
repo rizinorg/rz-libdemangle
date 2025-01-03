@@ -5,8 +5,9 @@ cc = meson.get_compiler('c')
 common_c_args = []
 libdemangle_c_args = []
 libdemangle_src = [
-  'src' / 'cxx' / 'borland.c',
+  'src' / 'borland.c',
   'src' / 'cxx.c',
+  'src' / 'cp' / 'demangle.c',
   'src' / 'demangler.c',
   'src' / 'demangler_util.c',
   'src' / 'java.c',
@@ -27,16 +28,10 @@ tests = [
   'objc',
   'pascal',
   'rust',
+  'cxx',
+  'cxx_base',
+  'cxx_gnu_v2'
 ]
-
-if get_option('use_gpl')
-  libdemangle_src += 'src' / 'cxx' / 'cp-demangle.c'
-  libdemangle_src += 'src' / 'gnu_v2' / 'cplus-dem.c'
-  common_c_args += '-DWITH_GPL=1'
-  tests += 'cxx'
-  tests += 'cxx_base'
-  tests += 'cxx_gnu_v2'
-endif
 
 if get_option('use_swift_demangler')
   libdemangle_src += 'src' / 'swift.c'

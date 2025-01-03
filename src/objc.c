@@ -4,6 +4,17 @@
 #include "cxx.h"
 #include <rz_libdemangle.h>
 
+char *find_block_invoke(char *p) {
+	const size_t kwlen = strlen("_block_invoke");
+	char *last = NULL;
+	char *next = p;
+	while ((next = strstr(next, "_block_invoke"))) {
+		last = next;
+		next += kwlen;
+	}
+	return last;
+}
+
 static char *demangle_objc(const char *symbol) {
 	char *ret = NULL;
 	char *clas = NULL;
