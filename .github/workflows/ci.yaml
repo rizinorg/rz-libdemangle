@@ -31,7 +31,7 @@ jobs:
     - name: Run Unit Tests
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=release -Denable_cli=true -Duse_gpl=false build-nogpl
+        meson -Dbuildtype=release -Denable_cli=true build-nogpl
         ninja -C build-nogpl test
         ./test/test-cli.sh ./build-nogpl/demangle
 
@@ -45,7 +45,7 @@ jobs:
     - name: Run Unit Tests
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=release -Denable_cli=true -Duse_gpl=false -Duse_swift_demangler=false build-no-min
+        meson -Dbuildtype=release -Denable_cli=true -Duse_swift_demangler=false build-no-min
         ninja -C build-no-min test
         ./test/test-cli.sh ./build-no-min/demangle
 
