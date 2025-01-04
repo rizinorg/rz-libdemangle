@@ -143,11 +143,14 @@ CpDem* cpdem_public_name (CpDem* dem) {
             return NULL;
         }
 
-        // <name> __F [<parameter type>]+
         if (!strncmp (CUR (dem), "__F", 3)) {
+            // skip __F
             SET_CUR (dem, CUR (dem) + 3);
+            // <name> __F [<parameter type>]+
             return cpdem_func_params (dem);
         } else {
+            // skip __
+            SET_CUR (dem, CUR (dem) + 2);
             // <name> __ <qualifiers list> [<parameter type>]+
             return cpdem_func_params (cpdem_qualifiers_list (dem));
         }
@@ -176,13 +179,13 @@ CpDem* cpdem_qualifiers_list (CpDem* dem) {
 
             // Q _ <qualifiers count> _
             qualifier_count = strtoull (CUR (dem), &end, 10);
-            if (*end != '_' || !qualifier_count) {
+            if (!end || !IN_RANGE (dem, end) || *end != '_' || !qualifier_count) {
                 return NULL;
             }
         } else {
             // Q <qualifiers count>
             qualifier_count = strtoull (CUR (dem), &end, 10);
-            if (!*end || !qualifier_count) {
+            if (!end || !IN_RANGE (dem, end) || !*end || !qualifier_count) {
                 return NULL;
             }
         }
@@ -232,7 +235,7 @@ CpDem* cpdem_class_names (CpDem* dem, ut64 qualifiers_count) {
         // <name length>
         char* end         = NULL;
         ut64  name_length = strtoull (CUR (dem), &end, 10);
-        if (!*end || !name_length) {
+        if (!end || !IN_RANGE (dem, end) || !*end || !name_length) {
             return NULL;
         }
         SET_CUR (dem, end);
@@ -258,86 +261,250 @@ CpDem* cpdem_func_params (CpDem* dem) {
         return NULL;
     }
 
+    DemString* suffix     = NULL;
+    DemString* prefix     = NULL;
     DemString* param_list = dem_string_new();
     dem_string_append_char (param_list, '(');
 
-#define APPEND(x)                                                                                  \
-    {                                                                                              \
-        first_param = first_param ? (dem_string_append (param_list, x), false) :                   \
-                                    (dem_string_append (param_list, ", " x), false);               \
-        break;                                                                                     \
-    }
+#define SUFFIX(x)                                                                                  \
+    do {                                                                                           \
+        suffix = dem_string_new();                                                                 \
+        dem_string_append (suffix, x);                                                             \
+    } while (0)
+
+#define PREFIX(x)                                                                                  \
+    do {                                                                                           \
+        prefix = dem_string_new();                                                                 \
+        dem_string_append (prefix, x);                                                             \
+    } while (0)
+
+#define APPEND(x) APPEND_N (x, strlen (x))
+#define APPEND_N(x, l)                                                                             \
+    do {                                                                                           \
+        if (prefix) {                                                                              \
+            dem_string_append_char (param_list, ' ');                                              \
+            dem_string_concat (param_list, prefix);                                                \
+            dem_string_free (prefix);                                                              \
+            prefix = NULL;                                                                         \
+        }                                                                                          \
+        if (first_param) {                                                                         \
+            first_param = false;                                                                   \
+        } else {                                                                                   \
+            dem_string_append_n (param_list, ", ", 2);                                             \
+        }                                                                                          \
+        dem_string_append_n (param_list, x, l);                                                    \
+        if (suffix) {                                                                              \
+            dem_string_append_char (param_list, ' ');                                              \
+            dem_string_concat (param_list, suffix);                                                \
+            dem_string_free (suffix);                                                              \
+            suffix = NULL;                                                                         \
+        }                                                                                          \
+    } while (0)
+
+#define X()                                                                                        \
+    do {                                                                                           \
+        /* move back one character to get complete length */                                       \
+        if (IS_DIGIT (*(CUR (dem) - 1))) {                                                         \
+            SET_CUR (dem, CUR (dem) - 1);                                                          \
+        }                                                                                          \
+                                                                                                   \
+        char* end          = NULL;                                                                 \
+        ut64  typename_len = strtoull (CUR (dem), &end, 10);                                       \
+        if (!dem || !IN_RANGE (dem, end) || !typename_len ||                                       \
+            !IN_RANGE (dem, CUR (dem) + typename_len)) {                                           \
+            dem_string_free (param_list);                                                          \
+            return NULL;                                                                           \
+        }                                                                                          \
+        SET_CUR (dem, end);                                                                        \
+                                                                                                   \
+        APPEND_N (CUR (dem), typename_len);                                                        \
+        SET_CUR (dem, CUR (dem) + typename_len);                                                   \
+    } while (0)
 
     bool first_param = true;
     while (PEEK (dem)) {
         switch (READ (dem)) {
             case 'b' :
                 APPEND ("bool");
+                break;
             case 'c' :
                 APPEND ("char");
+                break;
             case 'd' :
                 APPEND ("double");
+                break;
             case 'e' :
                 APPEND ("...");
+                break;
             case 'f' :
                 APPEND ("float");
+                break;
             case 'i' :
                 APPEND ("int");
+                break;
             case 'l' :
                 APPEND ("long int");
+                break;
             case 'r' :
                 APPEND ("long double");
+                break;
             case 's' :
                 APPEND ("short int");
+                break;
             case 'w' :
                 APPEND ("wchar_t");
+                break;
             case 'x' :
                 APPEND ("long long");
+                break;
             case 'U' :
                 switch (READ (dem)) {
+                    // Uc
                     case 'c' :
                         APPEND ("unsigned char");
+                        break;
+                    // Us
                     case 's' :
                         APPEND ("unsigned short int");
+                        break;
+                    // Ui
                     case 'i' :
                         APPEND ("unsigned int");
+                        break;
+                    // Ul
                     case 'l' :
                         APPEND ("unsigned long int");
+                        break;
+                    // Ux
                     case 'x' :
                         APPEND ("unsigned long long");
+                        break;
                     default :
                         break;
                 }
                 break;
             case 'S' :
                 switch (READ (dem)) {
+                    // Sc
                     case 'c' :
                         APPEND ("signed char");
+                        break;
                     default :
                         break;
                 }
                 break;
             case 'J' :
                 switch (READ (dem)) {
+                    // Jf
                     case 'f' :
                         APPEND ("__complex__ float");
+                        break;
+                    // Jd
                     case 'd' :
                         APPEND ("__complex__ double");
+                        break;
                     default :
                         break;
                 }
                 break;
+            case 'P' :
+                SUFFIX ("*");
+                switch (READ (dem)) {
+                    case 'C' : {
+                        switch (READ (dem)) {
+                            // PCVX
+                            case 'V' : {
+                                PREFIX ("const volatile");
+                                X();
+                                break;
+                            }
+                            // PCX
+                            default : {
+                                PREFIX ("const");
+                                X();
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    // PVX
+                    case 'V' : {
+                        PREFIX ("volatile");
+                        X();
+                        break;
+                    }
+                    // PX
+                    default :
+                        X();
+                        break;
+                }
+                break;
+            case 'R' :
+                SUFFIX ("&");
+                switch (READ (dem)) {
+                    case 'C' : {
+                        switch (READ (dem)) {
+                            // RCVX
+                            case 'V' : {
+                                PREFIX ("const volatile");
+                                X();
+                                break;
+                            }
+                            // RCX
+                            default : {
+                                PREFIX ("const");
+                                X();
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    // RVX
+                    case 'V' : {
+                        PREFIX ("volatile");
+                        X();
+                        break;
+                    }
+                    // RX
+                    default :
+                        X();
+                        break;
+                }
+                break;
+            // [0-9]+
+            case '0' :
+            case '1' :
+            case '2' :
+            case '3' :
+            case '4' :
+            case '5' :
+            case '6' :
+            case '7' :
+            case '8' :
+            case '9' : {
+                PREFIX ("const");
+                X();
+                break;
+            }
             default :
                 break;
         }
     }
 
 #undef APPEND
+#undef APPEND_N
+#undef SUFFIX
+#undef PREFIX
+#undef X
 
     // there mustn't be anything else after parsing all function param types
     if (PEEK (dem)) {
         dem_string_free (param_list);
         return NULL;
+    }
+
+    if (first_param) {
+        dem_string_append_n (param_list, "void", 4);
     }
 
     dem_string_append_char (param_list, ')');
