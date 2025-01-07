@@ -32,8 +32,13 @@ typedef struct StrIter {
 
 typedef struct Demdem {
     StrIter      original;
-    DemString*   demangled;
+    DemString*   name;
+    DemString*   param_list;
     CpDemOptions opts;
+
+    bool is_ctor;
+    bool is_dtor;
+    bool is_operator;
 } CpDem;
 
 static CpDem*      cpdem_init (CpDem* dem, const char* mangled, CpDemOptions opts);
@@ -67,27 +72,28 @@ static CpDem* cpdem_qualifiers_list (CpDem* dem);
 static CpDem* cpdem_name (CpDem* dem);
 static CpDem* cpdem_class_names (CpDem* dem, ut64 qualifiers_count);
 static CpDem* cpdem_func_params (CpDem* dem);
+static CpDem* cpdem_template_params (CpDem* dem);
 
-// Current read position
-// NOTE that this returns char* (pointer) instead of char
+/* Current read position */
+/* NOTE that this returns char* (pointer) instead of char */
 #define CUR(dem)           ((dem)->original.cur)
 #define BEG(dem)           ((dem)->original.beg)
 #define END(dem)           ((dem)->original.end)
 #define IN_RANGE(dem, pos) ((pos) >= BEG (dem) ? ((pos) < END (dem) ? 1 : 0) : 0)
 #define SET_CUR(dem, pos)  ((dem)->original.cur = IN_RANGE (dem, pos) ? (pos) : CUR (dem))
 
-// Read but don't advance
+/* Read but don't advance */
 #define PEEK(dem) (IN_RANGE (dem, CUR (dem)) ? *(dem)->original.cur : 0)
 
-// Read and advance one position
+/* Read and advance one position */
 #define READ(dem) (IN_RANGE (dem, CUR (dem)) ? *(dem)->original.cur++ : 0)
 
-// Advance by one character
-// NOTE that this returns char* (pointer) instead of char
+/* Advance by one character */
+/* NOTE that this returns char* (pointer) instead of char */
 #define ADV(dem) (IN_RANGE (dem, CUR (dem)) ? (dem)->original.cur++ : NULL)
 
-// Is current character a terminator
-#define IS_TERM(dem) (IN_RANGE (dem, CUR (dem)) && ((PEEK (dem) == '.') || (PEEK (dem) == '$')))
+/* Is current character a terminator */
+#define IS_TERM(dem) ((PEEK (dem) == '.') || (PEEK (dem) == '$'))
 
 CpDem* cpdem_init (CpDem* dem, const char* mangled, CpDemOptions opts) {
     if (!dem || !mangled) {
@@ -97,8 +103,8 @@ CpDem* cpdem_init (CpDem* dem, const char* mangled, CpDemOptions opts) {
     memset (dem, 0, sizeof (CpDem));
     dem->original =
         ((StrIter) {.beg = mangled, .end = mangled + strlen (mangled) + 1, .cur = mangled});
-    dem->opts      = opts;
-    dem->demangled = dem_string_new();
+    dem->opts = opts;
+    dem->name = dem_string_new();
     return dem;
 }
 
@@ -107,7 +113,12 @@ CpDem* cpdem_deinit (CpDem* dem) {
         return NULL;
     }
 
-    dem_string_free (dem->demangled);
+    if (dem->param_list) {
+        dem_string_free (dem->param_list);
+    }
+    if (dem->name) {
+        dem_string_free (dem->name);
+    }
     memset (dem, 0, sizeof (CpDem));
     return dem;
 }
@@ -117,11 +128,19 @@ const char* cpdem_get_demangled (CpDem* dem) {
         return NULL;
     }
 
-    const char* result =
-        dem_str_ndup (dem_string_buffer (dem->demangled), dem_string_length (dem->demangled));
+    DemString* demangled = dem_string_new();
+    dem_string_concat (demangled, dem->name);
+    if (dem->param_list) {
+        dem_string_append_char (demangled, '(');
+        dem_string_concat (demangled, dem->param_list);
+        dem_string_append_char (demangled, ')');
+    }
+
+    const char* res = dem_str_ndup (dem_string_buffer (demangled), dem_string_length (demangled));
+    dem_string_free (demangled);
 
     cpdem_deinit (dem);
-    return result;
+    return res;
 }
 
 CpDem* cpdem_public_name (CpDem* dem) {
@@ -129,31 +148,62 @@ CpDem* cpdem_public_name (CpDem* dem) {
         return NULL;
     }
 
-    // _
+    /* try matching for [_ <qualifiers list> <list term>] <name>*/
     if (PEEK (dem) == '_') {
         ADV (dem);
 
-        // _ <qualifiers list> <list term> <name>
-        if (!cpdem_qualifiers_list (dem) || !IS_TERM (dem) || !ADV (dem) || !cpdem_name (dem)) {
-            return NULL;
-        }
-    } else {
-        // <name>
-        if (!cpdem_name (dem)) {
-            return NULL;
+        /* _ <qualifiers list> <list term> <name> */
+        if (cpdem_qualifiers_list (dem)) {
+            if (IS_TERM (dem) && ADV (dem) && cpdem_name (dem)) {
+                return dem;
+            }
         }
 
-        if (!strncmp (CUR (dem), "__F", 3)) {
-            // skip __F
-            SET_CUR (dem, CUR (dem) + 3);
-            // <name> __F [<parameter type>]+
-            return cpdem_func_params (dem);
+        SET_CUR (dem, CUR (dem) - 1);
+    }
+
+    /* <name> */
+    if (!cpdem_name (dem)) {
+        return NULL;
+    }
+
+    if (IN_RANGE (dem, CUR (dem) + 3)) {
+        /* there may be one or two _ depending on scanned name */
+        if (dem->is_dtor || dem->is_ctor || dem->is_operator) {
+            /* skip _ */
+            ADV (dem);
         } else {
-            // skip __
-            SET_CUR (dem, CUR (dem) + 2);
-            // <name> __ <qualifiers list> [<parameter type>]+
-            return cpdem_func_params (cpdem_qualifiers_list (dem));
+            /* skip __ */
+            ADV (dem);
+            ADV (dem);
         }
+
+        switch (PEEK (dem)) {
+            /* <name> __F [<parameter type>]+ */
+            case 'F' :
+                ADV (dem);
+                return cpdem_func_params (dem);
+
+            /* <name> __H */
+            case 'H' :
+                ADV (dem);
+                return cpdem_template_params (dem);
+
+            /* <name> __ <qualifiers list> [<parameter type>]+ */
+            default :
+                if (!cpdem_qualifiers_list (dem)) {
+                    return NULL;
+                }
+
+                // this means func params is optional
+                // the docs don't imply this, but tests consider this optional in case of ctor and dtor
+                // this means old gnuv2 working demangled assumed optional as well
+                cpdem_func_params (dem);
+                return dem;
+        }
+    } else {
+        /* XXX: Unreachable code, becaue cpdem_name already performs all required bounds check */
+        return NULL;
     }
 
     return dem;
@@ -164,38 +214,40 @@ CpDem* cpdem_qualifiers_list (CpDem* dem) {
         return NULL;
     }
 
-    char* end             = NULL;
-    ut64  qualifier_count = 1;
+    ut64 qualifier_count = 1;
 
-    // if more than 1 qualifier
-    // Q
+    /* if more than 1 qualifier */
+    /* Q */
     if (PEEK (dem) == 'Q') {
         ADV (dem);
 
-        // if more than 9 qualifiers
-        // Q _
+        char* end = NULL;
+
+        /* if more than 9 qualifiers */
+        /* Q _ */
         if (PEEK (dem) == '_') {
             ADV (dem);
 
-            // Q _ <qualifiers count> _
+            /* Q _ <qualifiers count> _ */
             qualifier_count = strtoull (CUR (dem), &end, 10);
             if (!end || !IN_RANGE (dem, end) || *end != '_' || !qualifier_count) {
                 return NULL;
             }
+        } else if (PEEK (dem) >= '0' && PEEK (dem) <= '9') {
+            /* single digit count */
+            /* Q <qualifiers count> */
+            qualifier_count = PEEK (dem) - '0';
+            ADV (dem);
         } else {
-            // Q <qualifiers count>
-            qualifier_count = strtoull (CUR (dem), &end, 10);
-            if (!end || !IN_RANGE (dem, end) || !*end || !qualifier_count) {
-                return NULL;
-            }
+            return NULL;
         }
+
+        /* update current position */
+        SET_CUR (dem, end);
     }
 
-    // update current position
-    SET_CUR (dem, end);
-
-    // get each qualifier
-    // <qualifiers count> [<name length> <class name>]+
+    /* get each qualifier */
+    /* <qualifiers count> [<name length> <class name>]+ */
     return cpdem_class_names (dem, qualifier_count);
 }
 
@@ -204,20 +256,113 @@ CpDem* cpdem_name (CpDem* dem) {
         return NULL;
     }
 
-    // match character by character
-    while (PEEK (dem)) {
-        dem_string_append_char (dem->demangled, READ (dem));
+    static const struct {
+        const char* from;
+        const char* to;
+        size_t      len;
+    } map[] = {
+        {.from = "_aad_",        .to = "operator&=", .len = 5},
+        {.from = "_adv_",        .to = "operator/=", .len = 5},
+        {.from = "_aer_",        .to = "operator^=", .len = 5},
+        {.from = "_als_",       .to = "operator<<=", .len = 5},
+        {.from = "_aml_",        .to = "operator*=", .len = 5},
+        {.from = "_amd_",        .to = "operator%=", .len = 5},
+        {.from = "_ami_",        .to = "operator-=", .len = 5},
+        {.from = "_aor_",        .to = "operator|=", .len = 5},
+        {.from = "_apl_",        .to = "operator+=", .len = 5},
+        {.from = "_ars_",       .to = "operator>>=", .len = 5},
 
-        // __ [F | Q | [0-9]]
-        // If a qualifier(s) list or a function parameter(s) list starts then name ends there
+        { .from = "_aa_",        .to = "operator&&", .len = 4},
+        { .from = "_ad_",         .to = "operator&", .len = 4},
+        { .from = "_as_",         .to = "operator=", .len = 4},
+
+        { .from = "_cl_",        .to = "operator()", .len = 4},
+        { .from = "_co_",         .to = "operator~", .len = 4},
+        { .from = "_cm_",         .to = "operator,", .len = 4},
+
+        { .from = "_dl_",   .to = "operator delete", .len = 4},
+        { .from = "_dv_",         .to = "operator/", .len = 4},
+
+        { .from = "_eq_",        .to = "operator==", .len = 4},
+        { .from = "_er_",         .to = "operator^", .len = 4},
+
+        { .from = "_ge_",        .to = "operator>=", .len = 4},
+        { .from = "_gt_",         .to = "operator>", .len = 4},
+
+        { .from = "_le_",        .to = "operator<=", .len = 4},
+        { .from = "_ls_",        .to = "operator<<", .len = 4},
+        { .from = "_lt_",         .to = "operator<", .len = 4},
+
+        { .from = "_md_",         .to = "operator%", .len = 4},
+        { .from = "_mi_",         .to = "operator-", .len = 4},
+        { .from = "_ml_",         .to = "operator*", .len = 4},
+        { .from = "_mm_",        .to = "operator--", .len = 4},
+
+        { .from = "_ne_",        .to = "operator!=", .len = 4},
+        { .from = "_nt_",         .to = "operator!", .len = 4},
+        { .from = "_nw_",      .to = "operator new", .len = 4},
+
+        { .from = "_oo_",          .to = "operator", .len = 4},
+        /* TODO: {.from = "__op<L>TYPE_", .to = "operator", .len = 3}, */
+        { .from = "_or_",         .to = "operator|", .len = 4},
+
+        { .from = "_pl_",         .to = "operator+", .len = 4},
+        { .from = "_pp_",        .to = "operator++", .len = 4},
+
+        { .from = "_rf_",        .to = "operator->", .len = 4},
+        { .from = "_rm_",       .to = "operator->*", .len = 4},
+        { .from = "_rs_",        .to = "operator>>", .len = 4},
+
+        { .from = "_vc_",        .to = "operator[]", .len = 4},
+        { .from = "_vd_", .to = "operator delete[]", .len = 4},
+        { .from = "_vn_",    .to = "operator new[]", .len = 4},
+    };
+
+    /* TODO: _$ and _ */
+    size_t map_count = sizeof (map) / sizeof (map[0]);
+
+    /* if name begins with _, then it might be a constructor, a destructor or an operator. */
+    if (PEEK (dem) == '_') {
+        ADV (dem);
+
+        // destructor
+        if (PEEK (dem) == '$' || PEEK (dem) == '.') {
+            ADV (dem);
+            dem->is_dtor = true;
+            return dem;
+        } else {
+            // operator
+            for (size_t x = 0; x < map_count; x++) {
+                if (IN_RANGE (dem, CUR (dem) + map[x].len) &&
+                    !strncmp (CUR (dem), map[x].from, map[x].len)) {
+                    dem_string_append (dem->name, map[x].to);
+                    SET_CUR (dem, CUR (dem) + map[x].len);
+                    dem->is_operator = true;
+                    return dem;
+                }
+            }
+
+            // constructor
+            dem->is_ctor = true;
+            return dem;
+        }
+    }
+
+    /* match <name> if operator match didn't work */
+    while (PEEK (dem)) {
+        dem_string_append_char (dem->name, READ (dem));
+
+        /* __ [F | Q | [0-9]] */
+        /* If a qualifier(s) list or a function parameter(s) list starts then name ends there */
         if (IN_RANGE (dem, CUR (dem) + 2)) {
             const char* cur = CUR (dem);
             if (cur[0] == '_' && cur[1] == '_' &&
-                (cur[2] == 'F' || cur[2] == 'Q' || IS_DIGIT (cur[2]))) {
+                (cur[2] == 'F' || cur[2] == 'Q' || cur[2] == 'H' || IS_DIGIT (cur[2]))) {
                 break;
             }
         }
     }
+
 
     return dem;
 }
@@ -227,12 +372,17 @@ CpDem* cpdem_class_names (CpDem* dem, ut64 qualifiers_count) {
         return NULL;
     }
 
-    // temporary string to append class/namespace names in order
-    DemString* class_names = dem_string_new();
+    /* temporary string to append class/namespace names in order */
+    DemString* class_names    = dem_string_new();
+    DemString* last_qualifier = NULL;
 
-    // get each qualifier and append in class names list
+    if (dem->is_ctor || dem->is_dtor) {
+        last_qualifier = dem_string_new();
+    }
+
+    /* get each qualifier and append in class names list */
     while (qualifiers_count--) {
-        // <name length>
+        /* <name length> */
         char* end         = NULL;
         ut64  name_length = strtoull (CUR (dem), &end, 10);
         if (!end || !IN_RANGE (dem, end) || !*end || !name_length) {
@@ -240,14 +390,31 @@ CpDem* cpdem_class_names (CpDem* dem, ut64 qualifiers_count) {
         }
         SET_CUR (dem, end);
 
-        // <name length> <class name>
+        /* <name length> <class name> */
         dem_string_append_n (class_names, CUR (dem), name_length);
         dem_string_append_n (class_names, "::", 2);
+
+        /* save last qualifier */
+        if ((dem->is_ctor || dem->is_dtor) && !qualifiers_count) {
+            dem_string_append_n (last_qualifier, CUR (dem), name_length);
+        }
+
         SET_CUR (dem, CUR (dem) + name_length);
     }
 
+    if (dem->is_ctor) {
+        dem_string_concat (class_names, last_qualifier);
+        dem_string_free (last_qualifier);
+        dem->is_ctor = false;
+    } else if (dem->is_dtor) {
+        dem_string_append_prefix_n (last_qualifier, "~", 1);
+        dem_string_concat (class_names, last_qualifier);
+        dem_string_free (last_qualifier);
+        dem->is_dtor = false;
+    }
+
     dem_string_append_prefix_n (
-        dem->demangled,
+        dem->name,
         dem_string_buffer (class_names),
         dem_string_length (class_names)
     );
@@ -261,10 +428,11 @@ CpDem* cpdem_func_params (CpDem* dem) {
         return NULL;
     }
 
-    DemString* suffix     = NULL;
-    DemString* prefix     = NULL;
-    DemString* param_list = dem_string_new();
-    dem_string_append_char (param_list, '(');
+    DemString* suffix = NULL;
+    DemString* prefix = NULL;
+
+    dem->param_list       = dem_string_new();
+    DemString* param_list = dem->param_list;
 
 #define SUFFIX(x)                                                                                  \
     do {                                                                                           \
@@ -282,8 +450,11 @@ CpDem* cpdem_func_params (CpDem* dem) {
 #define APPEND_N(x, l)                                                                             \
     do {                                                                                           \
         if (prefix) {                                                                              \
-            dem_string_append_char (param_list, ' ');                                              \
+            if (!first_param) {                                                                    \
+                dem_string_append_char (param_list, ' ');                                          \
+            }                                                                                      \
             dem_string_concat (param_list, prefix);                                                \
+            dem_string_append_char (param_list, ' ');                                              \
             dem_string_free (prefix);                                                              \
             prefix = NULL;                                                                         \
         }                                                                                          \
@@ -313,6 +484,7 @@ CpDem* cpdem_func_params (CpDem* dem) {
         if (!dem || !IN_RANGE (dem, end) || !typename_len ||                                       \
             !IN_RANGE (dem, CUR (dem) + typename_len)) {                                           \
             dem_string_free (param_list);                                                          \
+            dem->param_list = NULL;                                                                \
             return NULL;                                                                           \
         }                                                                                          \
         SET_CUR (dem, end);                                                                        \
@@ -321,104 +493,144 @@ CpDem* cpdem_func_params (CpDem* dem) {
         SET_CUR (dem, CUR (dem) + typename_len);                                                   \
     } while (0)
 
-    bool first_param = true;
-    while (PEEK (dem)) {
-        switch (READ (dem)) {
-            case 'b' :
-                APPEND ("bool");
-                break;
-            case 'c' :
-                APPEND ("char");
-                break;
-            case 'd' :
-                APPEND ("double");
-                break;
-            case 'e' :
-                APPEND ("...");
-                break;
-            case 'f' :
-                APPEND ("float");
-                break;
-            case 'i' :
-                APPEND ("int");
-                break;
-            case 'l' :
-                APPEND ("long int");
-                break;
-            case 'r' :
-                APPEND ("long double");
-                break;
-            case 's' :
-                APPEND ("short int");
-                break;
-            case 'w' :
-                APPEND ("wchar_t");
-                break;
-            case 'x' :
-                APPEND ("long long");
-                break;
-            case 'U' :
-                switch (READ (dem)) {
-                    // Uc
-                    case 'c' :
-                        APPEND ("unsigned char");
-                        break;
-                    // Us
-                    case 's' :
-                        APPEND ("unsigned short int");
-                        break;
-                    // Ui
-                    case 'i' :
-                        APPEND ("unsigned int");
-                        break;
-                    // Ul
-                    case 'l' :
-                        APPEND ("unsigned long int");
-                        break;
-                    // Ux
-                    case 'x' :
-                        APPEND ("unsigned long long");
-                        break;
-                    default :
-                        break;
-                }
-                break;
-            case 'S' :
-                switch (READ (dem)) {
-                    // Sc
-                    case 'c' :
-                        APPEND ("signed char");
-                        break;
-                    default :
-                        break;
-                }
-                break;
-            case 'J' :
-                switch (READ (dem)) {
-                    // Jf
-                    case 'f' :
-                        APPEND ("__complex__ float");
-                        break;
-                    // Jd
-                    case 'd' :
-                        APPEND ("__complex__ double");
-                        break;
-                    default :
-                        break;
-                }
-                break;
+#define MATCH_SIMPLE_TYPE()                                                                        \
+    case 'b' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("bool");                                                                           \
+        break;                                                                                     \
+    case 'c' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("char");                                                                           \
+        break;                                                                                     \
+    case 'd' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("double");                                                                         \
+        break;                                                                                     \
+    case 'e' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("...");                                                                            \
+        break;                                                                                     \
+    case 'f' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("float");                                                                          \
+        break;                                                                                     \
+    case 'i' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("int");                                                                            \
+        break;                                                                                     \
+    case 'l' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("long");                                                                           \
+        break;                                                                                     \
+    case 'r' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("long double");                                                                    \
+        break;                                                                                     \
+    case 's' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("short");                                                                          \
+        break;                                                                                     \
+    case 'w' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("wchar_t");                                                                        \
+        break;                                                                                     \
+    case 'x' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("long long");                                                                      \
+        break;                                                                                     \
+    case 'G' : {                                                                                   \
+        ADV (dem);                                                                                 \
+        X();                                                                                       \
+        break;                                                                                     \
+    }                                                                                              \
+    case 'U' :                                                                                     \
+        ADV (dem);                                                                                 \
+        switch (PEEK (dem)) {                                                                      \
+                /* Uc */                                                                           \
+            case 'c' :                                                                             \
+                ADV (dem);                                                                         \
+                APPEND ("unsigned char");                                                          \
+                break;                                                                             \
+                /* Us */                                                                           \
+            case 's' :                                                                             \
+                ADV (dem);                                                                         \
+                APPEND ("unsigned short");                                                         \
+                break;                                                                             \
+                /* Ui */                                                                           \
+            case 'i' :                                                                             \
+                ADV (dem);                                                                         \
+                APPEND ("unsigned int");                                                           \
+                break;                                                                             \
+                /* Ul */                                                                           \
+            case 'l' :                                                                             \
+                ADV (dem);                                                                         \
+                APPEND ("unsigned long");                                                          \
+                break;                                                                             \
+                /* Ux */                                                                           \
+            case 'x' :                                                                             \
+                ADV (dem);                                                                         \
+                APPEND ("unsigned long long");                                                     \
+                break;                                                                             \
+            default :                                                                              \
+                xfixes_exist = false;                                                              \
+                break;                                                                             \
+        }                                                                                          \
+        break;                                                                                     \
+    case 'S' :                                                                                     \
+        ADV (dem);                                                                                 \
+        switch (PEEK (dem)) {                                                                      \
+                /* Sc */                                                                           \
+            case 'c' :                                                                             \
+                ADV (dem);                                                                         \
+                APPEND ("signed char");                                                            \
+                break;                                                                             \
+            default :                                                                              \
+                xfixes_exist = false;                                                              \
+                break;                                                                             \
+        }                                                                                          \
+        break;                                                                                     \
+    case 'J' :                                                                                     \
+        ADV (dem);                                                                                 \
+        switch (PEEK (dem)) {                                                                      \
+            /* Jf */                                                                               \
+            case 'f' :                                                                             \
+                ADV (dem);                                                                         \
+                APPEND ("__complex__ float");                                                      \
+                break;                                                                             \
+            /* Jd */                                                                               \
+            case 'd' :                                                                             \
+                ADV (dem);                                                                         \
+                APPEND ("__complex__ double");                                                     \
+                break;                                                                             \
+            default :                                                                              \
+                xfixes_exist = false;                                                              \
+                break;                                                                             \
+        }                                                                                          \
+        break;
+
+    bool first_param  = true;
+    bool xfixes_exist = true; /* suffixes or prefixes */
+    while (xfixes_exist && PEEK (dem)) {
+        switch (PEEK (dem)) {
+            MATCH_SIMPLE_TYPE();
+
             case 'P' :
+                ADV (dem);
                 SUFFIX ("*");
-                switch (READ (dem)) {
+                switch (PEEK (dem)) {
+                    MATCH_SIMPLE_TYPE();
+
                     case 'C' : {
-                        switch (READ (dem)) {
-                            // PCVX
+                        ADV (dem);
+                        switch (PEEK (dem)) {
+                            /* PCVX */
                             case 'V' : {
+                                ADV (dem);
                                 PREFIX ("const volatile");
                                 X();
                                 break;
                             }
-                            // PCX
+                            /* PCX */
                             default : {
                                 PREFIX ("const");
                                 X();
@@ -427,31 +639,45 @@ CpDem* cpdem_func_params (CpDem* dem) {
                         }
                         break;
                     }
-                    // PVX
+                    /* PVX */
                     case 'V' : {
+                        ADV (dem);
                         PREFIX ("volatile");
                         X();
                         break;
                     }
-                    // PX
+                    /* PX */
                     default :
+                        ADV (dem);
                         X();
                         break;
                 }
                 break;
             case 'R' :
-                SUFFIX ("&");
-                switch (READ (dem)) {
+                ADV (dem);
+                if (PEEK (dem) == 'P') {
+                    ADV (dem);
+                    SUFFIX ("*&");
+                } else {
+                    SUFFIX ("&");
+                }
+
+                switch (PEEK (dem)) {
+                    MATCH_SIMPLE_TYPE();
+
                     case 'C' : {
-                        switch (READ (dem)) {
-                            // RCVX
+                        ADV (dem);
+                        switch (PEEK (dem)) {
+                            /* RCVX */
                             case 'V' : {
+                                ADV (dem);
                                 PREFIX ("const volatile");
                                 X();
                                 break;
                             }
-                            // RCX
+                            /* RCX */
                             default : {
+                                ADV (dem);
                                 PREFIX ("const");
                                 X();
                                 break;
@@ -459,19 +685,21 @@ CpDem* cpdem_func_params (CpDem* dem) {
                         }
                         break;
                     }
-                    // RVX
+                    /* RVX */
                     case 'V' : {
+                        ADV (dem);
                         PREFIX ("volatile");
                         X();
                         break;
                     }
-                    // RX
+                    /* RX */
                     default :
+                        ADV (dem);
                         X();
                         break;
                 }
                 break;
-            // [0-9]+
+            /* [0-9]+ */
             case '0' :
             case '1' :
             case '2' :
@@ -482,11 +710,13 @@ CpDem* cpdem_func_params (CpDem* dem) {
             case '7' :
             case '8' :
             case '9' : {
+                ADV (dem);
                 PREFIX ("const");
                 X();
                 break;
             }
             default :
+                xfixes_exist = false;
                 break;
         }
     }
@@ -497,9 +727,10 @@ CpDem* cpdem_func_params (CpDem* dem) {
 #undef PREFIX
 #undef X
 
-    // there mustn't be anything else after parsing all function param types
+    /* there mustn't be anything else after parsing all function param types */
     if (PEEK (dem)) {
         dem_string_free (param_list);
+        dem->param_list = NULL;
         return NULL;
     }
 
@@ -507,14 +738,13 @@ CpDem* cpdem_func_params (CpDem* dem) {
         dem_string_append_n (param_list, "void", 4);
     }
 
-    dem_string_append_char (param_list, ')');
+    return dem;
+}
 
-    dem_string_append_n (
-        dem->demangled,
-        dem_string_buffer (param_list),
-        dem_string_length (param_list)
-    );
-    dem_string_free (param_list);
+CpDem* cpdem_template_params (CpDem* dem) {
+    if (!dem) {
+        return NULL;
+    }
 
     return dem;
 }
