@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 
+#include "cp/fparam.h"
 #include "demangler_util.h"
 
 
@@ -30,11 +31,14 @@ typedef struct StrIter {
     const char* cur; /**< \b Current read position. */
 } StrIter;
 
-typedef struct Demdem {
+typedef struct {
     StrIter      original;
-    DemString*   name;
-    DemString*   param_list;
     CpDemOptions opts;
+
+    DemString* name;      // TODO: convert this to a vector of qualifier strings
+    DemString* base_name; // this will just be the base <name> and not [<qualifier name> ::]+ <name>
+    FuncParamVec func_params;
+    bool         has_params;
 
     bool is_ctor;
     bool is_dtor;
@@ -105,6 +109,7 @@ CpDem* cpdem_init (CpDem* dem, const char* mangled, CpDemOptions opts) {
         ((StrIter) {.beg = mangled, .end = mangled + strlen (mangled) + 1, .cur = mangled});
     dem->opts = opts;
     dem->name = dem_string_new();
+    fparam_vec_init (&dem->func_params);
     return dem;
 }
 
@@ -113,12 +118,17 @@ CpDem* cpdem_deinit (CpDem* dem) {
         return NULL;
     }
 
-    if (dem->param_list) {
-        dem_string_free (dem->param_list);
-    }
+    // deinit all func params first
+    fparam_vec_deinit (&dem->func_params);
+
     if (dem->name) {
         dem_string_free (dem->name);
     }
+
+    if (dem->base_name) {
+        dem_string_free (dem->base_name);
+    }
+
     memset (dem, 0, sizeof (CpDem));
     return dem;
 }
@@ -128,11 +138,33 @@ const char* cpdem_get_demangled (CpDem* dem) {
         return NULL;
     }
 
+    // append name first
     DemString* demangled = dem_string_new();
     dem_string_concat (demangled, dem->name);
-    if (dem->param_list) {
+
+    // append all params
+    if (dem->has_params) {
+        bool is_first_param = true;
         dem_string_append_char (demangled, '(');
-        dem_string_concat (demangled, dem->param_list);
+        vec_foreach_ptr (&dem->func_params, param, {
+            // prepend a comma before every param if that param is not the first one.
+            if (is_first_param) {
+                is_first_param = false;
+            } else {
+                dem_string_append_n (demangled, ", ", 2);
+            }
+
+            // demangled += prefix name suffix
+            if (param->prefix->len) {
+                dem_string_concat (demangled, param->prefix);
+                dem_string_append_char (demangled, ' ');
+            }
+            dem_string_concat (demangled, param->name);
+            if (param->suffix->len) {
+                dem_string_append_char (demangled, ' ');
+                dem_string_concat (demangled, param->suffix);
+            }
+        });
         dem_string_append_char (demangled, ')');
     }
 
@@ -215,6 +247,10 @@ CpDem* cpdem_qualifiers_list (CpDem* dem) {
     }
 
     ut64 qualifier_count = 1;
+
+    /* if there are qualifiers, then the first name is a type in it's own */
+    dem->base_name = dem_string_new();
+    dem_string_concat (dem->base_name, dem->name);
 
     /* if more than 1 qualifier */
     /* Q */
@@ -303,7 +339,7 @@ CpDem* cpdem_name (CpDem* dem) {
         { .from = "_nw_",      .to = "operator new", .len = 4},
 
         { .from = "_oo_",          .to = "operator", .len = 4},
-        /* TODO: {.from = "__op<L>TYPE_", .to = "operator", .len = 3}, */
+        /* explicitly matched : {.from = "__op<L>TYPE_", .to = "operator", .len = 3}, */
         { .from = "_or_",         .to = "operator|", .len = 4},
 
         { .from = "_pl_",         .to = "operator+", .len = 4},
@@ -330,21 +366,49 @@ CpDem* cpdem_name (CpDem* dem) {
             ADV (dem);
             dem->is_dtor = true;
             return dem;
-        } else {
-            // operator
-            for (size_t x = 0; x < map_count; x++) {
-                if (IN_RANGE (dem, CUR (dem) + map[x].len) &&
-                    !strncmp (CUR (dem), map[x].from, map[x].len)) {
-                    dem_string_append (dem->name, map[x].to);
-                    SET_CUR (dem, CUR (dem) + map[x].len);
-                    dem->is_operator = true;
-                    return dem;
+        } else if (PEEK (dem) == '_') {
+            // opreator TYPE()
+            // __op<L>TYPE_ : L is length and TYPE is name of type of length <L> characters
+            if (IN_RANGE (dem, CUR (dem) + 4) && !strncmp (CUR (dem), "_op", 3) &&
+                !IS_DIGIT (CUR (dem)[3])) {
+                // read past _op
+                SET_CUR (dem, CUR (dem) + 3);
+
+                // get length of name
+                char* end = NULL;
+                ut64  len = strtoull (CUR (dem), &end, 10);
+                if (!end) {
+                    return NULL;
+                }
+                SET_CUR (dem, end);
+
+                // add operator as name
+                dem_string_append (dem->name, "operator ");
+                dem_string_append_n (dem->name, CUR (dem), len);
+                SET_CUR (dem, CUR (dem) + len);
+                dem_string_append_n (dem->name, "()", 2);
+                return dem;
+            } else {
+                // any other operator
+                for (size_t x = 0; x < map_count; x++) {
+                    if (IN_RANGE (dem, CUR (dem) + map[x].len) &&
+                        !strncmp (CUR (dem), map[x].from, map[x].len)) {
+                        dem_string_append (dem->name, map[x].to);
+                        SET_CUR (dem, CUR (dem) + map[x].len);
+                        dem->is_operator = true;
+                        return dem;
+                    }
                 }
             }
+
 
             // constructor
             dem->is_ctor = true;
             return dem;
+        } else {
+            // move back one position, because this is a name now, not an operator
+            // this name begins with underscore
+            SET_CUR (dem, CUR (dem) - 1);
         }
     }
 
@@ -428,72 +492,35 @@ CpDem* cpdem_func_params (CpDem* dem) {
         return NULL;
     }
 
-    DemString* suffix = NULL;
-    DemString* prefix = NULL;
-
-    dem->param_list       = dem_string_new();
-    DemString* param_list = dem->param_list;
-
-#define SUFFIX(x)                                                                                  \
-    do {                                                                                           \
-        suffix = dem_string_new();                                                                 \
-        dem_string_append (suffix, x);                                                             \
-    } while (0)
-
-#define PREFIX(x)                                                                                  \
-    do {                                                                                           \
-        prefix = dem_string_new();                                                                 \
-        dem_string_append (prefix, x);                                                             \
-    } while (0)
+    dem->has_params = true;
 
 #define APPEND(x) APPEND_N (x, strlen (x))
 #define APPEND_N(x, l)                                                                             \
     do {                                                                                           \
-        if (prefix) {                                                                              \
-            if (!first_param) {                                                                    \
-                dem_string_append_char (param_list, ' ');                                          \
-            }                                                                                      \
-            dem_string_concat (param_list, prefix);                                                \
-            dem_string_append_char (param_list, ' ');                                              \
-            dem_string_free (prefix);                                                              \
-            prefix = NULL;                                                                         \
-        }                                                                                          \
-        if (first_param) {                                                                         \
-            first_param = false;                                                                   \
-        } else {                                                                                   \
-            dem_string_append_n (param_list, ", ", 2);                                             \
-        }                                                                                          \
-        dem_string_append_n (param_list, x, l);                                                    \
-        if (suffix) {                                                                              \
-            dem_string_append_char (param_list, ' ');                                              \
-            dem_string_concat (param_list, suffix);                                                \
-            dem_string_free (suffix);                                                              \
-            suffix = NULL;                                                                         \
-        }                                                                                          \
+        dem_string_append_n (param.name, x, l);                                                    \
+        fparam_vec_append (&dem->func_params, &param);                                             \
     } while (0)
 
 #define X()                                                                                        \
     do {                                                                                           \
-        /* move back one character to get complete length */                                       \
-        if (IS_DIGIT (*(CUR (dem) - 1))) {                                                         \
-            SET_CUR (dem, CUR (dem) - 1);                                                          \
-        }                                                                                          \
+        if (PEEK (dem) >= '0' && PEEK (dem) <= '9') {                                              \
+            char* end          = NULL;                                                             \
+            ut64  typename_len = strtoull (CUR (dem), &end, 10);                                   \
+            if (!dem || !IN_RANGE (dem, end) || !typename_len ||                                   \
+                !IN_RANGE (dem, CUR (dem) + typename_len)) {                                       \
+                fparam_vec_deinit (&dem->func_params);                                             \
+                return NULL;                                                                       \
+            }                                                                                      \
+            SET_CUR (dem, end);                                                                    \
                                                                                                    \
-        char* end          = NULL;                                                                 \
-        ut64  typename_len = strtoull (CUR (dem), &end, 10);                                       \
-        if (!dem || !IN_RANGE (dem, end) || !typename_len ||                                       \
-            !IN_RANGE (dem, CUR (dem) + typename_len)) {                                           \
-            dem_string_free (param_list);                                                          \
-            dem->param_list = NULL;                                                                \
-            return NULL;                                                                           \
+            APPEND_N (CUR (dem), typename_len);                                                    \
+            SET_CUR (dem, CUR (dem) + typename_len);                                               \
+        } else {                                                                                   \
+            not_done = false;                                                                      \
         }                                                                                          \
-        SET_CUR (dem, end);                                                                        \
-                                                                                                   \
-        APPEND_N (CUR (dem), typename_len);                                                        \
-        SET_CUR (dem, CUR (dem) + typename_len);                                                   \
     } while (0)
 
-#define MATCH_SIMPLE_TYPE()                                                                        \
+#define MATCH_TYPE()                                                                               \
     case 'b' :                                                                                     \
         ADV (dem);                                                                                 \
         APPEND ("bool");                                                                           \
@@ -529,6 +556,10 @@ CpDem* cpdem_func_params (CpDem* dem) {
     case 's' :                                                                                     \
         ADV (dem);                                                                                 \
         APPEND ("short");                                                                          \
+        break;                                                                                     \
+    case 'v' :                                                                                     \
+        ADV (dem);                                                                                 \
+        APPEND ("void");                                                                           \
         break;                                                                                     \
     case 'w' :                                                                                     \
         ADV (dem);                                                                                 \
@@ -572,7 +603,8 @@ CpDem* cpdem_func_params (CpDem* dem) {
                 APPEND ("unsigned long long");                                                     \
                 break;                                                                             \
             default :                                                                              \
-                xfixes_exist = false;                                                              \
+                not_done = false;                                                                  \
+                fparam_vec_deinit (&dem->func_params);                                             \
                 break;                                                                             \
         }                                                                                          \
         break;                                                                                     \
@@ -585,7 +617,8 @@ CpDem* cpdem_func_params (CpDem* dem) {
                 APPEND ("signed char");                                                            \
                 break;                                                                             \
             default :                                                                              \
-                xfixes_exist = false;                                                              \
+                not_done = false;                                                                  \
+                fparam_vec_deinit (&dem->func_params);                                             \
                 break;                                                                             \
         }                                                                                          \
         break;                                                                                     \
@@ -603,139 +636,150 @@ CpDem* cpdem_func_params (CpDem* dem) {
                 APPEND ("__complex__ double");                                                     \
                 break;                                                                             \
             default :                                                                              \
-                xfixes_exist = false;                                                              \
+                not_done = false;                                                                  \
+                fparam_vec_deinit (&dem->func_params);                                             \
                 break;                                                                             \
         }                                                                                          \
+        break;                                                                                     \
+    case '0' :                                                                                     \
+    case '1' :                                                                                     \
+    case '2' :                                                                                     \
+    case '3' :                                                                                     \
+    case '4' :                                                                                     \
+    case '5' :                                                                                     \
+    case '6' :                                                                                     \
+    case '7' :                                                                                     \
+    case '8' :                                                                                     \
+    case '9' :                                                                                     \
+        X();                                                                                       \
+        break;                                                                                     \
+    default :                                                                                      \
+        not_done = false;                                                                          \
+        fparam_vec_deinit (&dem->func_params);                                                     \
         break;
 
-    bool first_param  = true;
-    bool xfixes_exist = true; /* suffixes or prefixes */
-    while (xfixes_exist && PEEK (dem)) {
-        switch (PEEK (dem)) {
-            MATCH_SIMPLE_TYPE();
+    /* set to false the moment we encouter something we don't know about */
+    bool not_done = true;
 
-            case 'P' :
-                ADV (dem);
-                SUFFIX ("*");
+    while (not_done && PEEK (dem)) {
+        FuncParam param;
+        fparam_init (&param);
+
+        switch (PEEK (dem)) {
+            /* X */
+            MATCH_TYPE();
+
+            /* R - References */
+            case 'R' :
+                ADV (dem); /* skip R */
+                fparam_append_to (&param, suffix, "&");
+                /* let it fall through, becase 'R' and 'P' differ only at first */
+
+            /* P - Pointers */
+            case 'P' : {
+                /* if it's not falling through 'R', but a direct case of 'P' */
+                if (PEEK (dem) == 'P') {
+                    ADV (dem); /* skip P */
+
+                    /* need to prepend it this way, because we might already have & in the suffix */
+                    fparam_prepend_to (&param, suffix, "*");
+                }
+
                 switch (PEEK (dem)) {
-                    MATCH_SIMPLE_TYPE();
+                    /* PX or RPX */
+                    MATCH_TYPE();
 
                     case 'C' : {
-                        ADV (dem);
+                        ADV (dem); /* skip C */
+                        fparam_append_to (&param, prefix, "const");
+
                         switch (PEEK (dem)) {
-                            /* PCVX */
-                            case 'V' : {
-                                ADV (dem);
-                                PREFIX ("const volatile");
-                                X();
-                                break;
-                            }
                             /* PCX */
-                            default : {
-                                PREFIX ("const");
-                                X();
+                            MATCH_TYPE();
+
+                            case 'V' : {
+                                ADV (dem); /* skip V */
+                                fparam_append_to (&param, prefix, " volatile");
+
+                                switch (PEEK (dem)) {
+                                    /* PCVX */
+                                    MATCH_TYPE();
+                                }
                                 break;
                             }
                         }
                         break;
                     }
+
                     /* PVX */
                     case 'V' : {
-                        ADV (dem);
-                        PREFIX ("volatile");
+                        ADV (dem); /* skip V */
+                        fparam_append_to (&param, prefix, "volatile");
                         X();
                         break;
                     }
-                    /* PX */
-                    default :
-                        ADV (dem);
-                        X();
-                        break;
-                }
-                break;
-            case 'R' :
-                ADV (dem);
-                if (PEEK (dem) == 'P') {
-                    ADV (dem);
-                    SUFFIX ("*&");
-                } else {
-                    SUFFIX ("&");
                 }
 
-                switch (PEEK (dem)) {
-                    MATCH_SIMPLE_TYPE();
-
-                    case 'C' : {
-                        ADV (dem);
-                        switch (PEEK (dem)) {
-                            /* RCVX */
-                            case 'V' : {
-                                ADV (dem);
-                                PREFIX ("const volatile");
-                                X();
-                                break;
-                            }
-                            /* RCX */
-                            default : {
-                                ADV (dem);
-                                PREFIX ("const");
-                                X();
-                                break;
-                            }
-                        }
-                        break;
-                    }
-                    /* RVX */
-                    case 'V' : {
-                        ADV (dem);
-                        PREFIX ("volatile");
-                        X();
-                        break;
-                    }
-                    /* RX */
-                    default :
-                        ADV (dem);
-                        X();
-                        break;
-                }
-                break;
-            /* [0-9]+ */
-            case '0' :
-            case '1' :
-            case '2' :
-            case '3' :
-            case '4' :
-            case '5' :
-            case '6' :
-            case '7' :
-            case '8' :
-            case '9' : {
-                ADV (dem);
-                PREFIX ("const");
-                X();
                 break;
             }
-            default :
-                xfixes_exist = false;
+
+            /* T - reference back to a repeated type */
+            case 'T' : {
+                ADV (dem); /* skip T */
+
+                /* get type index to copy here */
+                char* end     = NULL;
+                ut64  typeidx = strtoull (CUR (dem), &end, 10);
+                if (!end || typeidx > dem->func_params.length) {
+                    not_done = false;
+                    fparam_vec_deinit (&dem->func_params);
+                    break;
+                }
+                SET_CUR (dem, end);
+
+                /* if length is more than single digit in it's string form, then there will be a "_" just after it */
+                if (PEEK (dem) == '_') {
+                    ADV (dem);
+                }
+
+                /* refer back to param list */
+                if (typeidx == 0) {
+                    /* the very first type is name of function itself, it should be considered at index 0 */
+                    if (dem->base_name) {
+                        FuncParam param;
+                        fparam_init (&param);
+                        fparam_append_to (&param, name, dem_string_buffer (dem->base_name));
+                        fparam_vec_append (&dem->func_params, &param);
+                    } else {
+                        not_done = false;
+                        fparam_vec_deinit (&dem->func_params);
+                        break;
+                    }
+                } else {
+                    fparam_deinit (&param);
+                    fparam_init_clone (&param, vec_ptr_at (&dem->func_params, typeidx - 1));
+                    fparam_vec_append (&dem->func_params, &param);
+                }
                 break;
+            }
         }
     }
 
 #undef APPEND
 #undef APPEND_N
-#undef SUFFIX
-#undef PREFIX
 #undef X
 
     /* there mustn't be anything else after parsing all function param types */
     if (PEEK (dem)) {
-        dem_string_free (param_list);
-        dem->param_list = NULL;
+        vec_deinit (&dem->func_params);
         return NULL;
     }
 
-    if (first_param) {
-        dem_string_append_n (param_list, "void", 4);
+    if (!dem->func_params.length) {
+        FuncParam param;
+        fparam_init (&param);
+        fparam_append_to (&param, name, "void");
+        vec_append (&dem->func_params, &param);
     }
 
     return dem;
