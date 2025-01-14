@@ -335,7 +335,7 @@ CpDem* cpdem_qualifiers_list (CpDem* dem) {
 
         /* update current position */
         SET_CUR (dem, end);
-    } else if (PEEK (dem) >= '0' && PEEK (dem) <= '9') {
+    } else if ((PEEK (dem) >= '0' && PEEK (dem) <= '9') || PEEK (dem) == 't') {
         /* if just one qualifier, then length of qualifier comes first */
         qualifier_count = 1;
     } else {
@@ -474,12 +474,13 @@ CpDem* cpdem_name (CpDem* dem) {
     while (PEEK (dem)) {
         dem_string_append_char (dem->name, READ (dem));
 
-        /* __ [F | Q | [0-9]] */
+        /* __ [F | Q | H | t | [0-9]] */
         /* If a qualifier(s) list or a function parameter(s) list starts then name ends there */
         if (IN_RANGE (dem, CUR (dem) + 2)) {
             const char* cur = CUR (dem);
             if (cur[0] == '_' && cur[1] == '_' &&
-                (cur[2] == 'F' || cur[2] == 'Q' || cur[2] == 'H' || IS_DIGIT (cur[2]))) {
+                (cur[2] == 'F' || cur[2] == 'Q' || cur[2] == 'H' || cur[2] == 't' ||
+                 IS_DIGIT (cur[2]))) {
                 break;
             }
         }
@@ -513,6 +514,7 @@ CpDem* cpdem_class_names (CpDem* dem, ut64 qualifiers_count) {
         DemString* name = dem_string_new();
 
         if (PEEK (dem) == 't') {
+            ADV (dem);
             if (!cpdem_template_class (dem, name)) {
                 dem_string_free (name);
                 return NULL;
@@ -587,12 +589,15 @@ CpDem* cpdem_param_type (CpDem* dem, ParamVec* params) {
     param_init (&param);
 
 #define ADD_PARAM(x)                                                                               \
-    dem_string_append (param.name, x) ? (param_vec_append (params, &param) ? dem : NULL) : NULL
+    dem_string_append (param.name, x) ?                                                            \
+        (param_vec_append (params, &param) ? dem : (param_deinit (&param), NULL)) :                \
+        (param_deinit (&param), NULL)
 
     /** read a custom type from current read position and add it to params vector if success */
 #define ADD_NAMED_PARAM()                                                                          \
-    cpdem_custom_type_name (dem, param.name) ? (param_vec_append (params, &param) ? dem : NULL) :  \
-                                               NULL
+    cpdem_custom_type_name (dem, param.name) ?                                                     \
+        (param_vec_append (params, &param) ? dem : (param_deinit (&param), NULL)) :                \
+        (param_deinit (&param), NULL)
 
 #define MATCH_TYPE()                                                                               \
     case 'b' : {                                                                                   \
@@ -630,6 +635,16 @@ CpDem* cpdem_param_type (CpDem* dem, ParamVec* params) {
     case 's' : {                                                                                   \
         ADV (dem);                                                                                 \
         return ADD_PARAM ("short");                                                                \
+    }                                                                                              \
+    case 't' : {                                                                                   \
+        ADV (dem);                                                                                 \
+        if (cpdem_template_class (dem, param.name)) {                                              \
+            param_vec_append (params, &param);                                                     \
+            return dem;                                                                            \
+        } else {                                                                                   \
+            param_deinit (&param);                                                                 \
+            return NULL;                                                                           \
+        }                                                                                          \
     }                                                                                              \
     case 'v' : {                                                                                   \
         ADV (dem);                                                                                 \
@@ -731,70 +746,102 @@ CpDem* cpdem_param_type (CpDem* dem, ParamVec* params) {
 
         /* R - References */
         case 'R' : {
+case_r:
             ADV (dem); /* skip R */
             param_append_to (&param, suffix, "&");
+            is_ref = true;
 
             switch (PEEK (dem)) {
                 MATCH_TYPE();
+
+                case 'R' : {
+                    goto case_r;
+                }
 
                 case 'P' : {
                     goto logic_intersection_between_case_r_and_p;
                 }
 
                 case 'T' : {
-                    is_ref = true;
                     goto logic_intersection_between_case_r_and_t;
+                }
+
+                case 'C' : {
+                    goto logic_intersection_between_case_r_and_c;
+                }
+
+                case 'V' : {
+                    goto logic_intersection_between_case_r_and_v;
                 }
             }
         }
 
         /* P - Pointers */
         case 'P' : {
+case_p:
 logic_intersection_between_case_r_and_p:
             ADV (dem); /* skip P */
 
             /* need to prepend it this way, because we might already have & in the suffix */
             param_prepend_to (&param, suffix, "*");
+            is_ptr = true;
 
             switch (PEEK (dem)) {
                 /* PX or RPX */
                 MATCH_TYPE();
 
+                case 'P' : {
+                    goto case_p;
+                }
+
                 case 'T' : {
-                    is_ptr = true;
                     goto logic_intersection_between_p_and_t_or_r_and_p_and_t;
                 }
 
                 case 'C' : {
-                    ADV (dem); /* skip C */
-                    param_append_to (&param, prefix, "const");
-
-                    switch (PEEK (dem)) {
-                        /* PCX */
-                        MATCH_TYPE();
-
-                        case 'V' : {
-                            ADV (dem); /* skip V */
-                            param_append_to (&param, prefix, " volatile");
-
-                            switch (PEEK (dem)) {
-                                /* PCVX */
-                                MATCH_TYPE();
-                            }
-                            break;
-                        }
-                    }
-                    break;
+                    goto logic_intersection_between_case_p_and_c;
                 }
 
                 /* PVX */
                 case 'V' : {
-                    ADV (dem); /* skip V */
-                    param_append_to (&param, prefix, "volatile");
-                    return ADD_NAMED_PARAM();
+                    goto logic_intersection_between_case_p_and_v;
                 }
             }
 
+            break;
+        }
+
+        /* C */
+        case 'C' : {
+logic_intersection_between_case_r_and_c:
+logic_intersection_between_case_p_and_c:
+            ADV (dem); /* skip C */
+            param_append_to (&param, prefix, "const");
+
+            switch (PEEK (dem)) {
+                /* CX */
+                MATCH_TYPE();
+
+                /* CVX */
+                case 'V' : {
+                    goto logic_intersection_between_case_c_and_v;
+                }
+            }
+            break;
+        }
+
+        /* V */
+        case 'V' : {
+logic_intersection_between_case_r_and_v:
+logic_intersection_between_case_p_and_v:
+logic_intersection_between_case_c_and_v:
+            ADV (dem); /* skip V */
+            param_append_to (&param, prefix, "volatile");
+
+            switch (PEEK (dem)) {
+                /* VX */
+                MATCH_TYPE();
+            }
             break;
         }
 
@@ -855,7 +902,7 @@ logic_intersection_between_case_n_and_t:
                         /* num_reps will be 1 in this case */
                         param_append_to (&p, suffix, "&");
                     }
-                    
+
                     /* if we fell down from P */
                     if (is_ptr) {
                         /* num_reps will be 1 in this case */
@@ -881,7 +928,7 @@ logic_intersection_between_case_n_and_t:
                         /* num_reps will be 1 in this case */
                         param_append_to (&p, suffix, "&");
                     }
-                    
+
                     /* if we fell down from P */
                     if (is_ptr) {
                         /* num_reps will be 1 in this case */
