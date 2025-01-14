@@ -32,6 +32,11 @@ typedef uint16_t ut16;
 typedef uint32_t ut32;
 typedef uint64_t ut64;
 
+typedef char st8;
+typedef short st16;
+typedef int st32;
+typedef long long st64;
+
 #define UT8_MAX  0xFFu
 #define UT16_MAX 0xFFFFu
 #define UT32_MAX 0xFFFFFFFFu

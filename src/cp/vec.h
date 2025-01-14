@@ -5,6 +5,16 @@
 #ifndef CPDEM_VEC_H
 #define CPDEM_VEC_H
 
+#define nearest_power_of_two(v)                                                                    \
+    (((v)--),                                                                                      \
+     ((v) |= (v) >> 1),                                                                            \
+     ((v) |= (v) >> 2),                                                                            \
+     ((v) |= (v) >> 4),                                                                            \
+     ((v) |= (v) >> 8),                                                                            \
+     ((v) |= (v) >> 16),                                                                           \
+     ((v)++),                                                                                      \
+     (v))
+
 #define Vec(x)                                                                                     \
     struct {                                                                                       \
         x*   data;                                                                                 \
@@ -47,6 +57,8 @@
  * \return {0} otherwise.
  */
 #define vec_at(vec, idx) ((vec) ? (vec)->data[idx] : ((VEC_DATA_TYPE (vec)) {0}))
+#define vec_front(vec)   vec_at (vec, 0)
+#define vec_back(vec)    vec_at (vec, (vec)->length - 1)
 
 /**
  * Get pointer to data stored in vector at given idx.
@@ -58,6 +70,8 @@
  * \return {0} otherwise.
  */
 #define vec_ptr_at(vec, idx) ((vec) ? ((vec)->data + (idx)) : NULL)
+#define vec_begin(vec)       vec_ptr_at (vec, 0)
+#define vec_end(vec)         vec_ptr_at (vec, (vec)->length - 1)
 
 /**
  * Increase capacity of vector from current to new provided capacity. If new capacity
@@ -70,11 +84,28 @@
  * \return NULL otherwise.
  */
 #define vec_reserve(vec, new_cap)                                                                  \
-    ((vec) ? ((vec)->capacity < (new_cap) ?                                                        \
-                  (vec->data = realloc ((vec)->data, sizeof (VEC_DATA_TYPE (vec)) * (new_cap)),    \
-                   (vec)) :                                                                        \
-                  NULL) :                                                                          \
-             NULL)
+    ((vec) ?                                                                                       \
+         ((vec)->capacity < (new_cap) ?                                                            \
+              (/* make sure capacity can never be set to 0                                      */ \
+               ((vec)->capacity = (new_cap) ? (new_cap) : 1),                                      \
+               (/* make sure vector capacity is always in powers of two (not really necessary)*/   \
+                nearest_power_of_two ((vec)->capacity)                                             \
+               ),                                                                                  \
+               (/* increase vector capacity                                                     */ \
+                (vec)->data =                                                                      \
+                    realloc ((vec)->data, sizeof (VEC_DATA_TYPE (vec)) * (vec)->capacity)          \
+               ),                                                                                  \
+               (/* memset new allocated region with 0 to make all pointers NULL                 */ \
+                memset (                                                                           \
+                    (vec)->data + (vec)->length,                                                   \
+                    0,                                                                             \
+                    sizeof (VEC_DATA_TYPE (vec)) * ((vec)->capacity - (vec)->length)               \
+                )                                                                                  \
+               ),                                                                                  \
+               (vec)                                                                               \
+              ) :                                                                                  \
+              (vec)) :                                                                             \
+         NULL)
 
 /**
  * Append an item into vector.
@@ -87,12 +118,21 @@
  * \return vec on success.
  * \return NULL otherwise.
  */
-#define vec_append(vec, data_ptr)                                                                  \
-    ((vec) ? vec_reserve ((vec), (vec)->length + 1) ?                                              \
-             (memcpy ((vec)->data + (vec)->length++, (data_ptr), sizeof (VEC_DATA_TYPE (vec))),    \
-              (vec)) :                                                                             \
-             NULL :                                                                                \
-             NULL)
+#define vec_append(vec, data_ptr)                                                                   \
+    ((vec) ?                                                                                        \
+         ((/* make sure vector has sufficient space to insert one more item                      
+            * this has no effect if vector length is less than capacity                        */   \
+           vec_reserve ((vec), (vec)->length + 1)                                                   \
+          ) ?                                                                                       \
+              (/* copy the data over from data_ptr to last element                               */ \
+               memcpy ((vec)->data + (vec)->length, (data_ptr), sizeof (VEC_DATA_TYPE (vec))),      \
+               (/* adjust the vector length after appending                                      */ \
+                (vec)->length += 1                                                                  \
+               ),                                                                                   \
+               (vec)                                                                                \
+              ) :                                                                                   \
+              NULL) :                                                                               \
+         NULL)
 
 /**
  * Iterate over each element in vector.
@@ -101,14 +141,19 @@
  * \param v    : Pointer to vector.
  * \param var  : Variable where value will be stored.
  * \param body : For loop body. Yes, it's a parameter here! To handle local variable scope.
+ *
+ * NOTE: to maintain this macro in future, consider replacing the large iterator name with a small one
+ * and then replace it back to an uncommon name :-)
  */
 #define vec_foreach(v, var, body)                                                                  \
     do {                                                                                           \
-        size_t ___iter___     = 0;                                                                 \
-        VEC_DATA_TYPE (v) var = {0};                                                               \
+        size_t _i_needed_a_very_very_uncommon_name_for_this_iterator = 0;                          \
+        VEC_DATA_TYPE (v) var                                        = {0};                        \
         if ((v) && (v)->length) {                                                                  \
-            for ((___iter___) = 0; (___iter___) < (v)->length; ++(___iter___)) {                   \
-                var = (v)->data[(___iter___)];                                                     \
+            for ((_i_needed_a_very_very_uncommon_name_for_this_iterator) = 0;                      \
+                 (_i_needed_a_very_very_uncommon_name_for_this_iterator) < (v)->length;            \
+                 ++(_i_needed_a_very_very_uncommon_name_for_this_iterator)) {                      \
+                var = (v)->data[(_i_needed_a_very_very_uncommon_name_for_this_iterator)];          \
                 { body }                                                                           \
             }                                                                                      \
         }                                                                                          \
@@ -121,14 +166,19 @@
  * \param v    : Pointer to vector.
  * \param var  : Variable where pointer to variable will be stored.
  * \param body : For loop body. Yes, it's a parameter here! To handle local variable scope.
+ *
+ * NOTE: to maintain this macro in future, consider replacing the large iterator name with a small one
+ * and then replace it back to an uncommon name :-)
  */
 #define vec_foreach_ptr(v, var, body)                                                              \
     do {                                                                                           \
-        size_t ___iter___      = 0;                                                                \
-        VEC_DATA_TYPE (v)* var = {0};                                                              \
+        size_t _i_needed_a_very_very_uncommon_name_for_this_iterator = 0;                          \
+        VEC_DATA_TYPE (v)* var                                       = {0};                        \
         if ((v) && (v)->length) {                                                                  \
-            for ((___iter___) = 0; (___iter___) < (v)->length; ++(___iter___)) {                   \
-                var = &(v)->data[(___iter___)];                                                    \
+            for ((_i_needed_a_very_very_uncommon_name_for_this_iterator) = 0;                      \
+                 (_i_needed_a_very_very_uncommon_name_for_this_iterator) < (v)->length;            \
+                 ++(_i_needed_a_very_very_uncommon_name_for_this_iterator)) {                      \
+                var = &(v)->data[(_i_needed_a_very_very_uncommon_name_for_this_iterator)];         \
                 { body }                                                                           \
             }                                                                                      \
         }                                                                                          \
