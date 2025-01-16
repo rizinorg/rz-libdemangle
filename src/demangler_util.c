@@ -133,7 +133,7 @@ void dem_string_free(DemString *ds) {
 	if (!ds) {
 		return;
 	}
-	free(ds->buf);
+	dem_string_deinit(ds);
 	free(ds);
 }
 
@@ -157,6 +157,64 @@ DemString *dem_string_new_with_capacity(size_t cap) {
 
 DemString *dem_string_new() {
 	return dem_string_new_with_capacity(256);
+}
+
+/**
+ * Deinitialize given String object. This won't free the
+ * given pointer
+ *
+ * \p ds DemString object to be deinited.
+ */
+void dem_string_deinit(DemString *ds) {
+	if (!ds) {
+		return;
+	}
+	free(ds->buf);
+	memset(ds, 0, sizeof(DemString));
+}
+
+/**
+ * \b Initialize given DemString object. To be used when allocated
+ * memory is already available.
+ *
+ * \p ds DemString object to be initialized.
+ *
+ * \return ds on success.
+ * \return NULL otherwise.
+ */
+DemString *dem_string_init(DemString *ds) {
+	if (!ds) {
+		return NULL;
+	}
+
+	memset(ds, 0, sizeof(DemString));
+
+	return ds;
+}
+
+/**
+ * \b Init clone of given src into given dst DemString object.
+ *
+ * \p dst Destination.
+ * \p src Source.
+ *
+ * \return dst on success.
+ * \return NULL otherwise.
+ */
+DemString *dem_string_init_clone(DemString *dst, DemString *src) {
+	if (!dst || !src) {
+		return NULL;
+	}
+
+	if (src->buf) {
+		dst->buf = strdup(src->buf);
+		dst->len = strlen(dst->buf);
+		dst->cap = dst->len;
+	} else {
+		dem_string_init(dst);
+	}
+
+	return dst;
 }
 
 static bool dem_string_has_enough_capacity(DemString *ds, ssize_t size) {
@@ -183,6 +241,14 @@ static bool dem_string_increase_capacity(DemString *ds, ssize_t size) {
 	return true;
 }
 
+/**
+ * This will issue a free call on the provided DemString object.
+ * Make sure not to use this on objects that have not been malloc'd
+ *
+ * \param ds DemString object to drain out to a char* buf.
+ *
+ * \return char array containing ds contnents.
+ */
 char *dem_string_drain(DemString *ds) {
 	dem_return_val_if_fail(ds, NULL);
 	char *ret = ds->buf;

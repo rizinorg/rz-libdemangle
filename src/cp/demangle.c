@@ -36,23 +36,87 @@ typedef struct {
     StrIter      original;
     CpDemOptions opts;
 
-    DemString* name;      // TODO: convert this to a vector of qualifier strings
-    DemString* base_name; // This is the name that we have before prepending qualifiers
-    ParamVec   func_params;
-    bool       has_params;
+    Vec (DemString) qualifiers;
+    DemString base_name;   // Used to identify base type in list of function params
+    ParamVec  func_params; // Names of all function params
+    bool      has_params;  // There are cases where control never reaches `cpdem_func_params`
 
-    DemString* suffix; // anything that is to be put at the very end of demangled output
-    DemString* prefix; // a return type, or another keyword to be put before name
+    DemString suffix;      // anything that is to be put at the very end of demangled output
+    DemString prefix;      // a return type, or another keyword to be put before name
 
     bool is_ctor;
     bool is_dtor;
-    bool is_operator;
+    ut8  operator_type; // 0 if not an operator, otherwise a positive value
 } CpDem;
 
 static CpDem*      cpdem_init (CpDem* dem, const char* mangled, CpDemOptions opts);
 static const char* cpdem_get_demangled (CpDem* dem);
 static CpDem*      cpdem_public_name (CpDem* dem);
 static CpDem*      cpdem_deinit (CpDem* dem);
+
+static const struct {
+    const char* from;
+    const char* to;
+    size_t      len;
+} operators_map[] = {
+    {0 /* dummy entry to make sure indices start from 1 */},
+    {.from = "_aad_", .to = "operator&=", .len = 5},
+    {.from = "_adv_", .to = "operator/=", .len = 5},
+    {.from = "_aer_", .to = "operator^=", .len = 5},
+    {.from = "_als_", .to = "operator<<=", .len = 5},
+    {.from = "_aml_", .to = "operator*=", .len = 5},
+    {.from = "_amd_", .to = "operator%=", .len = 5},
+    {.from = "_ami_", .to = "operator-=", .len = 5},
+    {.from = "_aor_", .to = "operator|=", .len = 5},
+    {.from = "_apl_", .to = "operator+=", .len = 5},
+    {.from = "_ars_", .to = "operator>>=", .len = 5},
+
+    {.from = "_aa_", .to = "operator&&", .len = 4},
+    {.from = "_ad_", .to = "operator&", .len = 4},
+    {.from = "_as_", .to = "operator=", .len = 4},
+
+    {.from = "_cl_", .to = "operator()", .len = 4},
+    {.from = "_co_", .to = "operator~", .len = 4},
+    {.from = "_cm_", .to = "operator,", .len = 4},
+
+    {.from = "_dl_", .to = "operator delete", .len = 4},
+    {.from = "_dv_", .to = "operator/", .len = 4},
+
+    {.from = "_eq_", .to = "operator==", .len = 4},
+    {.from = "_er_", .to = "operator^", .len = 4},
+
+    {.from = "_ge_", .to = "operator>=", .len = 4},
+    {.from = "_gt_", .to = "operator>", .len = 4},
+
+    {.from = "_le_", .to = "operator<=", .len = 4},
+    {.from = "_ls_", .to = "operator<<", .len = 4},
+    {.from = "_lt_", .to = "operator<", .len = 4},
+
+    {.from = "_md_", .to = "operator%", .len = 4},
+    {.from = "_mi_", .to = "operator-", .len = 4},
+    {.from = "_ml_", .to = "operator*", .len = 4},
+    {.from = "_mm_", .to = "operator--", .len = 4},
+
+    {.from = "_ne_", .to = "operator!=", .len = 4},
+    {.from = "_nt_", .to = "operator!", .len = 4},
+    {.from = "_nw_", .to = "operator new", .len = 4},
+
+    {.from = "_oo_", .to = "operator||", .len = 4},
+    /* explicitly matched : {.from = "__op<L>TYPE_", .to = "operator", .len = 3}, */
+    {.from = "_or_", .to = "operator|", .len = 4},
+
+    {.from = "_pl_", .to = "operator+", .len = 4},
+    {.from = "_pp_", .to = "operator++", .len = 4},
+
+    {.from = "_rf_", .to = "operator->", .len = 4},
+    {.from = "_rm_", .to = "operator->*", .len = 4},
+    {.from = "_rs_", .to = "operator>>", .len = 4},
+
+    {.from = "_vc_", .to = "operator[]", .len = 4},
+    {.from = "_vd_", .to = "operator delete[]", .len = 4},
+    {.from = "_vn_", .to = "operator new[]", .len = 4},
+};
+#define OPERATOR_MAP_SIZE (sizeof (operators_map) / sizeof (operators_map[0]))
 
 /**
  * \b Takes a mangled input, and returns corresponding demangled form.
@@ -131,6 +195,11 @@ static CpDem* cpdem_custom_type_name (CpDem* dem, DemString* name);
 #define IN_RANGE(dem, pos) ((pos) >= BEG (dem) ? ((pos) < END (dem) ? 1 : 0) : 0)
 #define SET_CUR(dem, pos)  ((dem)->original.cur = IN_RANGE (dem, pos) ? (pos) : CUR (dem))
 
+#define IS_BASE_NAME_A_TYPE(dem) ((dem)->qualifiers.length && (dem)->base_name->length)
+
+/* is constructor, destructor or an operator */
+#define IS_XTOR(dem) ((dem)->is_ctor || (dem)->is_dtor || (dem)->operator_type)
+
 /* Read but don't advance */
 #define PEEK(dem) (IN_RANGE (dem, CUR (dem)) ? *(dem)->original.cur : 0)
 
@@ -152,10 +221,10 @@ CpDem* cpdem_init (CpDem* dem, const char* mangled, CpDemOptions opts) {
     memset (dem, 0, sizeof (CpDem));
     dem->original =
         ((StrIter) {.beg = mangled, .end = mangled + strlen (mangled) + 1, .cur = mangled});
-    dem->opts   = opts;
-    dem->name   = dem_string_new();
-    dem->suffix = dem_string_new();
-    dem->prefix = dem_string_new();
+    dem->opts = opts;
+    dem_string_init (&dem->base_name);
+    dem_string_init (&dem->suffix);
+    dem_string_init (&dem->prefix);
     param_vec_init (&dem->func_params);
     return dem;
 }
@@ -165,24 +234,16 @@ CpDem* cpdem_deinit (CpDem* dem) {
         return NULL;
     }
 
+    /* free all demstring and deinit qualifiers vector */
+    vec_foreach_ptr (&dem->qualifiers, q, { dem_string_deinit (q); });
+    vec_deinit (&dem->qualifiers);
+
     // deinit all func params first
     param_vec_deinit (&dem->func_params);
 
-    if (dem->name) {
-        dem_string_free (dem->name);
-    }
-
-    if (dem->base_name) {
-        dem_string_free (dem->base_name);
-    }
-
-    if (dem->prefix) {
-        dem_string_free (dem->prefix);
-    }
-
-    if (dem->suffix) {
-        dem_string_free (dem->suffix);
-    }
+    dem_string_deinit (&dem->base_name);
+    dem_string_deinit (&dem->prefix);
+    dem_string_deinit (&dem->suffix);
 
     memset (dem, 0, sizeof (CpDem));
     return dem;
@@ -194,41 +255,74 @@ const char* cpdem_get_demangled (CpDem* dem) {
     }
 
     // append name first
-    DemString* demangled = dem_string_new();
-    dem_string_concat (demangled, dem->name);
+    DemString demangled = {0};
+    dem_string_init (&demangled);
 
-    // append all params
-    if (dem->has_params) {
-        bool is_first_param = true;
-        dem_string_append_char (demangled, '(');
-        // vec_foreach_ptr (&dem->func_params, param, {
-        for (Param* param = dem->func_params.data;
-             param < dem->func_params.data + dem->func_params.length;
-             param++) {
-            // prepend a comma before every param if that param is not the first one.
-            if (is_first_param) {
-                is_first_param = false;
+    /* add all qualifiers */
+    if (dem->qualifiers.length) {
+        vec_foreach_ptr (&dem->qualifiers, q, {
+            dem_string_concat (&demangled, q);
+            dem_string_append_n (&demangled, "::", 2);
+        });
+
+        if (IS_XTOR (dem)) {
+            /* when adding into constructor or destructor, we don't need template params,
+             * make sure to not add that, but stopping at "<" */
+            DemString* last_qualifier = vec_end (&dem->qualifiers);
+            char*      buf            = last_qualifier->buf;
+            size_t     buf_len        = last_qualifier->len;
+            if (dem->is_ctor) {
+                char* name_end = memchr (buf, '<', buf_len);
+                name_end       = name_end ? name_end : buf + buf_len;
+                dem_string_append_n (&demangled, buf, name_end - buf);
+            } else if (dem->is_dtor) {
+                char* name_end = memchr (buf, '<', buf_len);
+                name_end       = name_end ? name_end : buf + buf_len;
+                dem_string_append_char (&demangled, '~');
+                dem_string_append_n (&demangled, buf, name_end - buf);
             } else {
-                dem_string_append_n (demangled, ", ", 2);
+                dem_string_append (&demangled, operators_map[dem->operator_type].to);
             }
-
-            // demangled += prefix name suffix
-            if (param->prefix->len) {
-                dem_string_concat (demangled, param->prefix);
-                dem_string_append_char (demangled, ' ');
-            }
-            dem_string_concat (demangled, param->name);
-            if (param->suffix->len) {
-                dem_string_append_char (demangled, ' ');
-                dem_string_concat (demangled, param->suffix);
-            }
+        } else {
+            dem_string_concat (&demangled, &dem->base_name);
         }
-        // });
-        dem_string_append_char (demangled, ')');
+    } else {
+        /* if there are no qualifiers, then there surely is a base name */
+        dem_string_concat (&demangled, &dem->base_name);
     }
 
-    const char* res = dem_str_ndup (dem_string_buffer (demangled), dem_string_length (demangled));
-    dem_string_free (demangled);
+    // append all params if they exist
+    if (dem->has_params) {
+        dem_string_append_char (&demangled, '(');
+        if (dem->func_params.length) {
+            bool is_first_param = true;
+            vec_foreach_ptr (&dem->func_params, param, {
+                // prepend a comma before every param if that param is not the first one.
+                if (is_first_param) {
+                    is_first_param = false;
+                } else {
+                    dem_string_append_n (&demangled, ", ", 2);
+                }
+
+                // demangled += prefix name suffix
+                if (param->prefix.len) {
+                    dem_string_concat (&demangled, &param->prefix);
+                    dem_string_append_char (&demangled, ' ');
+                }
+                dem_string_concat (&demangled, &param->name);
+                if (param->suffix.len) {
+                    dem_string_append_char (&demangled, ' ');
+                    dem_string_concat (&demangled, &param->suffix);
+                }
+            });
+        } else {
+            dem_string_append_n (&demangled, "void", 4);
+        }
+        dem_string_append_char (&demangled, ')');
+    }
+
+    const char* res = dem_str_ndup (demangled.buf, demangled.len);
+    dem_string_deinit (&demangled);
 
     return res;
 }
@@ -259,7 +353,7 @@ CpDem* cpdem_public_name (CpDem* dem) {
 
     if (IN_RANGE (dem, CUR (dem) + 3)) {
         /* there may be one or two _ depending on scanned name */
-        if (dem->is_dtor || dem->is_ctor || dem->is_operator) {
+        if (IS_XTOR (dem)) {
             /* skip _ */
             ADV (dem);
         } else {
@@ -353,71 +447,6 @@ CpDem* cpdem_name (CpDem* dem) {
         return NULL;
     }
 
-    static const struct {
-        const char* from;
-        const char* to;
-        size_t      len;
-    } map[] = {
-        {.from = "_aad_",        .to = "operator&=", .len = 5},
-        {.from = "_adv_",        .to = "operator/=", .len = 5},
-        {.from = "_aer_",        .to = "operator^=", .len = 5},
-        {.from = "_als_",       .to = "operator<<=", .len = 5},
-        {.from = "_aml_",        .to = "operator*=", .len = 5},
-        {.from = "_amd_",        .to = "operator%=", .len = 5},
-        {.from = "_ami_",        .to = "operator-=", .len = 5},
-        {.from = "_aor_",        .to = "operator|=", .len = 5},
-        {.from = "_apl_",        .to = "operator+=", .len = 5},
-        {.from = "_ars_",       .to = "operator>>=", .len = 5},
-
-        { .from = "_aa_",        .to = "operator&&", .len = 4},
-        { .from = "_ad_",         .to = "operator&", .len = 4},
-        { .from = "_as_",         .to = "operator=", .len = 4},
-
-        { .from = "_cl_",        .to = "operator()", .len = 4},
-        { .from = "_co_",         .to = "operator~", .len = 4},
-        { .from = "_cm_",         .to = "operator,", .len = 4},
-
-        { .from = "_dl_",   .to = "operator delete", .len = 4},
-        { .from = "_dv_",         .to = "operator/", .len = 4},
-
-        { .from = "_eq_",        .to = "operator==", .len = 4},
-        { .from = "_er_",         .to = "operator^", .len = 4},
-
-        { .from = "_ge_",        .to = "operator>=", .len = 4},
-        { .from = "_gt_",         .to = "operator>", .len = 4},
-
-        { .from = "_le_",        .to = "operator<=", .len = 4},
-        { .from = "_ls_",        .to = "operator<<", .len = 4},
-        { .from = "_lt_",         .to = "operator<", .len = 4},
-
-        { .from = "_md_",         .to = "operator%", .len = 4},
-        { .from = "_mi_",         .to = "operator-", .len = 4},
-        { .from = "_ml_",         .to = "operator*", .len = 4},
-        { .from = "_mm_",        .to = "operator--", .len = 4},
-
-        { .from = "_ne_",        .to = "operator!=", .len = 4},
-        { .from = "_nt_",         .to = "operator!", .len = 4},
-        { .from = "_nw_",      .to = "operator new", .len = 4},
-
-        { .from = "_oo_",          .to = "operator", .len = 4},
-        /* explicitly matched : {.from = "__op<L>TYPE_", .to = "operator", .len = 3}, */
-        { .from = "_or_",         .to = "operator|", .len = 4},
-
-        { .from = "_pl_",         .to = "operator+", .len = 4},
-        { .from = "_pp_",        .to = "operator++", .len = 4},
-
-        { .from = "_rf_",        .to = "operator->", .len = 4},
-        { .from = "_rm_",       .to = "operator->*", .len = 4},
-        { .from = "_rs_",        .to = "operator>>", .len = 4},
-
-        { .from = "_vc_",        .to = "operator[]", .len = 4},
-        { .from = "_vd_", .to = "operator delete[]", .len = 4},
-        { .from = "_vn_",    .to = "operator new[]", .len = 4},
-    };
-
-    size_t map_count = sizeof (map) / sizeof (map[0]);
-
-    /* if name begins with _, then it might be a constructor, a destructor or an operator. */
     if (PEEK (dem) == '_') {
         ADV (dem);
 
@@ -442,19 +471,20 @@ CpDem* cpdem_name (CpDem* dem) {
                 }
 
                 // add operator as name
-                dem_string_append (dem->name, "operator ");
-                dem_string_append_n (dem->name, CUR (dem), len);
-                SET_CUR (dem, CUR (dem) + len);
-                dem_string_append_n (dem->name, "()", 2);
+                // dem_string_append (dem->name, "operator ");
+                // dem_string_append_n (dem->name, CUR (dem), len);
+                // SET_CUR (dem, CUR (dem) + len);
+                // dem_string_append_n (dem->name, "()", 2);
                 return dem;
             } else {
                 // any other operator
-                for (size_t x = 0; x < map_count; x++) {
-                    if (IN_RANGE (dem, CUR (dem) + map[x].len) &&
-                        !strncmp (CUR (dem), map[x].from, map[x].len)) {
-                        dem_string_append (dem->name, map[x].to);
-                        SET_CUR (dem, CUR (dem) + map[x].len);
-                        dem->is_operator = true;
+                // try to match through each one, and if fails then it's a constructor
+                // note that index starts from 1
+                for (size_t x = 1; x < OPERATOR_MAP_SIZE; x++) {
+                    if (IN_RANGE (dem, CUR (dem) + operators_map[x].len) &&
+                        !strncmp (CUR (dem), operators_map[x].from, operators_map[x].len)) {
+                        SET_CUR (dem, CUR (dem) + operators_map[x].len);
+                        dem->operator_type = x;
                         return dem;
                     }
                 }
@@ -472,7 +502,7 @@ CpDem* cpdem_name (CpDem* dem) {
 
     /* match <name> if operator match didn't work */
     while (PEEK (dem)) {
-        dem_string_append_char (dem->name, READ (dem));
+        dem_string_append_char (&dem->base_name, READ (dem));
 
         /* __ [F | Q | H | t | [0-9]] */
         /* If a qualifier(s) list or a function parameter(s) list starts then name ends there */
@@ -486,7 +516,6 @@ CpDem* cpdem_name (CpDem* dem) {
         }
     }
 
-
     return dem;
 }
 
@@ -495,73 +524,27 @@ CpDem* cpdem_class_names (CpDem* dem, ut64 qualifiers_count) {
         return NULL;
     }
 
-    /* temporary string to append class/namespace names in order */
-    DemString* class_names    = dem_string_new();
-    DemString* last_qualifier = NULL;
-
-    if (dem->is_ctor || dem->is_dtor || dem->is_operator) {
-        last_qualifier = dem_string_new();
-    }
-
-    // if it's constructor or destructor or an operator
-    // then the last qualifier is the base name
-    // in this case, name.len is zero
-    // if name.len is not zero, then base name is set to that
-    dem->base_name = dem_string_new();
-
-    /* get each qualifier and append in class names list */
+    /* get each qualifier and append in qualifier name vector */
+    vec_reserve (&dem->qualifiers, qualifiers_count);
     while (qualifiers_count--) {
-        DemString* name = dem_string_new();
+        DemString name = {0};
+        dem_string_init (&name);
 
         if (PEEK (dem) == 't') {
             ADV (dem);
-            if (!cpdem_template_class (dem, name)) {
-                dem_string_free (name);
+            if (!cpdem_template_class (dem, &name)) {
+                dem_string_deinit (&name);
                 return NULL;
             }
         } else {
-            if (!cpdem_custom_type_name (dem, name)) {
-                dem_string_free (name);
+            if (!cpdem_custom_type_name (dem, &name)) {
+                dem_string_deinit (&name);
                 return NULL;
             }
         }
 
-        dem_string_concat (class_names, name);
-        /* if the mangled name represents a constructor or a destructor
-         * then save the last qualifier in the list of qualifiers */
-        if ((dem->is_ctor || dem->is_dtor || dem->is_operator) && !qualifiers_count) {
-            dem_string_concat (last_qualifier, name);
-        }
-        dem_string_free (name);
-        dem_string_append_n (class_names, "::", 2);
+        vec_append (&dem->qualifiers, &name);
     }
-
-    /* set base name */
-    if (dem->is_ctor || dem->is_operator || dem->is_dtor) {
-        dem_string_concat (dem->base_name, last_qualifier);
-    } else if (dem->name->len) {
-        dem_string_concat (dem->base_name, dem->name);
-    }
-
-    /* add a constructor or destructor name if required */
-    if (dem->is_ctor) {
-        dem_string_concat (class_names, last_qualifier);
-        dem->is_ctor = dem->is_operator = false;
-    } else if (dem->is_dtor) {
-        dem_string_append_prefix_n (last_qualifier, "~", 1);
-        dem_string_concat (class_names, last_qualifier);
-        dem->is_dtor = false;
-    }
-
-    dem_string_free (last_qualifier);
-
-    /* qualifiers appear at the very beginning */
-    dem_string_append_prefix_n (
-        dem->name,
-        dem_string_buffer (class_names),
-        dem_string_length (class_names)
-    );
-    dem_string_free (class_names);
 
     return dem;
 }
@@ -589,13 +572,13 @@ CpDem* cpdem_param_type (CpDem* dem, ParamVec* params) {
     param_init (&param);
 
 #define ADD_PARAM(x)                                                                               \
-    dem_string_append (param.name, x) ?                                                            \
+    dem_string_append (&param.name, x) ?                                                           \
         (param_vec_append (params, &param) ? dem : (param_deinit (&param), NULL)) :                \
         (param_deinit (&param), NULL)
 
     /** read a custom type from current read position and add it to params vector if success */
 #define ADD_NAMED_PARAM()                                                                          \
-    cpdem_custom_type_name (dem, param.name) ?                                                     \
+    cpdem_custom_type_name (dem, &param.name) ?                                                    \
         (param_vec_append (params, &param) ? dem : (param_deinit (&param), NULL)) :                \
         (param_deinit (&param), NULL)
 
@@ -638,7 +621,7 @@ CpDem* cpdem_param_type (CpDem* dem, ParamVec* params) {
     }                                                                                              \
     case 't' : {                                                                                   \
         ADV (dem);                                                                                 \
-        if (cpdem_template_class (dem, param.name)) {                                              \
+        if (cpdem_template_class (dem, &param.name)) {                                             \
             param_vec_append (params, &param);                                                     \
             return dem;                                                                            \
         } else {                                                                                   \
@@ -890,8 +873,17 @@ logic_intersection_between_case_n_and_t:
             /* deinit this one, because we'll be directly initing clones */
             param_deinit (&param);
 
+            char* base_typename = NULL;
+            if (dem->qualifiers.length) {
+                if (dem->base_name.len) {
+                    base_typename = dem->base_name.buf;
+                } else {
+                    base_typename = vec_end (&dem->qualifiers)->buf;
+                }
+            }
+
             /* refer back to param list */
-            if (dem->base_name && (typeidx == 0)) {
+            if (base_typename && (typeidx == 0)) {
                 /* the very first type is name of function itself, it should be considered at index 0 */
                 for (ut64 r = 0; r < num_reps; r++) {
                     Param p = {0};
@@ -909,12 +901,12 @@ logic_intersection_between_case_n_and_t:
                         param_prepend_to (&p, suffix, "*");
                     }
 
-                    param_append_to (&p, name, dem_string_buffer (dem->base_name));
+                    param_append_to (&p, name, base_typename);
                     param_vec_append (params, &p);
                 }
             } else {
                 /* if base name is considered as first type then assume array index starts at 1 in vector */
-                if (dem->base_name) {
+                if (base_typename) {
                     typeidx--;
                 }
 
@@ -963,14 +955,6 @@ CpDem* cpdem_func_params (CpDem* dem) {
     /* parse as many params as possible */
     while (PEEK (dem) && cpdem_param_type (dem, &dem->func_params)) {}
 
-    /* if no parameters present, but we did come here to get params, just append void */
-    if (!dem->func_params.length) {
-        Param param = {0};
-        param_init (&param);
-        param_append_to (&param, name, "void");
-        vec_append (&dem->func_params, &param);
-    }
-
     return dem;
 }
 
@@ -1004,16 +988,16 @@ CpDem* cpdem_template_param_type (CpDem* dem, ParamVec* params) {
             const char* pos_after_val = CUR (dem);
 
             /* make it as if string is clear */
-            Param* param     = vec_end (params);
-            param->name->len = param->prefix->len = param->suffix->len = 0;
+            Param* param    = vec_end (params);
+            param->name.len = param->prefix.len = param->suffix.len = 0;
 
-            if (!strncmp (param->name->buf, "bool", 4)) {
+            if (!strcmp (param->name.buf, "bool")) {
                 /* if the type is bool, then value will be converted to true/false */
-                dem_string_append (param->name, val ? "true" : "false");
+                dem_string_append (&param->name, val ? "true" : "false");
             } else {
                 /* no need to convert value back to string, we already have that */
-                size_t val_string_len = pos_after_val - pos_after_val;
-                dem_string_append_n (param->name, pos_before_val, val_string_len);
+                size_t val_string_len = pos_after_val - pos_before_val;
+                dem_string_append_n (&param->name, pos_before_val, val_string_len);
             }
         }
     }
@@ -1027,9 +1011,9 @@ CpDem* cpdem_template_class (CpDem* dem, DemString* tclass_name) {
     }
 
     /* get custom type name first */
-    DemString* class_name = dem_string_new();
-    if (!cpdem_custom_type_name (dem, class_name)) {
-        dem_string_free (class_name);
+    DemString class_name = {0};
+    if (!cpdem_custom_type_name (dem, &class_name)) {
+        dem_string_deinit (&class_name);
         return NULL;
     }
 
@@ -1037,7 +1021,6 @@ CpDem* cpdem_template_class (CpDem* dem, DemString* tclass_name) {
     st64 numtp = 0;
     cpdem_number (dem, numtp);
     if (numtp <= 0) {
-        dem_string_free (tclass_name);
         return NULL;
     }
 
@@ -1053,7 +1036,7 @@ CpDem* cpdem_template_class (CpDem* dem, DemString* tclass_name) {
     }
 
     /* merge class name and template parameters */
-    dem_string_concat (tclass_name, class_name);
+    dem_string_concat (tclass_name, &class_name);
     bool first_param = true;
     dem_string_append_char (tclass_name, '<');
     vec_foreach_ptr (&params, p, {
@@ -1064,20 +1047,20 @@ CpDem* cpdem_template_class (CpDem* dem, DemString* tclass_name) {
         }
 
         /* tclass_name += <prefix> <name> <suffix> */
-        if (dem_string_length (p->prefix)) {
-            dem_string_concat (tclass_name, p->prefix);
+        if (p->prefix.len) {
+            dem_string_concat (tclass_name, &p->prefix);
             dem_string_append_char (tclass_name, ' ');
         }
-        dem_string_concat (tclass_name, p->name);
-        if (dem_string_length (p->suffix)) {
+        dem_string_concat (tclass_name, &p->name);
+        if (p->suffix.len) {
             dem_string_append_char (tclass_name, ' ');
-            dem_string_concat (tclass_name, p->suffix);
+            dem_string_concat (tclass_name, &p->suffix);
         }
     });
     dem_string_append_char (tclass_name, '>');
 
     /* release temp resources */
-    dem_string_free (class_name);
+    dem_string_deinit (&class_name);
     param_vec_deinit (&params);
 
     return dem;

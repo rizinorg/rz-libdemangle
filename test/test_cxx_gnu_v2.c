@@ -4,6 +4,7 @@
 #include "minunit.h"
 
 mu_demangle_tests(gnu_v2,
+	mu_demangle_test("__ls__FR7ostreamR3Fix", "operator<<(ostream &, Fix &)"),
 	// fuzzed strings
 	mu_demangle_test("_ITM_deregisterTMCCCCCCCCCCCCCCCCCCCtart__5555555555555555CloneTable", NULL),
 	// normal
@@ -137,7 +138,7 @@ mu_demangle_tests(gnu_v2,
 	mu_demangle_test("_$_t3map4ZUsZUsZt4less1ZUsZt9allocator1ZUs", "map<unsigned short, unsigned short, less<unsigned short>, allocator<unsigned short>>::~map(void)"),
 	mu_demangle_test("_S_oom_malloc__t23__malloc_alloc_template1i0Ui", "__malloc_alloc_template<0>::_S_oom_malloc(unsigned int)"),
 	mu_demangle_test("_S_chunk_alloc__t24__default_alloc_template2b0i0UiRi", "__default_alloc_template<false, 0>::_S_chunk_alloc(unsigned int, int &)"),
-	mu_demangle_test("_M_insert__t8_Rb_tree5ZUiZt4pair2ZCUiZUsZt10_Select1st1Zt4pair2ZCUiZUsZt4less1ZUiZt9allocator1ZUsP18_Rb_tree_node_baseT1RCt4pair2ZCUiZUs", "_Rb_tree<unsigned int, pair<unsigned int const, unsigned short>, _Select1st<pair<unsigned int const, unsigned short>>, less<unsigned int>, allocator<unsigned short>>::_M_insert(_Rb_tree_node_base *, _Rb_tree_node_base *, pair<unsigned int const, unsigned short> const &)"),
+	mu_demangle_test("_M_insert__t8_Rb_tree5ZUiZt4pair2ZCUiZUsZt10_Select1st1Zt4pair2ZCUiZUsZt4less1ZUiZt9allocator1ZUsP18_Rb_tree_node_baseT1RCt4pair2ZCUiZUs", "_Rb_tree<unsigned int, pair<const unsigned int, unsigned short>, _Select1st<pair<const unsigned int, unsigned short>>, less<unsigned int>, allocator<unsigned short>>::_M_insert(_Rb_tree_node_base *, _Rb_tree_node_base *, const pair<const unsigned int, unsigned short> &)"),
 
 	mu_demangle_test("dbsTraverse__FPP9_hierheadPFP9_hierheadP8_fvectorPA3_f_vP8_fvector", "dbsTraverse(_hierhead **, void (*)(_hierhead *, _fvector *, float (*)[3]), _fvector *)"),
 
@@ -355,7 +356,7 @@ mu_demangle_tests(gnu_v2,
 	mu_demangle_test("__as__t5ListS1ZUiRCt5ListS1ZUi", "ListS<unsigned int>::operator=(ListS<unsigned int> const &)"),
 	mu_demangle_test("__cl__Ct5ListS1ZUiRCQ2t5ListS1ZUi3Vix", "ListS<unsigned int>::operator()(ListS<unsigned int>::Vix const &) const"),
 	mu_demangle_test("__cl__Ct5SetLS1ZUiRCQ2t5SetLS1ZUi3Vix", "SetLS<unsigned int>::operator()(SetLS<unsigned int>::Vix const &) const"),
-	mu_demangle_test("__t10ListS_link1ZUiRCUiPT0", "ListS_link<unsigned int>::ListS_link(unsigned int const &, ListS_link<unsigned int> *)"),
+	mu_demangle_test("__t10ListS_link1ZUiRCUiPT0", "ListS_link<unsigned int>::ListS_link(const unsigned int &, ListS_link<unsigned int> *)"),
 	mu_demangle_test("__t10ListS_link1ZUiRCt10ListS_link1ZUi", "ListS_link<unsigned int>::ListS_link(ListS_link<unsigned int> const &)"),
 	mu_demangle_test("__t5ListS1ZUiRCt5ListS1ZUi", "ListS<unsigned int>::ListS(ListS<unsigned int> const &)"),
 	mu_demangle_test("next__Ct5ListS1ZUiRQ2t5ListS1ZUi3Vix", "ListS<unsigned int>::next(ListS<unsigned int>::Vix &) const"),

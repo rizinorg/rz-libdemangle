@@ -12,9 +12,9 @@
  * Represents a template or function parameter.
  */
 typedef struct {
-    DemString *name;
-    DemString *suffix;
-    DemString *prefix;
+    DemString name;
+    DemString suffix;
+    DemString prefix;
 } Param;
 
 /**
@@ -27,11 +27,11 @@ typedef struct {
  * \return NULL otherwise.
  * */
 #define param_init_clone(p_dst, p_src)                                                             \
-    ((param_init (p_dst) && (p_src)) ? (dem_string_concat ((p_dst)->name, (p_src)->name),          \
-                                        dem_string_concat ((p_dst)->suffix, (p_src)->suffix),      \
-                                        dem_string_concat ((p_dst)->prefix, (p_src)->prefix),      \
-                                        (p_dst)) :                                                 \
-                                       NULL)
+    (((p_dst) && (p_src)) ? (dem_string_init_clone (&(p_dst)->name, &(p_src)->name),               \
+                             dem_string_init_clone (&(p_dst)->suffix, &(p_src)->suffix),           \
+                             dem_string_init_clone (&(p_dst)->prefix, &(p_src)->prefix),           \
+                             (p_dst)) :                                                            \
+                            NULL)
 
 /**
  * Init object make it usable with other functions (macros).
@@ -42,10 +42,10 @@ typedef struct {
  * \return NULL otherwise.
  * */
 #define param_init(p)                                                                              \
-    ((p) ? (((p)->name = dem_string_new()),                                                        \
-            ((p)->suffix = dem_string_new()),                                                      \
-            ((p)->prefix = dem_string_new()),                                                      \
-            (p)) :                                                                                 \
+    ((p) ? ((dem_string_init (&(p)->name) && dem_string_init (&(p)->suffix) &&                     \
+             dem_string_init (&(p)->prefix)) ?                                                     \
+                (p) :                                                                              \
+                NULL) :                                                                            \
            NULL)
 
 /**
@@ -57,10 +57,10 @@ typedef struct {
  * \return NULL otherwise.
  */
 #define param_deinit(p)                                                                            \
-    ((p) ? (dem_string_free ((p)->name),                                                           \
-            dem_string_free ((p)->suffix),                                                         \
-            dem_string_free ((p)->prefix),                                                         \
-            memset ((p), 0, sizeof (Param)),                                                   \
+    ((p) ? (dem_string_deinit (&(p)->name),                                                        \
+            dem_string_deinit (&(p)->suffix),                                                      \
+            dem_string_deinit (&(p)->prefix),                                                      \
+            memset ((p), 0, sizeof (Param)),                                                       \
             (p)) :                                                                                 \
            NULL)
 
@@ -75,7 +75,7 @@ typedef struct {
  * \return NULL otherwise.
  */
 #define param_append_to(p, field, val)                                                             \
-    ((p) ? (dem_string_append ((p)->field, val) ? (p) : NULL) : NULL)
+    ((p) ? (dem_string_append (&((p)->field), val) ? (p) : NULL) : NULL)
 
 /**
  * Prepend a string to a function param field (name/suffix/prefix)
@@ -88,7 +88,7 @@ typedef struct {
  * \return NULL otherwise.
  */
 #define param_prepend_to(p, field, val)                                                            \
-    ((p) ? (dem_string_append_prefix_n ((p)->field, val, strlen (val)) ? (p) : NULL) : NULL)
+    ((p) ? (dem_string_append_prefix_n (&((p)->field), val, strlen (val)) ? (p) : NULL) : NULL)
 
 
 typedef Vec (Param) ParamVec;
@@ -96,11 +96,11 @@ typedef Vec (Param) ParamVec;
 #define param_vec_init(pv) vec_init ((pv))
 #define param_vec_deinit(pv)                                                                       \
     do {                                                                                           \
-        vec_foreach_ptr (&dem->func_params, param, {                                               \
+        vec_foreach_ptr ((pv), param, {                                               \
             void *_ = param_deinit (param);                                                        \
             ((void)_); /* trick to silence unused variable warnings */                             \
         });                                                                                        \
-        vec_deinit (&dem->func_params);                                                            \
+        vec_deinit ((pv));                                                            \
     } while (0)
 #define param_vec_append(pv, val) vec_append ((pv), (val))
 

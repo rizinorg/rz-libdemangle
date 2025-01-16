@@ -75,8 +75,11 @@ typedef struct {
 } DemString;
 
 void dem_string_free(DemString *ds);
+void dem_string_deinit(DemString* ds);
 DemString *dem_string_new();
 DemString *dem_string_new_with_capacity(size_t cap);
+DemString *dem_string_init(DemString *ds);
+DemString *dem_string_init_clone(DemString *dst, DemString *src);
 char *dem_string_drain(DemString *ds);
 bool dem_string_append(DemString *ds, const char *string);
 bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size);
