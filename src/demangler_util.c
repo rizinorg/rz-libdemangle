@@ -169,7 +169,9 @@ void dem_string_deinit(DemString *ds) {
 	if (!ds) {
 		return;
 	}
-	free(ds->buf);
+	if (ds->buf) {
+		free(ds->buf);
+	}
 	memset(ds, 0, sizeof(DemString));
 }
 
