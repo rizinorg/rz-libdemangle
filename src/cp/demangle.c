@@ -47,7 +47,7 @@ typedef struct {
     DemString prefix;          // a return type, or another keyword to be put before name
     DemString custom_operator; // A special case of operator "__op<L><TYPE>"
 
-    bool has_special_name;     /* __vt or _GLOBAL$I/D$, etc... */
+    bool has_global_name;      /* __vt or _GLOBAL$I/D$, etc... */
     bool is_ctor;
     bool is_dtor;
     ut8  operator_type;        // 0 if not an operator, otherwise a positive value
@@ -221,6 +221,49 @@ static CpDem* cpdem_custom_type_name (CpDem* dem, DemString* name);
 /* Is current character a terminator */
 #define IS_TERM(dem) ((PEEK (dem) == '.') || (PEEK (dem) == '$'))
 
+DemString* dem_string_append_param (DemString* ds, Param* p) {
+    if (!ds || !p) {
+        return NULL;
+    }
+
+    if ((p)->prefix.len) {
+        dem_string_concat ((ds), &(p)->prefix);
+        dem_string_append_char ((ds), ' ');
+    }
+    dem_string_concat ((ds), &(p)->name);
+    if ((p)->suffix.len) {
+        dem_string_append_char ((ds), ' ');
+        dem_string_concat ((ds), &(p)->suffix);
+    }
+
+    return ds;
+}
+
+DemString* dem_string_append_param_vec (DemString* ds, ParamVec* pv) {
+    if (!ds || !pv) {
+        return NULL;
+    }
+
+    dem_string_append_char (ds, '(');
+    if (pv->length) {
+        bool is_first_param = true;
+        vec_foreach_ptr (pv, param, {
+            if (is_first_param) {
+                is_first_param = false;
+            } else {
+                dem_string_append_n ((ds), ", ", 2);
+            }
+
+            dem_string_append_param ((ds), param);
+        });
+    } else {
+        dem_string_append_n ((ds), "void", 4);
+    }
+    dem_string_append_char (ds, ')');
+
+    return ds;
+}
+
 CpDem* cpdem_init (CpDem* dem, const char* mangled, CpDemOptions opts) {
     if (!dem || !mangled) {
         return NULL;
@@ -313,32 +356,7 @@ const char* cpdem_get_demangled (CpDem* dem) {
 
     // append all params if they exist
     if (dem->has_params) {
-        dem_string_append_char (&demangled, '(');
-        if (dem->func_params.length) {
-            bool is_first_param = true;
-            vec_foreach_ptr (&dem->func_params, param, {
-                // prepend a comma before every param if that param is not the first one.
-                if (is_first_param) {
-                    is_first_param = false;
-                } else {
-                    dem_string_append_n (&demangled, ", ", 2);
-                }
-
-                // demangled += prefix name suffix
-                if (param->prefix.len) {
-                    dem_string_concat (&demangled, &param->prefix);
-                    dem_string_append_char (&demangled, ' ');
-                }
-                dem_string_concat (&demangled, &param->name);
-                if (param->suffix.len) {
-                    dem_string_append_char (&demangled, ' ');
-                    dem_string_concat (&demangled, &param->suffix);
-                }
-            });
-        } else {
-            dem_string_append_n (&demangled, "void", 4);
-        }
-        dem_string_append_char (&demangled, ')');
+        dem_string_append_param_vec (&demangled, &dem->func_params);
     }
 
     /* add suffix if present */
@@ -358,7 +376,6 @@ CpDem* cpdem_public_name (CpDem* dem) {
         return NULL;
     }
 
-    bool has_vt = false;
 
     /* special names */
     if (PEEK (dem) == '_') {
@@ -368,6 +385,7 @@ CpDem* cpdem_public_name (CpDem* dem) {
         /* _ <qualifiers list> <list term> <name> */
         if (IN_RANGE (dem, CUR (dem) + 3) &&
             (!strncmp (CUR (dem), "vt", 2) || !strncmp (CUR (dem), "_vt", 3))) {
+            bool has_vt = false;
             /* match past  "_vt$" or "_vt." or "__vt_" */
             if (PEEK (dem) == 'v') {
                 ADV_BY (dem, 2);
@@ -389,7 +407,58 @@ CpDem* cpdem_public_name (CpDem* dem) {
                 }
             }
 
-            /* continue to match past this, a name will come */
+            if (has_vt) {
+                while (PEEK (dem)) {
+                    ClassNameVec class_names = {0};
+                    DemString    custom_name = {0};
+
+                    /* it can be a base name, or a class name, or a custom type name */
+                    if (cpdem_class_names (dem, &class_names, 1)) {
+                        DemString* cname = vec_begin (&class_names);
+                        dem_string_concat (&dem->base_name, cname);
+                        dem_string_deinit (cname);
+                        vec_deinit (&class_names);
+
+                        if (IS_TERM (dem)) {
+                            dem_string_append_n (&dem->base_name, "::", 2);
+                            ADV (dem);
+                        }
+                    } else if (cpdem_name (dem)) {
+                        if (IS_TERM (dem)) {
+                            dem_string_append_n (&dem->base_name, "::", 2);
+                            ADV (dem);
+                        }
+                    } else if (cpdem_custom_type_name (dem, &custom_name)) {
+                        dem_string_concat (&dem->base_name, &custom_name);
+                        dem_string_deinit (&custom_name);
+
+                        if (IS_TERM (dem)) {
+                            dem_string_append_n (&dem->base_name, "::", 2);
+                            ADV (dem);
+                        }
+                    } else {
+                        break;
+                    }
+                }
+
+                if (PEEK (dem)) {
+                    return NULL;
+                } else {
+                    return dem;
+                }
+            }
+        } else if (IN_RANGE (dem, CUR (dem) + 8) && !strncmp (CUR (dem), "_thunk_", 7)) {
+            SET_CUR (dem, CUR (dem) + 7);
+
+            const char* delta_start = CUR (dem);
+            const char* delta_end   = strchr (CUR (dem), '_');
+            SET_CUR (dem, delta_end + 1);
+
+            dem_string_append (&dem->prefix, "virtual function thunk (delta:-");
+            dem_string_append_n (&dem->prefix, delta_start, delta_end - delta_start);
+            dem_string_append (&dem->prefix, ") for");
+
+            /* let it continue */
         } else if (IN_RANGE (dem, CUR (dem) + 3) && !strncmp (CUR (dem), "_t", 2)) {
             ADV_BY (dem, 2);
 
@@ -437,11 +506,11 @@ CpDem* cpdem_public_name (CpDem* dem) {
             if (PEEK (dem) == 'I') {
                 ADV_BY (dem, 2); /* skip I$ */
                 dem_string_append (&dem->prefix, "global constructors keyed to");
-                dem->has_special_name = true;
+                dem->has_global_name = true;
             } else if (PEEK (dem) == 'D') {
                 ADV_BY (dem, 2); /* skip I$ */
                 dem_string_append (&dem->prefix, "global destructors keyed to");
-                dem->has_special_name = true;
+                dem->has_global_name = true;
             } else {
                 /* I don't identify you */
                 return NULL;
@@ -449,7 +518,8 @@ CpDem* cpdem_public_name (CpDem* dem) {
 
             /* continue from here to parse names, qualifiers, etc... like usual */
         } else if (cpdem_qualifiers_list (dem)) {
-            if (IS_TERM (dem) && ADV (dem) && cpdem_name (dem)) {
+            if (IS_TERM (dem) && ADV (dem)) {
+                dem_string_append (&dem->base_name, CUR (dem));
                 return dem;
             }
         } else {
@@ -458,13 +528,13 @@ CpDem* cpdem_public_name (CpDem* dem) {
     }
 
     /* <name> */
-    if (!dem->has_special_name) {
+    if (!dem->has_global_name) {
         if (!cpdem_name (dem)) {
             return NULL;
         }
     }
 
-    bool has_special_name_with_qualifiers = false;
+    bool has_global_name_with_qualifiers = false;
 
     /* there may be one or two _ depending on scanned name */
     if (IS_XTOR (dem)) {
@@ -476,10 +546,10 @@ CpDem* cpdem_public_name (CpDem* dem) {
         }
     } else {
         /* an extra _ will be here only if this is not a special name */
-        if (dem->has_special_name && PEEK (dem) == '_') {
+        if (dem->has_global_name && PEEK (dem) == '_') {
             ADV (dem); /* skip _ */
-            has_special_name_with_qualifiers = true;
-        } else if (dem->has_special_name) {
+            has_global_name_with_qualifiers = true;
+        } else if (dem->has_global_name) {
             /* do nothing */
         } else if (PEEK (dem) == '_') {
             ADV (dem);     /* skip _ */
@@ -488,8 +558,6 @@ CpDem* cpdem_public_name (CpDem* dem) {
             } else {
                 return NULL;
             }
-        } else if (has_vt) {
-            /* do nothing */
         } else {
             return NULL;
         }
@@ -524,7 +592,7 @@ CpDem* cpdem_public_name (CpDem* dem) {
         /* [ _ <qualifiers list> <list term> ] <name> */
         /* <name> */
         default :
-            if (has_special_name_with_qualifiers) {
+            if (has_global_name_with_qualifiers) {
                 /* _ <qualifiers list> <list term> <name> */
                 if (cpdem_qualifiers_list (dem)) {
                     if (IS_TERM (dem)) {
@@ -538,7 +606,7 @@ CpDem* cpdem_public_name (CpDem* dem) {
                 } else {
                     return NULL;
                 }
-            } else if (dem->has_special_name) {
+            } else if (dem->has_global_name) {
                 if (!cpdem_name (dem)) {
                     return NULL;
                 }
@@ -547,8 +615,6 @@ CpDem* cpdem_public_name (CpDem* dem) {
                     /* <name> __ <qualifiers list> [<parameter type>]+ */
                     /* function params are optional here, therefore we won't check if they return anything or not */
                     cpdem_func_params (dem);
-                } else if (has_vt) {
-                    /* do nothing */
                 } else {
                     return NULL;
                 }
@@ -654,7 +720,7 @@ CpDem* cpdem_name (CpDem* dem) {
                     if (PEEK (dem) == '_') {
                         ADV (dem);
                         Param* p = vec_begin (&params);
-                        dem_string_concat (&dem->custom_operator, &p->name);
+                        dem_string_append_param (&dem->custom_operator, p);
                         param_vec_deinit (&params);
                         return dem;
                     } else {
@@ -689,14 +755,19 @@ CpDem* cpdem_name (CpDem* dem) {
     }
 
 parse_name:
+    /* name cannot start with non alpha numeric or "_" */
+    if (!IS_ALPHA (PEEK (dem)) && (PEEK (dem) != '_')) {
+        return NULL;
+    }
+
     /* match <name> if operator match didn't work */
     while (PEEK (dem)) {
         const char* cur = CUR (dem);
         if (IN_RANGE (dem, CUR (dem) + 2) &&
-            (cur[0] == '_' && (cur[1] == '_' || dem->has_special_name))) {
+            (cur[0] == '_' && (cur[1] == '_' || dem->has_global_name))) {
             /* depeneding on whether decl has a special name or not,
              * there will be an extra _ or a qualifier following up */
-            char next_char = dem->has_special_name ? cur[1] : cur[2];
+            char next_char = dem->has_global_name ? cur[1] : cur[2];
 
             switch (next_char) {
                 case 'C' : /* const function */
@@ -724,6 +795,8 @@ parse_name:
                     break;
                 }
             }
+        } else if (IS_TERM (dem)) {
+            return dem;
         }
 
         dem_string_append_char (&dem->base_name, READ (dem));
@@ -1052,6 +1125,74 @@ logic_intersection_between_case_r_and_p:
                     goto case_p;
                 }
 
+                case 'F' : {
+                    /* pointer to a function */
+                    ADV (dem); /* skip F */
+
+                    /* get all params */
+                    ParamVec pf_params = {0};
+                    param_vec_init (&pf_params);
+                    while (PEEK (dem) && cpdem_param_type (dem, &pf_params)) {}
+                    DemString param_list = {0};
+                    dem_string_append_param_vec (&param_list, &pf_params);
+                    param_vec_deinit (&pf_params);
+
+                    /* get return type */
+                    DemString return_type = {0};
+                    if (PEEK (dem) == '_') {
+                        ADV (dem);
+                        ParamVec pf_return_type = {0};
+                        param_vec_init (&pf_return_type);
+                        cpdem_param_type (dem, &pf_return_type);
+                        if (pf_return_type.length) {
+                            Param* rp = vec_end (&pf_return_type);
+                            dem_string_append_param (&return_type, rp);
+                            param_vec_deinit (&pf_return_type);
+                        } else {
+                            dem_string_deinit (&return_type);
+                            dem_string_deinit (&param_list);
+                            param_vec_deinit (&pf_return_type);
+                            return NULL;
+                        }
+                    } else {
+                        dem_string_append (&return_type, "void");
+                    }
+
+                    /* HACK: if return type is a function pointer itself, split it and patch it here 
+                     * this is maybe a hack, maybe not */
+                    if (strstr (return_type.buf, "(*)")) {
+                        char* pivot = strstr (return_type.buf, "(*)");
+
+                        /* get return type of functor */
+                        char* ftor_ret_type     = return_type.buf;
+                        ut64  ftor_ret_type_len = pivot - ftor_ret_type - 1;
+
+                        /* get param list of functor */
+                        char* ftor_param_list = pivot + 3;
+                        ut64  ftor_param_list_len =
+                            return_type.buf + return_type.len - ftor_param_list;
+
+                        dem_string_append_n (&param.name, ftor_ret_type, ftor_ret_type_len);
+                        dem_string_append_n (&param.name, " (*(*)", 6);
+                        dem_string_concat (&param.name, &param_list);
+                        dem_string_append_char (&param.name, ')');
+                        dem_string_append_n (&param.name, ftor_param_list, ftor_param_list_len);
+                    } else {
+                        dem_string_concat (&param.name, &return_type);
+                        dem_string_append_n (&param.name, " (*)", 4);
+                        dem_string_concat (&param.name, &param_list);
+                    }
+
+                    /* remove any suffix or prefix */
+                    param.suffix.len = param.prefix.len = 0;
+
+                    dem_string_deinit (&return_type);
+                    dem_string_deinit (&param_list);
+
+                    param_vec_append (params, &param);
+                    return dem;
+                }
+
                 case 'T' : {
                     goto logic_intersection_between_p_and_t_or_r_and_p_and_t;
                 }
@@ -1155,22 +1296,18 @@ logic_intersection_between_case_n_and_t:
             /* create base typename is to be provided for index 0 in list of recognized types */
             char* base_typename = NULL;
             if (dem->qualifiers.length) {
-                if (dem->base_name.len) {
-                    base_typename = strdup (dem->base_name.buf);
-                } else {
-                    DemString tname = {0};
-                    vec_foreach_ptr (&dem->qualifiers, q, {
-                        dem_string_concat (&tname, q);
-                        dem_string_append_n (&tname, "::", 2);
-                    });
+                DemString tname = {0};
+                vec_foreach_ptr (&dem->qualifiers, q, {
+                    dem_string_concat (&tname, q);
+                    dem_string_append_n (&tname, "::", 2);
+                });
 
-                    /* HACK: to remove extraneous "::" */
-                    tname.buf[--tname.len] = 0;
-                    tname.buf[--tname.len] = 0;
+                /* HACK: to remove extraneous "::" */
+                tname.buf[--tname.len] = 0;
+                tname.buf[--tname.len] = 0;
 
-                    base_typename = strndup (tname.buf, tname.len);
-                    dem_string_deinit (&tname);
-                }
+                base_typename = strndup (tname.buf, tname.len);
+                dem_string_deinit (&tname);
             }
 
             /* refer back to param list */
@@ -1316,7 +1453,7 @@ CpDem* cpdem_template_class (CpDem* dem, DemString* tclass_name) {
     /* number of template parameters */
     st64 numtp = 0;
     cpdem_number (dem, numtp);
-    if (numtp <= 0) {
+    if (numtp < 0) {
         return NULL;
     }
 
