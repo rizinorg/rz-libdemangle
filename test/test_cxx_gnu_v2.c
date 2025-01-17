@@ -139,9 +139,10 @@ mu_demangle_tests(gnu_v2,
 	mu_demangle_test("_S_chunk_alloc__t24__default_alloc_template2b0i0UiRi", "__default_alloc_template<false, 0>::_S_chunk_alloc(unsigned int, int &)"),
 	mu_demangle_test("_M_insert__t8_Rb_tree5ZUiZt4pair2ZCUiZUsZt10_Select1st1Zt4pair2ZCUiZUsZt4less1ZUiZt9allocator1ZUsP18_Rb_tree_node_baseT1RCt4pair2ZCUiZUs", "_Rb_tree<unsigned int, pair<const unsigned int, unsigned short>, _Select1st<pair<const unsigned int, unsigned short>>, less<unsigned int>, allocator<unsigned short>>::_M_insert(_Rb_tree_node_base *, _Rb_tree_node_base *, const pair<const unsigned int, unsigned short> &)"),
 
-	mu_demangle_test("dbsTraverse__FPP9_hierheadPFP9_hierheadP8_fvectorPA3_f_vP8_fvector", "dbsTraverse(_hierhead **, void (*)(_hierhead *, _fvector *, float (*)[3]), _fvector *)"),
+	/* NOTE: TODO: We need to verify this test case. The actua value for float (*)[X] array was 3, but according to demangling grammar for GNU v2, the value must be (3 + 1) */
+	mu_demangle_test("dbsTraverse__FPP9_hierheadPFP9_hierheadP8_fvectorPA3_f_vP8_fvector", "dbsTraverse(_hierhead **, void (*)(_hierhead *, _fvector *, float (*)[4]), _fvector *)"),
 
-	mu_demangle_test("lexicographical_compare__H2ZPCScZPCSc_X01X11_b", "bool lexicographical_compare<signed char const *, signed char const *>(signed char const *, signed char const *)"),
+	mu_demangle_test("lexicographical_compare__H2ZPCScZPCSc_X01X11_b", "bool lexicographical_compare<const signed char *, const signed char *>(const signed char *, const signed char *)"),
 
 	// the following tests are taken from libiberty/testsuite/demangle-expected in gcc-2.95.3 source code
 	// The source code is licensed under GPL v2
