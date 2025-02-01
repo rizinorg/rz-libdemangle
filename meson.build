@@ -7,7 +7,13 @@ libdemangle_c_args = []
 libdemangle_src = [
   'src' / 'borland.c',
   'src' / 'cxx.c',
+  
   'src' / 'cp' / 'demangle.c',
+  'src' / 'cp' / 'common.c',
+  'src' / 'cp' / 'param.c',
+  'src' / 'cp' / 'v2.c',
+  'src' / 'cp' / 'v3.c',
+
   'src' / 'demangler.c',
   'src' / 'demangler_util.c',
   'src' / 'java.c',

@@ -77,6 +77,17 @@ typedef struct {
 #define param_append_to(p, field, val)                                                             \
     ((p) ? (dem_string_append (&((p)->field), val) ? (p) : NULL) : NULL)
 
+#define param_appendf_to(p, field, ...)                                                            \
+    do {                                                                                           \
+        if (p) {                                                                                   \
+            const char* s = dem_str_newf (__VA_ARGS__);                                            \
+            if (s) {                                                                               \
+                param_append_to (p, field, s);                                                     \
+                free ((void*)s);                                                                   \
+            }                                                                                      \
+        }                                                                                          \
+    } while (0)
+
 /**
  * Prepend a string to a function param field (name/suffix/prefix)
  *
@@ -96,12 +107,15 @@ typedef Vec (Param) ParamVec;
 #define param_vec_init(pv) vec_init ((pv))
 #define param_vec_deinit(pv)                                                                       \
     do {                                                                                           \
-        vec_foreach_ptr ((pv), param, {                                               \
-            void *_ = param_deinit (param);                                                        \
+        vec_foreach_ptr ((pv), param, {                                                            \
+            void* _ = param_deinit (param);                                                        \
             ((void)_); /* trick to silence unused variable warnings */                             \
         });                                                                                        \
-        vec_deinit ((pv));                                                            \
+        vec_deinit ((pv));                                                                         \
     } while (0)
 #define param_vec_append(pv, val) vec_append ((pv), (val))
+
+Param*    param_append_to_dem_string (Param* p, DemString* ds);
+ParamVec* param_vec_append_to_dem_string (ParamVec* pv, DemString* ds);
 
 #endif // CPDEM_param_H
