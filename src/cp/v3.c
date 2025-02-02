@@ -674,81 +674,64 @@ DEFN_RULE (ref_qualifier, {
     MATCH (READ ('O') && APPEND_STR ("&&"));
 });
 
-/* 
- * NOTE(brightprogrammer): A 101 On Left-Recursion
- *
- * A grammar is left-recursive if it looks like following:
- *
- * S -> Sa | b
- *
- * This can left to infinite recursion, and a non-halting condition.
- * To mitigate this, we introduce right-recursion.
- *
- * S -> bT
- * T -> a | aT
- *
- * This rule is now right-recursive always. And while parsing a string,
- * it's guarateed to not enter infinite recursion, as long as the string
- * is finite.
- *
- * NOTE(brightprogrammer): The following non-terminal <prefix>
- * is also in mutual-left-recursion with non-terminals
- * - <template-prefix>
- * - <closure-prefix>
- * so this one needs three levels of patching.
- *
- * S -> A | B
- * A -> Bk | X 
- * B -> Am | Y
- *
- * is transformed to
- *
- * S  -> S1 | S2
- * S1 -> X | Yk | mkS1
- * S2 -> Y | Xm | kmS2
- *
- * For resolving the following mutual-left-recursion with <template-prefix>
- * - <prefix> is A
- *   - <template-param> is k
- *   - <prefix-without-recursion> is X
- * - <template-prefix> is B
- *   - <template-unqualified-name> is m
- *   - <template-prefix-without-mutual-recursion> is Y
- *
- * For resolving the following mutual-left-recursion with <closure-prefix>
- * - <prefix> is A
- *   - k is empty
- *   - <prefix-without-recursion> is X
- * - <template-prefix> is B
- *   - <variable-or-member-unqualified-name>M is m
- *   - <closure-prefix-without-mutual-recursion> is Y
- */
-
-DECL_RULE (template_prefix_without_mutual_recursion_with_prefix);
-DECL_RULE (closure_prefix_without_mutual_recursion_with_prefix);
-
-// X (mutual-left-recursion with template-prefix)
-// X (mutual-left-recursion with closure-prefix)
-// b (left-recursion context, leaving out closure-prefix)
-DEFN_RULE (prefix_without_mutual_recursion, {
+DEFN_RULE (prefix_X, {
     MATCH (RULE (unqualified_name));
     MATCH (RULE (template_param));
     MATCH (RULE (decltype));
     MATCH (RULE (substitution));
 });
 
-// S1 (mutual-left-recursion context)
+DEFN_RULE (prefix_Yk_template_prefix, {
+    MATCH (RULE (template_unqualified_name) && RULE (template_args));
+    MATCH (RULE (template_param) && RULE (template_args));
+    MATCH (RULE (substitution) && RULE (template_args));
+});
+
+DEFN_RULE (prefix_A_template_prefix, {
+    MATCH (RULE (prefix_X));
+    MATCH (RULE (prefix_Yk_template_prefix));
+});
+
+DEFN_RULE (prefix_mk_template_prefix, {
+    MATCH (RULE (template_unqualified_name) && RULE (template_args));
+});
+
+DEFN_RULE (prefix_S1_template_prefix, {
+    MATCH (RULE (prefix_A_template_prefix));
+    MATCH (
+        RULE (prefix_A_template_prefix) && RULE (prefix_mk_template_prefix) &&
+        RULE (prefix_S1_template_prefix)
+    );
+});
+
+DEFN_RULE (prefix_Yk_closure_prefix, {
+    MATCH (RULE (variable_template_template_prefix) && RULE (template_args) && READ ('M'));
+});
+
+DEFN_RULE (prefix_A_closure_prefix, {
+    MATCH (RULE (prefix_X));
+    MATCH (RULE (prefix_Yk_closure_prefix));
+});
+
+DEFN_RULE (prefix_mk_closure_prefix, {
+    MATCH (RULE (variable_or_member_unqualified_name) && READ ('M'));
+});
+
+DEFN_RULE (prefix_S1_closure_prefix, {
+    MATCH (RULE (prefix_A_closure_prefix));
+    MATCH (
+        RULE (prefix_A_closure_prefix) && RULE (prefix_mk_closure_prefix) &&
+        RULE (prefix_S1_closure_prefix)
+    );
+});
+
 DEFN_RULE (prefix, {
-    MATCH (RULE (prefix_without_mutual_recursion));
+    // fix left-recursion
+    MATCH (RULE (prefix_X) && RULE_MANY (unqualified_name));
 
-    // Fix for mutual-left-recursion with <template-prefix>
-    MATCH (RULE (template_prefix_without_mutual_recursion_with_prefix) && RULE (template_param));
-    MATCH (RULE (template_unqualified_name) && RULE (template_param) && RULE (template_prefix));
-
-    // Fix for mutual-left-recursion with <closure-prefix>
-    // k is empty string here
-    MATCH (RULE (closure_prefix_without_mutual_recursion_with_prefix));
-    MATCH (RULE (template_unqualified_name) && RULE (closure_prefix));
+    // fix mutual-recursions
+    MATCH (RULE (prefix_S1_template_prefix));
+    MATCH (RULE (prefix_S1_closure_prefix));
 });
 
 DEFN_RULE (abi_tags, { MATCH (RULE_ATLEAST_ONCE (abi_tag)); });
@@ -763,95 +746,53 @@ DEFN_RULE (decltype, {
     MATCH (READ_STR ("DT") && RULE (expression) && READ ('E'));
 });
 
-/* 
- * NOTE(brightprogrammer): This rule is in mutual recursion with <prefix>
- *
- * S -> A | B
- * A -> Bk | X 
- * B -> Am | Y
- *
- * is transformed to
- *
- * S  -> S1 | S2
- * S1 -> X | Yk | mkS1
- * S2 -> Y | Xm | kmS2
- *
- * For resolving the following mutual-left-recursion, I'll assume the following to
- * make analogy with above grammar transformation
- * - <prefix> is A
- *   - k is empty
- *   - <prefix-without-recursion> is X
- * - <template-prefix> is B
- *   - <variable-or-member-unqualified-name>M is m
- *   - <closure-prefix-without-mutual-recursion> is Y
- *
- * Follow the above analogy to understand the transformation from original grammar to
- * the currently implemented one.
- */
-
-DEFN_RULE (closure_prefix_without_mutual_recursion_with_prefix, {
+DEFN_RULE (closure_prefix_Y, {
     MATCH (RULE (variable_template_template_prefix) && RULE (template_args) && READ ('M'));
 });
 
-DEFN_RULE (closure_prefix, {
-    MATCH (RULE (closure_prefix_without_mutual_recursion_with_prefix));
-    MATCH (
-        RULE_OPTIONAL (prefix_without_mutual_recursion) &&
-        RULE (variable_or_member_unqualified_name) && READ ('M')
-    );
-    MATCH (RULE (variable_or_member_unqualified_name) && READ ('M') && RULE (prefix));
+DEFN_RULE (closure_prefix_Xm_prefix, {
+    MATCH (RULE (unqualified_name) && RULE (variable_or_member_unqualified_name) && READ ('M'));
+    MATCH (RULE (template_param) && RULE (variable_or_member_unqualified_name) && READ ('M'));
+    MATCH (RULE (decltype) && RULE (variable_or_member_unqualified_name) && READ ('M'));
+    MATCH (RULE (substitution) && RULE (variable_or_member_unqualified_name) && READ ('M'));
 });
 
-/*
- * NOTE(brightprogrammer) : A 101 On Mutual-Left-Recursion.
- *
- * A mutual-left-recursion happens when a language has grammar like this :
- *
- * S -> A | B
- * A -> Bk | X 
- * B -> Am | Y
- *
- * This results in a possibility of infinite recursion. To fix this, we make
- * the rules right recursive by re-writing the grammar like following
- *
- * S  -> S1 | S2
- * S1 -> X | Yk | mkS1
- * S2 -> Y | Xm | kmS2
- *
- * Now the grammar is no more mutually recursive.
- * 
- * For resolving the following mutual-left-recursion, I'll assume the following to
- * make analogy with above grammar transformation
- * - <prefix> is A
- *   - <template-param> is k
- *   - <prefix-without-recursion> is X
- * - <template-prefix> is B
- *   - <template-unqualified-name> is m
- *   - <template-prefix-without-mutual-recursion> is Y
- *
- * Follow the above analogy to understand the transformation from original grammar to
- * the currently implemented one.
- */
+DEFN_RULE (closure_prefix_B, {
+    MATCH (RULE (closure_prefix_Y));
+    MATCH (RULE (closure_prefix_Xm_prefix));
+});
 
-// NOTE(brightprogrammer): A dummy rule to fix mutual-left-recursion of non-terminals
-// <prefix> and <template-prefix>
-// Y
-DEFN_RULE (template_prefix_without_mutual_recursion_with_prefix, {
+DEFN_RULE (closure_prefix_S2_prefix, {
+    MATCH (RULE (closure_prefix_B));
+    MATCH (RULE (closure_prefix_B) && RULE (closure_prefix_S2_prefix));
+});
+
+DEFN_RULE (closure_prefix, { MATCH (RULE (closure_prefix_S2_prefix)); });
+
+DEFN_RULE (template_prefix_Y, {
     MATCH (RULE (template_unqualified_name));
     MATCH (RULE (template_param));
     MATCH (RULE (substitution));
 });
 
-// S2
-DEFN_RULE (template_prefix, {
-    // NOTE(brightprogrammer): This rule is mutually left-recursive with non-terminal <prefix>
-    // MATCH (RULE (prefix) && RULE (template_unqualified_name)); /* mutual-left-recursion */
-    MATCH (RULE (template_prefix_without_mutual_recursion_with_prefix));                // Y
-    MATCH (RULE (prefix_without_mutual_recursion) && RULE (template_unqualified_name)); // Xm
-    MATCH (
-        RULE (template_unqualified_name) && RULE (template_args) && RULE (template_prefix)
-    );                                                                                  // kmS2
+DEFN_RULE (template_prefix_Xm_prefix, {
+    MATCH (RULE (unqualified_name) && RULE (template_unqualified_name));
+    MATCH (RULE (template_param) && RULE (template_unqualified_name));
+    MATCH (RULE (decltype) && RULE (template_unqualified_name));
+    MATCH (RULE (substitution) && RULE (template_unqualified_name));
 });
+
+DEFN_RULE (template_prefix_B, {
+    MATCH (RULE (template_prefix_Y));
+    MATCH (RULE (template_prefix_Xm_prefix));
+});
+
+DEFN_RULE (template_prefix_S2_prefix, {
+    MATCH (RULE (template_prefix_B));
+    MATCH (RULE (template_prefix_B) && RULE (template_prefix_S2_prefix));
+});
+
+DEFN_RULE (template_prefix, { MATCH (RULE (template_prefix_S2_prefix)); });
 
 DEFN_RULE (template_param, {
     if (READ_STR ("T_")) {
