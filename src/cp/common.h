@@ -41,7 +41,7 @@ typedef struct {
 } CpDem;
 
 CpDem* cpdem_init (CpDem* dem, const char* mangled, CpDemOptions opts);
-CpDem* cpdem_deinit (CpDem* dem);
+void   cpdem_fini (CpDem* dem);
 
 /**
  * \b Give current read position.

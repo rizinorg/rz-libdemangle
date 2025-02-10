@@ -16,9 +16,9 @@ CpDem* cpdem_init (CpDem* dem, const char* mangled, CpDemOptions opts) {
     return dem;
 }
 
-CpDem* cpdem_deinit (CpDem* dem) {
+void cpdem_fini (CpDem* dem) {
     if (!dem) {
-        return NULL;
+        return;
     }
 
     /* free all demstring and deinit qualifiers vector */
@@ -34,5 +34,5 @@ CpDem* cpdem_deinit (CpDem* dem) {
     dem_string_deinit (&dem->custom_operator);
 
     memset (dem, 0, sizeof (CpDem));
-    return dem;
+    return;
 }

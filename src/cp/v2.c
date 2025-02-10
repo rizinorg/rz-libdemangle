@@ -128,17 +128,17 @@ const char* cp_demangle_v2 (const char* mangled, CpDemOptions opts) {
     }
 
     if (!cpdem_public_name (&dem)) {
-        cpdem_deinit (&dem);
+        cpdem_fini (&dem);
         return NULL;
     }
 
     const char* res = NULL;
     if (!(res = cpdem_get_demangled (&dem))) {
-        cpdem_deinit (&dem);
+        cpdem_fini (&dem);
         return NULL;
     }
 
-    cpdem_deinit (&dem);
+    cpdem_fini (&dem);
     return res;
 }
 
