@@ -5,6 +5,8 @@
 #ifndef CPDEM_VEC_H
 #define CPDEM_VEC_H
 
+#define UNUSED(xpr) ((void)(xpr))
+
 #define nearest_power_of_two(v)                                                                    \
     (((v)--),                                                                                      \
      ((v) |= (v) >> 1),                                                                            \
@@ -12,8 +14,7 @@
      ((v) |= (v) >> 4),                                                                            \
      ((v) |= (v) >> 8),                                                                            \
      ((v) |= (v) >> 16),                                                                           \
-     ((v)++),                                                                                      \
-     (v))
+     ((v) = v + 1))
 
 #define Vec(x)                                                                                     \
     struct {                                                                                       \
@@ -23,6 +24,8 @@
     }
 
 #define VEC_DATA_TYPE(vec) __typeof__ ((vec)->data[0])
+
+#define vec_mem_size(vec) (sizeof (VEC_DATA_TYPE ((vec))) * (vec)->length)
 
 /**
  * This will just memset vector to 0, to make it usable with other function (macros).
@@ -44,8 +47,7 @@
  * \return vec on success.
  * \return NULL otherwise.
  */
-#define vec_deinit(vec)                                                                            \
-    ((vec) ? (((vec)->data ? (free ((vec)->data), 1) : 1), vec_init (vec)) : NULL)
+#define vec_deinit(vec) ((vec) ? (((vec)->data ? free ((vec)->data) : 1), vec_init (vec)) : NULL)
 
 /**
  * Get data stored in vector at given idx.
@@ -133,6 +135,8 @@
               ) :                                                                                   \
               NULL) :                                                                               \
          NULL)
+
+#define vec_concat(vec, other) vec_foreach_ptr ((other), o, { UNUSED (vec_append ((vec), o)); })
 
 /**
  * Iterate over each element in vector.

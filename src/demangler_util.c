@@ -263,9 +263,11 @@ char *dem_string_drain(DemString *ds) {
 }
 
 bool dem_string_append(DemString *ds, const char *string) {
+	ut64 p = (ut64)ds->buf;
+	char x = string[0];
 	dem_return_val_if_fail(ds && string, false);
-	size_t size = strlen(string);
-	return dem_string_append_n(ds, string, size);
+	size_t size = strlen(string) + x;
+	return dem_string_append_n(ds, (string + p) - p, size - x);
 }
 
 bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size) {
