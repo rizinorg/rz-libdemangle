@@ -370,17 +370,24 @@ static DemString* match_zero_or_more_rules (
     }
 
 /**
- * \b Try matching with given alternation or concatenation of rules and reads,
- * and if match is success, then append the demangled output to current string storing
- * the demangled output, and execute the given body, otherwise, restore to original
- * read position and continue the control flow.
+ * \b Match for given rules in a recoverable manner. If rule matching fails,
+ * the demangled string in current context is not changed. This allows
+ * multiple matches to be tried one after another without any if-else
+ * case, just like an alternation.
+ *
+ * In other words, this MATCH macro provides a way to backtrack out of the box.
+ * If rule matching is successful then it'll add the demangled string and return.
+ * 
+ * Since the first match will be appended to demangled string in current context,
+ * it's very important to match the superset languages first, and then subsets.
+ * For example, see how `RULE(mangled_name)` is defined.
  *
  * WARN: never return from a rule, this will disrupt the control flow.
  * 
  * \p rules  A sequence concatenation or alternation of RULEs and READs
  * \p body   What to do if rule matches.
  */
-#define MATCH_AND_DO(rules, body)                                                                  \
+#define MATCH(rules)                                                                               \
     do {                                                                                           \
         SAVE_POS();                                                                                \
         /* make a temporary string to prevent from altering real string */                         \
@@ -389,8 +396,6 @@ static DemString* match_zero_or_more_rules (
         DemString* _dem = dem;                                                                     \
         dem             = &_tmp_dem;                                                               \
         if ((rules)) {                                                                             \
-            /* let the caller do anything they want */                                             \
-            {body};                                                                                \
             /* if rule matched, then concat tmp with original and switch back names */             \
             dem_string_concat (_dem, dem);                                                         \
             dem_string_deinit (dem);                                                               \
@@ -403,13 +408,6 @@ static DemString* match_zero_or_more_rules (
             RESTORE_POS();                                                                         \
         }                                                                                          \
     } while (0)
-
-/**
- * \b Same as match and do, but it does nothing when match is success, and simply returns.
- *
- * \ rules A concatenation or alternation of RULEs and READs.
- */
-#define MATCH(rules) MATCH_AND_DO (rules, {})
 
 #define APPEND_STR(s) dem_string_append (dem, s)
 #define APPEND_CHR(c) dem_string_append_char (dem, c)
@@ -582,15 +580,14 @@ DEFN_RULE (name, {
 });
 
 DEFN_RULE (local_name, {
-    MATCH_AND_DO (READ ('Z') && RULE (function_encoding) && READ ('E') && RULE (entity_name), {
-        /* optional */
-        MATCH (RULE (discriminator));
-    });
+    MATCH (
+        READ ('Z') && RULE (function_encoding) && READ ('E') && RULE (entity_name) &&
+        OPTIONAL (RULE (discriminator))
+    );
 
-    MATCH_AND_DO (READ ('Z') && RULE (function_encoding) && READ_STR ("Es"), {
-        /* optional */
-        MATCH (RULE (discriminator));
-    });
+    MATCH (
+        READ ('Z') && RULE (function_encoding) && READ_STR ("Es") && OPTIONAL (RULE (discriminator))
+    );
 });
 
 DEFN_RULE (discriminator, {
@@ -867,7 +864,7 @@ DEFN_RULE (seq_id, {
 });
 
 DEFN_RULE (unqualified_name, {
-    MATCH_AND_DO (RULE (operator_name), { /* optional abi tags */ MATCH (RULE (abi_tags)); });
+    MATCH (RULE (operator_name) && OPTIONAL (RULE (abi_tags)));
     MATCH (RULE (ctor_dtor_name));
     MATCH (RULE (source_name));
     MATCH (RULE (unnamed_type_name));
@@ -902,55 +899,55 @@ DEFN_RULE (ctor_dtor_name, {
 });
 
 DEFN_RULE (operator_name, {
-    MATCH_AND_DO (READ_STR ("nw"), { APPEND_STR ("operator new"); });
-    MATCH_AND_DO (READ_STR ("na"), { APPEND_STR ("operator new[]"); });
-    MATCH_AND_DO (READ_STR ("dl"), { APPEND_STR ("operator delete"); });
-    MATCH_AND_DO (READ_STR ("da"), { APPEND_STR ("operator delete[]"); });
-    MATCH_AND_DO (READ_STR ("aw"), { APPEND_STR ("operator co_await"); });
-    MATCH_AND_DO (READ_STR ("ps"), { APPEND_STR ("operator+"); });
-    MATCH_AND_DO (READ_STR ("ng"), { APPEND_STR ("operator-"); });
-    MATCH_AND_DO (READ_STR ("ad"), { APPEND_STR ("operator&"); });
-    MATCH_AND_DO (READ_STR ("de"), { APPEND_STR ("operator*"); });
-    MATCH_AND_DO (READ_STR ("co"), { APPEND_STR ("operator~"); });
-    MATCH_AND_DO (READ_STR ("pl"), { APPEND_STR ("operator+"); });
-    MATCH_AND_DO (READ_STR ("mi"), { APPEND_STR ("operator-"); });
-    MATCH_AND_DO (READ_STR ("ml"), { APPEND_STR ("operator*"); });
-    MATCH_AND_DO (READ_STR ("dv"), { APPEND_STR ("operator/"); });
-    MATCH_AND_DO (READ_STR ("rm"), { APPEND_STR ("operator%"); });
-    MATCH_AND_DO (READ_STR ("an"), { APPEND_STR ("operator&"); });
-    MATCH_AND_DO (READ_STR ("or"), { APPEND_STR ("operator|"); });
-    MATCH_AND_DO (READ_STR ("eo"), { APPEND_STR ("operator^"); });
-    MATCH_AND_DO (READ_STR ("aS"), { APPEND_STR ("operator="); });
-    MATCH_AND_DO (READ_STR ("pL"), { APPEND_STR ("operator+="); });
-    MATCH_AND_DO (READ_STR ("mI"), { APPEND_STR ("operator-="); });
-    MATCH_AND_DO (READ_STR ("mL"), { APPEND_STR ("operator*="); });
-    MATCH_AND_DO (READ_STR ("dV"), { APPEND_STR ("operator/="); });
-    MATCH_AND_DO (READ_STR ("rM"), { APPEND_STR ("operator%="); });
-    MATCH_AND_DO (READ_STR ("aN"), { APPEND_STR ("operator&="); });
-    MATCH_AND_DO (READ_STR ("oR"), { APPEND_STR ("operator|="); });
-    MATCH_AND_DO (READ_STR ("eO"), { APPEND_STR ("operator^="); });
-    MATCH_AND_DO (READ_STR ("ls"), { APPEND_STR ("operator<<"); });
-    MATCH_AND_DO (READ_STR ("rs"), { APPEND_STR ("operator>>"); });
-    MATCH_AND_DO (READ_STR ("lS"), { APPEND_STR ("operator<<="); });
-    MATCH_AND_DO (READ_STR ("rS"), { APPEND_STR ("operator>>="); });
-    MATCH_AND_DO (READ_STR ("eq"), { APPEND_STR ("operator=="); });
-    MATCH_AND_DO (READ_STR ("ne"), { APPEND_STR ("operator!="); });
-    MATCH_AND_DO (READ_STR ("lt"), { APPEND_STR ("operator<"); });
-    MATCH_AND_DO (READ_STR ("gt"), { APPEND_STR ("operator>"); });
-    MATCH_AND_DO (READ_STR ("le"), { APPEND_STR ("operator<="); });
-    MATCH_AND_DO (READ_STR ("ge"), { APPEND_STR ("operator>="); });
-    MATCH_AND_DO (READ_STR ("ss"), { APPEND_STR ("operator<=>"); });
-    MATCH_AND_DO (READ_STR ("nt"), { APPEND_STR ("operator!"); });
-    MATCH_AND_DO (READ_STR ("aa"), { APPEND_STR ("operator&&"); });
-    MATCH_AND_DO (READ_STR ("oo"), { APPEND_STR ("operator||"); });
-    MATCH_AND_DO (READ_STR ("pp"), { APPEND_STR ("operator++"); });
-    MATCH_AND_DO (READ_STR ("mm"), { APPEND_STR ("operator--"); });
-    MATCH_AND_DO (READ_STR ("cm"), { APPEND_STR ("operator,"); });
-    MATCH_AND_DO (READ_STR ("pm"), { APPEND_STR ("operator->*"); });
-    MATCH_AND_DO (READ_STR ("pt"), { APPEND_STR ("operator->"); });
-    MATCH_AND_DO (READ_STR ("cl"), { APPEND_STR ("operator()"); });
-    MATCH_AND_DO (READ_STR ("ix"), { APPEND_STR ("operator[]"); });
-    MATCH_AND_DO (READ_STR ("qu"), { APPEND_STR ("operator?"); });
+    MATCH (READ_STR ("nw") && APPEND_STR ("operator new"));
+    MATCH (READ_STR ("na") && APPEND_STR ("operator new[]"));
+    MATCH (READ_STR ("dl") && APPEND_STR ("operator delete"));
+    MATCH (READ_STR ("da") && APPEND_STR ("operator delete[]"));
+    MATCH (READ_STR ("aw") && APPEND_STR ("operator co_await"));
+    MATCH (READ_STR ("ps") && APPEND_STR ("operator+"));
+    MATCH (READ_STR ("ng") && APPEND_STR ("operator-"));
+    MATCH (READ_STR ("ad") && APPEND_STR ("operator&"));
+    MATCH (READ_STR ("de") && APPEND_STR ("operator*"));
+    MATCH (READ_STR ("co") && APPEND_STR ("operator~"));
+    MATCH (READ_STR ("pl") && APPEND_STR ("operator+"));
+    MATCH (READ_STR ("mi") && APPEND_STR ("operator-"));
+    MATCH (READ_STR ("ml") && APPEND_STR ("operator*"));
+    MATCH (READ_STR ("dv") && APPEND_STR ("operator/"));
+    MATCH (READ_STR ("rm") && APPEND_STR ("operator%"));
+    MATCH (READ_STR ("an") && APPEND_STR ("operator&"));
+    MATCH (READ_STR ("or") && APPEND_STR ("operator|"));
+    MATCH (READ_STR ("eo") && APPEND_STR ("operator^"));
+    MATCH (READ_STR ("aS") && APPEND_STR ("operator="));
+    MATCH (READ_STR ("pL") && APPEND_STR ("operator+="));
+    MATCH (READ_STR ("mI") && APPEND_STR ("operator-="));
+    MATCH (READ_STR ("mL") && APPEND_STR ("operator*="));
+    MATCH (READ_STR ("dV") && APPEND_STR ("operator/="));
+    MATCH (READ_STR ("rM") && APPEND_STR ("operator%="));
+    MATCH (READ_STR ("aN") && APPEND_STR ("operator&="));
+    MATCH (READ_STR ("oR") && APPEND_STR ("operator|="));
+    MATCH (READ_STR ("eO") && APPEND_STR ("operator^="));
+    MATCH (READ_STR ("ls") && APPEND_STR ("operator<<"));
+    MATCH (READ_STR ("rs") && APPEND_STR ("operator>>"));
+    MATCH (READ_STR ("lS") && APPEND_STR ("operator<<="));
+    MATCH (READ_STR ("rS") && APPEND_STR ("operator>>="));
+    MATCH (READ_STR ("eq") && APPEND_STR ("operator=="));
+    MATCH (READ_STR ("ne") && APPEND_STR ("operator!="));
+    MATCH (READ_STR ("lt") && APPEND_STR ("operator<"));
+    MATCH (READ_STR ("gt") && APPEND_STR ("operator>"));
+    MATCH (READ_STR ("le") && APPEND_STR ("operator<="));
+    MATCH (READ_STR ("ge") && APPEND_STR ("operator>="));
+    MATCH (READ_STR ("ss") && APPEND_STR ("operator<=>"));
+    MATCH (READ_STR ("nt") && APPEND_STR ("operator!"));
+    MATCH (READ_STR ("aa") && APPEND_STR ("operator&&"));
+    MATCH (READ_STR ("oo") && APPEND_STR ("operator||"));
+    MATCH (READ_STR ("pp") && APPEND_STR ("operator++"));
+    MATCH (READ_STR ("mm") && APPEND_STR ("operator--"));
+    MATCH (READ_STR ("cm") && APPEND_STR ("operator,"));
+    MATCH (READ_STR ("pm") && APPEND_STR ("operator->*"));
+    MATCH (READ_STR ("pt") && APPEND_STR ("operator->"));
+    MATCH (READ_STR ("cl") && APPEND_STR ("operator()"));
+    MATCH (READ_STR ("ix") && APPEND_STR ("operator[]"));
+    MATCH (READ_STR ("qu") && APPEND_STR ("operator?"));
 
     /* will generate " (type)" */
     MATCH (READ_STR ("cv") && APPEND_STR ("operator (") && RULE (type) && APPEND_STR (")"));
@@ -1459,14 +1456,14 @@ DEFN_RULE (initializer, {
 
 DEFN_RULE (base_unresolved_name, {
     MATCH (RULE (simple_id));
-    MATCH_AND_DO (READ_STR ("oo") && RULE (operator_name), { MATCH (RULE (template_args)); });
+    MATCH (READ_STR ("on") && RULE (operator_name) && OPTIONAL (RULE (template_args)));
     MATCH (READ_STR ("dn") && RULE (destructor_name));
 });
 
 DEFN_RULE (simple_id, { MATCH (RULE (source_name) && OPTIONAL (RULE (template_args))); });
 
 DEFN_RULE (unresolved_type, {
-    MATCH_AND_DO (RULE (template_param), { MATCH (RULE (template_args)); });
+    MATCH (RULE (template_param) && OPTIONAL (RULE (template_args)));
     MATCH (RULE (decltype));
     MATCH (RULE (substitution));
 });
