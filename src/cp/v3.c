@@ -454,6 +454,10 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
     StrVec* detected_types = &dt;
 
     if (RULE (mangled_name)) {
+        // vec_foreach_ptr (detected_types, t, {
+        //     dem_string_append_n (dem, ", ", 2);
+        //     dem_string_concat (dem, t);
+        // });
         vec_deinit (detected_types);
         return dem_string_drain (dem);
     } else {
@@ -554,7 +558,7 @@ DECL_RULE_ALIAS (virtual_offset_number, number);
 DECL_RULE_ALIAS (function_name, name);
 DECL_RULE_ALIAS (data_name, name);
 DECL_RULE (bare_function_type);
-DECL_RULE (signature_type);
+DECL_RULE_ALIAS (signature_type, type);
 /**********************************************************************************************************/
 
 DEFN_RULE (mangled_name, {
@@ -961,20 +965,22 @@ DEFN_RULE (operator_name, {
 
 DEFN_RULE (type, {
     MATCH (RULE (builtin_type));
-    MATCH (RULE (function_type));
-    MATCH (RULE (class_enum_type));
-    MATCH (RULE (array_type));
-    MATCH (RULE (pointer_to_member_type));
-    MATCH (RULE (template_param));
-    MATCH (RULE (template_template_param) && RULE (template_args));
-    MATCH (RULE (decltype));
-    MATCH (READ ('P') && RULE (type) && APPEND_CHR ('*'));  // pointer
-    MATCH (READ ('R') && RULE (type) && APPEND_CHR ('&'));  // l-value reference
-    MATCH (READ ('O') && RULE (type) && APPEND_STR ("&&")); // r-value reference (C++11)
-    MATCH (READ ('C') && RULE (type));                      // complex pair (C99)
-    MATCH (READ ('G') && RULE (type));                      // imaginary (C99)
-    MATCH (RULE (substitution));
-    MATCH (RULE (qualified_type));
+    MATCH (RULE (function_type) && APPEND_TYPE (dem));
+    MATCH (RULE (class_enum_type) && APPEND_TYPE (dem));
+    MATCH (RULE (array_type) && APPEND_TYPE (dem));
+    MATCH (RULE (pointer_to_member_type) && APPEND_TYPE (dem));
+    MATCH (RULE (template_param) && APPEND_TYPE (dem));
+    MATCH (RULE (template_template_param) && RULE (template_args) && APPEND_TYPE (dem));
+    MATCH (RULE (decltype) && APPEND_TYPE (dem));
+    MATCH (READ ('P') && RULE (type) && APPEND_CHR ('*') && APPEND_TYPE (dem)); // pointer
+    MATCH (READ ('R') && RULE (type) && APPEND_CHR ('&') && APPEND_TYPE (dem)); // l-value reference
+    MATCH (
+        READ ('O') && RULE (type) && APPEND_STR ("&&") && APPEND_TYPE (dem)
+    );                                 // r-value reference (C++11)
+    MATCH (READ ('C') && RULE (type)); // complex pair (C99)
+    MATCH (READ ('G') && RULE (type)); // imaginary (C99)
+    MATCH (RULE (substitution));       // Names that've already been substituted don't get numbered
+    MATCH (RULE (qualified_type) && APPEND_TYPE (dem));
 });
 
 DEFN_RULE (class_enum_type, {
@@ -1592,8 +1598,3 @@ DEFN_RULE (unscoped_template_name, {
 })
 
 DEFN_RULE (bare_function_type, { MATCH (RULE_ATLEAST_ONCE_WITH_SEP (signature_type, ", ")); });
-
-DEFN_RULE (signature_type, {
-    DEFER_VAR (t);
-    MATCH (RULE_DEFER (t, type) && APPEND_TYPE (t) && APPEND_DEFER_VAR (t));
-});
