@@ -7,12 +7,12 @@ libdemangle_c_args = []
 libdemangle_src = [
   'src' / 'borland.c',
   'src' / 'cxx.c',
-  
-  'src' / 'cp' / 'demangle.c',
-  'src' / 'cp' / 'common.c',
-  'src' / 'cp' / 'param.c',
-  'src' / 'cp' / 'v2.c',
-  'src' / 'cp' / 'v3.c',
+
+  'src' / 'cplusplus' / 'demangle.c',
+  'src' / 'cplusplus' / 'common.c',
+  'src' / 'cplusplus' / 'param.c',
+  'src' / 'cplusplus' / 'v2.c',
+  'src' / 'cplusplus' / 'v3.c',
 
   'src' / 'demangler.c',
   'src' / 'demangler_util.c',
@@ -34,9 +34,37 @@ tests = [
   'objc',
   'pascal',
   'rust',
-  'cxx',
+
+  'cxx.00',
+  'cxx.01',
+  'cxx.02',
+  'cxx.03',
+  'cxx.04',
+  'cxx.05',
+  'cxx.06',
+  'cxx.07',
+  'cxx.08',
+  'cxx.09',
+  'cxx.10',
+  'cxx.11',
+  'cxx.12',
+  'cxx.13',
+  'cxx.14',
+  'cxx.15',
+  'cxx.16',
+  'cxx.17',
+  'cxx.18',
+  'cxx.19',
+  'cxx.20',
+  'cxx.21',
+  'cxx.22',
+  'cxx.23',
+  'cxx.24',
+  'cxx.25',
+  'cxx.26',
+
   'cxx_base',
-  'cxx_gnu_v2'
+  'cxx_gnu_v2',
 ]
 
 if get_option('use_swift_demangler')
@@ -57,25 +85,30 @@ elif cc.has_argument('--std=c99')
   add_project_arguments('--std=c99', language: 'c')
 endif
 
-libdemangle = library('demangle', libdemangle_src,
-    c_args : common_c_args + libdemangle_c_args,
-    dependencies: [],
-    implicit_include_directories: false,
-    install: get_option('install_lib'),
-    include_directories: include_directories(['include', 'src']))
+libdemangle = library(
+  'demangle',
+  libdemangle_src,
+  c_args: common_c_args + libdemangle_c_args,
+  dependencies: [],
+  implicit_include_directories: false,
+  install: get_option('install_lib'),
+  include_directories: include_directories(['include', 'src']),
+)
 
 libdemangle_dep = declare_dependency(
-    link_with: libdemangle,
-    dependencies: [],
-    include_directories: include_directories('include'),
+  link_with: libdemangle,
+  dependencies: [],
+  include_directories: include_directories('include'),
 )
 
 if get_option('enable_cli')
   bin_demangle = [
     'bin' / 'demangle.c',
   ]
-  executable('demangle', bin_demangle,
-    c_args : common_c_args,
+  executable(
+    'demangle',
+    bin_demangle,
+    c_args: common_c_args,
     dependencies: [libdemangle_dep],
     include_directories: include_directories(['include', 'src']),
     implicit_include_directories: false,
@@ -92,13 +125,15 @@ if get_option('enable_tests') and not meson.is_subproject()
     test_dependencies += cc.find_library('ubsan')
   endif
   foreach test : tests
-    exe = executable('test_@0@'.format(test), 'test/test_@0@.c'.format(test),
+    exe = executable(
+      'test_@0@'.format(test),
+      'test/test_@0@.c'.format(test),
       include_directories: include_directories(['include', 'test']),
       dependencies: test_dependencies,
-      c_args : common_c_args,
+      c_args: common_c_args,
       install: false,
       install_rpath: '',
-      implicit_include_directories: false
+      implicit_include_directories: false,
     )
     test(test, exe)
   endforeach

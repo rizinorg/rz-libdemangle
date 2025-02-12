@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "borland.h"
-#include "cp/demangle.h"
+#include "cplusplus/demangle.h"
 #include <rz_libdemangle.h>
 
 DEM_LIB_EXPORT char *libdemangle_handler_cxx(const char *symbol, RzDemangleOpts opts) {
