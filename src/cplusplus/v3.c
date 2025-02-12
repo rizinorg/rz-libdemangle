@@ -746,7 +746,11 @@ static inline bool
     // then we have our constructor name
     char* rbeg = strrchr (pfx->buf, ':');
     if ((!rbeg && (rbeg = pfx->buf)) || (rbeg[-1] == ':' && rbeg++)) {
-        APPEND_TYPE (pfx);
+        DemString pfx_uname = {0};
+        dem_string_concat (&pfx_uname, pfx);
+        // dem_string_append (&pfx_uname, "::");
+        // dem_string_concat (&pfx_uname, uname);
+        APPEND_TYPE (&pfx_uname);
 
         // generate constructor/destructor name
         dem_string_concat (dem, pfx);
@@ -794,8 +798,7 @@ DEFN_RULE (nested_name, {
         RULE_DEFER (pfx, prefix) && RULE_DEFER (uname, unqualified_name) &&
         (IS_CTOR() ? make_ctor_dtor_name (dem, pfx, uname, true, m) :
          IS_DTOR() ? make_ctor_dtor_name (dem, pfx, uname, false, m) :
-                     APPEND_TYPE (pfx) && APPEND_DEFER_VAR (pfx) && APPEND_STR ("::") &&
-                         APPEND_DEFER_VAR (uname)) &&
+                     APPEND_DEFER_VAR (pfx) && APPEND_STR ("::") && APPEND_DEFER_VAR (uname)) &&
         READ ('E') && APPEND_DEFER_VAR (ref)
     );
     dem_string_deinit (ref);
@@ -806,8 +809,7 @@ DEFN_RULE (nested_name, {
         RULE_DEFER (uname, unqualified_name) &&
         (IS_CTOR() ? make_ctor_dtor_name (dem, pfx, uname, true, m) :
          IS_DTOR() ? make_ctor_dtor_name (dem, pfx, uname, false, m) :
-                     APPEND_TYPE (pfx) && APPEND_DEFER_VAR (pfx) && APPEND_STR ("::") &&
-                         APPEND_DEFER_VAR (uname)) &&
+                     APPEND_DEFER_VAR (pfx) && APPEND_STR ("::") && APPEND_DEFER_VAR (uname)) &&
         READ ('E')
     );
     dem_string_deinit (ref);
@@ -887,12 +889,12 @@ DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
     DEFER_VAR (pfx);
 
     if (RULE_DEFER (pfx, prefix_X)) {
-        DEFER_VAR (curr_name);
-        DEFER_VAR (total_name);
+        APPEND_TYPE (pfx);
 
         const char* last_pos        = msi->cur;
         const char* second_last_pos = msi->cur;
 
+        DEFER_VAR (curr_name);
         DEFER_VAR (last_name);
         DEFER_VAR (second_last_name);
 
@@ -911,8 +913,9 @@ DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
                 // this condition is true on second iteration,
                 // when last_name is not empty for the first time
                 if (second_last_pos != last_pos) {
-                    dem_string_append (total_name, "::");
-                    dem_string_concat (total_name, last_name);
+                    dem_string_append (pfx, "::");
+                    dem_string_concat (pfx, last_name);
+                    APPEND_TYPE (pfx);
                 }
 
                 // update second last name to store last name
@@ -925,8 +928,6 @@ DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
 
                 // update second last meta to store last meta
                 //    and last meta to store current meta
-                //    second_last_meta <- last_meta
-                //    last_meta <- meta
                 {
                     UNUSED (vec_reserve (
                         &second_last_meta.detected_types,
@@ -975,10 +976,10 @@ DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
             }
         }
 
-        dem_string_concat (pfx, total_name);
+        APPEND_TYPE (pfx);
+
         dem_string_concat (dem, pfx);
         dem_string_deinit (pfx);
-        dem_string_deinit (total_name);
         dem_string_deinit (last_name);
         dem_string_deinit (second_last_name);
 
