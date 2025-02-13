@@ -241,14 +241,18 @@ static DemString*
         return NULL;
     }
 
+    // NOTE(brightprogrammer): Just here to check the current iteration in debugger
+    // No special use
+    ut32 iter_for_dbg = 0;
+
     SAVE_POS();
     /* match atleast once, and then */
-    if (rule (dem, msi, m)) {
+    if (rule (dem, msi, m) && ++iter_for_dbg) {
         /* match as many as possible */
         while (true) {
             DemString tmp = {0};
             SAVE_POS();
-            if (rule (&tmp, msi, m)) {
+            if (rule (&tmp, msi, m) && ++iter_for_dbg) {
                 /* add separator before appending demangled string */
                 if (sep) {
                     dem_string_append_prefix_n (&tmp, sep, strlen (sep));
@@ -482,6 +486,10 @@ static DemString* match_zero_or_more_rules (
  */
 #if 1
 bool append_type (Meta* m, DemString* t) {
+    if (!m || !t || !t->len) {
+        return false;
+    }
+
     vec_foreach_ptr (&m->detected_types, dt, {
         if (!strcmp (dt->buf, t->buf)) {
             return true;
@@ -673,8 +681,8 @@ DEFN_RULE (encoding, {
 
 DEFN_RULE (name, {
     MATCH (RULE (nested_name));
+    MATCH (RULE (unscoped_template_name) && RULE (template_args));
     MATCH (RULE (unscoped_name));
-    MATCH (RULE (unscoped_template_name));
     MATCH (RULE (local_name));
 });
 
@@ -736,8 +744,7 @@ DEFN_RULE (unscoped_name, {
     MATCH (RULE (unqualified_name));
 });
 
-static inline bool
-    make_ctor_dtor_name (DemString* dem, DemString* pfx, DemString* uname, bool is_ctor, Meta* m) {
+static inline bool make_nested_name (DemString* dem, DemString* pfx, DemString* uname, Meta* m) {
     if (!dem || !pfx || !uname) {
         return false;
     }
@@ -746,22 +753,22 @@ static inline bool
     // then we have our constructor name
     char* rbeg = strrchr (pfx->buf, ':');
     if ((!rbeg && (rbeg = pfx->buf)) || (rbeg[-1] == ':' && rbeg++)) {
-        DemString pfx_uname = {0};
-        dem_string_concat (&pfx_uname, pfx);
-        // dem_string_append (&pfx_uname, "::");
-        // dem_string_concat (&pfx_uname, uname);
-        APPEND_TYPE (&pfx_uname);
-
         // generate constructor/destructor name
-        dem_string_concat (dem, pfx);
-        if (is_ctor) {
+        if (IS_CTOR()) {
+            dem_string_concat (dem, pfx);
             dem_string_append (dem, "::");
+            dem_string_append (dem, rbeg);
             UNSET_CTOR();
-        } else {
+        } else if (IS_DTOR()) {
+            dem_string_concat (dem, pfx);
             dem_string_append (dem, "::~");
+            dem_string_append (dem, rbeg);
             UNSET_DTOR();
+        } else {
+            dem_string_concat (dem, pfx);
+            APPEND_STR ("::");
+            dem_string_concat (dem, uname);
         }
-        dem_string_append (dem, rbeg);
 
         dem_string_deinit (pfx);
         dem_string_deinit (uname);
@@ -796,21 +803,14 @@ DEFN_RULE (nested_name, {
     MATCH (
         READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (ref, ref_qualifier) &&
         RULE_DEFER (pfx, prefix) && RULE_DEFER (uname, unqualified_name) &&
-        (IS_CTOR() ? make_ctor_dtor_name (dem, pfx, uname, true, m) :
-         IS_DTOR() ? make_ctor_dtor_name (dem, pfx, uname, false, m) :
-                     APPEND_DEFER_VAR (pfx) && APPEND_STR ("::") && APPEND_DEFER_VAR (uname)) &&
-        READ ('E') && APPEND_DEFER_VAR (ref)
+        make_nested_name (dem, pfx, uname, m) && READ ('E') && APPEND_DEFER_VAR (ref)
     );
     dem_string_deinit (ref);
     dem_string_deinit (pfx);
     dem_string_deinit (uname);
     MATCH (
         READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (pfx, prefix) &&
-        RULE_DEFER (uname, unqualified_name) &&
-        (IS_CTOR() ? make_ctor_dtor_name (dem, pfx, uname, true, m) :
-         IS_DTOR() ? make_ctor_dtor_name (dem, pfx, uname, false, m) :
-                     APPEND_DEFER_VAR (pfx) && APPEND_STR ("::") && APPEND_DEFER_VAR (uname)) &&
-        READ ('E')
+        RULE_DEFER (uname, unqualified_name) && make_nested_name (dem, pfx, uname, m) && READ ('E')
     );
     dem_string_deinit (ref);
     dem_string_deinit (pfx);
@@ -819,14 +819,23 @@ DEFN_RULE (nested_name, {
     /* NOTE(brightprogrammer):
      * these two rules make up matching for the rule
      *   <nested-name> ::= N [<CV-qualifiers>] [<ref-qualifier>] <template-prefix> <template-args> E
+     *
+     * NOTE(brightprogrammer):
+     * Rule for <template-args> in concatenation below is not an optional rule.
+     * The parser already detects template args before we reach here (inside template-prefix),
+     * and I don't want to really pay attention to how this happens, I've already changed the grammar
+     * a lot, and my head is exploding from long debugging sessions.
+     * So, I'll just make it optional here, for just-in-case, otherwise the matching works as expected.
      */
     MATCH (
         READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (ref, ref_qualifier) &&
-        RULE (template_prefix) && RULE (template_args) && READ ('E') && APPEND_DEFER_VAR (ref)
+        RULE (template_prefix) && OPTIONAL (RULE (template_args)) && READ ('E') &&
+        APPEND_DEFER_VAR (ref)
     );
+    dem_string_deinit (ref);
     MATCH (
         READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE (template_prefix) &&
-        RULE (template_args) && READ ('E')
+        OPTIONAL (RULE (template_args)) && READ ('E')
     );
 });
 
@@ -841,6 +850,10 @@ DEFN_RULE (ref_qualifier, {
     MATCH (READ ('O') && APPEND_STR ("&&"));
 });
 
+DECL_RULE_ALIAS (prefix_b, template_args);
+
+DEFN_RULE (prefix_c, { return dem; });
+
 DEFN_RULE (prefix_X, {
     MATCH (RULE (unqualified_name));
     MATCH (RULE (template_param));
@@ -848,44 +861,29 @@ DEFN_RULE (prefix_X, {
     MATCH (RULE (substitution));
 });
 
-DEFN_RULE (prefix_Yk_template_prefix, {
-    MATCH (RULE (template_unqualified_name) && RULE (template_args));
-    MATCH (RULE (template_param) && RULE (template_args));
-    MATCH (RULE (substitution) && RULE (template_args));
+DECL_RULE_ALIAS (template_prefix_l, template_unqualified_name);
+
+DECL_RULE (template_prefix_Y);
+
+DEFN_RULE (closure_prefix_m, { MATCH (RULE (variable_or_member_unqualified_name) && READ ('M')); });
+
+DECL_RULE (closure_prefix_Z);
+
+DEFN_RULE (prefix__template_prefix__closure_prefix__T, {
+    MATCH (
+        APPEND_STR ("::") && RULE (template_prefix_l) && RULE (prefix_b) &&
+        OPTIONAL (RULE (prefix__template_prefix__closure_prefix__T))
+    );
+    MATCH (
+        APPEND_STR ("::") && RULE (closure_prefix_m) && RULE (prefix_c) &&
+        OPTIONAL (RULE (prefix__template_prefix__closure_prefix__T))
+    );
+
+    return dem; // match empty
 });
 
-DEFN_RULE (prefix_A_template_prefix, {
-    MATCH (RULE (prefix_X));
-    MATCH (RULE (prefix_Yk_template_prefix));
-});
-
-DEFN_RULE (prefix_mk_template_prefix, {
-    MATCH (RULE (template_unqualified_name) && RULE (template_args));
-});
-
-DEFN_RULE (prefix_S1_template_prefix, {
-    MATCH (RULE (prefix_A_template_prefix) && RULE_MANY (prefix_mk_template_prefix));
-});
-
-DEFN_RULE (prefix_Yk_closure_prefix, {
-    MATCH (RULE (variable_template_template_prefix) && RULE (template_args) && READ ('M'));
-});
-
-DEFN_RULE (prefix_A_closure_prefix, {
-    MATCH (RULE (prefix_X));
-    MATCH (RULE (prefix_Yk_closure_prefix));
-});
-
-DEFN_RULE (prefix_mk_closure_prefix, {
-    MATCH (RULE (variable_or_member_unqualified_name) && READ ('M'));
-});
-
-DEFN_RULE (prefix_S1_closure_prefix, {
-    MATCH (RULE (prefix_A_closure_prefix) && RULE_MANY (prefix_mk_closure_prefix));
-});
-
-// DEFN_RULE (prefix, {
-DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
+DEFN_RULE (prefix, {
+    // DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
     DEFER_VAR (pfx);
 
     if (RULE_DEFER (pfx, prefix_X)) {
@@ -987,11 +985,18 @@ DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
     }
 
     // fix mutual-recursions
-    MATCH (RULE (prefix_S1_template_prefix));
-    MATCH (RULE (prefix_S1_closure_prefix));
-    // });
-    return NULL;
-}
+    MATCH (RULE (prefix_X) && RULE (prefix__template_prefix__closure_prefix__T));
+    MATCH (
+        RULE (template_prefix_Y) && RULE (prefix_b) &&
+        RULE (prefix__template_prefix__closure_prefix__T)
+    );
+    MATCH (
+        RULE (closure_prefix_Z) && RULE (prefix_c) &&
+        RULE (prefix__template_prefix__closure_prefix__T)
+    );
+});
+//     return NULL;
+// }
 
 DEFN_RULE (abi_tags, { MATCH (RULE_ATLEAST_ONCE (abi_tag)); });
 
@@ -1005,31 +1010,36 @@ DEFN_RULE (decltype, {
     MATCH (READ_STR ("DT") && RULE (expression) && READ ('E'));
 });
 
-DEFN_RULE (closure_prefix_Y, {
-    MATCH (RULE (variable_template_template_prefix) && RULE (template_args) && READ ('M'));
+DEFN_RULE (closure_prefix_Z_l, {
+    MATCH (
+        RULE (prefix_c) && RULE (prefix__template_prefix__closure_prefix__T) &&
+        RULE (closure_prefix_m)
+    );
 });
 
-DEFN_RULE (closure_prefix_Xm_prefix, {
-    MATCH (RULE (unqualified_name) && RULE (variable_or_member_unqualified_name) && READ ('M'));
-    MATCH (RULE (template_param) && RULE (variable_or_member_unqualified_name) && READ ('M'));
-    MATCH (RULE (decltype) && RULE (variable_or_member_unqualified_name) && READ ('M'));
-    MATCH (RULE (substitution) && RULE (variable_or_member_unqualified_name) && READ ('M'));
+DEFN_RULE (closure_prefix_Z_k, { MATCH (RULE (template_args) && READ ('M')); })
+
+DEFN_RULE (closure_prefix_Z, {
+    MATCH (
+        RULE (closure_prefix_Z_l) && RULE (closure_prefix_Z_k) && OPTIONAL (RULE (closure_prefix_Z))
+    );
 });
 
-DEFN_RULE (closure_prefix_km_prefix, {
-    MATCH (RULE (variable_template_template_prefix) && RULE (template_args) && READ ('M'));
+DEFN_RULE (closure_prefix, {
+    MATCH (
+        OPTIONAL (RULE (prefix_X)) && RULE (prefix__template_prefix__closure_prefix__T) &&
+        RULE (closure_prefix_m)
+    );
+    MATCH (
+        RULE (template_prefix_Y) && RULE (prefix_b) &&
+        RULE (prefix__template_prefix__closure_prefix__T) && RULE (closure_prefix_m)
+    );
+    MATCH (
+        RULE (closure_prefix_Z) && RULE (prefix_c) &&
+        RULE (prefix__template_prefix__closure_prefix__T) && RULE (closure_prefix_m)
+    );
+    MATCH (RULE (closure_prefix_Z));
 });
-
-DEFN_RULE (closure_prefix_B, {
-    MATCH (RULE (closure_prefix_Y));
-    MATCH (RULE (closure_prefix_Xm_prefix));
-});
-
-DEFN_RULE (closure_prefix_S2_prefix, {
-    MATCH (RULE (closure_prefix_B) && RULE_MANY (closure_prefix_km_prefix));
-});
-
-DEFN_RULE (closure_prefix, { MATCH (RULE (closure_prefix_S2_prefix)); });
 
 DEFN_RULE (template_prefix_Y, {
     MATCH (RULE (template_unqualified_name));
@@ -1037,27 +1047,20 @@ DEFN_RULE (template_prefix_Y, {
     MATCH (RULE (substitution));
 });
 
-DEFN_RULE (template_prefix_Xm_prefix, {
-    MATCH (RULE (unqualified_name) && RULE (template_unqualified_name));
-    MATCH (RULE (template_param) && RULE (template_unqualified_name));
-    MATCH (RULE (decltype) && RULE (template_unqualified_name));
-    MATCH (RULE (substitution) && RULE (template_unqualified_name));
-});
-
-DEFN_RULE (template_prefix_km_prefix, {
-    MATCH (RULE (template_args) && RULE (template_unqualified_name));
-});
-
-DEFN_RULE (template_prefix_B, {
+DEFN_RULE (template_prefix, {
+    MATCH (
+        RULE (prefix_X) && APPEND_TYPE (dem) && RULE (prefix__template_prefix__closure_prefix__T)
+    );
+    MATCH (
+        RULE (template_prefix_Y) && APPEND_TYPE (dem) && RULE (prefix_b) &&
+        RULE (prefix__template_prefix__closure_prefix__T)
+    );
+    MATCH (
+        RULE (closure_prefix_Z) && APPEND_TYPE (dem) && RULE (prefix_c) &&
+        RULE (prefix__template_prefix__closure_prefix__T)
+    );
     MATCH (RULE (template_prefix_Y));
-    MATCH (RULE (template_prefix_Xm_prefix));
 });
-
-DEFN_RULE (template_prefix_S2_prefix, {
-    MATCH (RULE (template_prefix_B) && RULE_MANY (template_prefix_km_prefix));
-});
-
-DEFN_RULE (template_prefix, { MATCH (RULE (template_prefix_S2_prefix)); });
 
 DEFN_RULE (template_param, {
     if (READ_STR ("T_")) {
@@ -1101,7 +1104,7 @@ DEFN_RULE (seq_id, {
         char* pos  = NULL;
         ut64  pow  = 1;
         ut64  sid  = 1;
-        while ((IS_DIGIT (PEEK()) || IS_UPPER (PEEK())) && (pos = strchr (base, PEEK()))) {
+        while ((pos = strchr (base, PEEK()))) {
             st64 based_val  = pos - base;
             sid            += based_val * pow;
             pow            *= 36;
@@ -1855,7 +1858,10 @@ DEFN_RULE (number, { MATCH (RULE_ATLEAST_ONCE (digit)); });
 // });
 
 DEFN_RULE (template_args, {
-    MATCH (READ ('I') && RULE_ATLEAST_ONCE (template_arg) && READ ('E'));
+    MATCH (
+        READ ('I') && APPEND_CHR ('<') && RULE_ATLEAST_ONCE (template_arg) && APPEND_CHR ('>') &&
+        READ ('E')
+    );
 });
 
 DEFN_RULE (template_arg, {
