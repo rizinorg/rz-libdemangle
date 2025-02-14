@@ -13,6 +13,8 @@
 
 #define DBG_PRINT_DETECTED_TYPES 0
 
+#define REPLACE_GLOBAL_N_WITH_ANON_NAMESPACE 1
+
 /**
  * \b String iterator
  **/
@@ -564,13 +566,13 @@ DECL_RULE (nested_name);
 DECL_RULE (cv_qualifiers);
 DECL_RULE (ref_qualifier);
 DECL_RULE (prefix);
-DECL_RULE (closure_prefix);
+// DECL_RULE (closure_prefix);
 DECL_RULE (template_param);
 DECL_RULE (decltype);
 DECL_RULE (template_prefix);
 DECL_RULE (unqualified_name);
 DECL_RULE_ALIAS (variable_or_member_unqualified_name, unqualified_name);
-DECL_RULE_ALIAS (variable_template_template_prefix, template_prefix);
+// DECL_RULE_ALIAS (variable_template_template_prefix, template_prefix);
 DECL_RULE (ctor_dtor_name);
 DECL_RULE (source_name);
 DECL_RULE (number);
@@ -1025,21 +1027,21 @@ DEFN_RULE (closure_prefix_Z, {
     );
 });
 
-DEFN_RULE (closure_prefix, {
-    MATCH (
-        OPTIONAL (RULE (prefix_X)) && RULE (prefix__template_prefix__closure_prefix__T) &&
-        RULE (closure_prefix_m)
-    );
-    MATCH (
-        RULE (template_prefix_Y) && RULE (prefix_b) &&
-        RULE (prefix__template_prefix__closure_prefix__T) && RULE (closure_prefix_m)
-    );
-    MATCH (
-        RULE (closure_prefix_Z) && RULE (prefix_c) &&
-        RULE (prefix__template_prefix__closure_prefix__T) && RULE (closure_prefix_m)
-    );
-    MATCH (RULE (closure_prefix_Z));
-});
+// DEFN_RULE (closure_prefix, {
+//     MATCH (
+//         OPTIONAL (RULE (prefix_X)) && RULE (prefix__template_prefix__closure_prefix__T) &&
+//         RULE (closure_prefix_m)
+//     );
+//     MATCH (
+//         RULE (template_prefix_Y) && RULE (prefix_b) &&
+//         RULE (prefix__template_prefix__closure_prefix__T) && RULE (closure_prefix_m)
+//     );
+//     MATCH (
+//         RULE (closure_prefix_Z) && RULE (prefix_c) &&
+//         RULE (prefix__template_prefix__closure_prefix__T) && RULE (closure_prefix_m)
+//     );
+//     MATCH (RULE (closure_prefix_Z));
+// });
 
 DEFN_RULE (template_prefix_Y, {
     MATCH (RULE (template_unqualified_name));
@@ -1117,10 +1119,17 @@ DEFN_RULE (seq_id, {
 });
 
 DEFN_RULE (unqualified_name, {
+// NOTE(brightprogrammer):
+// Manual replacements, this is not in original grammar
+#if REPLACE_GLOBAL_N_WITH_ANON_NAMESPACE
+    MATCH (READ_STR ("12_GLOBAL__N_1") && APPEND_STR ("(anonymous namespace)"));
+#endif
+
     MATCH (RULE (operator_name) && OPTIONAL (RULE (abi_tags)));
     MATCH (RULE (ctor_dtor_name));
     MATCH (RULE (source_name));
     MATCH (RULE (unnamed_type_name));
+    MATCH (RULE (expr_primary));
     MATCH (READ_STR ("DC") && RULE_ATLEAST_ONCE (source_name) && READ ('E'));
 });
 
@@ -1784,17 +1793,23 @@ DEFN_RULE (destructor_name, {
     MATCH (RULE (simple_id));
 });
 
+/* NOTE(brightprogrammer): The rule is modified. I've removed reading of 'E' from end.
+ * The original grammar for some reason has no way to reach <expr-primary> rule and because
+ * of that some matchings were failing.
+ *
+ * For this I manually added one alternative matching for this rule in the rule <unqualified-name>.
+ * This branches from the original grammar here.
+ */
 DEFN_RULE (expr_primary, {
-    MATCH (READ ('L') && RULE (type) && RULE (value_number) && READ ('E'));
-    MATCH (READ ('L') && RULE (type) && RULE (value_float) && READ ('E'));
-    MATCH (READ ('L') && RULE (string_type) && READ ('E'));
-    MATCH (READ ('L') && RULE (nullptr_type) && READ ('E'));
-    MATCH (READ ('L') && RULE (pointer_type) && READ_STR ("0E"));
+    MATCH (READ ('L') && RULE (type) && RULE (value_number));
+    MATCH (READ ('L') && RULE (type) && RULE (value_float));
+    MATCH (READ ('L') && RULE (string_type));
+    MATCH (READ ('L') && RULE (nullptr_type));
+    MATCH (READ ('L') && RULE (pointer_type) && READ ('0'));
     MATCH (
-        READ ('L') && RULE (type) && RULE (real_part_float) && READ ('_') &&
-        RULE (imag_part_float) && READ ('E')
+        READ ('L') && RULE (type) && RULE (real_part_float) && READ ('_') && RULE (imag_part_float)
     );
-    MATCH (READ_STR ("L_Z") && RULE (encoding) && READ ('E'));
+    MATCH (READ_STR ("L_Z") && RULE (encoding));
 });
 
 DEFN_RULE (float, {
