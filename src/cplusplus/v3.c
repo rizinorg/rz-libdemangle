@@ -210,9 +210,9 @@ static inline void meta_tmp_fini (Meta* og, Meta* tmp) {
 #define SET_DTOR()  (m->is_ctor = false, (m->is_dtor = true))
 #define SET_CONST() (m->is_const = true)
 
-#define UNSET_CTOR()  (m->is_dtor = false, m->is_ctor = false)
-#define UNSET_DTOR()  (m->is_ctor = false, m->is_dtor = false)
-#define UNSET_CONST() (m->is_const = false)
+#define UNSET_CTOR()  (m->is_dtor = false, m->is_ctor = false, true)
+#define UNSET_DTOR()  (m->is_ctor = false, m->is_dtor = false, true)
+#define UNSET_CONST() (m->is_const = false, true)
 
 /**
  * Type of rules.
@@ -430,6 +430,17 @@ static DemString* match_zero_or_more_rules (
         return NULL;                                                                               \
     }
 
+#define MATCH_FAILED()                                                                             \
+    do {                                                                                           \
+        meta_tmp_fini (_og_meta, &_tmp_meta);                                                      \
+        /* if rule matched, then concat tmp with original and switch back names */                 \
+        dem_string_deinit (&_tmp_dem);                                                             \
+        dem = _og_dem;                                                                             \
+        m   = _og_meta;                                                                            \
+        RESTORE_POS();                                                                             \
+        break;                                                                                     \
+    } while (0)
+
 /**
  * \b Match for given rules in a recoverable manner. If rule matching fails,
  * the demangled string in current context is not changed. This allows
@@ -443,12 +454,48 @@ static DemString* match_zero_or_more_rules (
  * it's very important to match the superset languages first, and then subsets.
  * For example, see how `RULE(mangled_name)` is defined.
  *
+ * NOTE: By default, match_and_do will always be successful, once it attempts
+ * to execute the given code body. But this can be changed by calling MATCH_FAIL()
+ * to say that the mayching actually failed inside the given code body, and
+ * the rule must continue looking for an alternative match by continuing the code
+ * execution
+ *
  * WARN: never return from a rule, this will disrupt the control flow.
  * 
  * \p rules  A sequence concatenation or alternation of RULEs and READs
  * \p body   What to do if rule matches.
  */
-#define MATCH(rules)                                                                               \
+#define MATCH_AND_DO(rules, body)                                                                  \
+    do {                                                                                           \
+        SAVE_POS();                                                                                \
+        /* make a temporary string to prevent from altering real string */                         \
+        DemString  _tmp_dem = {0};                                                                 \
+        DemString* _og_dem  = dem;                                                                 \
+        dem                 = &_tmp_dem;                                                           \
+        Meta  _tmp_meta     = {0};                                                                 \
+        Meta* _og_meta      = m;                                                                   \
+        m                   = &_tmp_meta;                                                          \
+        meta_tmp_init (_og_meta, &_tmp_meta);                                                      \
+        if ((rules)) {                                                                             \
+            /* caller execute code */                                                              \
+            {body};                                                                                \
+                                                                                                   \
+            meta_tmp_apply (_og_meta, &_tmp_meta);                                                 \
+            /* if rule matched, then concat tmp with original and switch back names */             \
+            dem_string_concat (_og_dem, &_tmp_dem);                                                \
+            dem_string_deinit (&_tmp_dem);                                                         \
+                                                                                                   \
+            dem = _og_dem;                                                                         \
+            m   = _og_meta;                                                                        \
+            return dem;                                                                            \
+        } else {                                                                                   \
+            MATCH_FAILED();                                                                        \
+        }                                                                                          \
+    } while (0)
+
+#define MATCH(rules) MATCH_AND_DO (rules, {})
+
+#define MATCH_AND_CONTINUE(rules)                                                                  \
     do {                                                                                           \
         SAVE_POS();                                                                                \
         /* make a temporary string to prevent from altering real string */                         \
@@ -467,14 +514,8 @@ static DemString* match_zero_or_more_rules (
                                                                                                    \
             dem = _og_dem;                                                                         \
             m   = _og_meta;                                                                        \
-            return dem;                                                                            \
         } else {                                                                                   \
-            meta_tmp_fini (_og_meta, &_tmp_meta);                                                  \
-            /* if rule matched, then concat tmp with original and switch back names */             \
-            dem_string_deinit (&_tmp_dem);                                                         \
-            dem = _og_dem;                                                                         \
-            m   = _og_meta;                                                                        \
-            RESTORE_POS();                                                                         \
+            MATCH_FAILED();                                                                        \
         }                                                                                          \
     } while (0)
 
@@ -486,29 +527,28 @@ static DemString* match_zero_or_more_rules (
  * This vector is then used to refer back to a detected type in substitution
  * rules.
  */
-#if 1
 bool append_type (Meta* m, DemString* t) {
     if (!m || !t || !t->len) {
         return false;
     }
+
+    // if we're inside template then we don't add detected types
+    // if (m->is_inside_template) {
+    //     return true;
+    // }
 
     vec_foreach_ptr (&m->detected_types, dt, {
         if (!strcmp (dt->buf, t->buf)) {
             return true;
         }
     });
+
     UNUSED (vec_reserve (&m->detected_types, m->detected_types.length + 1));
     m->detected_types.length += 1;
     dem_string_init_clone (vec_end (&m->detected_types), t);
     return true;
 }
-#    define APPEND_TYPE(tname) append_type (m, (tname))
-#else
-#    define APPEND_TYPE(tname)                                                                     \
-        (UNUSED (vec_reserve (&m->detected_types, m->detected_types.length + 1)),                  \
-         m->detected_types.length += 1,                                                            \
-         dem_string_init_clone (vec_end (&m->detected_types), (tname)))
-#endif
+#define APPEND_TYPE(tname) append_type (m, (tname))
 
 /**
  * Refer back to a previous type from detected types and then add that
@@ -742,7 +782,7 @@ DEFN_RULE (v_offset, {
 });
 
 DEFN_RULE (unscoped_name, {
-    MATCH (READ_STR ("St") && APPEND_STR (" ::std::") && RULE (unqualified_name));
+    MATCH (READ_STR ("St") && APPEND_STR ("std::") && RULE (unqualified_name));
     MATCH (RULE (unqualified_name));
 });
 
@@ -871,18 +911,64 @@ DEFN_RULE (closure_prefix_m, { MATCH (RULE (variable_or_member_unqualified_name)
 
 DECL_RULE (closure_prefix_Z);
 
-DEFN_RULE (prefix__template_prefix__closure_prefix__T, {
-    MATCH (
-        APPEND_STR ("::") && RULE (template_prefix_l) && RULE (prefix_b) &&
-        OPTIONAL (RULE (prefix__template_prefix__closure_prefix__T))
-    );
-    MATCH (
-        APPEND_STR ("::") && RULE (closure_prefix_m) && RULE (prefix_c) &&
-        OPTIONAL (RULE (prefix__template_prefix__closure_prefix__T))
-    );
+// DEFN_RULE (prefix__template_prefix__closure_prefix__T, {
+//     MATCH (
+//         APPEND_STR ("::") && RULE (template_prefix_l) && RULE (prefix_b) &&
+//         OPTIONAL (RULE (prefix__template_prefix__closure_prefix__T))
+//     );
+//     MATCH (
+//         APPEND_STR ("::") && RULE (closure_prefix_m) && RULE (prefix_c) &&
+//         OPTIONAL (RULE (prefix__template_prefix__closure_prefix__T))
+//     );
 
-    return dem; // match empty
-});
+//     return dem; // match empty
+// });
+
+/*
+ * HACK(brightprogrammer):
+ * Turns out that the way we generate demangled names is not helpful when a child
+ * node requires data from parent node. Node being a rule application.
+ *
+ * For this a better idea is to inline the rule application then and there, and
+ * what's better than using a macro?
+ *
+ * So, this macro imitates what the above rule definition tries to do.
+ * */
+#define prefix__template_prefix__closure_prefix__T()                                               \
+    do {                                                                                           \
+        bool matched = true;                                                                       \
+        while (matched) {                                                                          \
+            matched = false;                                                                       \
+                                                                                                   \
+            DEFER_VAR (accu); /* accumulator */                                                    \
+                                                                                                   \
+            dem_string_concat (accu, dem);                                                         \
+            DemString* parent_dem = dem;                                                           \
+                                                                                                   \
+            MATCH_AND_CONTINUE (                                                                   \
+                dem_string_append (accu, "::") && RULE_DEFER (accu, template_prefix_l) &&          \
+                APPEND_TYPE (accu) && RULE_DEFER (accu, prefix_b) && APPEND_TYPE (accu) &&         \
+                (matched = true) &&                                                                \
+                (dem_string_deinit (parent_dem), dem_string_init_clone (dem, accu))                \
+            );                                                                                     \
+                                                                                                   \
+            if (matched) {                                                                         \
+                continue;                                                                          \
+            }                                                                                      \
+                                                                                                   \
+            dem_string_deinit (accu);                                                              \
+            dem_string_concat (accu, dem);                                                         \
+                                                                                                   \
+            MATCH_AND_CONTINUE (                                                                   \
+                dem_string_append (accu, "::") && RULE_DEFER (accu, closure_prefix_m) &&           \
+                APPEND_TYPE (accu) && RULE_DEFER (accu, prefix_c) && APPEND_TYPE (accu) &&         \
+                (matched = true) &&                                                                \
+                (dem_string_deinit (parent_dem), dem_string_init_clone (dem, accu))                \
+            );                                                                                     \
+        }                                                                                          \
+    } while (0)
+
+// XXX: problem is in the macro maybe!!
 
 DEFN_RULE (prefix, {
     // DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
@@ -987,15 +1073,17 @@ DEFN_RULE (prefix, {
     }
 
     // fix mutual-recursions
-    MATCH (RULE (prefix_X) && RULE (prefix__template_prefix__closure_prefix__T));
-    MATCH (
-        RULE (template_prefix_Y) && RULE (prefix_b) &&
-        RULE (prefix__template_prefix__closure_prefix__T)
-    );
-    MATCH (
-        RULE (closure_prefix_Z) && RULE (prefix_c) &&
-        RULE (prefix__template_prefix__closure_prefix__T)
-    );
+    MATCH_AND_DO (RULE (prefix_X) && APPEND_TYPE (dem), {
+        prefix__template_prefix__closure_prefix__T();
+    });
+
+    MATCH_AND_DO (RULE (template_prefix_Y) && RULE (prefix_b) && APPEND_TYPE (dem), {
+        prefix__template_prefix__closure_prefix__T();
+    });
+
+    MATCH_AND_DO (RULE (closure_prefix_Z) && RULE (prefix_c) && APPEND_TYPE (dem), {
+        prefix__template_prefix__closure_prefix__T();
+    });
 });
 //     return NULL;
 // }
@@ -1013,10 +1101,16 @@ DEFN_RULE (decltype, {
 });
 
 DEFN_RULE (closure_prefix_Z_l, {
-    MATCH (
-        RULE (prefix_c) && RULE (prefix__template_prefix__closure_prefix__T) &&
-        RULE (closure_prefix_m)
-    );
+    MATCH_AND_DO (RULE (prefix_c), {
+        prefix__template_prefix__closure_prefix__T();
+
+        bool matched = false;
+        MATCH (RULE (closure_prefix_m) && (matched = true));
+
+        if (!matched) {
+            MATCH_FAILED();
+        }
+    });
 });
 
 DEFN_RULE (closure_prefix_Z_k, { MATCH (RULE (template_args) && READ ('M')); })
@@ -1050,18 +1144,19 @@ DEFN_RULE (template_prefix_Y, {
 });
 
 DEFN_RULE (template_prefix, {
-    MATCH (
-        RULE (prefix_X) && APPEND_TYPE (dem) && RULE (prefix__template_prefix__closure_prefix__T)
-    );
-    MATCH (
-        RULE (template_prefix_Y) && APPEND_TYPE (dem) && RULE (prefix_b) &&
-        RULE (prefix__template_prefix__closure_prefix__T)
-    );
-    MATCH (
-        RULE (closure_prefix_Z) && APPEND_TYPE (dem) && RULE (prefix_c) &&
-        RULE (prefix__template_prefix__closure_prefix__T)
-    );
-    MATCH (RULE (template_prefix_Y));
+    MATCH_AND_DO (RULE (prefix_X) && APPEND_TYPE (dem), {
+        prefix__template_prefix__closure_prefix__T();
+    });
+
+    MATCH_AND_DO (RULE (template_prefix_Y) && APPEND_TYPE (dem) && RULE (prefix_b), {
+        prefix__template_prefix__closure_prefix__T();
+    });
+
+    MATCH_AND_DO (RULE (closure_prefix_Z) && APPEND_TYPE (dem) && RULE (prefix_c), {
+        prefix__template_prefix__closure_prefix__T();
+    });
+
+    MATCH (RULE (template_prefix_Y) && APPEND_TYPE (dem));
 });
 
 DEFN_RULE (template_param, {
@@ -1084,18 +1179,16 @@ DEFN_RULE (template_template_param, {
 });
 
 DEFN_RULE (substitution, {
-    MATCH (READ_STR ("St") && APPEND_STR (" ::std::"));
-    MATCH (READ_STR ("Sa") && APPEND_STR (" ::std::allocator"));
-    MATCH (READ_STR ("Sb") && APPEND_STR (" ::std::basic_string"));
+    MATCH (READ_STR ("St") && APPEND_STR ("std::"));
+    MATCH (READ_STR ("Sa") && APPEND_STR ("std::allocator"));
+    MATCH (READ_STR ("Sb") && APPEND_STR ("std::basic_string"));
     MATCH (
         READ_STR ("Ss") &&
-        APPEND_STR (
-            " ::std::basic_string < char, ::std::char_traits<char>, ::std::allocator<char> >"
-        )
+        APPEND_STR ("std::basic_string < char, std::char_traits<char>, std::allocator<char> >")
     );
-    MATCH (READ_STR ("Si") && APPEND_STR (" ::std::basic_istream<char,  std::char_traits<char> >"));
-    MATCH (READ_STR ("So") && APPEND_STR (" ::std::basic_ostream<char,  std::char_traits<char> >"));
-    MATCH (READ_STR ("Sd") && APPEND_STR (" ::std::basic_iostream<char, std::char_traits<char> >"));
+    MATCH (READ_STR ("Si") && APPEND_STR ("std::basic_istream<char,  std::char_traits<char> >"));
+    MATCH (READ_STR ("So") && APPEND_STR ("std::basic_ostream<char,  std::char_traits<char> >"));
+    MATCH (READ_STR ("Sd") && APPEND_STR ("std::basic_iostream<char, std::char_traits<char> >"));
 
     MATCH (READ ('S') && RULE (seq_id) && READ ('_'));
 });
@@ -1874,8 +1967,8 @@ DEFN_RULE (number, { MATCH (RULE_ATLEAST_ONCE (digit)); });
 
 DEFN_RULE (template_args, {
     MATCH (
-        READ ('I') && APPEND_CHR ('<') && RULE_ATLEAST_ONCE (template_arg) && APPEND_CHR ('>') &&
-        READ ('E')
+        READ ('I') && APPEND_CHR ('<') && RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") &&
+        APPEND_CHR ('>') && READ ('E')
     );
 });
 
