@@ -1179,7 +1179,7 @@ DEFN_RULE (template_template_param, {
 });
 
 DEFN_RULE (substitution, {
-    MATCH (READ_STR ("St") && APPEND_STR ("std::"));
+    MATCH (READ_STR ("St") && APPEND_STR ("std"));
     MATCH (READ_STR ("Sa") && APPEND_STR ("std::allocator"));
     MATCH (READ_STR ("Sb") && APPEND_STR ("std::basic_string"));
     MATCH (
