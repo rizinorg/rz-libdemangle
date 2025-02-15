@@ -696,34 +696,27 @@ DEFN_RULE (mangled_name, {
     );
 });
 
-/**
- * HACK(brightprogrammer):
- * In the test cases, functions of time X(void) are written as X(),
- * note the absence of void in brackets. This function is a place to
- * apply patches to generated function list like that.
- * */
-static inline void apply_function_param_patches (DemString* param_list) {
-    if (!strcmp (param_list->buf, "void")) {
-        dem_string_deinit (param_list);
-    }
-}
-
 DEFN_RULE (encoding, {
     bool is_const = false;
     DEFER_VAR (param_list);
     MATCH (
         RULE (function_name) && OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) &&
         APPEND_CHR ('(') && RULE_DEFER (param_list, bare_function_type) &&
-        (apply_function_param_patches (param_list), true) && APPEND_DEFER_VAR (param_list) &&
-        APPEND_CHR (')') && OPTIONAL (is_const && APPEND_STR (" const"))
+        APPEND_DEFER_VAR (param_list) && APPEND_CHR (')') &&
+        OPTIONAL (is_const && APPEND_STR (" const"))
     );
     MATCH (RULE (data_name));
     MATCH (RULE (special_name));
 });
 
 DEFN_RULE (name, {
+    bool is_const = false;
     MATCH (RULE (nested_name));
-    MATCH (RULE (unscoped_template_name) && RULE (template_args));
+    MATCH (
+        RULE (unscoped_template_name) && APPEND_TYPE (dem) &&
+        OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) && RULE (template_args) &&
+        APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const")) && APPEND_TYPE (dem)
+    );
     MATCH (RULE (unscoped_name));
     MATCH (RULE (local_name));
 });
@@ -1379,11 +1372,15 @@ DEFN_RULE (pointer_to_member_type, {
 });
 
 DEFN_RULE (function_type, {
+    bool is_const   = false;
+    bool is_functor = false;
     MATCH (
-        OPTIONAL (RULE (cv_qualifiers)) && OPTIONAL (RULE (exception_spec)) &&
-        READ_STR_OPTIONAL ("Dx") && READ ('F') && READ_OPTIONAL ('Y') &&
-        RULE (bare_function_type) &&
-        OPTIONAL (IS_CONST() && APPEND_STR (" const") && UNSET_CONST()) &&
+        OPTIONAL (READ ('P') && (is_functor = true)) &&
+        OPTIONAL (RULE (cv_qualifiers) && IS_CONST() && (is_const = true) && UNSET_CONST()) &&
+        OPTIONAL (RULE (exception_spec)) && READ_STR_OPTIONAL ("Dx") && READ ('F') &&
+        READ_OPTIONAL ('Y') && RULE (signature_type) &&
+        (is_functor ? APPEND_STR (" (*)(") : APPEND_STR (" (")) && RULE_MANY (bare_function_type) &&
+        APPEND_CHR (')') && OPTIONAL (is_const && APPEND_STR (" const")) &&
         OPTIONAL (RULE (ref_qualifier)) && READ ('E')
     );
 });
@@ -1479,7 +1476,10 @@ DEFN_RULE (builtin_type, {
         READ_STR ("DSDA") && APPEND_STR ("_Sat T _Accum")
     ); // NOTE(brightprogrammer): I'm unsure why there is a T in the middle of _Sat and _Accum
        // Do we have to match for a type again?
-    MATCH (READ ('u') && RULE (source_name) && RULE (template_args));
+    MATCH (
+        READ ('u') && RULE (source_name) && APPEND_TYPE (dem) && RULE (template_args) &&
+        APPEND_TYPE (dem)
+    );
 });
 
 DEFN_RULE (expression, {
@@ -1841,7 +1841,12 @@ DEFN_RULE (base_unresolved_name, {
     MATCH (READ_STR ("dn") && RULE (destructor_name));
 });
 
-DEFN_RULE (simple_id, { MATCH (RULE (source_name) && OPTIONAL (RULE (template_args))); });
+DEFN_RULE (simple_id, {
+    MATCH (
+        RULE (source_name) && APPEND_TYPE (dem) &&
+        OPTIONAL (RULE (template_args) && APPEND_TYPE (dem))
+    );
+});
 
 DEFN_RULE (unresolved_type, {
     MATCH (RULE (template_param) && OPTIONAL (RULE (template_args)));
@@ -1949,7 +1954,7 @@ DEFN_RULE (digit, {
         ADV();
         return dem;
     }
-})
+});
 
 DEFN_RULE (number, { MATCH (RULE_ATLEAST_ONCE (digit)); });
 
@@ -1984,4 +1989,11 @@ DEFN_RULE (unscoped_template_name, {
     MATCH (RULE (substitution));
 })
 
-DEFN_RULE (bare_function_type, { MATCH (RULE_ATLEAST_ONCE_WITH_SEP (signature_type, ", ")); });
+DEFN_RULE (bare_function_type, {
+    MATCH (
+        RULE_ATLEAST_ONCE_WITH_SEP (signature_type, ", ") &&
+        OPTIONAL (
+            !strcmp (dem->buf, "void") && (dem_string_deinit (dem), dem_string_append (dem, ""))
+        )
+    );
+});
