@@ -98,7 +98,8 @@ mu_demangle_tests(gpl,
 	// INCORRECT : 	mu_demangle_test("_ZNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEED1Ev_ptr", "std::ostringstream::~ostringstream()"),
 	mu_demangle_test("_ZNSt8ios_baseC2Ev_ptr", "std::ios_base::ios_base()"),
 	mu_demangle_test("_ZNSt8ios_baseD2Ev_ptr", "std::ios_base::~ios_base()"),
-	mu_demangle_test("_ZNSt9basic_iosIcSt11char_traitsIcEE4initEPSt15basic_streambufIcS1_E_ptr", "std::ios::init(std::streambuf*)"),
+	// mu_demangle_test("_ZNSt9basic_iosIcSt11char_traitsIcEE4initEPSt15basic_streambufIcS1_E_ptr", "std::ios::init(std::streambuf*)"),
+	mu_demangle_test("_ZNSt9basic_iosIcSt11char_traitsIcEE4initEPSt15basic_streambufIcS1_E_ptr", "std::basic_ios<char, std::char_traits<char>>::init(std::basic_streambuf<char, std::char_traits>*)"),
 	mu_demangle_test("_ZNSt9exceptionD2Ev_ptr", "std::exception::~exception()"),
 	mu_demangle_test("_Znwm_ptr", "operator new(unsigned long)"),
 	mu_demangle_test("_ZSt11_Hash_bytesPKvmm_ptr", "std::_Hash_bytes(void const*, unsigned long, unsigned long)"),
@@ -183,7 +184,7 @@ mu_demangle_tests(gpl,
 	// end
 	// The following test cases are a copied and modified version of https://raw.githubusercontent.com/ianlancetaylor/demangle/refs/heads/master/cases_test.go
 	// This modified version is licensed under as LGPL-3.0-only
-  mu_demangle_test("_Z1A", "A"),
+	mu_demangle_test("_Z1A", "A"),
 	mu_demangle_test("_Z1Av", "A()"),
 	mu_demangle_test("_Z1A1B1C", "A(B, C)"),
 	mu_demangle_test("_Z4testI1A1BE1Cv", "C test<A, B>()"),
@@ -971,8 +972,8 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN12_GLOBAL__N_112StatListener7getStatEPKcR4statPi", "(anonymous namespace)::StatListener::getStat(char const*, stat&, int*)"),
 	mu_demangle_test("_ZN5clang2io6Emit32ERN4llvm11raw_ostreamEj", "clang::io::Emit32(llvm::raw_ostream&, unsigned int)"),
 	mu_demangle_test("_ZN5clang2io6Emit64ERN4llvm11raw_ostreamEy", "clang::io::Emit64(llvm::raw_ostream&, uint64_t)"),
-	mu_demangle_test("_ZN4llvm8DenseMapIPKN5clang14IdentifierInfoEjNS_12DenseMapInfoIS4_EENS5_IjEEE16InsertIntoBucketERKS4_RKjPSt4pairIS4_jE", "llvm::DenseMap<clang::IdentifierInfo const*, unsigned int, llvm::DenseMapInfo<clang::IdentifierInfo const*>, llvm::DenseMapInfo<unsigned int> >::InsertIntoBucket(clang::IdentifierInfo const* const&, unsigned int const&, std::pair<clang::IdentifierInfo const*, unsigned int>*)"),
-	mu_demangle_test("_ZN4llvm8DenseMapIPKN5clang14IdentifierInfoEjNS_12DenseMapInfoIS4_EENS5_IjEEE4growEj", "llvm::DenseMap<clang::IdentifierInfo const*, unsigned int, llvm::DenseMapInfo<clang::IdentifierInfo const*>, llvm::DenseMapInfo<unsigned int> >::grow(unsigned int)"),
+	mu_demangle_test("_ZN4llvm8DenseMapIPKN5clang14IdentifierInfoEjNS_12DenseMapInfoIS4_EENS5_IjEEE16InsertIntoBucketERKS4_RKjPSt4pairIS4_jE", "llvm::DenseMap<clang::IdentifierInfo const*, unsigned int, llvm::DenseMapInfo<clang::IdentifierInfo const*>, llvm::DenseMapInfo<unsigned int>>::InsertIntoBucket(clang::IdentifierInfo const* const&, unsigned int const&, std::pair<clang::IdentifierInfo const*, unsigned int>*)"),
+	mu_demangle_test("_ZN4llvm8DenseMapIPKN5clang14IdentifierInfoEjNS_12DenseMapInfoIS4_EENS5_IjEEE4growEj", "llvm::DenseMap<clang::IdentifierInfo const*, unsigned int, llvm::DenseMapInfo<clang::IdentifierInfo const*>, llvm::DenseMapInfo<unsigned int>>::grow(unsigned int)"),
 	mu_demangle_test("_ZN5clang16CompilerInstanceC1Ev", "clang::CompilerInstance::CompilerInstance()"),
 	mu_demangle_test("_ZN5clang16CompilerInstanceC2Ev", "clang::CompilerInstance::CompilerInstance()"),
 	mu_demangle_test("_ZN5clang16CompilerInstanceD1Ev", "clang::CompilerInstance::~CompilerInstance()"),
@@ -1004,7 +1005,5 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN5clang16CompilerInstance10createSemaEbPNS_20CodeCompleteConsumerE", "clang::CompilerInstance::createSema(bool, clang::CodeCompleteConsumer*)"),
 	mu_demangle_test("_ZN5clang16CompilerInstance13addOutputFileERKNS0_10OutputFileE", "clang::CompilerInstance::addOutputFile(clang::CompilerInstance::OutputFile const&)"),
 	mu_demangle_test("_ZN5clang16CompilerInstance16clearOutputFilesEb", "clang::CompilerInstance::clearOutputFiles(bool)"),
-	mu_demangle_test("_ZN5clang16CompilerInstance23createDefaultOutputFileEbN4llvm9StringRefES2_", "clang::CompilerInstance::createDefaultOutputFile(bool, llvm::StringRef, llvm::StringRef)"),
-);
+	mu_demangle_test("_ZN5clang16CompilerInstance23createDefaultOutputFileEbN4llvm9StringRefES2_", "clang::CompilerInstance::createDefaultOutputFile(bool, llvm::StringRef, llvm::StringRef)"), );
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
-

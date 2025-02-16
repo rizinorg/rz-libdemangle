@@ -152,9 +152,11 @@ typedef Vec (DemString) StrVec;
 
 typedef struct Meta {
     StrVec detected_types;
+    StrVec template_params;
     bool   is_ctor;
     bool   is_dtor;
     bool   is_const;
+    bool   is_template_func;
 } Meta;
 
 static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
@@ -163,9 +165,11 @@ static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
     }
 
     vec_concat (&tmp->detected_types, &og->detected_types);
-    tmp->is_ctor  = og->is_ctor;
-    tmp->is_dtor  = og->is_dtor;
-    tmp->is_const = og->is_const;
+    vec_concat (&tmp->template_params, &og->template_params);
+    tmp->is_ctor          = og->is_ctor;
+    tmp->is_dtor          = og->is_dtor;
+    tmp->is_const         = og->is_const;
+    tmp->is_template_func = og->is_template_func;
 
     return false;
 }
@@ -182,9 +186,21 @@ static inline void meta_tmp_apply (Meta* og, Meta* tmp) {
     memset (tmp->detected_types.data, 0, vec_mem_size (&tmp->detected_types));
     UNUSED (vec_deinit (&tmp->detected_types));
 
-    og->is_ctor  = tmp->is_ctor;
-    og->is_dtor  = tmp->is_dtor;
-    og->is_const = tmp->is_const;
+    // transfer of ownership from tmp to og
+    vec_reserve (&og->template_params, tmp->template_params.length);
+    memcpy (
+        og->template_params.data,
+        tmp->template_params.data,
+        vec_mem_size (&tmp->template_params)
+    );
+    og->template_params.length = tmp->template_params.length;
+    memset (tmp->template_params.data, 0, vec_mem_size (&tmp->template_params));
+    UNUSED (vec_deinit (&tmp->template_params));
+
+    og->is_ctor          = tmp->is_ctor;
+    og->is_dtor          = tmp->is_dtor;
+    og->is_const         = tmp->is_const;
+    og->is_template_func = tmp->is_template_func;
 }
 
 static inline void meta_tmp_fini (Meta* og, Meta* tmp) {
@@ -197,22 +213,32 @@ static inline void meta_tmp_fini (Meta* og, Meta* tmp) {
          ds++) {
         dem_string_deinit (ds);
     }
-
     UNUSED (vec_deinit (&tmp->detected_types));
+
+    for (DemString* ds = tmp->template_params.data + og->template_params.length;
+         ds < tmp->template_params.data + tmp->template_params.length;
+         ds++) {
+        dem_string_deinit (ds);
+    }
+
+    UNUSED (vec_deinit (&tmp->template_params));
     memset (tmp, 0, sizeof (*tmp));
 }
 
-#define IS_CTOR()  (m->is_ctor)
-#define IS_DTOR()  (m->is_dtor)
-#define IS_CONST() (m->is_const)
+#define IS_CTOR()          (m->is_ctor)
+#define IS_DTOR()          (m->is_dtor)
+#define IS_CONST()         (m->is_const)
+#define IS_TEMPLATE_FUNC() (m->is_template_func)
 
-#define SET_CTOR()  (m->is_dtor = false, (m->is_ctor = true))
-#define SET_DTOR()  (m->is_ctor = false, (m->is_dtor = true))
-#define SET_CONST() (m->is_const = true)
+#define SET_CTOR()          (m->is_dtor = false, (m->is_ctor = true))
+#define SET_DTOR()          (m->is_ctor = false, (m->is_dtor = true))
+#define SET_CONST()         (m->is_const = true)
+#define SET_TEMPLATE_FUNC() (m->is_template_func = true)
 
-#define UNSET_CTOR()  (m->is_dtor = false, m->is_ctor = false, true)
-#define UNSET_DTOR()  (m->is_ctor = false, m->is_dtor = false, true)
-#define UNSET_CONST() (m->is_const = false, true)
+#define UNSET_CTOR()          (m->is_dtor = false, m->is_ctor = false, true)
+#define UNSET_DTOR()          (m->is_ctor = false, m->is_dtor = false, true)
+#define UNSET_CONST()         (m->is_const = false, true)
+#define UNSET_TEMPLATE_FUNC() (m->is_template_func = false, true)
 
 /**
  * Type of rules.
@@ -532,11 +558,6 @@ bool append_type (Meta* m, DemString* t) {
         return false;
     }
 
-    // if we're inside template then we don't add detected types
-    // if (m->is_inside_template) {
-    //     return true;
-    // }
-
     vec_foreach_ptr (&m->detected_types, dt, {
         if (!strcmp (dt->buf, t->buf)) {
             return true;
@@ -551,12 +572,38 @@ bool append_type (Meta* m, DemString* t) {
 #define APPEND_TYPE(tname) append_type (m, (tname))
 
 /**
+ * Much like `append_type`, but for templates. 
+ */
+bool append_tparam (Meta* m, DemString* t) {
+    if (!m || !t || !t->len) {
+        return false;
+    }
+
+    vec_foreach_ptr (&m->template_params, dt, {
+        if (!strcmp (dt->buf, t->buf)) {
+            return true;
+        }
+    });
+
+    UNUSED (vec_reserve (&m->template_params, m->template_params.length + 1));
+    m->template_params.length += 1;
+    dem_string_init_clone (vec_end (&m->template_params), t);
+    return true;
+}
+#define APPEND_TPARAM(tname) append_tparam (m, (tname))
+
+/**
  * Refer back to a previous type from detected types and then add that
  * type to the currently demangled string
  */
 #define SUBSTITUTE_TYPE(id)                                                                        \
     (m->detected_types.length > (id) ?                                                             \
          (APPEND_STR (vec_ptr_at (&m->detected_types, (id))->buf) ? dem : NULL) :                  \
+         NULL)
+
+#define SUBSTITUTE_TPARAM(id)                                                                      \
+    (m->template_params.length > (id) ?                                                            \
+         (APPEND_STR (vec_ptr_at (&m->template_params, (id))->buf) ? dem : NULL) :                 \
          NULL)
 
 /* TODO: what to do with this? */
@@ -698,13 +745,38 @@ DEFN_RULE (mangled_name, {
 
 DEFN_RULE (encoding, {
     bool is_const = false;
+
     DEFER_VAR (param_list);
+    DEFER_VAR (fname);
+    DEFER_VAR (rtype);
+
     MATCH (
-        RULE (function_name) && OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) &&
-        APPEND_CHR ('(') && RULE_DEFER (param_list, bare_function_type) &&
-        APPEND_DEFER_VAR (param_list) && APPEND_CHR (')') &&
-        OPTIONAL (is_const && APPEND_STR (" const"))
+        // function name
+        RULE_DEFER (fname, function_name) &&
+        OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) &&
+
+        // HACK(brightprogrammer):
+        // functions with template parameters have return type encoded
+        // this is a hack to detect whether a function has templates,
+        // it might be bad, but it works!
+        OPTIONAL (
+            (fname->buf[fname->len - 1] == '>') && RULE_DEFER (rtype, type) && APPEND_TYPE (rtype)
+        ) &&
+
+        // param list
+        RULE_DEFER (param_list, bare_function_type) &&
+
+        // apply return type first
+        OPTIONAL ((rtype->len) && APPEND_DEFER_VAR (rtype) && APPEND_CHR (' ')) &&
+
+        // generate rest of the name <name> ( <params> ) [const] [&]
+        APPEND_DEFER_VAR (fname) && APPEND_CHR ('(') && APPEND_DEFER_VAR (param_list) &&
+        APPEND_CHR (')') && OPTIONAL (is_const && APPEND_STR (" const"))
     );
+
+    dem_string_deinit (param_list);
+    dem_string_deinit (fname);
+
     MATCH (RULE (data_name));
     MATCH (RULE (special_name));
 });
@@ -715,7 +787,8 @@ DEFN_RULE (name, {
     MATCH (
         RULE (unscoped_template_name) && APPEND_TYPE (dem) &&
         OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) && RULE (template_args) &&
-        APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const")) && APPEND_TYPE (dem)
+        APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const")) && APPEND_TYPE (dem) &&
+        SET_TEMPLATE_FUNC()
     );
     MATCH (RULE (unscoped_name));
     MATCH (RULE (local_name));
@@ -759,6 +832,24 @@ DEFN_RULE (discriminator, {
 DEFN_RULE (vendor_specific_suffix, { return NULL; });
 
 DEFN_RULE (special_name, {
+    MATCH (READ_STR ("TV") && APPEND_STR ("vtable for ") && RULE (type));
+    MATCH (READ_STR ("TT") && APPEND_STR ("construction vtable index for ") && RULE (type));
+    MATCH (READ_STR ("TI") && APPEND_STR ("typeinfo for ") && RULE (type));
+    MATCH (READ_STR ("TS") && APPEND_STR ("typeinfo name for ") && RULE (type));
+
+    // untested, so I'm placing any string I want to here, so that i can be deteced as bug in testing
+    MATCH (READ_STR ("GV") && APPEND_STR ("guard variable ") && RULE (name));
+    MATCH (READ_STR ("No") && APPEND_STR ("guard variable ") && RULE (type));
+    MATCH (READ_STR ("GR") && APPEND_STR ("first temporary ") && RULE (name) && READ ('_'));
+    MATCH (
+        READ_STR ("GR") && APPEND_STR ("subsequent temporary ") && RULE (name) && RULE (seq_id) &&
+        READ ('_')
+    );
+    MATCH (
+        READ_STR ("GTt") && APPEND_STR ("transaction save function entry point for ") &&
+        RULE (encoding)
+    );
+
     MATCH (READ ('T') && RULE (call_offset) && RULE (base_encoding));
     MATCH (READ_STR ("Tc") && RULE (call_offset) && RULE (call_offset) && RULE (base_encoding));
 });
@@ -839,9 +930,6 @@ static inline bool make_template_nested_name (
         return false;
     }
 
-    // if we encounter end of string or :: from reverse search
-    // then we have our constructor name
-    // generate constructor/destructor name
     if (IS_CTOR()) {
         dem_string_concat (dem, pfx);
         dem_string_concat (dem, targs);
@@ -1225,17 +1313,31 @@ DEFN_RULE (template_prefix, {
 });
 
 DEFN_RULE (template_param, {
-    if (READ_STR ("T_")) {
-        // do something
-    }
-
+    SAVE_POS();
     if (READ ('T')) {
-        st64 tparam = -1;
-        READ_NUMBER (tparam);
-        if (tparam >= 0) {
-            // do something
+        if (IS_DIGIT (PEEK()) || IS_UPPER (PEEK())) {
+            char* base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
+            char* pos  = NULL;
+            ut64  pow  = 1;
+            ut64  sid  = 0;
+            while ((pos = strchr (base, PEEK()))) {
+                st64 based_val  = pos - base;
+                sid            += based_val * pow;
+                pow            *= 36;
+                ADV();
+            }
+            if (!READ ('_')) {
+                RESTORE_POS();
+                return NULL;
+            }
+            APPEND_TYPE (vec_ptr_at (&m->template_params, sid));
+            return SUBSTITUTE_TPARAM (sid);
+        } else if (READ ('_')) {
+            APPEND_TYPE (vec_begin (&m->template_params));
+            return SUBSTITUTE_TPARAM (0);
         }
     }
+    RESTORE_POS();
 });
 
 DEFN_RULE (template_template_param, {
@@ -1254,11 +1356,21 @@ DEFN_RULE (substitution, {
     MATCH (READ_STR ("Sb") && APPEND_STR ("std::basic_string"));
     MATCH (
         READ_STR ("Ss") &&
-        APPEND_STR ("std::basic_string < char, std::char_traits<char>, std::allocator<char> >")
+        // APPEND_STR ("std::basic_string<char, std::char_traits<char>, std::allocator<char>>")
+        APPEND_STR ("std::string")
     );
-    MATCH (READ_STR ("Si") && APPEND_STR ("std::basic_istream<char,  std::char_traits<char> >"));
-    MATCH (READ_STR ("So") && APPEND_STR ("std::basic_ostream<char,  std::char_traits<char> >"));
-    MATCH (READ_STR ("Sd") && APPEND_STR ("std::basic_iostream<char, std::char_traits<char> >"));
+    MATCH (
+        READ_STR ("Si") && APPEND_STR ("std::istream")
+        // APPEND_STR ("std::basic_istream<char, std::char_traits<char>>")
+    );
+    MATCH (
+        READ_STR ("So") && APPEND_STR ("std::ostream")
+        // APPEND_STR ("std::basic_ostream<char, std::char_traits<char>>")
+    );
+    MATCH (
+        READ_STR ("Sd") && APPEND_STR ("std::iostream")
+        // APPEND_STR ("std::basic_iostream<char, std::char_traits<char>>")
+    );
 
     MATCH (READ ('S') && RULE (seq_id) && READ ('_'));
 });
@@ -1926,7 +2038,7 @@ DEFN_RULE (simple_id, {
 });
 
 DEFN_RULE (unresolved_type, {
-    MATCH (RULE (template_param) && OPTIONAL (RULE (template_args)));
+    MATCH (RULE (template_param) && APPEND_STR ("::") && OPTIONAL (RULE (template_args)));
     MATCH (RULE (decltype));
     MATCH (RULE (substitution));
 });
@@ -2055,10 +2167,10 @@ DEFN_RULE (template_args, {
 });
 
 DEFN_RULE (template_arg, {
-    MATCH (RULE (type));
-    MATCH (READ ('X') && RULE (expression) && READ ('E'));
-    MATCH (RULE (expr_primary));
-    MATCH (READ ('J') && RULE_MANY (template_arg) && READ ('E'));
+    MATCH (RULE (type) && APPEND_TPARAM (dem));
+    MATCH (READ ('X') && RULE (expression) && READ ('E') && APPEND_TPARAM (dem));
+    MATCH (RULE (expr_primary) && APPEND_TPARAM (dem));
+    MATCH (READ ('J') && RULE_MANY (template_arg) && READ ('E') && APPEND_TPARAM (dem));
 });
 
 DEFN_RULE (unscoped_template_name, {
