@@ -801,8 +801,10 @@ static inline bool make_nested_name (DemString* dem, DemString* pfx, DemString* 
             UNSET_DTOR();
         } else {
             dem_string_concat (dem, pfx);
-            APPEND_STR ("::");
-            dem_string_concat (dem, uname);
+            if (uname->len) {
+                APPEND_STR ("::");
+                dem_string_concat (dem, uname);
+            }
         }
 
         dem_string_deinit (pfx);
@@ -814,6 +816,58 @@ static inline bool make_nested_name (DemString* dem, DemString* pfx, DemString* 
         dem_string_deinit (uname);
         return false;
     }
+}
+
+/*
+ * NOTE(brightprogrammer):
+ *
+ * Another place we find where the grammar is not consistent with real examples.
+ * we can have a `ctor_dtor_name` rule just after `template_args` in a `nested_name`,
+ * and if you follow the original grammar, there's no way to reach this.
+ *
+ * I manually added to match an `unqualified_name` after `template_args` in `nested_name`
+ * and now it works, with the help of this patch function.
+ */
+static inline bool make_template_nested_name (
+    DemString* dem,
+    DemString* pfx,
+    DemString* targs,
+    DemString* uname,
+    Meta*      m
+) {
+    if (!dem || !pfx || !targs || !uname) {
+        return false;
+    }
+
+    // if we encounter end of string or :: from reverse search
+    // then we have our constructor name
+    // generate constructor/destructor name
+    if (IS_CTOR()) {
+        dem_string_concat (dem, pfx);
+        dem_string_concat (dem, targs);
+        dem_string_append (dem, "::");
+        dem_string_concat (dem, pfx);
+        UNSET_CTOR();
+    } else if (IS_DTOR()) {
+        dem_string_concat (dem, pfx);
+        dem_string_concat (dem, targs);
+        dem_string_append (dem, "::~");
+        dem_string_concat (dem, pfx);
+        UNSET_DTOR();
+    } else {
+        dem_string_concat (dem, pfx);
+        dem_string_concat (dem, targs);
+        if (uname->len) {
+            APPEND_STR ("::");
+            dem_string_concat (dem, uname);
+        }
+    }
+
+    dem_string_deinit (pfx);
+    dem_string_deinit (uname);
+    dem_string_deinit (targs);
+
+    return true;
 }
 
 DEFN_RULE (nested_name, {
@@ -843,6 +897,8 @@ DEFN_RULE (nested_name, {
     dem_string_deinit (ref);
     dem_string_deinit (pfx);
     dem_string_deinit (uname);
+
+
     MATCH (
         READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (pfx, prefix) &&
         RULE_DEFER (uname, unqualified_name) && make_nested_name (dem, pfx, uname, m) && READ ('E')
@@ -850,6 +906,9 @@ DEFN_RULE (nested_name, {
     dem_string_deinit (ref);
     dem_string_deinit (pfx);
     dem_string_deinit (uname);
+
+
+    DEFER_VAR (targs);
 
     /* NOTE(brightprogrammer):
      * these two rules make up matching for the rule
@@ -864,14 +923,27 @@ DEFN_RULE (nested_name, {
      */
     MATCH (
         READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (ref, ref_qualifier) &&
-        RULE (template_prefix) && OPTIONAL (RULE (template_args)) && READ ('E') &&
+        RULE_DEFER (pfx, template_prefix) && OPTIONAL (RULE_DEFER (targs, template_args)) &&
+        OPTIONAL (RULE_DEFER (uname, unqualified_name)) &&
+        make_template_nested_name (dem, pfx, targs, uname, m) && READ ('E') &&
         APPEND_DEFER_VAR (ref)
     );
     dem_string_deinit (ref);
+    dem_string_deinit (pfx);
+    dem_string_deinit (uname);
+    dem_string_deinit (targs);
+
+
     MATCH (
-        READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE (template_prefix) &&
-        OPTIONAL (RULE (template_args)) && READ ('E')
+        READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (pfx, template_prefix) &&
+        OPTIONAL (RULE_DEFER (targs, template_args)) &&
+        OPTIONAL (RULE_DEFER (uname, unqualified_name)) &&
+        make_template_nested_name (dem, pfx, targs, uname, m) && READ ('E')
     );
+    dem_string_deinit (ref);
+    dem_string_deinit (pfx);
+    dem_string_deinit (uname);
+    dem_string_deinit (targs);
 });
 
 DEFN_RULE (cv_qualifiers, {
@@ -1172,6 +1244,11 @@ DEFN_RULE (template_template_param, {
 });
 
 DEFN_RULE (substitution, {
+    // HACK(brightprogrammer): This is not in original grammar, but this works!
+    // Because having a "7__cxx11" just after a substitution "St" does not make sense to original grammar
+    // Placing it here is also important, the order matters!
+    MATCH (READ_STR ("St7__cxx11") && APPEND_STR ("std::__cxx11"));
+
     MATCH (READ_STR ("St") && APPEND_STR ("std"));
     MATCH (READ_STR ("Sa") && APPEND_STR ("std::allocator"));
     MATCH (READ_STR ("Sb") && APPEND_STR ("std::basic_string"));

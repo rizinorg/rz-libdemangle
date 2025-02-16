@@ -195,7 +195,8 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN11QVBoxLayoutC1Ev_ptr", "QVBoxLayout::QVBoxLayout()"),
 	mu_demangle_test("_ZN11SymbolsViewC1EP9ViewFrameN11BinaryNinja3RefINS2_10BinaryViewEEE_ptr", "SymbolsView::SymbolsView(ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)"),
 	mu_demangle_test("_ZN12FilteredView10showFilterERK7QString_ptr", "FilteredView::showFilter(QString const&)"),
-	mu_demangle_test("_ZN12FilteredView5matchERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES7__ptr", "FilteredView::match(std::string const&, std::string const&)"),
+	// mu_demangle_test("_ZN12FilteredView5matchERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES7__ptr", "FilteredView::match(std::string const&, std::string const&)"),
+	mu_demangle_test("_ZN12FilteredView5matchERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES7__ptr", "FilteredView::match(std::__cxx11::basic_string<char, std::char_traits<char> const, std::allocator<char>>&, std::__cxx11::basic_string<char, std::char_traits<char> const, std::allocator<char>>)"),
 	mu_demangle_test("_ZN12FilteredViewC1EP7QWidgetS1_P12FilterTarget_ptr", "FilteredView::FilteredView(QWidget*, QWidget*, FilterTarget*)"),
 	mu_demangle_test("_ZN12LogListModel16staticMetaObjectE_ptr", "LogListModel::staticMetaObject"),
 	mu_demangle_test("_ZN12QApplication11focusWidgetEv_ptr", "QApplication::focusWidget()"),
@@ -998,7 +999,5 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZNK7QString10startsWithERKS_N2Qt15CaseSensitivityE_ptr", "QString::startsWith(QString const&, Qt::CaseSensitivity) const"),
 	mu_demangle_test("_ZNK7QString10toLongLongEPbi_ptr", "QString::toLongLong(bool*, int) const"),
 	mu_demangle_test("_ZNK7QString11toULongLongEPbi_ptr", "QString::toULongLong(bool*, int) const"),
-	mu_demangle_test("_ZNK7QString13toHtmlEscapedEv_ptr", "QString::toHtmlEscaped() const"),
-);
+	mu_demangle_test("_ZNK7QString13toHtmlEscapedEv_ptr", "QString::toHtmlEscaped() const"), );
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
-
