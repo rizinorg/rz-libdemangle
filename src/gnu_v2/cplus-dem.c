@@ -2805,32 +2805,30 @@ demangle_fund_type(struct work_stuff *work, const char **mangled, string *result
 		(*mangled)++;
 		if (**mangled == '_') {
 			int i;
+			int max_len = 32;
+			char *buf = malloc(max_len);
+			if (!buf) return 0;
+			
 			(*mangled)++;
 			for (i = 0;
-				i < sizeof(buf) - 1 && **mangled && **mangled != '_';
+				i < max_len - 1 && **mangled && **mangled != '_';
 				(*mangled)++, i++) {
 				buf[i] = **mangled;
 			}
 			if (**mangled != '_') {
-				success = 0;
-				break;
+				free(buf);
+				return 0;
 			}
 			buf[i] = '\0';
 			(*mangled)++;
-		} else {
-			strncpy(buf, *mangled, 2);
-			buf[2] = '\0';
-			*mangled += min(strlen(*mangled), 2);
-		}
-		sscanf(buf, "%x", &dec);
-		if (dec > 64 || dec < 8) {
-			success = 0;
+			
+			sscanf(buf, "%x", &dec);
+			snprintf(buf, max_len, "int%i_t", dec);
+			APPEND_BLANK(result);
+			string_append(result, buf);
+			free(buf);
 			break;
 		}
-		snprintf(buf, sizeof(buf), "int%i_t", dec);
-		APPEND_BLANK(result);
-		string_append(result, buf);
-		break;
 
 		/* fall through */
 		/* An explicit type, such as "6mytype" or "7integer" */
