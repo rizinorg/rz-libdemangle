@@ -11,7 +11,8 @@
 #include "cplusplus/vec.h"
 #include "demangler_util.h"
 
-#define DBG_PRINT_DETECTED_TYPES 0
+#define DBG_PRINT_DETECTED_TYPES   0
+#define DBG_PRINT_DETECTED_TPARAMS 0
 
 #define REPLACE_GLOBAL_N_WITH_ANON_NAMESPACE 1
 
@@ -249,7 +250,7 @@ static inline void meta_tmp_fini (Meta* og, Meta* tmp) {
  * \return dem on success.
  * \return NULL otherwise.
  */
-typedef DemString* (*DemRule) (DemString* dem, StrIter* msi, Meta* detected_types);
+typedef DemString* (*DemRule) (DemString* dem, StrIter* msi, Meta* m);
 
 /**
  * \b Takes a rule and matches at least one occurence of it.
@@ -548,6 +549,30 @@ static DemString* match_zero_or_more_rules (
 #define APPEND_STR(s) dem_string_append (dem, s)
 #define APPEND_CHR(c) dem_string_append_char (dem, c)
 
+bool ignore_type (Meta* m, DemString* t) {
+    if (!m || !t || !t->len) {
+        return true;
+    }
+
+    // operator names are excluded from substitutions
+    if (!strncmp (t->buf, "std::operator", 13) || !strncmp (t->buf, "operator", 8)) {
+        return true;
+    }
+
+    // sometimes by mistake "std" is appended as type, but name manglers don't expect it to be a type
+    if (!strcmp (t->buf, "std")) {
+        return true;
+    }
+
+    vec_foreach_ptr (&m->detected_types, dt, {
+        if (!strcmp (dt->buf, t->buf)) {
+            return true;
+        }
+    });
+
+    return false;
+}
+
 /**
  * Append given type name to list of all detected types.
  * This vector is then used to refer back to a detected type in substitution
@@ -558,11 +583,9 @@ bool append_type (Meta* m, DemString* t) {
         return false;
     }
 
-    vec_foreach_ptr (&m->detected_types, dt, {
-        if (!strcmp (dt->buf, t->buf)) {
-            return true;
-        }
-    });
+    if (ignore_type (m, t)) {
+        return true;
+    }
 
     UNUSED (vec_reserve (&m->detected_types, m->detected_types.length + 1));
     m->detected_types.length += 1;
@@ -578,6 +601,8 @@ bool append_tparam (Meta* m, DemString* t) {
     if (!m || !t || !t->len) {
         return false;
     }
+
+    append_type (m, t);
 
     vec_foreach_ptr (&m->template_params, dt, {
         if (!strcmp (dt->buf, t->buf)) {
@@ -629,7 +654,15 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
 
     if (RULE (mangled_name)) {
 #if DBG_PRINT_DETECTED_TYPES
+        dem_string_append (dem, " || ");
         vec_foreach_ptr (&m->detected_types, t, {
+            dem_string_append_n (dem, ", ", 2);
+            dem_string_concat (dem, t);
+        });
+#endif
+#if DBG_PRINT_DETECTED_TPARAMS
+        dem_string_append (dem, " || ");
+        vec_foreach_ptr (&m->template_params, t, {
             dem_string_append_n (dem, ", ", 2);
             dem_string_concat (dem, t);
         });
@@ -776,6 +809,7 @@ DEFN_RULE (encoding, {
 
     dem_string_deinit (param_list);
     dem_string_deinit (fname);
+    dem_string_deinit (rtype);
 
     MATCH (RULE (data_name));
     MATCH (RULE (special_name));
@@ -796,12 +830,13 @@ DEFN_RULE (name, {
 
 DEFN_RULE (local_name, {
     MATCH (
-        READ ('Z') && RULE (function_encoding) && READ ('E') && RULE (entity_name) &&
-        OPTIONAL (RULE (discriminator))
+        READ ('Z') && RULE (function_encoding) && READ ('E') && APPEND_STR ("::") &&
+        RULE (entity_name) && OPTIONAL (RULE (discriminator))
     );
 
     MATCH (
-        READ ('Z') && RULE (function_encoding) && READ_STR ("Es") && OPTIONAL (RULE (discriminator))
+        READ ('Z') && RULE (function_encoding) && READ_STR ("Es") && APPEND_STR ("::") &&
+        OPTIONAL (RULE (discriminator))
     );
 });
 
@@ -831,11 +866,38 @@ DEFN_RULE (discriminator, {
 // Will have to go through tests to see.
 DEFN_RULE (vendor_specific_suffix, { return NULL; });
 
+/* 
+ * NOTE: Taken from old c++v3 demangler code
+ * Some of these are tested, others are not encountered yet.
+ *
+ * <special-name> ::= TV <type>
+		  ::= TT <type>
+		  ::= TI <type>
+		  ::= TS <type>
+		  ::= TA <template-arg>
+		  ::= GV <(object) name>
+		  ::= T <call-offset> <(base) encoding>
+		  ::= Tc <call-offset> <call-offset> <(base) encoding>
+   Also g++ extensions:
+		  ::= TC <type> <(offset) number> _ <(base) type>
+		  ::= TF <type>
+		  ::= TJ <type>
+		  ::= GR <name>
+		  ::= GA <encoding>
+		  ::= Gr <resource name>
+		  ::= GTt <encoding>
+		  ::= GTn <encoding>
+*/
+
 DEFN_RULE (special_name, {
     MATCH (READ_STR ("TV") && APPEND_STR ("vtable for ") && RULE (type));
     MATCH (READ_STR ("TT") && APPEND_STR ("construction vtable index for ") && RULE (type));
     MATCH (READ_STR ("TI") && APPEND_STR ("typeinfo for ") && RULE (type));
     MATCH (READ_STR ("TS") && APPEND_STR ("typeinfo name for ") && RULE (type));
+    MATCH (
+        READ_STR ("Tc") && APPEND_STR ("covariant thunk for") && RULE (call_offset) &&
+        RULE (call_offset) && RULE (base_encoding)
+    );
 
     // untested, so I'm placing any string I want to here, so that i can be deteced as bug in testing
     MATCH (READ_STR ("GV") && APPEND_STR ("guard variable ") && RULE (name));
@@ -851,12 +913,11 @@ DEFN_RULE (special_name, {
     );
 
     MATCH (READ ('T') && RULE (call_offset) && RULE (base_encoding));
-    MATCH (READ_STR ("Tc") && RULE (call_offset) && RULE (call_offset) && RULE (base_encoding));
 });
 
 DEFN_RULE (call_offset, {
-    MATCH (READ ('h') && RULE (nv_offset) && READ ('_'));
-    MATCH (READ ('V') && RULE (v_offset) && READ ('_'));
+    MATCH (READ ('h') && APPEND_STR ("non-virtual thunk to ") && RULE (nv_offset) && READ ('_'));
+    MATCH (READ ('v') && APPEND_STR ("virtual thunk to ") && RULE (v_offset) && READ ('_'));
 });
 
 DEFN_RULE (nv_offset, { MATCH (RULE (offset_number)); });
@@ -866,8 +927,7 @@ DEFN_RULE (v_offset, {
 });
 
 DEFN_RULE (unscoped_name, {
-    MATCH (READ_STR ("St") && APPEND_STR ("std::") && RULE (unqualified_name));
-    MATCH (RULE (unqualified_name));
+    MATCH (OPTIONAL (READ_STR ("St") && APPEND_STR ("std::")) && RULE (unqualified_name));
 });
 
 static inline bool make_nested_name (DemString* dem, DemString* pfx, DemString* uname, Meta* m) {
@@ -1319,7 +1379,7 @@ DEFN_RULE (template_param, {
             char* base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
             char* pos  = NULL;
             ut64  pow  = 1;
-            ut64  sid  = 0;
+            ut64  sid  = 1;
             while ((pos = strchr (base, PEEK()))) {
                 st64 based_val  = pos - base;
                 sid            += based_val * pow;
@@ -1330,10 +1390,8 @@ DEFN_RULE (template_param, {
                 RESTORE_POS();
                 return NULL;
             }
-            APPEND_TYPE (vec_ptr_at (&m->template_params, sid));
             return SUBSTITUTE_TPARAM (sid);
         } else if (READ ('_')) {
-            APPEND_TYPE (vec_begin (&m->template_params));
             return SUBSTITUTE_TPARAM (0);
         }
     }
@@ -1425,14 +1483,20 @@ DEFN_RULE (unnamed_type_name, {
 });
 
 DEFN_RULE (ctor_dtor_name, {
-    MATCH (READ_STR ("C1") && SET_CTOR());
-    MATCH (READ_STR ("C2") && SET_CTOR());
-    MATCH (READ_STR ("C3") && SET_CTOR());
+    // NOTE: reference taken from https://github.com/rizinorg/rz-libdemangle/blob/c2847137398cf8d378d46a7510510aaefcffc8c6/src/cxx/cp-demangle.c#L2143
+    MATCH (READ_STR ("C1") && SET_CTOR()); // gnu complete object ctor
+    MATCH (READ_STR ("C2") && SET_CTOR()); // gnu base object ctor
+    MATCH (READ_STR ("C3") && SET_CTOR()); // gnu complete object allocating ctor
+    MATCH (READ_STR ("C4") && SET_CTOR()); // gnu unified ctor
+    MATCH (READ_STR ("C5") && SET_CTOR()); // gnu object ctor group
     MATCH (READ_STR ("CI1") && SET_CTOR());
     MATCH (READ_STR ("CI2") && SET_CTOR());
-    MATCH (READ_STR ("D0") && SET_DTOR());
-    MATCH (READ_STR ("D1") && SET_DTOR());
-    MATCH (READ_STR ("D2") && SET_DTOR());
+    MATCH (READ_STR ("D0") && SET_DTOR()); // gnu deleting dtor
+    MATCH (READ_STR ("D1") && SET_DTOR()); // gnu complete object dtor
+    MATCH (READ_STR ("D2") && SET_DTOR()); // gnu base object dtor
+    // 3 is not used
+    MATCH (READ_STR ("D4") && SET_DTOR()); // gnu unified dtor
+    MATCH (READ_STR ("D5") && SET_DTOR()); // gnu object dtor group
 });
 
 DEFN_RULE (operator_name, {
@@ -1557,7 +1621,17 @@ DEFN_RULE (array_type, {
 });
 
 DEFN_RULE (pointer_to_member_type, {
-    MATCH (READ ('M') && RULE (class_type) && RULE (member_type));
+    DEFER_VAR (ctype);
+    DEFER_VAR (rtype);
+    DEFER_VAR (args);
+    MATCH (
+        READ ('M') && RULE_DEFER (ctype, class_type) && READ ('F') && RULE_DEFER (rtype, type) &&
+        RULE_DEFER (args, bare_function_type) && APPEND_DEFER_VAR (rtype) &&
+
+        APPEND_STR (" (") && APPEND_DEFER_VAR (ctype) && APPEND_STR ("::*)") &&
+
+        APPEND_CHR ('(') && APPEND_DEFER_VAR (args) && APPEND_CHR (')')
+    );
 });
 
 DEFN_RULE (function_type, {
@@ -1652,7 +1726,8 @@ DEFN_RULE (builtin_type, {
     MATCH (READ_STR ("Du") && APPEND_STR ("char8_t"));
     MATCH (READ_STR ("Da") && APPEND_STR ("auto"));
     MATCH (READ_STR ("Dc") && APPEND_STR ("decltype(auto)"));
-    MATCH (READ_STR ("Dn") && APPEND_STR ("std::nullptr_t"));
+    // MATCH (READ_STR ("Dn") && APPEND_STR ("std::nullptr_t"));
+    MATCH (READ_STR ("Dn") && APPEND_STR ("decltype(nullptr)"));
     MATCH (
         ((READ_STR ("DSDA") && APPEND_STR ("_Sat")) || READ_STR ("DA")) && APPEND_STR (" T _Accum")
     ); // NOTE(brightprogrammer): I'm unsure why there is a T in the middle of _Sat and _Accum
@@ -2088,15 +2163,48 @@ DEFN_RULE (destructor_name, {
  * This branches from the original grammar here.
  */
 DEFN_RULE (expr_primary, {
-    MATCH (READ ('L') && RULE (type) && RULE (value_number));
-    MATCH (READ ('L') && RULE (type) && RULE (value_float));
-    MATCH (READ ('L') && RULE (string_type));
-    MATCH (READ ('L') && RULE (nullptr_type));
-    MATCH (READ ('L') && RULE (pointer_type) && READ ('0'));
+    MATCH (READ_STR ("LDnE") && APPEND_STR ("decltype(nullptr)0"));
+    MATCH (READ_STR ("LDn0E") && APPEND_STR ("(decltype(nullptr))0"));
     MATCH (
-        READ ('L') && RULE (type) && RULE (real_part_float) && READ ('_') && RULE (imag_part_float)
+        READ ('L') && APPEND_STR ("(") && (PEEK() == 'P') && RULE (pointer_type) &&
+        APPEND_STR (")") && READ ('0') && APPEND_CHR ('0') && READ ('E')
     );
-    MATCH (READ_STR ("L_Z") && RULE (encoding));
+
+    // HACK: "(bool)0" is converted to "true"
+    //       "(bool)1" is converted to "false"
+    DEFER_VAR (tn);
+    DEFER_VAR (n);
+    MATCH (
+        READ ('L') && RULE_DEFER (tn, type) && RULE_DEFER (n, value_number) && APPEND_STR ("(") &&
+        APPEND_DEFER_VAR (tn) && APPEND_STR (")") && APPEND_DEFER_VAR (n) && READ ('E')
+    );
+    /* char* end = NULL; */
+    /* st64 v = 0; */
+    /* MATCH ( */
+    /*     READ ('L') && RULE_DEFER (tn, type) && RULE_DEFER (n, value_number) && */
+    /**/
+    /*             // clang-format off */
+    /*         (!strcmp (tn->buf, "bool")) ? */
+    /*             (v = strtoll (n->buf, &end, 10), end) ? */
+    /*                 (v == 1) ? */
+    /*                     APPEND_STR ("true") && (dem_string_deinit (tn), 1) && (dem_string_free (n), 1) : */
+    /*                     APPEND_STR ("(") && APPEND_DEFER_VAR (tn) && APPEND_STR (")") && APPEND_DEFER_VAR (n) : */
+    /*                 (v == 0) ? */
+    /*                     APPEND_STR ("false") && (dem_string_deinit (tn), 1) && (dem_string_free (n), 1) : */
+    /*                     APPEND_STR ("(") && APPEND_DEFER_VAR (tn) && APPEND_STR (")") && APPEND_DEFER_VAR (n) : */
+    /*             APPEND_STR ("(") && APPEND_DEFER_VAR (tn) && APPEND_STR (")") && APPEND_DEFER_VAR (n) */
+    /*     // clang-format on */
+    /* ); */
+    dem_string_deinit (tn);
+    dem_string_deinit (n);
+
+    MATCH (READ ('L') && RULE (type) && RULE (value_float) && READ ('E'));
+    MATCH (READ ('L') && RULE (string_type) && READ ('E'));
+    MATCH (
+        READ ('L') && RULE (type) && RULE (real_part_float) && READ ('_') &&
+        RULE (imag_part_float) && READ ('E')
+    );
+    MATCH (READ_STR ("L_Z") && RULE (encoding) && READ ('E'));
 });
 
 DEFN_RULE (float, {
@@ -2139,13 +2247,12 @@ DEFN_RULE (source_name, {
 
 DEFN_RULE (digit, {
     if (IS_DIGIT (PEEK())) {
-        APPEND_CHR (PEEK());
         ADV();
         return dem;
     }
 });
 
-DEFN_RULE (number, { MATCH (RULE_ATLEAST_ONCE (digit)); });
+DEFN_RULE (number, { MATCH (OPTIONAL (READ ('n')) && RULE_ATLEAST_ONCE (digit)); });
 
 // DEFN_RULE (identifier, {
 //     if (IS_ALPHA (PEEK()) || PEEK() == '_') {
@@ -2167,7 +2274,12 @@ DEFN_RULE (template_args, {
 });
 
 DEFN_RULE (template_arg, {
+    // HACK: even though RULE(type) automatically checks for a RULE(builtin_type), this hack
+    // prevents the detected RULE(builtin_type) from being added as a detected template param
+    // by making the check inside RULE(type) redundant
+    MATCH (RULE (builtin_type));
     MATCH (RULE (type) && APPEND_TPARAM (dem));
+
     MATCH (READ ('X') && RULE (expression) && READ ('E') && APPEND_TPARAM (dem));
     MATCH (RULE (expr_primary) && APPEND_TPARAM (dem));
     MATCH (READ ('J') && RULE_MANY (template_arg) && READ ('E') && APPEND_TPARAM (dem));
