@@ -11,6 +11,10 @@ Files: .clang-format
 Copyright: 2020 RizinOrg <info@rizin.re>
 License: LGPL-3.0-only
 
+Files: src/cp/.clang-format
+Copyright: 2025 Siddharth Mishra <admin@brightprogrammer.in>
+License: LGPL-3.0-only
+
 Files: .gitignore
 Copyright: 2021 RizinOrg <info@rizin.re>
 License: LGPL-3.0-only

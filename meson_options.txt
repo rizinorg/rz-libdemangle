@@ -1,4 +1,3 @@
-option('use_gpl', type: 'boolean', value: true, description: 'Set to false when you want to disable gpl code')
 option('use_swift_demangler', type: 'boolean', value: true, description: 'If false, disables the swift demangler')
 option('install_lib', type: 'boolean', value: false, description: 'install libdemangle in the specified prefix path.')
 option('enable_cli', type: 'boolean', value: false, description: 'install a cli to demangle symbols.')
