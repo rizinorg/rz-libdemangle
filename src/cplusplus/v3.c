@@ -990,17 +990,42 @@ static inline bool make_template_nested_name (
         return false;
     }
 
+    // HACK: a hacky way to find name of constructor
+    // find content before first "<" (template argument start)
+    // find last appearance of "::" that comes before found "<"
+
+    char* n_end = strchr (pfx->buf, '<');
+    char* n_beg = NULL;
+    if (n_end) {
+        char* pos = pfx->buf;
+        while (pos && pos < n_end && (n_beg = pos, pos = strchr (pos, ':'))) {
+            pos++;
+        }
+        if (n_beg == pfx->buf) {
+            n_beg = NULL;
+        }
+    }
+
+    size_t n_len = 0;
+    if (n_end && n_beg) {
+        n_len = n_end - n_beg;
+    } else {
+        n_beg = pfx->buf;
+        n_len = pfx->len;
+    }
+
+
     if (IS_CTOR()) {
         dem_string_concat (dem, pfx);
         dem_string_concat (dem, targs);
         dem_string_append (dem, "::");
-        dem_string_concat (dem, pfx);
+        dem_string_append_n (dem, n_beg, n_len);
         UNSET_CTOR();
     } else if (IS_DTOR()) {
         dem_string_concat (dem, pfx);
         dem_string_concat (dem, targs);
         dem_string_append (dem, "::~");
-        dem_string_concat (dem, pfx);
+        dem_string_append_n (dem, n_beg, n_len);
         UNSET_DTOR();
     } else {
         dem_string_concat (dem, pfx);
