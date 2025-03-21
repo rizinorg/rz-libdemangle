@@ -2302,10 +2302,16 @@ DEFN_RULE (number, { MATCH (OPTIONAL (READ ('n')) && RULE_ATLEAST_ONCE (digit));
 // });
 
 DEFN_RULE (template_args, {
+    bool is_const;
     MATCH (
-        READ ('I') && APPEND_CHR ('<') && RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") &&
-        APPEND_CHR ('>') && READ ('E')
+        OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && READ ('I') && APPEND_CHR ('<') &&
+        RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && APPEND_CHR ('>') && READ ('E') &&
+        OPTIONAL (is_const && SET_CONST())
     );
+    /* MATCH ( */
+    /*     READ ('I') && APPEND_CHR ('<') && RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && */
+    /*     APPEND_CHR ('>') && READ ('E') */
+    /* ); */
 });
 
 DEFN_RULE (template_arg, {
