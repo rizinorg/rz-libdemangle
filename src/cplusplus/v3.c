@@ -714,7 +714,7 @@ DECL_RULE (float);
 DECL_RULE_ALIAS (value_number, number);
 DECL_RULE_ALIAS (value_float, float);
 DECL_RULE_ALIAS (string_type, type);
-DECL_RULE_ALIAS (nullptr_type, type);
+/* DECL_RULE_ALIAS (nullptr_type, type); */
 DECL_RULE_ALIAS (pointer_type, type);
 DECL_RULE_ALIAS (real_part_float, float);
 DECL_RULE_ALIAS (imag_part_float, float);
@@ -742,7 +742,7 @@ DECL_RULE_ALIAS (instantiation_dependent_array_bound_expression, expression);
 DECL_RULE_ALIAS (array_bound_number, number);
 DECL_RULE (pointer_to_member_type);
 DECL_RULE_ALIAS (class_type, type);
-DECL_RULE_ALIAS (member_type, type);
+/* DECL_RULE_ALIAS (member_type, type); */
 DECL_RULE (template_template_param);
 DECL_RULE (digit);
 DECL_RULE_ALIAS (template_unqualified_name, unqualified_name);
@@ -920,10 +920,19 @@ DEFN_RULE (call_offset, {
     MATCH (READ ('v') && APPEND_STR ("virtual thunk to ") && RULE (v_offset) && READ ('_'));
 });
 
-DEFN_RULE (nv_offset, { MATCH (RULE (offset_number)); });
+DEFN_RULE (nv_offset, {
+    // ignore the number
+    DEFER_VAR (_);
+    MATCH (RULE_DEFER (_, offset_number) && (dem_string_deinit (_), 1));
+});
 
 DEFN_RULE (v_offset, {
-    MATCH (RULE (offset_number) && READ ('_') && RULE (virtual_offset_number));
+    // ignore the number
+    DEFER_VAR (_);
+    MATCH (
+        RULE_DEFER (_, offset_number) && READ ('_') && RULE_DEFER (_, virtual_offset_number) &&
+        (dem_string_deinit (_), 1)
+    );
 });
 
 DEFN_RULE (unscoped_name, {
@@ -1487,7 +1496,7 @@ DEFN_RULE (unqualified_name, {
     MATCH (RULE (ctor_dtor_name));
     MATCH (RULE (source_name));
     MATCH (RULE (unnamed_type_name));
-    MATCH (RULE (expr_primary));
+    /* MATCH (RULE (expr_primary)); */
     MATCH (READ_STR ("DC") && RULE_ATLEAST_ONCE (source_name) && READ ('E'));
 });
 
@@ -2197,32 +2206,32 @@ DEFN_RULE (expr_primary, {
 
     // HACK: "(bool)0" is converted to "true"
     //       "(bool)1" is converted to "false"
-    DEFER_VAR (tn);
+    //       "(unsigned int)N" to "Nu"
+    /* MATCH ( */
+    /*     READ ('L') && RULE_DEFER (tn, type) && RULE_DEFER (n, value_number) && APPEND_STR ("(") && */
+    /*     APPEND_DEFER_VAR (tn) && APPEND_STR (")") && APPEND_DEFER_VAR (n) && READ ('E') */
+    /* ); */
+    DEFER_VAR (t);
     DEFER_VAR (n);
     MATCH (
-        READ ('L') && RULE_DEFER (tn, type) && RULE_DEFER (n, value_number) && APPEND_STR ("(") &&
-        APPEND_DEFER_VAR (tn) && APPEND_STR (")") && APPEND_DEFER_VAR (n) && READ ('E')
+        READ ('L') && RULE_DEFER (t, type) && RULE_DEFER (n, value_number) &&
+        OPTIONAL (
+            // change to bool
+            !strcmp (t->buf, "bool") ?
+                (!strcmp (n->buf, "0") ? (dem_string_deinit (t),
+                                          dem_string_deinit (n),
+                                          dem_string_append_n (dem, "false", 5)) :
+                                         (dem_string_deinit (t),
+                                          dem_string_deinit (n),
+                                          dem_string_append_n (dem, "true", 4))) :
+                // shorten unsigned int typecast
+                !strcmp (t->buf, "unsigned int") ?
+                (dem_string_deinit (t), APPEND_DEFER_VAR (n) && dem_string_append_char (dem, 'u')) :
+                true
+        )
     );
-    /* char* end = NULL; */
-    /* st64 v = 0; */
-    /* MATCH ( */
-    /*     READ ('L') && RULE_DEFER (tn, type) && RULE_DEFER (n, value_number) && */
-    /**/
-    /*             // clang-format off */
-    /*         (!strcmp (tn->buf, "bool")) ? */
-    /*             (v = strtoll (n->buf, &end, 10), end) ? */
-    /*                 (v == 1) ? */
-    /*                     APPEND_STR ("true") && (dem_string_deinit (tn), 1) && (dem_string_free (n), 1) : */
-    /*                     APPEND_STR ("(") && APPEND_DEFER_VAR (tn) && APPEND_STR (")") && APPEND_DEFER_VAR (n) : */
-    /*                 (v == 0) ? */
-    /*                     APPEND_STR ("false") && (dem_string_deinit (tn), 1) && (dem_string_free (n), 1) : */
-    /*                     APPEND_STR ("(") && APPEND_DEFER_VAR (tn) && APPEND_STR (")") && APPEND_DEFER_VAR (n) : */
-    /*             APPEND_STR ("(") && APPEND_DEFER_VAR (tn) && APPEND_STR (")") && APPEND_DEFER_VAR (n) */
-    /*     // clang-format on */
-    /* ); */
-    dem_string_deinit (tn);
+    dem_string_deinit (t);
     dem_string_deinit (n);
-
     MATCH (READ ('L') && RULE (type) && RULE (value_float) && READ ('E'));
     MATCH (READ ('L') && RULE (string_type) && READ ('E'));
     MATCH (
@@ -2272,6 +2281,7 @@ DEFN_RULE (source_name, {
 
 DEFN_RULE (digit, {
     if (IS_DIGIT (PEEK())) {
+        APPEND_CHR (PEEK());
         ADV();
         return dem;
     }
