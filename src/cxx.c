@@ -482,6 +482,7 @@ char *demangle_gpl_cxx(const char *str, bool simplify) {
 
 	char *out = cplus_demangle_v3(p, DMGL_PARAMS);
 	if (!out) {
+		free(tmpstr);
 		return NULL;
 	}
 
