@@ -422,6 +422,9 @@ char *demangle_gpl_cxx(const char *str, bool simplify) {
 		PRFX("stub."),
 	};
 	char *tmpstr = strdup(str);
+	if (!tmpstr) {
+		return NULL;
+	}
 	char *p = tmpstr;
 
 	while (p[0] == p[1] && *p == '_') {
@@ -482,6 +485,7 @@ char *demangle_gpl_cxx(const char *str, bool simplify) {
 
 	char *out = cplus_demangle_v3(p, DMGL_PARAMS);
 	if (!out) {
+		free(tmpstr);
 		return NULL;
 	}
 
