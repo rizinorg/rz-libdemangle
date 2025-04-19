@@ -157,7 +157,7 @@ typedef struct Meta {
     bool   is_ctor;
     bool   is_dtor;
     bool   is_const;
-    bool   locked; // true means no new type can be added
+    int    template_level;
     bool   is_template_func;
 } Meta;
 
@@ -171,7 +171,7 @@ static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
     tmp->is_ctor          = og->is_ctor;
     tmp->is_dtor          = og->is_dtor;
     tmp->is_const         = og->is_const;
-    tmp->locked           = og->locked;
+    tmp->template_level   = og->template_level;
     tmp->is_template_func = og->is_template_func;
 
     return false;
@@ -203,7 +203,7 @@ static inline void meta_tmp_apply (Meta* og, Meta* tmp) {
     og->is_ctor          = tmp->is_ctor;
     og->is_dtor          = tmp->is_dtor;
     og->is_const         = tmp->is_const;
-    og->locked           = tmp->locked;
+    og->template_level   = tmp->template_level;
     og->is_template_func = tmp->is_template_func;
 }
 
@@ -232,19 +232,16 @@ static inline void meta_tmp_fini (Meta* og, Meta* tmp) {
 #define IS_CTOR()          (m->is_ctor)
 #define IS_DTOR()          (m->is_dtor)
 #define IS_CONST()         (m->is_const)
-#define IS_LOCKED()        (m->locked)
 #define IS_TEMPLATE_FUNC() (m->is_template_func)
 
 #define SET_CTOR()          (m->is_dtor = false, (m->is_ctor = true))
 #define SET_DTOR()          (m->is_ctor = false, (m->is_dtor = true))
 #define SET_CONST()         (m->is_const = true)
-#define LOCK()              (m->locked = true)
 #define SET_TEMPLATE_FUNC() (m->is_template_func = true)
 
 #define UNSET_CTOR()          (m->is_dtor = false, m->is_ctor = false, true)
 #define UNSET_DTOR()          (m->is_ctor = false, m->is_dtor = false, true)
 #define UNSET_CONST()         (m->is_const = false, true)
-#define UNLOCK()              (m->locked = false, true)
 #define UNSET_TEMPLATE_FUNC() (m->is_template_func = false, true)
 
 /**
@@ -561,9 +558,9 @@ bool ignore_type (Meta* m, DemString* t) {
     }
 
     // operator names are excluded from substitutions
-    if (!strncmp (t->buf, "std::operator", 13) || !strncmp (t->buf, "operator", 8)) {
-        return true;
-    }
+    // if (!strncmp (t->buf, "std::operator", 13) || !strncmp (t->buf, "operator", 8)) {
+    //     return true;
+    // }
 
     // sometimes by mistake "std" is appended as type, but name manglers don't expect it to be a type
     if (!strcmp (t->buf, "std")) {
@@ -608,7 +605,9 @@ bool append_tparam (Meta* m, DemString* t) {
         return false;
     }
 
-    append_type (m, t);
+    if (m->template_level > 1) {
+        return true;
+    }
 
     vec_foreach_ptr (&m->template_params, dt, {
         if (!strcmp (dt->buf, t->buf)) {
@@ -755,7 +754,7 @@ DECL_RULE (digit);
 DECL_RULE_ALIAS (template_unqualified_name, unqualified_name);
 DECL_RULE (template_args);
 DECL_RULE (template_arg);
-DECL_RULE (unscoped_template_name);
+// DECL_RULE (unscoped_template_name);
 DECL_RULE (substitution);
 DECL_RULE (seq_id);
 DECL_RULE (local_name);
@@ -2319,10 +2318,16 @@ DEFN_RULE (number, { MATCH (OPTIONAL (READ ('n')) && RULE_ATLEAST_ONCE (digit));
 
 DEFN_RULE (template_args, {
     bool is_const;
-    MATCH (
-        OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && READ ('I') && APPEND_CHR ('<') &&
-        RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && APPEND_CHR ('>') && READ ('E') &&
-        OPTIONAL (is_const && SET_CONST())
+    MATCH_AND_DO (
+        OPTIONAL (++m->template_level) && OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) &&
+            READ ('I') && APPEND_CHR ('<') && RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") &&
+            APPEND_CHR ('>') && READ ('E'),
+        {
+            --m->template_level;
+            if (is_const) {
+                SET_CONST();
+            }
+        }
     );
     /* MATCH ( */
     /*     READ ('I') && APPEND_CHR ('<') && RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && */
@@ -2334,18 +2339,24 @@ DEFN_RULE (template_arg, {
     // HACK: even though RULE(type) automatically checks for a RULE(builtin_type), this hack
     // prevents the detected RULE(builtin_type) from being added as a detected template param
     // by making the check inside RULE(type) redundant
-    MATCH (RULE (builtin_type));
+    MATCH (RULE (builtin_type) && APPEND_TPARAM (dem));
+
     MATCH (RULE (type) && APPEND_TPARAM (dem));
 
-    MATCH (READ ('X') && RULE (expression) && READ ('E') && APPEND_TPARAM (dem));
-    MATCH (RULE (expr_primary) && APPEND_TPARAM (dem));
-    MATCH (READ ('J') && RULE_MANY (template_arg) && READ ('E') && APPEND_TPARAM (dem));
+    MATCH (
+        READ ('X') && RULE (expression) && READ ('E') && APPEND_TPARAM (dem) && APPEND_TYPE (dem)
+    );
+    MATCH (RULE (expr_primary) && APPEND_TPARAM (dem) && APPEND_TYPE (dem));
+    MATCH (
+        READ ('J') && RULE_MANY (template_arg) && READ ('E') && APPEND_TPARAM (dem) &&
+        APPEND_TYPE (dem)
+    );
 });
 
-DEFN_RULE (unscoped_template_name, {
-    MATCH (RULE (unscoped_name));
-    MATCH (RULE (substitution));
-})
+// DEFN_RULE (unscoped_template_name, {
+//     MATCH (RULE (unscoped_name));
+//     MATCH (RULE (substitution));
+// })
 
 DEFN_RULE (bare_function_type, {
     MATCH (
