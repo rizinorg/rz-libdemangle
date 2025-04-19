@@ -11,8 +11,8 @@
 #include "cplusplus/vec.h"
 #include "demangler_util.h"
 
-#define DBG_PRINT_DETECTED_TYPES   0
-#define DBG_PRINT_DETECTED_TPARAMS 0
+#define DBG_PRINT_DETECTED_TYPES   1
+#define DBG_PRINT_DETECTED_TPARAMS 1
 
 #define REPLACE_GLOBAL_N_WITH_ANON_NAMESPACE 1
 
@@ -821,7 +821,8 @@ DEFN_RULE (encoding, {
     MATCH (RULE (special_name));
 });
 
-DEFN_RULE (name, {
+// DEFN_RULE (name, {
+DemString* rule_name (DemString* dem, StrIter* msi, Meta* m) {
     bool is_const = false;
     MATCH (RULE (nested_name));
 
@@ -830,7 +831,7 @@ DEFN_RULE (name, {
     MATCH (
         RULE (unscoped_name) && APPEND_TYPE (dem) &&
         OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) && RULE (template_args) &&
-        APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const")) && APPEND_TYPE (dem) &&
+        APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const") && APPEND_TYPE (dem)) &&
         SET_TEMPLATE_FUNC()
     );
     MATCH (
@@ -841,7 +842,9 @@ DEFN_RULE (name, {
 
     MATCH (RULE (unscoped_name));
     MATCH (RULE (local_name));
-});
+    // });
+    return NULL;
+}
 
 DEFN_RULE (local_name, {
     MATCH (
@@ -1175,7 +1178,6 @@ DECL_RULE (template_prefix_Y);
 DEFN_RULE (closure_prefix_m, { MATCH (RULE (variable_or_member_unqualified_name) && READ ('M')); });
 
 DECL_RULE (closure_prefix_Z);
-
 // DEFN_RULE (prefix__template_prefix__closure_prefix__T, {
 //     MATCH (
 //         APPEND_STR ("::") && RULE (template_prefix_l) && RULE (prefix_b) &&
