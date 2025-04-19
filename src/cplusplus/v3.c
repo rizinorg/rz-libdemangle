@@ -1067,7 +1067,8 @@ static inline bool make_template_nested_name (
     return true;
 }
 
-DEFN_RULE (nested_name, {
+// DEFN_RULE (nested_name, {
+DemString* rule_nested_name (DemString* dem, StrIter* msi, Meta* m) {
     DEFER_VAR (ref);
     DEFER_VAR (pfx);
     DEFER_VAR (uname);
@@ -1141,7 +1142,9 @@ DEFN_RULE (nested_name, {
     dem_string_deinit (pfx);
     dem_string_deinit (uname);
     dem_string_deinit (targs);
-});
+    // });
+    return NULL;
+}
 
 DEFN_RULE (cv_qualifiers, {
     MATCH (READ ('r') && APPEND_STR ("restrict"));
@@ -1610,6 +1613,18 @@ DEFN_RULE (operator_name, {
 });
 
 DEFN_RULE (type, {
+    // HACK(brightprogrammer): Current parsing method makes it hard to parse and demangle
+    // this correctly. Must be parsed before parsing P or O or R
+    MATCH (
+        READ_STR ("PKPK") && RULE (type) && APPEND_STR (" const") && APPEND_TYPE (dem) &&
+        APPEND_STR ("*") && APPEND_TYPE (dem) && APPEND_STR (" const") && APPEND_TYPE (dem) &&
+        APPEND_STR ("*") && APPEND_TYPE (dem)
+    );
+    MATCH (
+        READ_STR ("PK") && RULE (type) && APPEND_STR (" const") && APPEND_TYPE (dem) &&
+        APPEND_STR ("*") && APPEND_TYPE (dem)
+    );
+
     MATCH (RULE (builtin_type));
     MATCH (
         RULE (function_type) && APPEND_TYPE (dem) &&
@@ -1639,6 +1654,7 @@ DEFN_RULE (type, {
         RULE (decltype) && APPEND_TYPE (dem) &&
         OPTIONAL (IS_CONST() && APPEND_STR (" const") && UNSET_CONST())
     );
+
     MATCH (READ ('P') && RULE (type) && APPEND_CHR ('*') && APPEND_TYPE (dem)); // pointer
     MATCH (READ ('R') && RULE (type) && APPEND_CHR ('&') && APPEND_TYPE (dem)); // l-value reference
     MATCH (
@@ -2242,7 +2258,8 @@ DEFN_RULE (expr_primary, {
                 !strcmp (t->buf, "unsigned int") ?
                 (dem_string_deinit (t), APPEND_DEFER_VAR (n) && dem_string_append_char (dem, 'u')) :
                 true
-        )
+        ) &&
+        READ ('E')
     );
     dem_string_deinit (t);
     dem_string_deinit (n);
@@ -2345,7 +2362,7 @@ DEFN_RULE (template_arg, {
     MATCH (
         READ ('X') && RULE (expression) && READ ('E') && APPEND_TPARAM (dem) && APPEND_TYPE (dem)
     );
-    MATCH (RULE (expr_primary) && APPEND_TPARAM (dem) && APPEND_TYPE (dem));
+    MATCH (RULE (expr_primary));
     MATCH (
         READ ('J') && RULE_MANY (template_arg) && READ ('E') && APPEND_TPARAM (dem) &&
         APPEND_TYPE (dem)
