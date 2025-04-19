@@ -11,8 +11,8 @@
 #include "cplusplus/vec.h"
 #include "demangler_util.h"
 
-#define DBG_PRINT_DETECTED_TYPES   1
-#define DBG_PRINT_DETECTED_TPARAMS 1
+#define DBG_PRINT_DETECTED_TYPES   0
+#define DBG_PRINT_DETECTED_TPARAMS 0
 
 #define REPLACE_GLOBAL_N_WITH_ANON_NAMESPACE 1
 
@@ -581,12 +581,12 @@ bool ignore_type (Meta* m, DemString* t) {
  * This vector is then used to refer back to a detected type in substitution
  * rules.
  */
-bool append_type (Meta* m, DemString* t) {
+bool append_type (Meta* m, DemString* t, bool force_append) {
     if (!m || !t || !t->len) {
         return false;
     }
 
-    if (ignore_type (m, t)) {
+    if (!force_append && ignore_type (m, t)) {
         return true;
     }
 
@@ -595,7 +595,8 @@ bool append_type (Meta* m, DemString* t) {
     dem_string_init_clone (vec_end (&m->detected_types), t);
     return true;
 }
-#define APPEND_TYPE(tname) append_type (m, (tname))
+#define APPEND_TYPE(tname)       append_type (m, (tname), false)
+#define FORCE_APPEND_TYPE(tname) append_type (m, (tname), true)
 
 /**
  * Much like `append_type`, but for templates. 
@@ -830,14 +831,12 @@ DemString* rule_name (DemString* dem, StrIter* msi, Meta* m) {
     // where if we match a substitution we don't want to append it as a detected type
     MATCH (
         RULE (unscoped_name) && APPEND_TYPE (dem) &&
-        OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) && RULE (template_args) &&
-        APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const") && APPEND_TYPE (dem)) &&
-        SET_TEMPLATE_FUNC()
+        OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && RULE (template_args) &&
+        OPTIONAL (is_const && APPEND_STR (" const")) && SET_TEMPLATE_FUNC()
     );
     MATCH (
         RULE (substitution) && OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) &&
-        RULE (template_args) && APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const")) &&
-        APPEND_TYPE (dem) && SET_TEMPLATE_FUNC()
+        RULE (template_args) && OPTIONAL (is_const && APPEND_STR (" const")) && SET_TEMPLATE_FUNC()
     );
 
     MATCH (RULE (unscoped_name));
@@ -1450,8 +1449,14 @@ DEFN_RULE (template_param, {
                 RESTORE_POS();
                 return NULL;
             }
+            if (m->template_params.length > sid && vec_ptr_at (&m->template_params, sid)->buf) {
+                FORCE_APPEND_TYPE (vec_ptr_at (&m->template_params, sid));
+            }
             return SUBSTITUTE_TPARAM (sid);
         } else if (READ ('_')) {
+            if (m->template_params.length && vec_ptr_at (&m->template_params, 0)->buf) {
+                FORCE_APPEND_TYPE (vec_ptr_at (&m->template_params, 0));
+            }
             return SUBSTITUTE_TPARAM (0);
         }
     }
@@ -1681,8 +1686,7 @@ DEFN_RULE (type, {
 });
 
 DEFN_RULE (class_enum_type, {
-    MATCH (RULE (name));
-    MATCH ((READ_STR ("Ts") || READ_STR ("Tu") || READ_STR ("Te")) && RULE (name));
+    MATCH (OPTIONAL (READ_STR ("Ts") || READ_STR ("Tu") || READ_STR ("Te")) && RULE (name));
 });
 
 DEFN_RULE (array_type, {
@@ -2369,12 +2373,13 @@ DEFN_RULE (template_arg, {
     MATCH (RULE (type) && APPEND_TPARAM (dem));
 
     MATCH (
-        READ ('X') && RULE (expression) && READ ('E') && APPEND_TPARAM (dem) && APPEND_TYPE (dem)
+        READ ('X') && RULE (expression) && READ ('E') && APPEND_TPARAM (dem) &&
+        FORCE_APPEND_TYPE (dem)
     );
     MATCH (RULE (expr_primary));
     MATCH (
         READ ('J') && RULE_MANY (template_arg) && READ ('E') && APPEND_TPARAM (dem) &&
-        APPEND_TYPE (dem)
+        FORCE_APPEND_TYPE (dem)
     );
 });
 
