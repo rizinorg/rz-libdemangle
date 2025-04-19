@@ -1202,6 +1202,7 @@ DECL_RULE (closure_prefix_Z);
 #define prefix__template_prefix__closure_prefix__T()                                               \
     do {                                                                                           \
         bool matched = true;                                                                       \
+        DEFER_VAR (un);                                                                            \
         while (matched) {                                                                          \
             matched = false;                                                                       \
                                                                                                    \
@@ -1212,10 +1213,16 @@ DECL_RULE (closure_prefix_Z);
                                                                                                    \
             MATCH_AND_CONTINUE (                                                                   \
                 dem_string_append (accu, "::") && RULE_DEFER (accu, template_prefix_l) &&          \
-                APPEND_TYPE (accu) && RULE_DEFER (accu, prefix_b) && APPEND_TYPE (accu) &&         \
-                (matched = true) &&                                                                \
+                APPEND_TYPE (accu) &&                                                              \
+                OPTIONAL (                                                                         \
+                    RULE_DEFER (un, source_name) && dem_string_append (accu, "::") &&              \
+                    dem_string_concat (accu, un)                                                   \
+                ) &&                                                                               \
+                RULE_DEFER (accu, prefix_b) && APPEND_TYPE (accu) && (matched = true) &&           \
                 (dem_string_deinit (parent_dem), dem_string_init_clone (dem, accu))                \
             );                                                                                     \
+                                                                                                   \
+            dem_string_deinit (un);                                                                \
                                                                                                    \
             if (matched) {                                                                         \
                 continue;                                                                          \
