@@ -1004,7 +1004,5 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN5clang7CodeGen15CodeGenFunction19getUnreachableBlockEv", "clang::CodeGen::CodeGenFunction::getUnreachableBlock()"),
 	mu_demangle_test("_ZN4llvm23SmallVectorTemplateBaseIN5clang7CodeGen12EHCatchScope7HandlerELb0EE4growEm", "llvm::SmallVectorTemplateBase<clang::CodeGen::EHCatchScope::Handler, false>::grow(unsigned long)"),
 	mu_demangle_test("_ZN5clang7CodeGen19DominatingLLVMValue4saveERNS0_15CodeGenFunctionEPN4llvm5ValueE", "clang::CodeGen::DominatingLLVMValue::save(clang::CodeGen::CodeGenFunction&, llvm::Value*)"),
-	mu_demangle_test("_ZN5clang7CodeGen15CodeGenFunction17EmitCastToVoidPtrEPN4llvm5ValueE", "clang::CodeGen::CodeGenFunction::EmitCastToVoidPtr(llvm::Value*)"),
-);
+	mu_demangle_test("_ZN5clang7CodeGen15CodeGenFunction17EmitCastToVoidPtrEPN4llvm5ValueE", "clang::CodeGen::CodeGenFunction::EmitCastToVoidPtr(llvm::Value*)"), );
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
-

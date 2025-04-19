@@ -157,8 +157,14 @@ typedef struct Meta {
     bool   is_ctor;
     bool   is_dtor;
     bool   is_const;
-    int    template_level;
     bool   is_template_func;
+
+    // detected templates are reset everytime a new template argument list starts
+    // instead of taking care of that, we just rebase from where we start our substitution
+    // this way we just keep adding templates and incrementing this idx_start on every reset
+    // so a T_ (index = 0) can actually refer to index = 5
+    int template_idx_start;
+    int last_reset_idx;
 } Meta;
 
 static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
@@ -168,11 +174,12 @@ static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
 
     vec_concat (&tmp->detected_types, &og->detected_types);
     vec_concat (&tmp->template_params, &og->template_params);
-    tmp->is_ctor          = og->is_ctor;
-    tmp->is_dtor          = og->is_dtor;
-    tmp->is_const         = og->is_const;
-    tmp->template_level   = og->template_level;
-    tmp->is_template_func = og->is_template_func;
+    tmp->is_ctor            = og->is_ctor;
+    tmp->is_dtor            = og->is_dtor;
+    tmp->is_const           = og->is_const;
+    tmp->template_idx_start = og->template_idx_start;
+    tmp->last_reset_idx     = og->last_reset_idx;
+    tmp->is_template_func   = og->is_template_func;
 
     return false;
 }
@@ -200,11 +207,12 @@ static inline void meta_tmp_apply (Meta* og, Meta* tmp) {
     memset (tmp->template_params.data, 0, vec_mem_size (&tmp->template_params));
     UNUSED (vec_deinit (&tmp->template_params));
 
-    og->is_ctor          = tmp->is_ctor;
-    og->is_dtor          = tmp->is_dtor;
-    og->is_const         = tmp->is_const;
-    og->template_level   = tmp->template_level;
-    og->is_template_func = tmp->is_template_func;
+    og->is_ctor            = tmp->is_ctor;
+    og->is_dtor            = tmp->is_dtor;
+    og->is_const           = tmp->is_const;
+    og->template_idx_start = tmp->template_idx_start;
+    og->is_template_func   = tmp->is_template_func;
+    og->last_reset_idx     = tmp->last_reset_idx;
 }
 
 static inline void meta_tmp_fini (Meta* og, Meta* tmp) {
@@ -606,10 +614,6 @@ bool append_tparam (Meta* m, DemString* t) {
         return false;
     }
 
-    if (m->template_level > 1) {
-        return true;
-    }
-
     vec_foreach_ptr (&m->template_params, dt, {
         if (!strcmp (dt->buf, t->buf)) {
             return true;
@@ -669,10 +673,16 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
 #endif
 #if DBG_PRINT_DETECTED_TPARAMS
         dem_string_append (dem, " || ");
+        m->template_params.data     += m->template_idx_start;
+        m->template_params.length   -= m->template_idx_start;
+        m->template_params.capacity -= m->template_idx_start;
         vec_foreach_ptr (&m->template_params, t, {
             dem_string_append_n (dem, ", ", 2);
             dem_string_concat (dem, t);
         });
+        m->template_params.length   += m->template_idx_start;
+        m->template_params.capacity += m->template_idx_start;
+        m->template_params.data     -= m->template_idx_start;
 #endif
         vec_deinit (&meta.detected_types);
         return dem_string_drain (dem);
@@ -783,7 +793,8 @@ DEFN_RULE (mangled_name, {
     );
 });
 
-DEFN_RULE (encoding, {
+// DEFN_RULE (encoding, {
+DemString* rule_encoding (DemString* dem, StrIter* msi, Meta* m) {
     bool is_const = false;
 
     DEFER_VAR (param_list);
@@ -793,6 +804,15 @@ DEFN_RULE (encoding, {
     MATCH (
         // function name
         RULE_DEFER (fname, function_name) &&
+
+        // If last detected type is same as this function name
+        // then we made a mistake
+        OPTIONAL (
+            m->detected_types.length && !strcmp (vec_end (&m->detected_types)->buf, fname->buf) &&
+            (dem_string_deinit (vec_end (&m->detected_types)), true) &&
+            (m->detected_types.length--, true)
+        ) &&
+
         OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) &&
 
         // HACK(brightprogrammer):
@@ -820,7 +840,9 @@ DEFN_RULE (encoding, {
 
     MATCH (RULE (data_name));
     MATCH (RULE (special_name));
-});
+    return NULL;
+}
+// });
 
 // DEFN_RULE (name, {
 DemString* rule_name (DemString* dem, StrIter* msi, Meta* m) {
@@ -1449,15 +1471,17 @@ DEFN_RULE (template_param, {
                 RESTORE_POS();
                 return NULL;
             }
+            sid = sid + m->template_idx_start;
             if (m->template_params.length > sid && vec_ptr_at (&m->template_params, sid)->buf) {
                 FORCE_APPEND_TYPE (vec_ptr_at (&m->template_params, sid));
             }
             return SUBSTITUTE_TPARAM (sid);
         } else if (READ ('_')) {
-            if (m->template_params.length && vec_ptr_at (&m->template_params, 0)->buf) {
-                FORCE_APPEND_TYPE (vec_ptr_at (&m->template_params, 0));
+            size_t sid = m->template_idx_start;
+            if (m->template_params.length > sid && vec_ptr_at (&m->template_params, sid)->buf) {
+                FORCE_APPEND_TYPE (vec_ptr_at (&m->template_params, sid));
             }
-            return SUBSTITUTE_TPARAM (0);
+            return SUBSTITUTE_TPARAM (sid);
         }
     }
     RESTORE_POS();
@@ -2348,11 +2372,11 @@ DEFN_RULE (number, { MATCH (OPTIONAL (READ ('n')) && RULE_ATLEAST_ONCE (digit));
 DEFN_RULE (template_args, {
     bool is_const;
     MATCH_AND_DO (
-        OPTIONAL (++m->template_level) && OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) &&
-            READ ('I') && APPEND_CHR ('<') && RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") &&
-            APPEND_CHR ('>') && READ ('E'),
+        OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && READ ('I') && APPEND_CHR ('<') &&
+            RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && APPEND_CHR ('>') && READ ('E'),
         {
-            --m->template_level;
+            m->template_idx_start = m->last_reset_idx;
+            m->last_reset_idx     = m->template_params.length;
             if (is_const) {
                 SET_CONST();
             }
