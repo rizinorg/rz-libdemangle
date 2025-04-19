@@ -157,6 +157,7 @@ typedef struct Meta {
     bool   is_ctor;
     bool   is_dtor;
     bool   is_const;
+    bool   locked; // true means no new type can be added
     bool   is_template_func;
 } Meta;
 
@@ -170,6 +171,7 @@ static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
     tmp->is_ctor          = og->is_ctor;
     tmp->is_dtor          = og->is_dtor;
     tmp->is_const         = og->is_const;
+    tmp->locked           = og->locked;
     tmp->is_template_func = og->is_template_func;
 
     return false;
@@ -201,6 +203,7 @@ static inline void meta_tmp_apply (Meta* og, Meta* tmp) {
     og->is_ctor          = tmp->is_ctor;
     og->is_dtor          = tmp->is_dtor;
     og->is_const         = tmp->is_const;
+    og->locked           = tmp->locked;
     og->is_template_func = tmp->is_template_func;
 }
 
@@ -229,16 +232,19 @@ static inline void meta_tmp_fini (Meta* og, Meta* tmp) {
 #define IS_CTOR()          (m->is_ctor)
 #define IS_DTOR()          (m->is_dtor)
 #define IS_CONST()         (m->is_const)
+#define IS_LOCKED()        (m->locked)
 #define IS_TEMPLATE_FUNC() (m->is_template_func)
 
 #define SET_CTOR()          (m->is_dtor = false, (m->is_ctor = true))
 #define SET_DTOR()          (m->is_ctor = false, (m->is_dtor = true))
 #define SET_CONST()         (m->is_const = true)
+#define LOCK()              (m->locked = true)
 #define SET_TEMPLATE_FUNC() (m->is_template_func = true)
 
 #define UNSET_CTOR()          (m->is_dtor = false, m->is_ctor = false, true)
 #define UNSET_DTOR()          (m->is_ctor = false, m->is_dtor = false, true)
 #define UNSET_CONST()         (m->is_const = false, true)
+#define UNLOCK()              (m->locked = false, true)
 #define UNSET_TEMPLATE_FUNC() (m->is_template_func = false, true)
 
 /**
@@ -656,8 +662,9 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
 #if DBG_PRINT_DETECTED_TYPES
         dem_string_append (dem, " || ");
         vec_foreach_ptr (&m->detected_types, t, {
-            dem_string_append_n (dem, ", ", 2);
+            dem_string_append_n (dem, ", [", 3);
             dem_string_concat (dem, t);
+            dem_string_append_n (dem, "]", 1);
         });
 #endif
 #if DBG_PRINT_DETECTED_TPARAMS
@@ -818,12 +825,21 @@ DEFN_RULE (encoding, {
 DEFN_RULE (name, {
     bool is_const = false;
     MATCH (RULE (nested_name));
+
+    // next two matches are breakdown of RULE(unscoped_template_name)
+    // where if we match a substitution we don't want to append it as a detected type
     MATCH (
-        RULE (unscoped_template_name) && APPEND_TYPE (dem) &&
+        RULE (unscoped_name) && APPEND_TYPE (dem) &&
         OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) && RULE (template_args) &&
         APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const")) && APPEND_TYPE (dem) &&
         SET_TEMPLATE_FUNC()
     );
+    MATCH (
+        RULE (substitution) && OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) &&
+        RULE (template_args) && APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const")) &&
+        APPEND_TYPE (dem) && SET_TEMPLATE_FUNC()
+    );
+
     MATCH (RULE (unscoped_name));
     MATCH (RULE (local_name));
 });
