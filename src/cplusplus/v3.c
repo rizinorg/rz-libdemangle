@@ -1159,9 +1159,9 @@ DECL_RULE_ALIAS (prefix_b, template_args);
 DEFN_RULE (prefix_c, { return dem; });
 
 DEFN_RULE (prefix_X, {
-    MATCH (RULE (unqualified_name));
-    MATCH (RULE (template_param));
-    MATCH (RULE (decltype));
+    MATCH (RULE (unqualified_name) && APPEND_TYPE (dem));
+    MATCH (RULE (template_param) && APPEND_TYPE (dem));
+    MATCH (RULE (decltype) && APPEND_TYPE (dem));
     MATCH (RULE (substitution));
 });
 
@@ -1232,13 +1232,11 @@ DECL_RULE (closure_prefix_Z);
 
 // XXX: problem is in the macro maybe!!
 
-DEFN_RULE (prefix, {
-    // DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
+// DEFN_RULE (prefix, {
+DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
     DEFER_VAR (pfx);
 
     if (RULE_DEFER (pfx, prefix_X)) {
-        APPEND_TYPE (pfx);
-
         const char* last_pos        = msi->cur;
         const char* second_last_pos = msi->cur;
 
@@ -1286,8 +1284,9 @@ DEFN_RULE (prefix, {
                         last_meta.detected_types.data,
                         vec_mem_size (&last_meta.detected_types)
                     );
-                    second_last_meta.is_ctor = last_meta.is_ctor;
-                    second_last_meta.is_dtor = last_meta.is_dtor;
+                    second_last_meta.detected_types.length = last_meta.detected_types.length;
+                    second_last_meta.is_ctor               = last_meta.is_ctor;
+                    second_last_meta.is_dtor               = last_meta.is_dtor;
 
                     UNUSED (vec_reserve (&last_meta.detected_types, m->detected_types.length));
                     memcpy (
@@ -1295,8 +1294,9 @@ DEFN_RULE (prefix, {
                         m->detected_types.data,
                         vec_mem_size (&m->detected_types)
                     );
-                    last_meta.is_ctor = m->is_ctor;
-                    last_meta.is_dtor = m->is_dtor;
+                    last_meta.detected_types.length = m->detected_types.length;
+                    last_meta.is_ctor               = m->is_ctor;
+                    last_meta.is_dtor               = m->is_dtor;
                 }
 
                 // update second last pos to store last pos
@@ -1308,14 +1308,13 @@ DEFN_RULE (prefix, {
                 // and return as if that's not yet matched
                 msi->cur = second_last_pos;
 
-                for (DemString* ds =
-                         m->detected_types.data + second_last_meta.detected_types.length;
+                for (DemString* ds = m->detected_types.data + last_meta.detected_types.length;
                      ds < m->detected_types.data + m->detected_types.length;
                      ds++) {
                     dem_string_deinit (ds);
                 }
 
-                m->detected_types.length = second_last_meta.detected_types.length;
+                m->detected_types.length = last_meta.detected_types.length;
 
                 UNUSED (vec_deinit (&second_last_meta.detected_types));
                 UNUSED (vec_deinit (&last_meta.detected_types));
@@ -1346,9 +1345,9 @@ DEFN_RULE (prefix, {
     MATCH_AND_DO (RULE (closure_prefix_Z) && RULE (prefix_c) && APPEND_TYPE (dem), {
         prefix__template_prefix__closure_prefix__T();
     });
-});
-//     return NULL;
-// }
+    // });
+    return NULL;
+}
 
 DEFN_RULE (abi_tags, { MATCH (RULE_ATLEAST_ONCE (abi_tag)); });
 
