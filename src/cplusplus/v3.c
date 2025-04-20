@@ -11,8 +11,8 @@
 #include "cplusplus/vec.h"
 #include "demangler_util.h"
 
-#define DBG_PRINT_DETECTED_TYPES   0
-#define DBG_PRINT_DETECTED_TPARAMS 0
+#define DBG_PRINT_DETECTED_TYPES   1
+#define DBG_PRINT_DETECTED_TPARAMS 1
 
 #define REPLACE_GLOBAL_N_WITH_ANON_NAMESPACE 1
 
@@ -854,10 +854,10 @@ DemString* rule_name (DemString* dem, StrIter* msi, Meta* m) {
     MATCH (
         RULE (unscoped_name) && APPEND_TYPE (dem) &&
         OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && RULE (template_args) &&
-        OPTIONAL (is_const && APPEND_STR (" const")) && SET_TEMPLATE_FUNC()
+        APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const")) && SET_TEMPLATE_FUNC()
     );
     MATCH (
-        RULE (substitution) && OPTIONAL (IS_CONST() && (is_const = true) && UNSET_CONST()) &&
+        RULE (substitution) && OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) &&
         RULE (template_args) && OPTIONAL (is_const && APPEND_STR (" const")) && SET_TEMPLATE_FUNC()
     );
 
@@ -1661,6 +1661,10 @@ DEFN_RULE (type, {
     MATCH (
         READ_STR ("PK") && RULE (type) && APPEND_STR (" const") && APPEND_TYPE (dem) &&
         APPEND_STR ("*") && APPEND_TYPE (dem)
+    );
+    MATCH (
+        READ_STR ("PR") && RULE (type) && APPEND_STR (" const") && APPEND_TYPE (dem) &&
+        APPEND_STR ("&") && APPEND_TYPE (dem)
     );
 
     MATCH (RULE (builtin_type));
