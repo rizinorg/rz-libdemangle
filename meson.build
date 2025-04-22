@@ -27,14 +27,42 @@ tests = [
   'objc',
   'pascal',
   'rust',
+
+  'cxx.00',
+  'cxx.01',
+  'cxx.02',
+  'cxx.03',
+  'cxx.04',
+  'cxx.05',
+  'cxx.06',
+  'cxx.07',
+  'cxx.08',
+  'cxx.09',
+  'cxx.10',
+  'cxx.11',
+  'cxx.12',
+  'cxx.13',
+  'cxx.14',
+  'cxx.15',
+  'cxx.16',
+  'cxx.17',
+  'cxx.18',
+  'cxx.19',
+  'cxx.20',
+  'cxx.21',
+  'cxx.22',
+  'cxx.23',
+  'cxx.24',
+  'cxx.25',
+  'cxx.26',
+
+  'cxx_base',
 ]
 
 if get_option('use_gpl')
   libdemangle_src += 'src' / 'cxx' / 'cp-demangle.c'
   libdemangle_src += 'src' / 'gnu_v2' / 'cplus-dem.c'
   common_c_args += '-DWITH_GPL=1'
-  tests += 'cxx'
-  tests += 'cxx_base'
   tests += 'cxx_gnu_v2'
 endif
 

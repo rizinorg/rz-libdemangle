@@ -87,10 +87,10 @@ mu_demangle_tests(swift,
 	mu_demangle_test("__TZvOs7Process11_unsafeArgvGSpGSpVs4Int8__", "Process._unsafeArgv"),
 	mu_demangle_test("__TZvOs7Process5_argcVs5Int32", "Process._argc"),
 
-#if 0
-	// these tests are broken because the demangler is demangling symbols in the wrong way
-	mu_demangle_str(swift, "_TFSSCfT21_builtinStringLiteralBp8byteSizeBw7isASCIIBi1__SS", "Swift.String.init (_builtinStringLiteral(Builtin.RawPointer byteSize__Builtin.Word isASCII__Builtin.Int1 _) -> String");
-#endif
+/*#if 0*/
+/*	// these tests are broken because the demangler is demangling symbols in the wrong way*/
+/*	mu_demangle_str(swift, "_TFSSCfT21_builtinStringLiteralBp8byteSizeBw7isASCIIBi1__SS", "Swift.String.init (_builtinStringLiteral(Builtin.RawPointer byteSize__Builtin.Word isASCII__Builtin.Int1 _) -> String");*/
+/*#endif*/
 	// end
 );
 
