@@ -4,7 +4,6 @@
 #include "minunit.h"
 
 mu_demangle_tests(borland,
-/*#if 0*/
 /*	// these are some weird c++ encodings.*/
 /*	// we will skip them.*/
 /*	mu_demangle_test("@%foo_enum$6MyEnum$i1$%$qv$v", "void foo_enum<(MyEnum)1>(void)"),*/
@@ -17,7 +16,7 @@ mu_demangle_tests(borland,
 /*	mu_demangle_test("@Unit1@foo_RawByteString_$qqr31System@%AnsiStringT$us$i65535$%", "__fastcall Unit1::foo_RawByteString_(System::AnsiStringT<65535>)"),*/
 /*	mu_demangle_test("@Unit1@foo_ShortString_$qqrr29System@%SmallString$uc$i255$%", "__fastcall Unit1::foo_ShortString_(System::SmallString<255> &)"),*/
 /*	mu_demangle_test("@Unit1@foo_UTF8String_$qqr31System@%AnsiStringT$us$i65001$%", "__fastcall Unit1::foo_UTF8String_(System::AnsiStringT<65001>)"),*/
-/*#endif*/
+
 	// must succeeds
 	mu_demangle_test("@$badd$q3Bart1", "operator+(Bar, Bar)"),
 	mu_demangle_test("@%$badd$3Bar%$q3Bart1$3Bar", "Bar operator+<Bar>(Bar, Bar)"),
