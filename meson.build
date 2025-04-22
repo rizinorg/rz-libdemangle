@@ -27,42 +27,42 @@ tests = [
   'objc',
   'pascal',
   'rust',
-
-  'cxx.00',
-  'cxx.01',
-  'cxx.02',
-  'cxx.03',
-  'cxx.04',
-  'cxx.05',
-  'cxx.06',
-  'cxx.07',
-  'cxx.08',
-  'cxx.09',
-  'cxx.10',
-  'cxx.11',
-  'cxx.12',
-  'cxx.13',
-  'cxx.14',
-  'cxx.15',
-  'cxx.16',
-  'cxx.17',
-  'cxx.18',
-  'cxx.19',
-  'cxx.20',
-  'cxx.21',
-  'cxx.22',
-  'cxx.23',
-  'cxx.24',
-  'cxx.25',
-  'cxx.26',
-
-  'cxx_base',
 ]
 
 if get_option('use_gpl')
   libdemangle_src += 'src' / 'cxx' / 'cp-demangle.c'
   libdemangle_src += 'src' / 'gnu_v2' / 'cplus-dem.c'
   common_c_args += '-DWITH_GPL=1'
+
+  tests += 'cxx.00'
+  tests += 'cxx.01'
+  tests += 'cxx.02'
+  tests += 'cxx.03'
+  tests += 'cxx.04'
+  tests += 'cxx.05'
+  tests += 'cxx.06'
+  tests += 'cxx.07'
+  tests += 'cxx.08'
+  tests += 'cxx.09'
+  tests += 'cxx.10'
+  tests += 'cxx.11'
+  tests += 'cxx.12'
+  tests += 'cxx.13'
+  tests += 'cxx.14'
+  tests += 'cxx.15'
+  tests += 'cxx.16'
+  tests += 'cxx.17'
+  tests += 'cxx.18'
+  tests += 'cxx.19'
+  tests += 'cxx.20'
+  tests += 'cxx.21'
+  tests += 'cxx.22'
+  tests += 'cxx.23'
+  tests += 'cxx.24'
+  tests += 'cxx.25'
+  tests += 'cxx.26'
+
+  tests += 'cxx_base'
   tests += 'cxx_gnu_v2'
 endif
 
