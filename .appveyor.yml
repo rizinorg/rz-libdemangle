@@ -12,7 +12,7 @@ install:
 
 before_build:
   # Set up the MSVC 64-bit build environment
-  - cmd: call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+  - cmd: call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 
 build_script:
   - cmd: meson setup build 
