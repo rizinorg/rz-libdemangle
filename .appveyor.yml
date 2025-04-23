@@ -1,0 +1,16 @@
+version: 'git.{build}'
+image:
+- Visual Studio 2022
+- Visual Studio 2019
+- Visual Studio 2017
+
+install:
+- cmd: python -m pip install meson ninja
+
+build_script:
+- cmd: >-
+    meson setup build
+    meson compile -C build
+
+test_script:
+- cmd: meson test -C build
