@@ -1,16 +1,22 @@
 version: 'git.{build}'
-image:
-- Visual Studio 2022
-- Visual Studio 2019
-- Visual Studio 2017
+
+# Choose a single image, ideally the most recent
+image: Visual Studio 2022
+
+# Disable default MSBuild-based build
+build: off
 
 install:
-- cmd: python -m pip install meson ninja
+  - cmd: python -m pip install --upgrade pip
+  - cmd: pip install meson ninja
+
+before_build:
+  # Set up the MSVC 64-bit build environment
+  - cmd: call "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 
 build_script:
-- cmd: >-
-    meson setup build
-    meson compile -C build
+  - cmd: meson setup build 
+  - cmd: meson compile -C build
 
 test_script:
-- cmd: meson test -C build
+  - cmd: meson test -C build --verbose
