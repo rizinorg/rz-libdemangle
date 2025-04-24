@@ -11,8 +11,8 @@
 #include "cplusplus/vec.h"
 #include "demangler_util.h"
 
-#define DBG_PRINT_DETECTED_TYPES   1
-#define DBG_PRINT_DETECTED_TPARAMS 1
+#define DBG_PRINT_DETECTED_TYPES   0
+#define DBG_PRINT_DETECTED_TPARAMS 0
 
 #define REPLACE_GLOBAL_N_WITH_ANON_NAMESPACE 1
 
@@ -157,7 +157,6 @@ typedef struct Meta {
     bool   is_ctor;
     bool   is_dtor;
     bool   is_const;
-    bool   is_template_func;
 
     // detected templates are reset everytime a new template argument list starts
     // instead of taking care of that, we just rebase from where we start our substitution
@@ -179,7 +178,6 @@ static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
     tmp->is_const           = og->is_const;
     tmp->template_idx_start = og->template_idx_start;
     tmp->last_reset_idx     = og->last_reset_idx;
-    tmp->is_template_func   = og->is_template_func;
 
     return false;
 }
@@ -211,7 +209,6 @@ static inline void meta_tmp_apply (Meta* og, Meta* tmp) {
     og->is_dtor            = tmp->is_dtor;
     og->is_const           = tmp->is_const;
     og->template_idx_start = tmp->template_idx_start;
-    og->is_template_func   = tmp->is_template_func;
     og->last_reset_idx     = tmp->last_reset_idx;
 }
 
@@ -237,20 +234,17 @@ static inline void meta_tmp_fini (Meta* og, Meta* tmp) {
     memset (tmp, 0, sizeof (*tmp));
 }
 
-#define IS_CTOR()          (m->is_ctor)
-#define IS_DTOR()          (m->is_dtor)
-#define IS_CONST()         (m->is_const)
-#define IS_TEMPLATE_FUNC() (m->is_template_func)
+#define IS_CTOR()  (m->is_ctor)
+#define IS_DTOR()  (m->is_dtor)
+#define IS_CONST() (m->is_const)
 
-#define SET_CTOR()          (m->is_dtor = false, (m->is_ctor = true))
-#define SET_DTOR()          (m->is_ctor = false, (m->is_dtor = true))
-#define SET_CONST()         (m->is_const = true)
-#define SET_TEMPLATE_FUNC() (m->is_template_func = true)
+#define SET_CTOR()  (m->is_dtor = false, (m->is_ctor = true))
+#define SET_DTOR()  (m->is_ctor = false, (m->is_dtor = true))
+#define SET_CONST() (m->is_const = true)
 
-#define UNSET_CTOR()          (m->is_dtor = false, m->is_ctor = false, true)
-#define UNSET_DTOR()          (m->is_ctor = false, m->is_dtor = false, true)
-#define UNSET_CONST()         (m->is_const = false, true)
-#define UNSET_TEMPLATE_FUNC() (m->is_template_func = false, true)
+#define UNSET_CTOR()  (m->is_dtor = false, m->is_ctor = false, true)
+#define UNSET_DTOR()  (m->is_ctor = false, m->is_dtor = false, true)
+#define UNSET_CONST() (m->is_const = false, true)
 
 /**
  * Type of rules.
@@ -854,11 +848,11 @@ DemString* rule_name (DemString* dem, StrIter* msi, Meta* m) {
     MATCH (
         RULE (unscoped_name) && APPEND_TYPE (dem) &&
         OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && RULE (template_args) &&
-        APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const")) && SET_TEMPLATE_FUNC()
+        APPEND_TYPE (dem) && OPTIONAL (is_const && APPEND_STR (" const"))
     );
     MATCH (
         RULE (substitution) && OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) &&
-        RULE (template_args) && OPTIONAL (is_const && APPEND_STR (" const")) && SET_TEMPLATE_FUNC()
+        RULE (template_args) && OPTIONAL (is_const && APPEND_STR (" const"))
     );
 
     MATCH (RULE (unscoped_name));
@@ -2375,12 +2369,17 @@ DEFN_RULE (number, { MATCH (OPTIONAL (READ ('n')) && RULE_ATLEAST_ONCE (digit));
 
 DEFN_RULE (template_args, {
     bool is_const;
+
+    size_t template_idx_start = m->last_reset_idx;
+    size_t last_reset_idx     = m->template_params.length;
+
     MATCH_AND_DO (
         OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && READ ('I') && APPEND_CHR ('<') &&
             RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && APPEND_CHR ('>') && READ ('E'),
         {
-            m->template_idx_start = m->last_reset_idx;
-            m->last_reset_idx     = m->template_params.length;
+            m->template_idx_start = template_idx_start;
+            m->last_reset_idx     = last_reset_idx;
+
             if (is_const) {
                 SET_CONST();
             }
