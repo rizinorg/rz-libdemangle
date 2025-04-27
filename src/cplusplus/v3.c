@@ -16,6 +16,58 @@
 
 #define REPLACE_GLOBAL_N_WITH_ANON_NAMESPACE 1
 
+#if 0
+#    ifndef __has_builtin
+#        define __has_builtin(n) (0)
+#    endif
+
+#    if __has_builtin(__builtin_debugtrap)
+#        define rz_sys_breakpoint() __builtin_debugtrap()
+#    endif
+
+#    ifndef rz_sys_breakpoint
+#        if __WINDOWS__
+#            define rz_sys_breakpoint()                                                            \
+                { __debugbreak(); }
+#        else
+#            if __GNUC__
+#                define rz_sys_breakpoint() __builtin_trap()
+#            elif __i386__ || __x86_64__
+#                define rz_sys_breakpoint() __asm__ volatile ("int3");
+#            elif __arm64__ || __aarch64__
+#                define rz_sys_breakpoint() __asm__ volatile ("brk 0");
+// #define rz_sys_breakpoint() __asm__ volatile ("brk #1");
+#            elif (__arm__ || __thumb__)
+#                if __ARM_ARCH > 5
+#                    define rz_sys_breakpoint() __asm__ volatile ("bkpt $0");
+#                else
+#                    define rz_sys_breakpoint() __asm__ volatile ("svc $1");
+#                endif
+#            elif __mips__
+#                define rz_sys_breakpoint() __asm__ volatile ("break");
+// #  define rz_sys_breakpoint() __asm__ volatile ("teq $0, $0");
+#            elif __EMSCRIPTEN__
+// TODO: cannot find a better way to breakpoint in wasm/asm.js
+#                define rz_sys_breakpoint()                                                        \
+                    {                                                                              \
+                        char* a = NULL;                                                            \
+                        *a      = 0;                                                               \
+                    }
+#            else
+#                warning rz_sys_breakpoint not implemented for this platform
+#                define rz_sys_trap() __asm__ __volatile__ (".word 0");
+#                define rz_sys_breakpoint()                                                        \
+                    {                                                                              \
+                        char* a = NULL;                                                            \
+                        *a      = 0;                                                               \
+                    }
+#            endif
+#        endif
+#    endif
+#else
+#    define rz_sys_breakpoint()
+#endif
+
 /**
  * \b String iterator
  **/
@@ -162,6 +214,7 @@ typedef struct Meta {
     // instead of taking care of that, we just rebase from where we start our substitution
     // this way we just keep adding templates and incrementing this idx_start on every reset
     // so a T_ (index = 0) can actually refer to index = 5
+    // TODO: At the moment it seems like of no use, so delete this in future
     int template_idx_start;
     int last_reset_idx;
 
@@ -462,6 +515,9 @@ static DemString* match_zero_or_more_rules (
  */
 #define DEFN_RULE(x, rule_body)                                                                    \
     DECL_RULE (x) {                                                                                \
+        if (!strncmp (msi->cur, "PKT_RNS0_", strlen ("PKT_RNS0_"))) {                              \
+            rz_sys_breakpoint();                                                                   \
+        }                                                                                          \
         if (!dem || !msi || !m) {                                                                  \
             return NULL;                                                                           \
         }                                                                                          \
@@ -1692,6 +1748,25 @@ DEFN_RULE (operator_name, {
 });
 
 DEFN_RULE (type, {
+    // HACK(brightprogrammer): Template substitutions need to be forcefully appended to
+    // list of detected types for future substitutions. This is even if they're already
+    // detected.
+    // NOTE: This needs to be above the hack for RULE(type) below
+    MATCH (
+        READ_STR ("PKPK") && RULE (template_param) && APPEND_STR (" const") &&
+        FORCE_APPEND_TYPE (dem) && APPEND_STR ("*") && FORCE_APPEND_TYPE (dem) &&
+        APPEND_STR (" const") && FORCE_APPEND_TYPE (dem) && APPEND_STR ("*") &&
+        FORCE_APPEND_TYPE (dem)
+    );
+    MATCH (
+        READ_STR ("PK") && RULE (template_param) && APPEND_STR (" const") &&
+        FORCE_APPEND_TYPE (dem) && APPEND_STR ("*") && FORCE_APPEND_TYPE (dem)
+    );
+    MATCH (
+        READ_STR ("PR") && RULE (template_param) && APPEND_STR (" const") &&
+        FORCE_APPEND_TYPE (dem) && APPEND_STR ("&") && FORCE_APPEND_TYPE (dem)
+    );
+
     // HACK(brightprogrammer): Current parsing method makes it hard to parse and demangle
     // this correctly. Must be parsed before parsing P or O or R
     MATCH (
