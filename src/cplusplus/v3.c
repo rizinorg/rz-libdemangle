@@ -164,6 +164,11 @@ typedef struct Meta {
     // so a T_ (index = 0) can actually refer to index = 5
     int template_idx_start;
     int last_reset_idx;
+
+    // template level, detects the depth of RULE(template_args) expansion
+    // if we expand above level 1 (starts at level 1), then we stop appending parameters to template
+    // parameter list
+    int t_level;
 } Meta;
 
 static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
@@ -178,6 +183,7 @@ static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
     tmp->is_const           = og->is_const;
     tmp->template_idx_start = og->template_idx_start;
     tmp->last_reset_idx     = og->last_reset_idx;
+    tmp->t_level            = og->t_level;
 
     return false;
 }
@@ -210,6 +216,7 @@ static inline void meta_tmp_apply (Meta* og, Meta* tmp) {
     og->is_const           = tmp->is_const;
     og->template_idx_start = tmp->template_idx_start;
     og->last_reset_idx     = tmp->last_reset_idx;
+    og->t_level            = tmp->t_level;
 }
 
 static inline void meta_tmp_fini (Meta* og, Meta* tmp) {
@@ -619,7 +626,7 @@ bool append_tparam (Meta* m, DemString* t) {
     dem_string_init_clone (vec_end (&m->template_params), t);
     return true;
 }
-#define APPEND_TPARAM(tname) append_tparam (m, (tname))
+#define APPEND_TPARAM(tname) OPTIONAL (m->t_level < 2 && append_tparam (m, (tname)))
 
 /**
  * Refer back to a previous type from detected types and then add that
@@ -660,7 +667,7 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
 #if DBG_PRINT_DETECTED_TYPES
         dem_string_append (dem, " || ");
         vec_foreach_ptr (&m->detected_types, t, {
-            dem_string_append_n (dem, ", [", 3);
+            dem_string_append_n (dem, "\n[", 2);
             dem_string_concat (dem, t);
             dem_string_append_n (dem, "]", 1);
         });
@@ -671,7 +678,7 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
         m->template_params.length   -= m->template_idx_start;
         m->template_params.capacity -= m->template_idx_start;
         vec_foreach_ptr (&m->template_params, t, {
-            dem_string_append_n (dem, ", ", 2);
+            dem_string_append_n (dem, "\n", 1);
             dem_string_concat (dem, t);
         });
         m->template_params.length   += m->template_idx_start;
@@ -688,6 +695,36 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
 
     return NULL;
 }
+
+/*
+    _ZN
+        St8__detail17__regex_algo_implI
+                                        PKcSaI
+                                                N
+                                                    St7__cxx119sub_matchI
+                                                                            S2_
+                                                                        E
+                                                E
+                                            EcN
+                                                S3_12regex_traitsI
+                                                                    c
+                                                                 E
+                                              E
+                                      E
+     EbT_S9_RN
+                S3_13match_resultsI
+                                    S9_T0_
+                                  E
+             ERKN
+                    S3_11basic_regexI
+                                        T1_T2_
+                                    E
+                EN
+                    St15regex_constants15match_flag_type
+                 EN
+                    S_20_RegexExecutorPolicy
+                  Eb
+ */
 
 /********************************* LIST OF ALL RULE DECLARATIONS IN GRAMMAR *******************************/
 DECL_RULE (encoding);
@@ -814,7 +851,17 @@ DemString* rule_encoding (DemString* dem, StrIter* msi, Meta* m) {
         // this is a hack to detect whether a function has templates,
         // it might be bad, but it works!
         OPTIONAL (
-            (fname->buf[fname->len - 1] == '>') && RULE_DEFER (rtype, type) && APPEND_TYPE (rtype)
+            // possibly a template
+            (fname->buf[fname->len - 1] == '>') &&
+
+            // not ends with an "operator>"
+            (fname->len > 9 ? !!strncmp (fname->buf + fname->len - 9, "operator>", 9) : true) &&
+
+            // if function type is a builtin type then we don't want to append it to list of detected types
+            (RULE_DEFER (rtype, builtin_type) ||
+
+             // In any other case we do
+             (RULE_DEFER (rtype, type) && APPEND_TYPE (rtype)))
         ) &&
 
         // param list
@@ -1233,7 +1280,7 @@ DECL_RULE (closure_prefix_Z);
                 APPEND_TYPE (accu) &&                                                              \
                 OPTIONAL (                                                                         \
                     RULE_DEFER (un, source_name) && dem_string_append (accu, "::") &&              \
-                    dem_string_concat (accu, un)                                                   \
+                    dem_string_concat (accu, un) && APPEND_TYPE (accu)                             \
                 ) &&                                                                               \
                 RULE_DEFER (accu, prefix_b) && APPEND_TYPE (accu) && (matched = true) &&           \
                 (dem_string_deinit (parent_dem), dem_string_init_clone (dem, accu))                \
@@ -2373,22 +2420,24 @@ DEFN_RULE (template_args, {
     size_t template_idx_start = m->last_reset_idx;
     size_t last_reset_idx     = m->template_params.length;
 
+    m->t_level++;
+
     MATCH_AND_DO (
         OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && READ ('I') && APPEND_CHR ('<') &&
             RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && APPEND_CHR ('>') && READ ('E'),
         {
-            m->template_idx_start = template_idx_start;
-            m->last_reset_idx     = last_reset_idx;
+            // m->template_idx_start = template_idx_start;
+            // m->last_reset_idx     = last_reset_idx;
+
+            m->t_level--;
 
             if (is_const) {
                 SET_CONST();
             }
         }
     );
-    /* MATCH ( */
-    /*     READ ('I') && APPEND_CHR ('<') && RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && */
-    /*     APPEND_CHR ('>') && READ ('E') */
-    /* ); */
+
+    m->t_level--;
 });
 
 DEFN_RULE (template_arg, {
