@@ -517,7 +517,7 @@ static DemString* match_zero_or_more_rules (
  */
 #define DEFN_RULE(x, rule_body)                                                                    \
     DECL_RULE (x) {                                                                                \
-        if (!strncmp (msi->cur, "PKT_RNS0_", strlen ("PKT_RNS0_"))) {                              \
+        if (!strncmp (msi->cur, "RAT__KcRAT0__S6_", strlen ("RAT__KcRAT0__S6_"))) {                \
             rz_sys_breakpoint();                                                                   \
         }                                                                                          \
         if (!dem || !msi || !m) {                                                                  \
@@ -619,30 +619,6 @@ static DemString* match_zero_or_more_rules (
 #define APPEND_STR(s) dem_string_append (dem, s)
 #define APPEND_CHR(c) dem_string_append_char (dem, c)
 
-bool ignore_type (Meta* m, DemString* t) {
-    if (!m || !t || !t->len) {
-        return true;
-    }
-
-    // operator names are excluded from substitutions
-    // if (!strncmp (t->buf, "std::operator", 13) || !strncmp (t->buf, "operator", 8)) {
-    //     return true;
-    // }
-
-    // sometimes by mistake "std" is appended as type, but name manglers don't expect it to be a type
-    if (!strcmp (t->buf, "std")) {
-        return true;
-    }
-
-    vec_foreach_ptr (&m->detected_types, dt, {
-        if (!strcmp (dt->buf, t->buf)) {
-            return true;
-        }
-    });
-
-    return false;
-}
-
 /**
  * Append given type name to list of all detected types.
  * This vector is then used to refer back to a detected type in substitution
@@ -653,8 +629,24 @@ bool append_type (Meta* m, DemString* t, bool force_append) {
         return false;
     }
 
-    if (!force_append && ignore_type (m, t)) {
+    // A hack to ingore constant values getting forcefully added from RULE(template_param)
+    // because templates sometimes get values like "true", "false", "4u", etc...
+    if (IS_DIGIT (t->buf[0]) || !strcmp (t->buf, "true") || !strcmp (t->buf, "false")) {
         return true;
+    }
+
+    // sometimes by mistake "std" is appended as type, but name manglers don't expect it to be a type
+    if (!strcmp (t->buf, "std")) {
+        return true;
+    }
+
+    // If we're not forcefully appending values, then check for uniqueness of times
+    if (!force_append) {
+        vec_foreach_ptr (&m->detected_types, dt, {
+            if (!strcmp (dt->buf, t->buf)) {
+                return true;
+            }
+        });
     }
 
     UNUSED (vec_reserve (&m->detected_types, m->detected_types.length + 1));
@@ -910,10 +902,8 @@ DemString* rule_encoding (DemString* dem, StrIter* msi, Meta* m) {
             (fname->len > 9 ? !!strncmp (fname->buf + fname->len - 9, "operator>", 9) : true) &&
 
             // if function type is a builtin type then we don't want to append it to list of detected types
-            (RULE_DEFER (rtype, builtin_type) ||
-
-             // In any other case we do
-             (RULE_DEFER (rtype, type) && APPEND_TYPE (rtype)))
+            // in any other case we do!
+            (RULE_DEFER (rtype, builtin_type) || (RULE_DEFER (rtype, type) && APPEND_TYPE (rtype)))
         ) &&
 
         // param list
@@ -1745,6 +1735,12 @@ DEFN_RULE (operator_name, {
 });
 
 DEFN_RULE (type, {
+    // must be at the top before any other type is matched
+    MATCH (
+        RULE (array_type) && APPEND_TYPE (dem) &&
+        OPTIONAL (IS_CONST() && APPEND_STR (" const") && UNSET_CONST())
+    );
+
     // HACK(brightprogrammer): Template substitutions need to be forcefully appended to
     // list of detected types for future substitutions. This is even if they're already
     // detected.
@@ -1790,10 +1786,6 @@ DEFN_RULE (type, {
         OPTIONAL (IS_CONST() && APPEND_STR (" const") && UNSET_CONST())
     );
     MATCH (
-        RULE (array_type) && APPEND_TYPE (dem) &&
-        OPTIONAL (IS_CONST() && APPEND_STR (" const") && UNSET_CONST())
-    );
-    MATCH (
         RULE (pointer_to_member_type) && APPEND_TYPE (dem) &&
         OPTIONAL (IS_CONST() && APPEND_STR (" const") && UNSET_CONST())
     );
@@ -1810,7 +1802,8 @@ DEFN_RULE (type, {
         OPTIONAL (IS_CONST() && APPEND_STR (" const") && UNSET_CONST())
     );
 
-    MATCH (READ ('P') && RULE (type) && APPEND_CHR ('*') && APPEND_TYPE (dem)); // pointer
+    MATCH (READ ('K') && RULE (type) && APPEND_STR (" const") && APPEND_TYPE (dem)); // pointer
+    MATCH (READ ('P') && RULE (type) && APPEND_CHR ('*') && APPEND_TYPE (dem));      // pointer
     MATCH (READ ('R') && RULE (type) && APPEND_CHR ('&') && APPEND_TYPE (dem)); // l-value reference
     MATCH (
         READ ('O') && RULE (type) && APPEND_STR ("&&") && APPEND_TYPE (dem)
@@ -1831,11 +1824,78 @@ DEFN_RULE (class_enum_type, {
 });
 
 DEFN_RULE (array_type, {
-    MATCH (READ ('A') && OPTIONAL (RULE (array_bound_number)) && READ ('_') && RULE (element_type));
-    MATCH (
-        READ ('A') && RULE (instantiation_dependent_array_bound_expression) && READ ('_') &&
-        RULE (element_type)
+    DEFER_VAR (array_num);
+    DEFER_VAR (etype);
+
+    bool is_ref = false;
+
+    // pointer type
+    // MATCH_AND_DO (
+    //     OPTIONAL (is_ref = READ ('R')) && READ ('A') && READ ('_') && RULE (element_type) &&
+    //         APPEND_STR (" *") && APPEND_TYPE (dem),
+    //     {
+    //         DemString dt = {0};
+    //         dem_string_concat (&dt, etype);
+    //         dem_string_append (&dt, " [");
+    //         dem_string_concat (&dt, array_num);
+    //         dem_string_append (&dt, "]");
+    //
+    //         APPEND_TYPE (&dt);
+    //
+    //         if (is_ref) {
+    //             dem_string_deinit (&dt);
+    //
+    //             dem_string_concat (&dt, etype);
+    //             dem_string_append (&dt, " (&) [");
+    //             dem_string_concat (&dt, array_num);
+    //             dem_string_append (&dt, "]");
+    //
+    //             APPEND_TYPE (&dt);
+    //         } else {
+    //             dem_string_concat (dem, &dt);
+    //             dem_string_deinit (&dt);
+    //         }
+    //     }
+    // );
+
+    MATCH_AND_DO (
+        OPTIONAL (is_ref = READ ('R')) && READ ('A') &&
+            OPTIONAL (
+                RULE_DEFER (array_num, array_bound_number) ||
+                RULE_DEFER (array_num, instantiation_dependent_expression)
+            ) &&
+            READ ('_') && RULE_DEFER (etype, element_type),
+        {
+            DemString dt = {0};
+            dem_string_concat (&dt, etype);
+            dem_string_append (&dt, " [");
+            dem_string_concat (&dt, array_num);
+            dem_string_append (&dt, "]");
+
+            // TODO: Do we really force append here?
+            FORCE_APPEND_TYPE (&dt);
+
+            if (is_ref) {
+                dem_string_deinit (&dt);
+
+                dem_string_concat (&dt, etype);
+                dem_string_append (&dt, " (&) [");
+                dem_string_concat (&dt, array_num);
+                dem_string_append (&dt, "]");
+
+                // TODO: Do we really force append here?
+                FORCE_APPEND_TYPE (&dt);
+
+                dem_string_concat (dem, &dt);
+                dem_string_deinit (&dt);
+            } else {
+                dem_string_concat (dem, &dt);
+                dem_string_deinit (&dt);
+            }
+        }
     );
+    dem_string_deinit (array_num);
+    dem_string_deinit (etype);
 });
 
 DEFN_RULE (pointer_to_member_type, {
@@ -2542,7 +2602,7 @@ DEFN_RULE (template_arg, {
         READ ('X') && RULE (expression) && READ ('E') && APPEND_TPARAM (dem) &&
         FORCE_APPEND_TYPE (dem)
     );
-    MATCH (RULE (expr_primary));
+    MATCH (RULE (expr_primary) && APPEND_TPARAM (dem));
     MATCH (
         READ ('J') && RULE_MANY (template_arg) && READ ('E') && APPEND_TPARAM (dem) &&
         FORCE_APPEND_TYPE (dem)
