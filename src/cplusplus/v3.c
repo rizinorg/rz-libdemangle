@@ -210,18 +210,18 @@ typedef struct Meta {
     bool   is_dtor;
     bool   is_const;
 
-    // detected templates are reset everytime a new template argument list starts
+    // detected templates are reset everytime a new template argument list starts at the same level
     // instead of taking care of that, we just rebase from where we start our substitution
     // this way we just keep adding templates and incrementing this idx_start on every reset
     // so a T_ (index = 0) can actually refer to index = 5
-    // TODO: At the moment it seems like of no use, so delete this in future
     int template_idx_start;
     int last_reset_idx;
 
     // template level, detects the depth of RULE(template_args) expansion
     // if we expand above level 1 (starts at level 1), then we stop appending parameters to template
     // parameter list
-    int t_level;
+    int  t_level;
+    bool template_reset;
 } Meta;
 
 static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
@@ -237,6 +237,7 @@ static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
     tmp->template_idx_start = og->template_idx_start;
     tmp->last_reset_idx     = og->last_reset_idx;
     tmp->t_level            = og->t_level;
+    tmp->template_reset     = og->template_reset;
 
     return false;
 }
@@ -270,6 +271,7 @@ static inline void meta_tmp_apply (Meta* og, Meta* tmp) {
     og->template_idx_start = tmp->template_idx_start;
     og->last_reset_idx     = tmp->last_reset_idx;
     og->t_level            = tmp->t_level;
+    og->template_reset     = tmp->template_reset;
 }
 
 static inline void meta_tmp_fini (Meta* og, Meta* tmp) {
@@ -1256,6 +1258,7 @@ DemString* rule_nested_name (DemString* dem, StrIter* msi, Meta* m) {
     MATCH (
         READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (pfx, template_prefix) &&
         OPTIONAL (RULE_DEFER (targs, template_args)) &&
+
         OPTIONAL (RULE_DEFER (uname, unqualified_name)) &&
         make_template_nested_name (dem, pfx, targs, uname, m) && READ ('E')
     );
@@ -2492,19 +2495,37 @@ DEFN_RULE (number, { MATCH (OPTIONAL (READ ('n')) && RULE_ATLEAST_ONCE (digit));
 DEFN_RULE (template_args, {
     bool is_const;
 
+    // we going down the rabbit hope
+    m->t_level++;
+
+    // in case we reset the template types (m->template_params)
     size_t template_idx_start = m->last_reset_idx;
     size_t last_reset_idx     = m->template_params.length;
 
-    m->t_level++;
+    // if we're here more than once at the topmost level (t->level = 0)
+    // then this means we have something like A<..>::B<...>
+    // were we're just starting to read B, and have already parsed and generate template for A
+    // now B won't be using A's template type substitutions, so we increase the offset
+    // from which we use the template substitutions.
+    if (m->template_reset) {
+        m->template_idx_start = template_idx_start;
+        m->last_reset_idx     = last_reset_idx;
+        m->template_reset     = false;
+        rz_sys_breakpoint();
+    }
 
     MATCH_AND_DO (
         OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && READ ('I') && APPEND_CHR ('<') &&
             RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && APPEND_CHR ('>') && READ ('E'),
         {
-            // m->template_idx_start = template_idx_start;
-            // m->last_reset_idx     = last_reset_idx;
-
+            // uppity up up
             m->t_level--;
+
+            // number of <templates> at level 0
+            if (!m->t_level) {
+                m->template_reset = true;
+                rz_sys_breakpoint();
+            }
 
             if (is_const) {
                 SET_CONST();
