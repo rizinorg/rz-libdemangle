@@ -72,7 +72,7 @@ void   cpdem_fini (CpDem* dem);
  * \return 1 if in range.
  * \return 0 otherwise. 
  */
-#define IN_RANGE(read_pos) ((read_pos) >= BEG() ? ((read_pos) < END() ? 1 : 0) : 0)
+#define IN_RANGE(read_pos) ((read_pos) >= BEG() && (read_pos) < END())
 
 /**
  * \b Seek to given read position if it's in range. This will change the current

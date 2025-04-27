@@ -42,6 +42,4 @@ const char* cp_demangle (const char* mangled, CpDemOptions opts) {
     } else {
         return res;
     }
-
-    return NULL;
 }
