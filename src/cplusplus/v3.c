@@ -673,12 +673,6 @@ bool append_tparam (Meta* m, DemString* t) {
         return false;
     }
 
-    vec_foreach_ptr (&m->template_params, dt, {
-        if (!strcmp (dt->buf, t->buf)) {
-            return true;
-        }
-    });
-
     UNUSED (vec_reserve (&m->template_params, m->template_params.length + 1));
     m->template_params.length += 1;
     dem_string_init_clone (vec_end (&m->template_params), t);
