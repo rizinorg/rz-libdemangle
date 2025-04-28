@@ -1305,6 +1305,11 @@ DECL_RULE (closure_prefix_Z);
  * what's better than using a macro?
  *
  * So, this macro imitates what the above rule definition tries to do.
+ * TODO: no use of having a macro, this can be a RULE() as well!
+ *
+ * XXX: Even after getting a correct demangled string RULE(template_prefix) is discarding the value for some reason
+ * - clang::CodeGen::DominatingValue<clang::CodeGen::RValue>::saved_type::needsSaving
+ * I suspect it's because of this macro!
  * */
 #define prefix__template_prefix__closure_prefix__T()                                               \
     do {                                                                                           \
@@ -1347,7 +1352,6 @@ DECL_RULE (closure_prefix_Z);
         }                                                                                          \
     } while (0)
 
-// XXX: problem is in the macro maybe!!
 
 // DEFN_RULE (prefix, {
 DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
@@ -1862,7 +1866,7 @@ DEFN_RULE (array_type, {
         OPTIONAL (is_ref = READ ('R')) && READ ('A') &&
             OPTIONAL (
                 RULE_DEFER (array_num, array_bound_number) ||
-                RULE_DEFER (array_num, instantiation_dependent_expression)
+                RULE_DEFER (array_num, instantiation_dependent_array_bound_expression)
             ) &&
             READ ('_') && RULE_DEFER (etype, element_type),
         {
