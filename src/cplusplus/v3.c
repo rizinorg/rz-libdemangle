@@ -16,58 +16,6 @@
 
 #define REPLACE_GLOBAL_N_WITH_ANON_NAMESPACE 1
 
-#if 0
-#    ifndef __has_builtin
-#        define __has_builtin(n) (0)
-#    endif
-
-#    if __has_builtin(__builtin_debugtrap)
-#        define rz_sys_breakpoint() __builtin_debugtrap()
-#    endif
-
-#    ifndef rz_sys_breakpoint
-#        if __WINDOWS__
-#            define rz_sys_breakpoint()                                                            \
-                { __debugbreak(); }
-#        else
-#            if __GNUC__
-#                define rz_sys_breakpoint() __builtin_trap()
-#            elif __i386__ || __x86_64__
-#                define rz_sys_breakpoint() __asm__ volatile ("int3");
-#            elif __arm64__ || __aarch64__
-#                define rz_sys_breakpoint() __asm__ volatile ("brk 0");
-// #define rz_sys_breakpoint() __asm__ volatile ("brk #1");
-#            elif (__arm__ || __thumb__)
-#                if __ARM_ARCH > 5
-#                    define rz_sys_breakpoint() __asm__ volatile ("bkpt $0");
-#                else
-#                    define rz_sys_breakpoint() __asm__ volatile ("svc $1");
-#                endif
-#            elif __mips__
-#                define rz_sys_breakpoint() __asm__ volatile ("break");
-// #  define rz_sys_breakpoint() __asm__ volatile ("teq $0, $0");
-#            elif __EMSCRIPTEN__
-// TODO: cannot find a better way to breakpoint in wasm/asm.js
-#                define rz_sys_breakpoint()                                                        \
-                    {                                                                              \
-                        char* a = NULL;                                                            \
-                        *a      = 0;                                                               \
-                    }
-#            else
-#                warning rz_sys_breakpoint not implemented for this platform
-#                define rz_sys_trap() __asm__ __volatile__ (".word 0");
-#                define rz_sys_breakpoint()                                                        \
-                    {                                                                              \
-                        char* a = NULL;                                                            \
-                        *a      = 0;                                                               \
-                    }
-#            endif
-#        endif
-#    endif
-#else
-#    define rz_sys_breakpoint()
-#endif
-
 /**
  * \b String iterator
  **/
@@ -222,6 +170,8 @@ typedef struct Meta {
     // parameter list
     int  t_level;
     bool template_reset;
+
+    bool is_ctor_or_dtor_at_l0;
 } Meta;
 
 static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
@@ -231,13 +181,14 @@ static inline bool meta_tmp_init (Meta* og, Meta* tmp) {
 
     vec_concat (&tmp->detected_types, &og->detected_types);
     vec_concat (&tmp->template_params, &og->template_params);
-    tmp->is_ctor            = og->is_ctor;
-    tmp->is_dtor            = og->is_dtor;
-    tmp->is_const           = og->is_const;
-    tmp->template_idx_start = og->template_idx_start;
-    tmp->last_reset_idx     = og->last_reset_idx;
-    tmp->t_level            = og->t_level;
-    tmp->template_reset     = og->template_reset;
+    tmp->is_ctor               = og->is_ctor;
+    tmp->is_dtor               = og->is_dtor;
+    tmp->is_const              = og->is_const;
+    tmp->template_idx_start    = og->template_idx_start;
+    tmp->last_reset_idx        = og->last_reset_idx;
+    tmp->t_level               = og->t_level;
+    tmp->template_reset        = og->template_reset;
+    tmp->is_ctor_or_dtor_at_l0 = og->is_ctor_or_dtor_at_l0;
 
     return false;
 }
@@ -265,13 +216,14 @@ static inline void meta_tmp_apply (Meta* og, Meta* tmp) {
     memset (tmp->template_params.data, 0, vec_mem_size (&tmp->template_params));
     UNUSED (vec_deinit (&tmp->template_params));
 
-    og->is_ctor            = tmp->is_ctor;
-    og->is_dtor            = tmp->is_dtor;
-    og->is_const           = tmp->is_const;
-    og->template_idx_start = tmp->template_idx_start;
-    og->last_reset_idx     = tmp->last_reset_idx;
-    og->t_level            = tmp->t_level;
-    og->template_reset     = tmp->template_reset;
+    og->is_ctor               = tmp->is_ctor;
+    og->is_dtor               = tmp->is_dtor;
+    og->is_const              = tmp->is_const;
+    og->template_idx_start    = tmp->template_idx_start;
+    og->last_reset_idx        = tmp->last_reset_idx;
+    og->t_level               = tmp->t_level;
+    og->template_reset        = tmp->template_reset;
+    og->is_ctor_or_dtor_at_l0 = tmp->is_ctor_or_dtor_at_l0;
 }
 
 static inline void meta_tmp_fini (Meta* og, Meta* tmp) {
@@ -517,9 +469,6 @@ static DemString* match_zero_or_more_rules (
  */
 #define DEFN_RULE(x, rule_body)                                                                    \
     DECL_RULE (x) {                                                                                \
-        if (!strncmp (msi->cur, "RAT__KcRAT0__S6_", strlen ("RAT__KcRAT0__S6_"))) {                \
-            rz_sys_breakpoint();                                                                   \
-        }                                                                                          \
         if (!dem || !msi || !m) {                                                                  \
             return NULL;                                                                           \
         }                                                                                          \
@@ -740,36 +689,6 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
     return NULL;
 }
 
-/*
-    _ZN
-        St8__detail17__regex_algo_implI
-                                        PKcSaI
-                                                N
-                                                    St7__cxx119sub_matchI
-                                                                            S2_
-                                                                        E
-                                                E
-                                            EcN
-                                                S3_12regex_traitsI
-                                                                    c
-                                                                 E
-                                              E
-                                      E
-     EbT_S9_RN
-                S3_13match_resultsI
-                                    S9_T0_
-                                  E
-             ERKN
-                    S3_11basic_regexI
-                                        T1_T2_
-                                    E
-                EN
-                    St15regex_constants15match_flag_type
-                 EN
-                    S_20_RegexExecutorPolicy
-                  Eb
- */
-
 /********************************* LIST OF ALL RULE DECLARATIONS IN GRAMMAR *******************************/
 DECL_RULE (encoding);
 DECL_RULE (name);
@@ -896,7 +815,7 @@ DemString* rule_encoding (DemString* dem, StrIter* msi, Meta* m) {
         // it might be bad, but it works!
         OPTIONAL (
             // possibly a template
-            (fname->buf[fname->len - 1] == '>') &&
+            !m->is_ctor_or_dtor_at_l0 && (fname->buf[fname->len - 1] == '>') &&
 
             // not ends with an "operator>"
             (fname->len > 9 ? !!strncmp (fname->buf + fname->len - 9, "operator>", 9) : true) &&
@@ -1075,12 +994,18 @@ static inline bool make_nested_name (DemString* dem, DemString* pfx, DemString* 
             dem_string_concat (dem, pfx);
             dem_string_append (dem, "::");
             dem_string_append (dem, rbeg);
+            if (!m->t_level) {
+                m->is_ctor_or_dtor_at_l0 = true;
+            }
             UNSET_CTOR();
         } else if (IS_DTOR()) {
             dem_string_concat (dem, pfx);
             dem_string_append (dem, "::~");
             dem_string_append (dem, rbeg);
-            UNSET_DTOR();
+            if (!m->t_level) {
+                m->is_ctor_or_dtor_at_l0 = true;
+            }
+            UNSET_CTOR();
         } else {
             dem_string_concat (dem, pfx);
             if (uname->len) {
@@ -1123,7 +1048,7 @@ static inline bool make_template_nested_name (
 
     // HACK: a hacky way to find name of constructor
     // find content before first "<" (template argument start)
-    // find last appearance of "::" that comes before found "<"
+    // find last appearance of "::" that comes just before found "<"
 
     char* n_end = strchr (pfx->buf, '<');
     char* n_beg = NULL;
@@ -1151,12 +1076,18 @@ static inline bool make_template_nested_name (
         dem_string_concat (dem, targs);
         dem_string_append (dem, "::");
         dem_string_append_n (dem, n_beg, n_len);
+        if (!m->t_level) {
+            m->is_ctor_or_dtor_at_l0 = true;
+        }
         UNSET_CTOR();
     } else if (IS_DTOR()) {
         dem_string_concat (dem, pfx);
         dem_string_concat (dem, targs);
         dem_string_append (dem, "::~");
         dem_string_append_n (dem, n_beg, n_len);
+        if (!m->t_level) {
+            m->is_ctor_or_dtor_at_l0 = true;
+        }
         UNSET_DTOR();
     } else {
         dem_string_concat (dem, pfx);
@@ -1242,7 +1173,6 @@ DemString* rule_nested_name (DemString* dem, StrIter* msi, Meta* m) {
     MATCH (
         READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (pfx, template_prefix) &&
         OPTIONAL (RULE_DEFER (targs, template_args)) &&
-
         OPTIONAL (RULE_DEFER (uname, unqualified_name)) &&
         make_template_nested_name (dem, pfx, targs, uname, m) && READ ('E')
     );
@@ -1283,75 +1213,49 @@ DECL_RULE (template_prefix_Y);
 DEFN_RULE (closure_prefix_m, { MATCH (RULE (variable_or_member_unqualified_name) && READ ('M')); });
 
 DECL_RULE (closure_prefix_Z);
-// DEFN_RULE (prefix__template_prefix__closure_prefix__T, {
-//     MATCH (
-//         APPEND_STR ("::") && RULE (template_prefix_l) && RULE (prefix_b) &&
-//         OPTIONAL (RULE (prefix__template_prefix__closure_prefix__T))
-//     );
-//     MATCH (
-//         APPEND_STR ("::") && RULE (closure_prefix_m) && RULE (prefix_c) &&
-//         OPTIONAL (RULE (prefix__template_prefix__closure_prefix__T))
-//     );
 
-//     return dem; // match empty
-// });
+DEFN_RULE (prefix__template_prefix__closure_prefix__T_1, {
+    DEFER_VAR (un);
+    DEFER_VAR (accu); /* accumulator */
+    DemString* parent_dem = dem;
 
-/*
- * HACK(brightprogrammer):
- * Turns out that the way we generate demangled names is not helpful when a child
- * node requires data from parent node. Node being a rule application.
- *
- * For this a better idea is to inline the rule application then and there, and
- * what's better than using a macro?
- *
- * So, this macro imitates what the above rule definition tries to do.
- * TODO: no use of having a macro, this can be a RULE() as well!
- *
- * XXX: Even after getting a correct demangled string RULE(template_prefix) is discarding the value for some reason
- * - clang::CodeGen::DominatingValue<clang::CodeGen::RValue>::saved_type::needsSaving
- * I suspect it's because of this macro!
- * */
-#define prefix__template_prefix__closure_prefix__T()                                               \
-    do {                                                                                           \
-        bool matched = true;                                                                       \
-        DEFER_VAR (un);                                                                            \
-        while (matched) {                                                                          \
-            matched = false;                                                                       \
-                                                                                                   \
-            DEFER_VAR (accu); /* accumulator */                                                    \
-                                                                                                   \
-            dem_string_concat (accu, dem);                                                         \
-            DemString* parent_dem = dem;                                                           \
-                                                                                                   \
-            MATCH_AND_CONTINUE (                                                                   \
-                dem_string_append (accu, "::") && RULE_DEFER (accu, template_prefix_l) &&          \
-                APPEND_TYPE (accu) &&                                                              \
-                OPTIONAL (                                                                         \
-                    RULE_DEFER (un, source_name) && dem_string_append (accu, "::") &&              \
-                    dem_string_concat (accu, un) && APPEND_TYPE (accu)                             \
-                ) &&                                                                               \
-                RULE_DEFER (accu, prefix_b) && APPEND_TYPE (accu) && (matched = true) &&           \
-                (dem_string_deinit (parent_dem), dem_string_init_clone (dem, accu))                \
-            );                                                                                     \
-                                                                                                   \
-            dem_string_deinit (un);                                                                \
-                                                                                                   \
-            if (matched) {                                                                         \
-                continue;                                                                          \
-            }                                                                                      \
-                                                                                                   \
-            dem_string_deinit (accu);                                                              \
-            dem_string_concat (accu, dem);                                                         \
-                                                                                                   \
-            MATCH_AND_CONTINUE (                                                                   \
-                dem_string_append (accu, "::") && RULE_DEFER (accu, closure_prefix_m) &&           \
-                APPEND_TYPE (accu) && RULE_DEFER (accu, prefix_c) && APPEND_TYPE (accu) &&         \
-                (matched = true) &&                                                                \
-                (dem_string_deinit (parent_dem), dem_string_init_clone (dem, accu))                \
-            );                                                                                     \
-        }                                                                                          \
-    } while (0)
+    dem_string_concat (accu, parent_dem);
+    MATCH (
+        dem_string_append (accu, "::") && RULE_DEFER (accu, template_prefix_l) &&
+        APPEND_TYPE (accu) && RULE_DEFER (un, source_name) && dem_string_append (accu, "::") &&
+        dem_string_concat (accu, un) && APPEND_TYPE (accu) && RULE_DEFER (accu, prefix_b) &&
+        APPEND_TYPE (accu) &&
+        (dem_string_deinit (parent_dem), dem_string_init_clone (parent_dem, accu))
+    );
 
+    dem_string_deinit (un);
+    dem_string_deinit (accu);
+})
+
+DEFN_RULE (prefix__template_prefix__closure_prefix__T_2, {
+    DEFER_VAR (un);
+    DEFER_VAR (accu); /* accumulator */
+    DemString* parent_dem = dem;
+
+    dem_string_concat (accu, parent_dem);
+    /* after closure_prefix_m, there's prefix_c, but that's just identity rule so we can ignore that */
+    MATCH_AND_CONTINUE (
+        dem_string_append (accu, "::") && RULE_DEFER (accu, closure_prefix_m) &&
+        APPEND_TYPE (accu) &&
+        (dem_string_deinit (parent_dem), dem_string_init_clone (parent_dem, accu))
+    );
+});
+
+DEFN_RULE (prefix__template_prefix__closure_prefix__T_1_or_2, {
+    DemString* parent_dem = dem;
+    MATCH (RULE_DEFER (parent_dem, prefix__template_prefix__closure_prefix__T_1));
+    MATCH (RULE_DEFER (parent_dem, prefix__template_prefix__closure_prefix__T_2));
+});
+
+DEFN_RULE (prefix__template_prefix__closure_prefix__T, {
+    DemString* parent_dem = dem;
+    MATCH (RULE_DEFER_MANY (parent_dem, prefix__template_prefix__closure_prefix__T_1_or_2));
+});
 
 // DEFN_RULE (prefix, {
 DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
@@ -1444,7 +1348,7 @@ DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
             }
         }
 
-        APPEND_TYPE (pfx);
+        // APPEND_TYPE (pfx);
 
         dem_string_concat (dem, pfx);
         dem_string_deinit (pfx);
@@ -1455,17 +1359,20 @@ DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
     }
 
     // fix mutual-recursions
-    MATCH_AND_DO (RULE (prefix_X) && APPEND_TYPE (dem), {
-        prefix__template_prefix__closure_prefix__T();
-    });
+    MATCH (
+        RULE (prefix_X) && APPEND_TYPE (dem) && RULE (prefix__template_prefix__closure_prefix__T)
+    );
 
-    MATCH_AND_DO (RULE (template_prefix_Y) && RULE (prefix_b) && APPEND_TYPE (dem), {
-        prefix__template_prefix__closure_prefix__T();
-    });
+    MATCH (
+        RULE (template_prefix_Y) && RULE (prefix_b) && APPEND_TYPE (dem) &&
+        RULE (prefix__template_prefix__closure_prefix__T)
+    );
 
-    MATCH_AND_DO (RULE (closure_prefix_Z) && RULE (prefix_c) && APPEND_TYPE (dem), {
-        prefix__template_prefix__closure_prefix__T();
-    });
+    // after closure-prefix-Z we have prefix-c but that's an identity rule hence we can just ignore it
+    MATCH (
+        RULE (closure_prefix_Z) && APPEND_TYPE (dem) &&
+        RULE (prefix__template_prefix__closure_prefix__T)
+    );
     // });
     return NULL;
 }
@@ -1483,16 +1390,10 @@ DEFN_RULE (decltype, {
 });
 
 DEFN_RULE (closure_prefix_Z_l, {
-    MATCH_AND_DO (RULE (prefix_c), {
-        prefix__template_prefix__closure_prefix__T();
-
-        bool matched = false;
-        MATCH (RULE (closure_prefix_m) && (matched = true));
-
-        if (!matched) {
-            MATCH_FAILED();
-        }
-    });
+    MATCH (
+        RULE (prefix_c) && RULE (prefix__template_prefix__closure_prefix__T) &&
+        RULE (closure_prefix_m)
+    );
 });
 
 DEFN_RULE (closure_prefix_Z_k, { MATCH (RULE (template_args) && READ ('M')); })
@@ -1526,17 +1427,21 @@ DEFN_RULE (template_prefix_Y, {
 });
 
 DEFN_RULE (template_prefix, {
-    MATCH_AND_DO (RULE (prefix_X) && APPEND_TYPE (dem), {
-        prefix__template_prefix__closure_prefix__T();
-    });
+    MATCH (
+        RULE (prefix_X) && APPEND_TYPE (dem) && RULE (prefix__template_prefix__closure_prefix__T)
+    );
 
-    MATCH_AND_DO (RULE (template_prefix_Y) && APPEND_TYPE (dem) && RULE (prefix_b), {
-        prefix__template_prefix__closure_prefix__T();
-    });
+    MATCH (
+        RULE (template_prefix_Y) && APPEND_TYPE (dem) && RULE (prefix_b) &&
+        RULE (prefix__template_prefix__closure_prefix__T)
+    );
 
-    MATCH_AND_DO (RULE (closure_prefix_Z) && APPEND_TYPE (dem) && RULE (prefix_c), {
-        prefix__template_prefix__closure_prefix__T();
-    });
+    // NOTE: has RULE(prefix_c) at the end but it's identity rule (matches empty string) so
+    // no real point having it here, it'll always evaluate to true
+    MATCH (
+        RULE (closure_prefix_Z) && APPEND_TYPE (dem) &&
+        RULE (prefix__template_prefix__closure_prefix__T)
+    );
 
     MATCH (RULE (template_prefix_Y) && APPEND_TYPE (dem));
 });
@@ -2569,7 +2474,6 @@ DEFN_RULE (template_args, {
         m->template_idx_start = template_idx_start;
         m->last_reset_idx     = last_reset_idx;
         m->template_reset     = false;
-        rz_sys_breakpoint();
     }
 
     MATCH_AND_DO (
@@ -2582,7 +2486,6 @@ DEFN_RULE (template_args, {
             // number of <templates> at level 0
             if (!m->t_level) {
                 m->template_reset = true;
-                rz_sys_breakpoint();
             }
 
             if (is_const) {

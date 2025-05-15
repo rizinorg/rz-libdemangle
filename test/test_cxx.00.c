@@ -4,6 +4,7 @@
 #include "minunit.h"
 
 mu_demangle_tests(gpl,
+	mu_demangle_test("_ZN11DockHandler13addDockWidgetERK7QStringRKSt8functionIFP7QWidgetS2_P9ViewFrameN11BinaryNinja3RefINS8_10BinaryViewEEEEEN2Qt14DockWidgetAreaENSG_11OrientationEb_ptr", "DockHandler::addDockWidget(QString const&, std::function<QWidget* (QString const&, ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)> const&, Qt::DockWidgetArea, Qt::Orientation, bool)"),
 
 	mu_demangle_test("_ZNSt2147483648ios_base4InitD1Ev", NULL),
 	mu_demangle_test("_Z10initThemesv_ptr", "initThemes()"),

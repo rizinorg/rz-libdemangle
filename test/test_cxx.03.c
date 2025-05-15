@@ -4,6 +4,7 @@
 #include "minunit.h"
 
 mu_demangle_tests(gpl,
+	mu_demangle_test("_ZN4llvm10InvokeInstC2IPKPNS_5ValueEEES3_PNS_10BasicBlockES7_T_S8_jRKNS_5TwineEPNS_11InstructionE", "llvm::InvokeInst::InvokeInst<llvm::Value* const*>(llvm::Value*, llvm::BasicBlock*, llvm::BasicBlock*, llvm::Value* const*, llvm::Value* const*, unsigned int, llvm::Twine const&, llvm::Instruction*)"),
 
 	mu_demangle_test("_ZN5clang13TypeLocReader27VisitIncompleteArrayTypeLocENS_22IncompleteArrayTypeLocE", "clang::TypeLocReader::VisitIncompleteArrayTypeLoc(clang::IncompleteArrayTypeLoc)"),
 	mu_demangle_test("_ZN5clang13TypeLocReader25VisitVariableArrayTypeLocENS_20VariableArrayTypeLocE", "clang::TypeLocReader::VisitVariableArrayTypeLoc(clang::VariableArrayTypeLoc)"),

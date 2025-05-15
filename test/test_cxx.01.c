@@ -4,6 +4,7 @@
 #include "minunit.h"
 
 mu_demangle_tests(gpl,
+	mu_demangle_test("_ZN9libunwind12UnwindCursorINS_17LocalAddressSpaceENS_16Registers_x86_64EED1Ev", "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_x86_64>::~UnwindCursor()"),
 
 	mu_demangle_test("_ZNK7QString3argERKS_i5QChar_ptr", "QString::arg(QString const&, int, QChar) const"),
 	mu_demangle_test("_ZNK7QString3argExii5QChar_ptr", "QString::arg(int64_t, int, int, QChar) const"),
