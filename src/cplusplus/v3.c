@@ -406,7 +406,9 @@ static DemString* match_zero_or_more_rules (
     DemString  tmp_defer_var_##var = {};                                                           \
     DemString* var                 = &tmp_defer_var_##var;                                         \
     dem_string_init (var);
-#define APPEND_DEFER_VAR(var) (dem_string_concat (dem, (var)), dem_string_deinit (var), 1)
+
+#define APPEND_DEFER_VAR(var)                                                                      \
+    (var)->len ? (dem_string_concat (dem, (var)), dem_string_deinit (var), 1) : true
 
 /**
  * Always evaluate to true, even if rule does not match.
@@ -697,18 +699,13 @@ DECL_RULE (nested_name);
 DECL_RULE (cv_qualifiers);
 DECL_RULE (ref_qualifier);
 DECL_RULE (prefix);
-// DECL_RULE (closure_prefix);
 DECL_RULE (template_param);
 DECL_RULE (decltype);
 DECL_RULE (template_prefix);
 DECL_RULE (unqualified_name);
-DECL_RULE_ALIAS (variable_or_member_unqualified_name, unqualified_name);
-// DECL_RULE_ALIAS (variable_template_template_prefix, template_prefix);
 DECL_RULE (ctor_dtor_name);
 DECL_RULE (source_name);
 DECL_RULE (number);
-// DECL_RULE_ALIAS (positive_length_number, number);
-// DECL_RULE (identifier);
 DECL_RULE (unnamed_type_name);
 DECL_RULE (abi_tag);
 DECL_RULE (abi_tags);
@@ -725,7 +722,6 @@ DECL_RULE (float);
 DECL_RULE_ALIAS (value_number, number);
 DECL_RULE_ALIAS (value_float, float);
 DECL_RULE_ALIAS (string_type, type);
-/* DECL_RULE_ALIAS (nullptr_type, type); */
 DECL_RULE_ALIAS (pointer_type, type);
 DECL_RULE_ALIAS (real_part_float, float);
 DECL_RULE_ALIAS (imag_part_float, float);
@@ -753,13 +749,10 @@ DECL_RULE_ALIAS (instantiation_dependent_array_bound_expression, expression);
 DECL_RULE_ALIAS (array_bound_number, number);
 DECL_RULE (pointer_to_member_type);
 DECL_RULE_ALIAS (class_type, type);
-/* DECL_RULE_ALIAS (member_type, type); */
 DECL_RULE (template_template_param);
 DECL_RULE (digit);
-DECL_RULE_ALIAS (template_unqualified_name, unqualified_name);
 DECL_RULE (template_args);
 DECL_RULE (template_arg);
-// DECL_RULE (unscoped_template_name);
 DECL_RULE (substitution);
 DECL_RULE (seq_id);
 DECL_RULE (local_name);
@@ -980,8 +973,8 @@ DEFN_RULE (unscoped_name, {
     MATCH (OPTIONAL (READ_STR ("St") && APPEND_STR ("std::")) && RULE (unqualified_name));
 });
 
-static inline bool make_nested_name (DemString* dem, DemString* pfx, DemString* uname, Meta* m) {
-    if (!dem || !pfx || !uname) {
+static inline bool make_nested_name (DemString* dem, DemString* pfx, Meta* m) {
+    if (!dem || !pfx) {
         return false;
     }
 
@@ -1008,19 +1001,13 @@ static inline bool make_nested_name (DemString* dem, DemString* pfx, DemString* 
             UNSET_CTOR();
         } else {
             dem_string_concat (dem, pfx);
-            if (uname->len) {
-                APPEND_STR ("::");
-                dem_string_concat (dem, uname);
-            }
         }
 
         dem_string_deinit (pfx);
-        dem_string_deinit (uname);
 
         return true;
     } else {
         dem_string_deinit (pfx);
-        dem_string_deinit (uname);
         return false;
     }
 }
@@ -1035,14 +1022,9 @@ static inline bool make_nested_name (DemString* dem, DemString* pfx, DemString* 
  * I manually added to match an `unqualified_name` after `template_args` in `nested_name`
  * and now it works, with the help of this patch function.
  */
-static inline bool make_template_nested_name (
-    DemString* dem,
-    DemString* pfx,
-    DemString* targs,
-    DemString* uname,
-    Meta*      m
-) {
-    if (!dem || !pfx || !targs || !uname) {
+static inline bool
+    make_template_nested_name (DemString* dem, DemString* pfx, DemString* targs, Meta* m) {
+    if (!dem || !pfx || !targs) {
         return false;
     }
 
@@ -1070,7 +1052,6 @@ static inline bool make_template_nested_name (
         n_len = pfx->len;
     }
 
-
     if (IS_CTOR()) {
         dem_string_concat (dem, pfx);
         dem_string_concat (dem, targs);
@@ -1092,97 +1073,40 @@ static inline bool make_template_nested_name (
     } else {
         dem_string_concat (dem, pfx);
         dem_string_concat (dem, targs);
-        if (uname->len) {
-            APPEND_STR ("::");
-            dem_string_concat (dem, uname);
-        }
     }
 
     dem_string_deinit (pfx);
-    dem_string_deinit (uname);
     dem_string_deinit (targs);
 
     return true;
 }
 
-// DEFN_RULE (nested_name, {
-DemString* rule_nested_name (DemString* dem, StrIter* msi, Meta* m) {
+DEFN_RULE (nested_name, {
     DEFER_VAR (ref);
     DEFER_VAR (pfx);
-    DEFER_VAR (uname);
 
-    /*
-     * HACK(brightprogrammer):
-     * Reference qualifiers are present at the end of type names. The way we match
-     * the grammar rules (linearly, from left to right), there is no direct way to append
-     * the matched reference qualifier at the end.
-     *
-     * For this we use RULE_DEFER to temporarily store the deferred rule, and then
-     * append it later on after complete matching is done
-     */
-
-    /* NOTE(brightprogrammer):
-     * these two rules make up matching for the rule
-     *   <nested-name> ::= N [<CV-qualifiers>] [<ref-qualifier>] <prefix> <unqualified-name> E 
-     */
+    // N [<CV-qualifiers>] [<ref-qualifier>] <prefix> <unqualified-name> E
     MATCH (
-        READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (ref, ref_qualifier) &&
-        RULE_DEFER (pfx, prefix) && RULE_DEFER (uname, unqualified_name) &&
-        make_nested_name (dem, pfx, uname, m) && READ ('E') && APPEND_DEFER_VAR (ref)
+        READ ('N') && OPTIONAL (RULE (cv_qualifiers)) &&
+        OPTIONAL (RULE_DEFER (ref, ref_qualifier)) && RULE_DEFER (pfx, prefix) && READ ('E') &&
+        make_nested_name (dem, pfx, m) && APPEND_DEFER_VAR (ref)
     );
     dem_string_deinit (ref);
     dem_string_deinit (pfx);
-    dem_string_deinit (uname);
-
-
-    MATCH (
-        READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (pfx, prefix) &&
-        RULE_DEFER (uname, unqualified_name) && make_nested_name (dem, pfx, uname, m) && READ ('E')
-    );
-    dem_string_deinit (ref);
-    dem_string_deinit (pfx);
-    dem_string_deinit (uname);
-
 
     DEFER_VAR (targs);
 
-    /* NOTE(brightprogrammer):
-     * these two rules make up matching for the rule
-     *   <nested-name> ::= N [<CV-qualifiers>] [<ref-qualifier>] <template-prefix> <template-args> E
-     *
-     * NOTE(brightprogrammer):
-     * Rule for <template-args> in concatenation below is not an optional rule.
-     * The parser already detects template args before we reach here (inside template-prefix),
-     * and I don't want to really pay attention to how this happens, I've already changed the grammar
-     * a lot, and my head is exploding from long debugging sessions.
-     * So, I'll just make it optional here, for just-in-case, otherwise the matching works as expected.
-     */
+    // N [<CV-qualifiers>] [<ref-qualifier>] <template-prefix> <template-args> E
     MATCH (
-        READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (ref, ref_qualifier) &&
-        RULE_DEFER (pfx, template_prefix) && OPTIONAL (RULE_DEFER (targs, template_args)) &&
-        OPTIONAL (RULE_DEFER (uname, unqualified_name)) &&
-        make_template_nested_name (dem, pfx, targs, uname, m) && READ ('E') &&
-        APPEND_DEFER_VAR (ref)
+        READ ('N') && OPTIONAL (RULE (cv_qualifiers)) &&
+        OPTIONAL (RULE_DEFER (ref, ref_qualifier)) && RULE_DEFER (pfx, template_prefix) &&
+        OPTIONAL (RULE_DEFER (targs, template_args)) && READ ('E') &&
+        make_template_nested_name (dem, pfx, targs, m) && APPEND_DEFER_VAR (ref)
     );
     dem_string_deinit (ref);
     dem_string_deinit (pfx);
-    dem_string_deinit (uname);
     dem_string_deinit (targs);
-
-
-    MATCH (
-        READ ('N') && OPTIONAL (RULE (cv_qualifiers)) && RULE_DEFER (pfx, template_prefix) &&
-        OPTIONAL (RULE_DEFER (targs, template_args)) &&
-        OPTIONAL (RULE_DEFER (uname, unqualified_name)) &&
-        make_template_nested_name (dem, pfx, targs, uname, m) && READ ('E')
-    );
-    dem_string_deinit (ref);
-    dem_string_deinit (pfx);
-    dem_string_deinit (uname);
-    dem_string_deinit (targs);
-    // });
-    return NULL;
-}
+});
 
 DEFN_RULE (cv_qualifiers, {
     MATCH (READ ('r') && APPEND_STR ("restrict"));
@@ -1195,187 +1119,102 @@ DEFN_RULE (ref_qualifier, {
     MATCH (READ ('O') && APPEND_STR ("&&"));
 });
 
-DECL_RULE_ALIAS (prefix_b, template_args);
+//
+// DEFN_RULE (prefix, {
+//     MATCH (RULE (unqualified_name));
+//     MATCH (RULE (prefix) && RULE (unqualified_name));
+//     MATCH (RULE (template_prefix) && RULE (template_args) && APPEND_TYPE (dem));
+//     MATCH (RULE (closure_prefix) && APPEND_TYPE (dem));
+//     MATCH (RULE (template_param) && APPEND_TYPE (dem));
+//     MATCH (RULE (decltype) && APPEND_TYPE (dem));
+//     MATCH (RULE (substitution));
+// });
+//
+// DEFN_RULE (closure_prefix, {
+//     MATCH (OPTIONAL (RULE (prefix)) && RULE (unqualified_name) && READ ('M'));
+//     MATCH (RULE (template_prefix) && RULE (template_args) && READ ('M'));
+// });
+//
+// DEFN_RULE (template_prefix, {
+//     MATCH (RULE (unqualified_name));
+//     MATCH (RULE (prefix) && RULE (unqualified_name));
+//     MATCH (RULE (template_param));
+//     MATCH (RULE (substitution));
+// });
+//
+// Above is the original grammar, the implementation contains the Griebach Normal Form
+// of above.
+//
 
-DEFN_RULE (prefix_c, { return dem; });
+DEFN_RULE (prefix_1, {
+    MATCH (RULE (unqualified_name) && RULE (prefix_1));
+    MATCH (RULE (unqualified_name) && READ ('M') && RULE (prefix_1));
 
-DEFN_RULE (prefix_X, {
-    MATCH (RULE (unqualified_name) && APPEND_TYPE (dem));
+    // match empty string
+    return dem;
+});
+
+DEFN_RULE (prefix_f, {
+    MATCH (RULE (unqualified_name));
     MATCH (RULE (template_param) && APPEND_TYPE (dem));
     MATCH (RULE (decltype) && APPEND_TYPE (dem));
     MATCH (RULE (substitution));
 });
 
-DECL_RULE_ALIAS (template_prefix_l, template_unqualified_name);
+DEFN_RULE (template_prefix_h, {
+    MATCH (RULE (unqualified_name));
+    MATCH (RULE (template_param));
+    MATCH (RULE (substitution));
+});
 
-DECL_RULE (template_prefix_Y);
-
-DEFN_RULE (closure_prefix_m, { MATCH (RULE (variable_or_member_unqualified_name) && READ ('M')); });
-
-DECL_RULE (closure_prefix_Z);
-
-DEFN_RULE (prefix__template_prefix__closure_prefix__T_1, {
-    DEFER_VAR (un);
-    DEFER_VAR (accu); /* accumulator */
-    DemString* parent_dem = dem;
-
-    dem_string_concat (accu, parent_dem);
+DEFN_RULE (prefix_2, {
     MATCH (
-        dem_string_append (accu, "::") && RULE_DEFER (accu, template_prefix_l) &&
-        APPEND_TYPE (accu) && RULE_DEFER (un, source_name) && dem_string_append (accu, "::") &&
-        dem_string_concat (accu, un) && APPEND_TYPE (accu) && RULE_DEFER (accu, prefix_b) &&
-        APPEND_TYPE (accu) &&
-        (dem_string_deinit (parent_dem), dem_string_init_clone (parent_dem, accu))
+        RULE (unqualified_name) && RULE (template_args) && APPEND_TYPE (dem) && RULE (prefix_1) &&
+        RULE (prefix_2)
+    );
+    MATCH (
+        RULE (unqualified_name) && RULE (template_args) && READ ('M') && RULE (prefix_1) &&
+        RULE (prefix_2)
     );
 
-    dem_string_deinit (un);
-    dem_string_deinit (accu);
-})
+    return dem;
+});
 
-DEFN_RULE (prefix__template_prefix__closure_prefix__T_2, {
-    DEFER_VAR (un);
-    DEFER_VAR (accu); /* accumulator */
-    DemString* parent_dem = dem;
+DEFN_RULE (prefix, {
+    MATCH (
+        RULE (template_prefix_h) && RULE (template_args) && APPEND_TYPE (dem) && RULE (prefix_1) &&
+        RULE (prefix_2)
+    );
+    MATCH (
+        RULE (template_prefix_h) && RULE (template_args) && READ ('M') && RULE (prefix_1) &&
+        RULE (prefix_2)
+    );
 
-    dem_string_concat (accu, parent_dem);
-    /* after closure_prefix_m, there's prefix_c, but that's just identity rule so we can ignore that */
-    MATCH_AND_CONTINUE (
-        dem_string_append (accu, "::") && RULE_DEFER (accu, closure_prefix_m) &&
-        APPEND_TYPE (accu) &&
-        (dem_string_deinit (parent_dem), dem_string_init_clone (parent_dem, accu))
+    MATCH (RULE (unqualified_name) && READ ('M') && RULE (prefix_1) && RULE (prefix_2));
+    MATCH (RULE (prefix_f) && RULE (prefix_1) && RULE (prefix_2));
+});
+
+DEFN_RULE (template_prefix_1, {
+    MATCH (
+        RULE (template_args) && APPEND_TYPE (dem) && RULE (prefix_1) && RULE (unqualified_name) &&
+        RULE (template_prefix_1)
+    );
+    MATCH (
+        RULE (template_args) && READ ('M') && RULE (prefix_1) && RULE (unqualified_name) &&
+        RULE (template_prefix_1)
     );
 });
 
-DEFN_RULE (prefix__template_prefix__closure_prefix__T_1_or_2, {
-    DemString* parent_dem = dem;
-    MATCH (RULE_DEFER (parent_dem, prefix__template_prefix__closure_prefix__T_1));
-    MATCH (RULE_DEFER (parent_dem, prefix__template_prefix__closure_prefix__T_2));
+DEFN_RULE (template_prefix, {
+    MATCH (
+        RULE (unqualified_name) && READ ('M') && RULE (prefix_1) && RULE (unqualified_name) &&
+        RULE (template_prefix_1)
+    );
+    MATCH (
+        RULE (prefix_f) && RULE (prefix_1) && RULE (unqualified_name) && RULE (template_prefix_1)
+    );
+    MATCH (RULE (template_prefix_h) && RULE (template_prefix_1));
 });
-
-DEFN_RULE (prefix__template_prefix__closure_prefix__T, {
-    DemString* parent_dem = dem;
-    MATCH (RULE_DEFER_MANY (parent_dem, prefix__template_prefix__closure_prefix__T_1_or_2));
-});
-
-// DEFN_RULE (prefix, {
-DemString* rule_prefix (DemString* dem, StrIter* msi, Meta* m) {
-    DEFER_VAR (pfx);
-
-    if (RULE_DEFER (pfx, prefix_X)) {
-        const char* last_pos        = msi->cur;
-        const char* second_last_pos = msi->cur;
-
-        DEFER_VAR (curr_name);
-        DEFER_VAR (last_name);
-        DEFER_VAR (second_last_name);
-
-        Meta last_meta        = {0};
-        Meta second_last_meta = {0};
-
-        meta_tmp_init (m, &last_meta);
-        meta_tmp_init (m, &second_last_meta);
-
-        while (true) {
-            // if we get a match at current position, then we append the last match
-            // if we don't get a match at current position, then we don't get a change to append a last match
-            // this mechanism forces this rule to leave out the last unqualified_name
-            if (RULE_DEFER (curr_name, unqualified_name)) {
-                // <total_name> += :: <last_name>
-                // this condition is true on second iteration,
-                // when last_name is not empty for the first time
-                if (second_last_pos != last_pos) {
-                    dem_string_append (pfx, "::");
-                    dem_string_concat (pfx, last_name);
-                    APPEND_TYPE (pfx);
-                }
-
-                // update second last name to store last name
-                //    and last name to store current name
-                dem_string_deinit (second_last_name);
-                dem_string_concat (second_last_name, last_name);
-                dem_string_deinit (last_name);
-                dem_string_concat (last_name, curr_name);
-                dem_string_deinit (curr_name);
-
-                // update second last meta to store last meta
-                //    and last meta to store current meta
-                {
-                    UNUSED (vec_reserve (
-                        &second_last_meta.detected_types,
-                        last_meta.detected_types.length
-                    ));
-                    memcpy (
-                        second_last_meta.detected_types.data,
-                        last_meta.detected_types.data,
-                        vec_mem_size (&last_meta.detected_types)
-                    );
-                    second_last_meta.detected_types.length = last_meta.detected_types.length;
-                    second_last_meta.is_ctor               = last_meta.is_ctor;
-                    second_last_meta.is_dtor               = last_meta.is_dtor;
-
-                    UNUSED (vec_reserve (&last_meta.detected_types, m->detected_types.length));
-                    memcpy (
-                        last_meta.detected_types.data,
-                        m->detected_types.data,
-                        vec_mem_size (&m->detected_types)
-                    );
-                    last_meta.detected_types.length = m->detected_types.length;
-                    last_meta.is_ctor               = m->is_ctor;
-                    last_meta.is_dtor               = m->is_dtor;
-                }
-
-                // update second last pos to store last pos
-                //    and last pos to store current pos
-                second_last_pos = last_pos;
-                last_pos        = msi->cur;
-            } else {
-                // if match fails, then we restore back to last matched position
-                // and return as if that's not yet matched
-                msi->cur = second_last_pos;
-
-                for (DemString* ds = m->detected_types.data + last_meta.detected_types.length;
-                     ds < m->detected_types.data + m->detected_types.length;
-                     ds++) {
-                    dem_string_deinit (ds);
-                }
-
-                m->detected_types.length = last_meta.detected_types.length;
-
-                UNUSED (vec_deinit (&second_last_meta.detected_types));
-                UNUSED (vec_deinit (&last_meta.detected_types));
-
-                break;
-            }
-        }
-
-        // APPEND_TYPE (pfx);
-
-        dem_string_concat (dem, pfx);
-        dem_string_deinit (pfx);
-        dem_string_deinit (last_name);
-        dem_string_deinit (second_last_name);
-
-        return dem;
-    }
-
-    // fix mutual-recursions
-    MATCH (
-        RULE (prefix_X) && APPEND_TYPE (dem) && RULE (prefix__template_prefix__closure_prefix__T)
-    );
-
-    MATCH (
-        RULE (template_prefix_Y) && RULE (prefix_b) && APPEND_TYPE (dem) &&
-        RULE (prefix__template_prefix__closure_prefix__T)
-    );
-
-    // after closure-prefix-Z we have prefix-c but that's an identity rule hence we can just ignore it
-    MATCH (
-        RULE (closure_prefix_Z) && APPEND_TYPE (dem) &&
-        RULE (prefix__template_prefix__closure_prefix__T)
-    );
-    // });
-    return NULL;
-}
 
 DEFN_RULE (abi_tags, { MATCH (RULE_ATLEAST_ONCE (abi_tag)); });
 
@@ -1387,63 +1226,6 @@ DEFN_RULE (abi_tag, {
 DEFN_RULE (decltype, {
     MATCH (READ_STR ("Dt") && RULE (expression) && READ ('E'));
     MATCH (READ_STR ("DT") && RULE (expression) && READ ('E'));
-});
-
-DEFN_RULE (closure_prefix_Z_l, {
-    MATCH (
-        RULE (prefix_c) && RULE (prefix__template_prefix__closure_prefix__T) &&
-        RULE (closure_prefix_m)
-    );
-});
-
-DEFN_RULE (closure_prefix_Z_k, { MATCH (RULE (template_args) && READ ('M')); })
-
-DEFN_RULE (closure_prefix_Z, {
-    MATCH (
-        RULE (closure_prefix_Z_l) && RULE (closure_prefix_Z_k) && OPTIONAL (RULE (closure_prefix_Z))
-    );
-});
-
-// DEFN_RULE (closure_prefix, {
-//     MATCH (
-//         OPTIONAL (RULE (prefix_X)) && RULE (prefix__template_prefix__closure_prefix__T) &&
-//         RULE (closure_prefix_m)
-//     );
-//     MATCH (
-//         RULE (template_prefix_Y) && RULE (prefix_b) &&
-//         RULE (prefix__template_prefix__closure_prefix__T) && RULE (closure_prefix_m)
-//     );
-//     MATCH (
-//         RULE (closure_prefix_Z) && RULE (prefix_c) &&
-//         RULE (prefix__template_prefix__closure_prefix__T) && RULE (closure_prefix_m)
-//     );
-//     MATCH (RULE (closure_prefix_Z));
-// });
-
-DEFN_RULE (template_prefix_Y, {
-    MATCH (RULE (template_unqualified_name));
-    MATCH (RULE (template_param));
-    MATCH (RULE (substitution));
-});
-
-DEFN_RULE (template_prefix, {
-    MATCH (
-        RULE (prefix_X) && APPEND_TYPE (dem) && RULE (prefix__template_prefix__closure_prefix__T)
-    );
-
-    MATCH (
-        RULE (template_prefix_Y) && APPEND_TYPE (dem) && RULE (prefix_b) &&
-        RULE (prefix__template_prefix__closure_prefix__T)
-    );
-
-    // NOTE: has RULE(prefix_c) at the end but it's identity rule (matches empty string) so
-    // no real point having it here, it'll always evaluate to true
-    MATCH (
-        RULE (closure_prefix_Z) && APPEND_TYPE (dem) &&
-        RULE (prefix__template_prefix__closure_prefix__T)
-    );
-
-    MATCH (RULE (template_prefix_Y) && APPEND_TYPE (dem));
 });
 
 DEFN_RULE (template_param, {
