@@ -32,6 +32,11 @@ typedef uint16_t ut16;
 typedef uint32_t ut32;
 typedef uint64_t ut64;
 
+typedef char st8;
+typedef short st16;
+typedef int st32;
+typedef long long st64;
+
 #define UT8_MAX  0xFFu
 #define UT16_MAX 0xFFFFu
 #define UT32_MAX 0xFFFFFFFFu
@@ -70,8 +75,11 @@ typedef struct {
 } DemString;
 
 void dem_string_free(DemString *ds);
+void dem_string_deinit(DemString* ds);
 DemString *dem_string_new();
 DemString *dem_string_new_with_capacity(size_t cap);
+DemString *dem_string_init(DemString *ds);
+DemString *dem_string_init_clone(DemString *dst, DemString *src);
 char *dem_string_drain(DemString *ds);
 bool dem_string_append(DemString *ds, const char *string);
 bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size);
