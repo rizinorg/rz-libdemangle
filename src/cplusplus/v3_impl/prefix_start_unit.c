@@ -9,4 +9,4 @@ DEFN_RULE (prefix_start_unit, {
     MATCH (RULE (prefix_or_template_prefix_start));
     MATCH (RULE (decltype) && APPEND_TYPE (dem));
     MATCH (RULE (closure_prefix));
-}); 
+});

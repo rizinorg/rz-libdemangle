@@ -24,4 +24,4 @@ DEFN_RULE (discriminator, {
             }
         }
     }
-}); 
+});

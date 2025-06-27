@@ -7,4 +7,4 @@
 DEFN_RULE (decltype, {
     MATCH (READ_STR ("Dt") && RULE (expression) && READ ('E'));
     MATCH (READ_STR ("DT") && RULE (expression) && READ ('E'));
-}); 
+});

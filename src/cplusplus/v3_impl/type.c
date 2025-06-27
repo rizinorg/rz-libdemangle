@@ -7,17 +7,20 @@
 DEFN_RULE (type, {
     MATCH (RULE (function_type) && APPEND_TYPE (dem));
 
-    MATCH_AND_DO(first_of_rule_extended_qualifier(CUR()) && RULE_ATLEAST_ONCE(extended_qualifier), {
-        MATCH (READ_STR ("rVK") && RULE (type) && APPEND_STR (" restrict const volatile"));
-        MATCH (READ_STR ("rV") && RULE (type) && APPEND_STR (" restrict volatile"));
-        MATCH (READ_STR ("rK") && RULE (type) && APPEND_STR (" restrict const"));
-        MATCH (READ_STR ("VK") && RULE (type) && APPEND_STR (" const volatile"));
-        MATCH (READ ('P') && RULE (type) && APPEND_STR ("*") && APPEND_TYPE (dem));
-        MATCH (READ ('R') && RULE (type) && APPEND_STR ("&") && APPEND_TYPE (dem));
-        MATCH (READ ('K') && RULE (type) && APPEND_STR (" const") && APPEND_TYPE (dem));
-        MATCH (READ ('O') && RULE (type) && APPEND_STR ("&&") && APPEND_TYPE (dem));
-        MATCH_FAILED();
-    });
+    MATCH_AND_DO (
+        first_of_rule_extended_qualifier (CUR()) && RULE_ATLEAST_ONCE (extended_qualifier),
+        {
+            MATCH (READ_STR ("rVK") && RULE (type) && APPEND_STR (" restrict const volatile"));
+            MATCH (READ_STR ("rV") && RULE (type) && APPEND_STR (" restrict volatile"));
+            MATCH (READ_STR ("rK") && RULE (type) && APPEND_STR (" restrict const"));
+            MATCH (READ_STR ("VK") && RULE (type) && APPEND_STR (" const volatile"));
+            MATCH (READ ('P') && RULE (type) && APPEND_STR ("*") && APPEND_TYPE (dem));
+            MATCH (READ ('R') && RULE (type) && APPEND_STR ("&") && APPEND_TYPE (dem));
+            MATCH (READ ('K') && RULE (type) && APPEND_STR (" const") && APPEND_TYPE (dem));
+            MATCH (READ ('O') && RULE (type) && APPEND_STR ("&&") && APPEND_TYPE (dem));
+            MATCH_FAILED();
+        }
+    );
 
     MATCH (READ ('C') && RULE (type)); // complex pair (C99)
     MATCH (READ ('G') && RULE (type)); // imaginary (C99)
@@ -25,7 +28,7 @@ DEFN_RULE (type, {
     MATCH (READ ('P') && RULE (type) && APPEND_STR ("*") && APPEND_TYPE (dem));
     MATCH (READ ('R') && RULE (type) && APPEND_STR ("&") && APPEND_TYPE (dem));
     MATCH (READ ('O') && RULE (type) && APPEND_STR ("&&") && APPEND_TYPE (dem));
-    
+
     MATCH (READ_STR ("rVK") && RULE (type) && APPEND_STR (" restrict const volatile"));
     MATCH (READ_STR ("rV") && RULE (type) && APPEND_STR (" restrict volatile"));
     MATCH (READ_STR ("rK") && RULE (type) && APPEND_STR (" restrict const"));
@@ -35,7 +38,10 @@ DEFN_RULE (type, {
     MATCH (READ ('K') && RULE (type) && APPEND_STR (" const") && APPEND_TYPE (dem));
 
     // MATCH (RULE (template_template_param) && APPEND_TYPE (dem) && RULE (template_args) && APPEND_TYPE (dem));
-    MATCH (RULE (template_param) && APPEND_TYPE (dem) && OPTIONAL(RULE (template_args) && APPEND_TYPE (dem)));
+    MATCH (
+        RULE (template_param) && APPEND_TYPE (dem) &&
+        OPTIONAL (RULE (template_args) && APPEND_TYPE (dem))
+    );
     MATCH (RULE (substitution) && RULE (template_args) && APPEND_TYPE (dem));
 
 

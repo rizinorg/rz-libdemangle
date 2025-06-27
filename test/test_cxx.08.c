@@ -1004,7 +1004,5 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN4llvm10FoldingSetIN5clang36SubstTemplateTemplateParmPackStorageEED1Ev", "llvm::FoldingSet<clang::SubstTemplateTemplateParmPackStorage>::~FoldingSet()"),
 	mu_demangle_test("_ZN4llvm10FoldingSetIN5clang21DependentTemplateNameEED1Ev", "llvm::FoldingSet<clang::DependentTemplateName>::~FoldingSet()"),
 	mu_demangle_test("_ZN4llvm10FoldingSetIN5clang21QualifiedTemplateNameEED1Ev", "llvm::FoldingSet<clang::QualifiedTemplateName>::~FoldingSet()"),
-	mu_demangle_test("_ZN4llvm10FoldingSetIN5clang14AttributedTypeEED1Ev", "llvm::FoldingSet<clang::AttributedType>::~FoldingSet()"),
-);
+	mu_demangle_test("_ZN4llvm10FoldingSetIN5clang14AttributedTypeEED1Ev", "llvm::FoldingSet<clang::AttributedType>::~FoldingSet()"), );
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
-

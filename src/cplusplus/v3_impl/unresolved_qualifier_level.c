@@ -4,6 +4,4 @@
 
 #include "types.h"
 
-DEFN_RULE (unresolved_qualifier_level, { 
-    MATCH (RULE (simple_id)); 
-}); 
+DEFN_RULE (unresolved_qualifier_level, { MATCH (RULE (simple_id)); });

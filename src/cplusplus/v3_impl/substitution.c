@@ -32,4 +32,4 @@ DEFN_RULE (substitution, {
         READ_STR ("Sd") && APPEND_STR ("std::iostream")
         // APPEND_STR ("std::basic_iostream<char, std::char_traits<char>>")
     );
-}); 
+});

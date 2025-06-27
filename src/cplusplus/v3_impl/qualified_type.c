@@ -4,6 +4,4 @@
 
 #include "types.h"
 
-DEFN_RULE (qualified_type, { 
-    MATCH (RULE (qualifiers) && RULE (type)); 
-}); 
+DEFN_RULE (qualified_type, { MATCH (RULE (qualifiers) && RULE (type)); });

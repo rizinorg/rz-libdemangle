@@ -1004,6 +1004,5 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZNK4llvm5APInt3uleEy", "llvm::APInt::ule(uint64_t) const"),
 	mu_demangle_test("_ZNK4llvm14SCEVAddRecExpr17getStepRecurrenceERNS_15ScalarEvolutionE", "llvm::SCEVAddRecExpr::getStepRecurrence(llvm::ScalarEvolution&) const"),
 	mu_demangle_test("_ZN4llvm15ScalarEvolution13getAddRecExprERKNS_15SmallVectorImplIPKNS_4SCEVEEEPKNS_4LoopEbb", "llvm::ScalarEvolution::getAddRecExpr(llvm::SmallVectorImpl<llvm::SCEV const*> const&, llvm::Loop const*, bool, bool)"),
-	mu_demangle_test("_ZN4llvm8SmallSetIxLj8EE6insertERKx", "llvm::SmallSet<int64_t, 8u>::insert(int64_t const&)"),
-);
+	mu_demangle_test("_ZN4llvm8SmallSetIxLj8EE6insertERKx", "llvm::SmallSet<int64_t, 8u>::insert(int64_t const&)"), );
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);

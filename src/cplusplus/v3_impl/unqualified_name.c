@@ -17,4 +17,4 @@ DEFN_RULE (unqualified_name, {
     MATCH (RULE (source_name));
     /* MATCH (RULE (expr_primary)); */
     MATCH (RULE (unnamed_type_name));
-}); 
+});

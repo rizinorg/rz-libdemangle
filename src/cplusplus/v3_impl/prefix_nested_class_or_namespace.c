@@ -172,8 +172,14 @@ bool we_are_at_an_unqualified_name_starting (const char* p) {
 
 DEFN_RULE (prefix_nested_class_or_namespace, {
     // {unqualified-name} {prefix-nested-class-or-namespace}
-    MATCH (RULE (unqualified_name) && APPEND_TYPE (dem) && APPEND_STR ("::") && RULE (prefix_nested_class_or_namespace) && APPEND_TYPE (dem));
+    MATCH (
+        RULE (unqualified_name) && APPEND_TYPE (dem) && APPEND_STR ("::") &&
+        RULE (prefix_nested_class_or_namespace) && APPEND_TYPE (dem)
+    );
 
     // {unqualified-name}
-    MATCH (RULE (unqualified_name) && we_are_at_an_unqualified_name_starting (msi->cur) && APPEND_TYPE (dem));
+    MATCH (
+        RULE (unqualified_name) && we_are_at_an_unqualified_name_starting (msi->cur) &&
+        APPEND_TYPE (dem)
+    );
 });

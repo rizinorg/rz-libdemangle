@@ -4,6 +4,4 @@
 
 #include "types.h"
 
-DEFN_RULE (bare_function_type, {
-    MATCH (RULE_ATLEAST_ONCE_WITH_SEP (type, ", "));
-}); 
+DEFN_RULE (bare_function_type, { MATCH (RULE_ATLEAST_ONCE_WITH_SEP (type, ", ")); });

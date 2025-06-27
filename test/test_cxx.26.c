@@ -909,23 +909,23 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZL16NotUnderValgrind", "NotUnderValgrind"),
 	mu_demangle_test("_ZN8Blizzard6Memory12voidp_returncvPT_IcEEv", "Blizzard::Memory::voidp_return::operator char*<char>()"),
 	mu_demangle_test("_Z2f0PU3AS1c", "f0(char AS1*)"),
-	mu_demangle_test("_ZN5Casts8implicitILj4EEEvPN9enable_ifIXstT_EvE4typeE", 		"void Casts::implicit<4u>(enable_if<sizeof (4u), void>::type*)" ),
-	mu_demangle_test("_ZN5Casts8implicitILj4EEEvPN9enable_ifIXszT_EvE4typeE", 		"void Casts::implicit<4u>(enable_if<sizeof (4u), void>::type*)" ),
-	mu_demangle_test("_ZN5Casts8implicitILj4EEEvPN9enable_ifIXatT_EvE4typeE", 		"void Casts::implicit<4u>(enable_if<alignof (4u), void>::type*)" ),
-	mu_demangle_test("_ZN5Casts8implicitILj4EEEvPN9enable_ifIXazT_EvE4typeE", 		"void Casts::implicit<4u>(enable_if<alignof (4u), void>::type*)" ),
-	mu_demangle_test("_Z1fPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP1XS13_S12_S11_S10_SZ_SY_SX_SW_SV_SU_ST_SS_SR_SQ_SP_SO_SN_SM_SL_SK_SJ_" 
-			"SI_SH_SG_SF_SE_SD_SC_SB_SA_S9_S8_S7_S6_S5_S4_S3_S2_S1_S0_S_",
+	mu_demangle_test("_ZN5Casts8implicitILj4EEEvPN9enable_ifIXstT_EvE4typeE", "void Casts::implicit<4u>(enable_if<sizeof (4u), void>::type*)"),
+	mu_demangle_test("_ZN5Casts8implicitILj4EEEvPN9enable_ifIXszT_EvE4typeE", "void Casts::implicit<4u>(enable_if<sizeof (4u), void>::type*)"),
+	mu_demangle_test("_ZN5Casts8implicitILj4EEEvPN9enable_ifIXatT_EvE4typeE", "void Casts::implicit<4u>(enable_if<alignof (4u), void>::type*)"),
+	mu_demangle_test("_ZN5Casts8implicitILj4EEEvPN9enable_ifIXazT_EvE4typeE", "void Casts::implicit<4u>(enable_if<alignof (4u), void>::type*)"),
+	mu_demangle_test("_Z1fPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP1XS13_S12_S11_S10_SZ_SY_SX_SW_SV_SU_ST_SS_SR_SQ_SP_SO_SN_SM_SL_SK_SJ_"
+			 "SI_SH_SG_SF_SE_SD_SC_SB_SA_S9_S8_S7_S6_S5_S4_S3_S2_S1_S0_S_",
 		"f(X****************************************, X****************************************, "
-			"X***************************************, X**************************************, "
-			"X*************************************, X************************************, "
-			"X***********************************, X**********************************, X*********************************, " 
-			"X********************************, X*******************************, X******************************, " 
-			"X*****************************, X****************************, X***************************, " 
-			"X**************************, X*************************, X************************, X***********************, " 
-			"X**********************, X*********************, X********************, X*******************, " 
-			"X******************, X*****************, X****************, X***************, X**************, X*************, " 
-			"X************, X***********, X**********, X*********, X********, X*******, X******, X*****, X****, X***, X**, " 
-			"X*, X)" ),
+		"X***************************************, X**************************************, "
+		"X*************************************, X************************************, "
+		"X***********************************, X**********************************, X*********************************, "
+		"X********************************, X*******************************, X******************************, "
+		"X*****************************, X****************************, X***************************, "
+		"X**************************, X*************************, X************************, X***********************, "
+		"X**********************, X*********************, X********************, X*******************, "
+		"X******************, X*****************, X****************, X***************, X**************, X*************, "
+		"X************, X***********, X**********, X*********, X********, X*******, X******, X*****, X****, X***, X**, "
+		"X*, X)"),
 	mu_demangle_test("_ZZN1J1KEvENK1C1FEv", "J::K()::C::F() const"),
 	mu_demangle_test("_ZZNVK1J1KEvENK1C1FEv", "J::K() const volatile::C::F() const"),
 	mu_demangle_test("_Z1fM1AKFvvE", "f(void (A::*)() const)"),
@@ -940,9 +940,9 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN5test52f1ENS_2t1ILZ8test5_f0EEE", "test5::f1(test5::t1<test5_f0>)"),
 	mu_demangle_test("_ZN5test52f2ENS_2t2ILZ4mainEEE", "test5::f2(test5::t2<main>)"),
 	mu_demangle_test("_ZN5test52f2ENS_2t2ILZ4mainEEE", "test5::f2(test5::t2<main>)"),
-	mu_demangle_test("_ZN5test81fIiEEvNS_5int_cIXsrNS_4metaIT_E4typeE5valueEEE", 		"void test8::f<int>(test8::int_c<test8::meta<int>::type::value>)" ),
-	mu_demangle_test("_ZN5test91fIiNS_1XEEENS_9supermetaIT_E5applyIT0_E4typeEv", 		"test9::supermeta<int>::apply<test9::X>::type test9::f<int, test9::X>()" ),
-	mu_demangle_test("_ZN6test101fIidEENS_1XIT_E10definitionIT0_EES2_S5_", 		"test10::X<int>::definition<double> test10::f<int, double>(int, double)" ),
+	mu_demangle_test("_ZN5test81fIiEEvNS_5int_cIXsrNS_4metaIT_E4typeE5valueEEE", "void test8::f<int>(test8::int_c<test8::meta<int>::type::value>)"),
+	mu_demangle_test("_ZN5test91fIiNS_1XEEENS_9supermetaIT_E5applyIT0_E4typeEv", "test9::supermeta<int>::apply<test9::X>::type test9::f<int, test9::X>()"),
+	mu_demangle_test("_ZN6test101fIidEENS_1XIT_E10definitionIT0_EES2_S5_", "test10::X<int>::definition<double> test10::f<int, double>(int, double)"),
 	mu_demangle_test("_ZZ2f5vE1a", "f5()::a"),
 	mu_demangle_test("_ZZ2f6vE1b", "f6()::b"),
 	mu_demangle_test("_ZNV3$_35test9Ev", "$_3::test9() volatile"),
@@ -951,20 +951,20 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZGVZN1N1gEvE1a", "guard variable for N::g()::a"),
 	mu_demangle_test("_ZplRK1YRA100_P1X", "operator+(Y const&, X* (&) [100])"),
 	mu_demangle_test("_Z1fM1SKFvvE", "f(void (S::*)() const)"),
-	mu_demangle_test("_Z3ft7IiEN11__enable_ifIXsr16__is_scalar_typeIT_EE7__valueEvE6__typeEv", 		"__enable_if<__is_scalar_type<int>::__value, void>::__type ft7<int>()" ),
-	mu_demangle_test("_Z3ft7IPvEN11__enable_ifIXsr16__is_scalar_typeIT_EE7__valueEvE6__typeEv", 		"__enable_if<__is_scalar_type<void*>::__value, void>::__type ft7<void*>()" ),
-	mu_demangle_test("_ZN6PR57968__fill_aIiEENS_11__enable_ifIXntsrNS_11__is_scalarIT_EE7__valueEvE6__typeEv", 		"PR5796::__enable_if<!PR5796::__is_scalar<int>::__value, void>::__type PR5796::__fill_a<int>()" ),
+	mu_demangle_test("_Z3ft7IiEN11__enable_ifIXsr16__is_scalar_typeIT_EE7__valueEvE6__typeEv", "__enable_if<__is_scalar_type<int>::__value, void>::__type ft7<int>()"),
+	mu_demangle_test("_Z3ft7IPvEN11__enable_ifIXsr16__is_scalar_typeIT_EE7__valueEvE6__typeEv", "__enable_if<__is_scalar_type<void*>::__value, void>::__type ft7<void*>()"),
+	mu_demangle_test("_ZN6PR57968__fill_aIiEENS_11__enable_ifIXntsrNS_11__is_scalarIT_EE7__valueEvE6__typeEv", "PR5796::__enable_if<!PR5796::__is_scalar<int>::__value, void>::__type PR5796::__fill_a<int>()"),
 	mu_demangle_test("_ZN3OpsplERKS_", "Ops::operator+(Ops const&)"),
 	mu_demangle_test("_ZN5test01fIdEEvT_RAszcl3ovlcvS1__EE_c", "void test0::f<double>(double, char (&) [sizeof (ovl((double)()))])"),
 	mu_demangle_test("_ZN5test01fIiEEvT_RAszcl3ovlcvS1__EE_c", "void test0::f<int>(int, char (&) [sizeof (ovl((int)()))])"),
-	mu_demangle_test("_ZN5test01jINS_1AEEEvRAszdtcvT__E6buffer_c", 		"void test0::j<test0::A>(char (&) [sizeof (((test0::A)()).buffer)])" ),
+	mu_demangle_test("_ZN5test01jINS_1AEEEvRAszdtcvT__E6buffer_c", "void test0::j<test0::A>(char (&) [sizeof (((test0::A)()).buffer)])"),
 	mu_demangle_test("_ZN5test11fINS_1XEiEEvT_IT0_E", "void test1::f<test1::X, int>(test1::X<int>)"),
 	mu_demangle_test("_ZN5test41gEPNS_3zedIXadL_ZNS_3foo3barEEEEE", "test4::g(test4::zed<&test4::foo::bar>*)"),
 	mu_demangle_test("_ZN5test51gEPNS_3zedIXadL_ZNS_3foo3barEEEEE", "test5::g(test5::zed<&test5::foo::bar>*)"),
 	mu_demangle_test("_ZN5test91fIiNS_3barEEEvRKNT0_3baz1XE", "void test9::f<int, test9::bar>(test9::bar::baz::X const&)"),
 	mu_demangle_test("_ZN6test111fEz", "test11::f(...)"),
 	mu_demangle_test("_ZN6test121fENS_1AILt33000EEE", "test12::f(test12::A<(unsigned short)33000>)"),
-	mu_demangle_test("_ZN6test174funcINS_1BEEENS_1AIXszclsrT_3fooEEEEv", 		"test17::A<sizeof (test17::B::foo())> test17::func<test17::B>()" ),
+	mu_demangle_test("_ZN6test174funcINS_1BEEENS_1AIXszclsrT_3fooEEEEv", "test17::A<sizeof (test17::B::foo())> test17::func<test17::B>()"),
 	mu_demangle_test("_ZN6test181fINS_1AEEEvNS_1SIXadsrT_plEEE", "void test18::f<test18::A>(test18::S<&test18::A::operator+>)"),
 	mu_demangle_test("_ZN6test181fINS_1AEEEvNS_1SIXadsrT_anEEE", "void test18::f<test18::A>(test18::S<&test18::A::operator&>)"),
 	mu_demangle_test("_ZN6test191gINS_1AEEEvNS_1SIXadsrT_plEEE", "void test19::g<test19::A>(test19::S<&test19::A::operator+>)"),
@@ -1004,6 +1004,5 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZTIU4_farrVKPi", "typeinfo for int* const volatile restrict _far"),
 	// mangled names can include type manglings too, which don't start with _Z:
 	// attribute abi_tag
-	mu_demangle_test("_Z1fB3foov", "f[abi:foo]()"),
-);
+	mu_demangle_test("_Z1fB3foov", "f[abi:foo]()"), );
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);

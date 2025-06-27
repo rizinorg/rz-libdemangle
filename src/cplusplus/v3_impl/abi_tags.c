@@ -4,6 +4,4 @@
 
 #include "types.h"
 
-DEFN_RULE (abi_tags, { 
-    MATCH (RULE_ATLEAST_ONCE (abi_tag)); 
-}); 
+DEFN_RULE (abi_tags, { MATCH (RULE_ATLEAST_ONCE (abi_tag)); });

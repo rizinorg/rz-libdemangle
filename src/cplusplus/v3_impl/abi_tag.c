@@ -7,4 +7,4 @@
 DEFN_RULE (abi_tag, {
     // will generate " \"<source_name>\","
     MATCH (READ ('B') && APPEND_STR (" \"") && RULE (source_name) && APPEND_STR ("\","));
-}); 
+});

@@ -7,4 +7,4 @@
 DEFN_RULE (array_type, {
     MATCH (READ ('A') && OPTIONAL (RULE (number)) && READ ('_') && RULE (type));
     MATCH (READ ('A') && RULE (expression) && READ ('_') && RULE (type));
-}); 
+});

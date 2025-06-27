@@ -75,7 +75,7 @@ typedef struct {
 } DemString;
 
 void dem_string_free(DemString *ds);
-void dem_string_deinit(DemString* ds);
+void dem_string_deinit(DemString *ds);
 DemString *dem_string_new();
 DemString *dem_string_new_with_capacity(size_t cap);
 DemString *dem_string_init(DemString *ds);

@@ -23,17 +23,19 @@ DEFN_RULE (template_param, {
                 return NULL;
             }
             sid = sid + m->template_idx_start;
-            if (m->template_params.length > sid && vec_ptr_at (&m->template_params, sid)->buf) {
-                FORCE_APPEND_TYPE (vec_ptr_at (&m->template_params, sid));
+            if (m->template_params.length > sid &&
+                vec_ptr_at (&m->template_params, sid)->name.buf) {
+                FORCE_APPEND_TYPE (&vec_ptr_at (&m->template_params, sid)->name);
             }
             return SUBSTITUTE_TPARAM (sid);
         } else if (READ ('_')) {
             size_t sid = m->template_idx_start;
-            if (m->template_params.length > sid && vec_ptr_at (&m->template_params, sid)->buf) {
-                FORCE_APPEND_TYPE (vec_ptr_at (&m->template_params, sid));
+            if (m->template_params.length > sid &&
+                vec_ptr_at (&m->template_params, sid)->name.buf) {
+                FORCE_APPEND_TYPE (&vec_ptr_at (&m->template_params, sid)->name);
             }
             return SUBSTITUTE_TPARAM (sid);
         }
     }
     RESTORE_POS();
-}); 
+});

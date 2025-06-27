@@ -23,15 +23,20 @@ typedef struct StrIter {
     const char* cur; /**< \b Current read position. */
 } StrIter;
 
-typedef Vec (DemString) StrVec;
+typedef struct Name {
+    DemString name;
+    ut32      num_parts; // if part count greater than 1 then a nested name
+} Name;
+
+typedef Vec (Name) Names;
 
 typedef struct Meta {
-    StrVec detected_types;
-    StrVec template_params;
-    bool   is_ctor;
-    bool   is_dtor;
-    bool   is_const;
-    bool   trace; // Debug tracing flag
+    Names detected_types;
+    Names template_params;
+    bool  is_ctor;
+    bool  is_dtor;
+    bool  is_const;
+    bool  trace; // Debug tracing flag
 
     // detected templates are reset everytime a new template argument list starts at the same level
     // instead of taking care of that, we just rebase from where we start our substitution
@@ -74,12 +79,25 @@ void meta_tmp_apply (Meta* og, Meta* tmp);
 void meta_tmp_fini (Meta* og, Meta* tmp);
 
 // Helper functions
-bool append_type (Meta* m, DemString* t, bool force_append);
-bool append_tparam (Meta* m, DemString* t);
-DemString*
-    match_one_or_more_rules (DemRuleFirst first, DemRule rule, const char* sep, DemString* dem, StrIter* msi, Meta* m);
-DemString*
-    match_zero_or_more_rules (DemRuleFirst first, DemRule rule, const char* sep, DemString* dem, StrIter* msi, Meta* m);
+size_t     parse_sequence_id (StrIter* msi, Meta* m);
+bool       append_type (Meta* m, DemString* t, bool force_append);
+bool       append_tparam (Meta* m, DemString* t);
+DemString* match_one_or_more_rules (
+    DemRuleFirst first,
+    DemRule      rule,
+    const char*  sep,
+    DemString*   dem,
+    StrIter*     msi,
+    Meta*        m
+);
+DemString* match_zero_or_more_rules (
+    DemRuleFirst first,
+    DemRule      rule,
+    const char*  sep,
+    DemString*   dem,
+    StrIter*     msi,
+    Meta*        m
+);
 
 // Rule declarations
 DECL_RULE (mangled_name);

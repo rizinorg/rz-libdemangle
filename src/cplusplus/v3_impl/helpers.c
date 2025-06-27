@@ -62,21 +62,68 @@ void meta_tmp_fini (Meta* og, Meta* tmp) {
         return;
     }
 
-    for (DemString* ds = tmp->detected_types.data + og->detected_types.length;
-         ds < tmp->detected_types.data + tmp->detected_types.length;
-         ds++) {
-        dem_string_deinit (ds);
+    // Only clean up newly added items in tmp (beyond og's original length)
+    // Items 0..og->length-1 are shared and should not be cleaned up
+    for (size_t i = og->detected_types.length; i < tmp->detected_types.length; i++) {
+        Name* dt = vec_ptr_at (&tmp->detected_types, i);
+        dem_string_deinit (&dt->name);
+        dt->num_parts = 0;
     }
     UNUSED (vec_deinit (&tmp->detected_types));
 
-    for (DemString* ds = tmp->template_params.data + og->template_params.length;
-         ds < tmp->template_params.data + tmp->template_params.length;
-         ds++) {
-        dem_string_deinit (ds);
+    for (size_t i = og->template_params.length; i < tmp->template_params.length; i++) {
+        Name* tp = vec_ptr_at (&tmp->template_params, i);
+        dem_string_deinit (&tp->name);
+        tp->num_parts = 0;
+    }
+    UNUSED (vec_deinit (&tmp->template_params));
+
+    memset (tmp, 0, sizeof (*tmp));
+}
+
+/**
+ * \b Parse sequence ID from mangled string iterator.
+ *
+ * Parses a sequence ID following the Itanium ABI specification:
+ * - Empty (just '_'): returns 0
+ * - Base-36 digits followed by '_': returns parsed value + 1
+ *
+ * \p msi   Mangled string iterator positioned at the sequence ID
+ * \p m     Meta context (used for tracing if enabled)
+ *
+ * \return Parsed sequence ID (1 for empty, 2+ for base-36 values) on success
+ * \return 0 on failure (invalid format)
+ */
+size_t parse_sequence_id (StrIter* msi, Meta* m) {
+    if (!msi || !m) {
+        return 0;
     }
 
-    UNUSED (vec_deinit (&tmp->template_params));
-    memset (tmp, 0, sizeof (*tmp));
+    size_t sid           = 1; // Start at 1 for empty sequence
+    bool   parsed_seq_id = false;
+
+    if (IS_DIGIT (PEEK()) || IS_UPPER (PEEK())) {
+        char*  base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
+        char*  pos  = NULL;
+        size_t pow  = 1;
+        sid         = 2; // Start at 2 for base-36 sequences (1 + parsed value)
+        while ((pos = strchr (base, PEEK()))) {
+            size_t based_val  = (size_t)(pos - base);
+            sid              += based_val * pow;
+            pow              *= 36;
+            ADV();
+        }
+        parsed_seq_id = true;
+    } else if (PEEK() == '_') {
+        sid           = 1; // Empty sequence maps to 1
+        parsed_seq_id = true;
+    }
+
+    if (!parsed_seq_id || !READ ('_')) {
+        return 0;
+    }
+
+    return sid;
 }
 
 /**
@@ -91,15 +138,25 @@ void meta_tmp_fini (Meta* og, Meta* tmp) {
  * \return dem If at least one rule match exists for given rule.
  * \return NULL otherwise.
  */
-DemString*
-    match_one_or_more_rules (DemRuleFirst first, DemRule rule, const char* sep, DemString* dem, StrIter* msi, Meta* m) {
+DemString* match_one_or_more_rules (
+    DemRuleFirst first,
+    DemRule      rule,
+    const char*  sep,
+    DemString*   dem,
+    StrIter*     msi,
+    Meta*        m
+) {
     if (!first || !rule || !dem || !msi || !m) {
         return NULL;
     }
 
     if (m->trace) {
-        printf("[TRACE] match_one_or_more_rules: entering, current char: '%.*s', pos: %zu\n", 
-               (int)(msi->end - msi->cur), CUR(), msi->cur - msi->beg);
+        printf (
+            "[TRACE] match_one_or_more_rules: entering, current char: '%.*s', pos: %zu\n",
+            (int)(msi->end - msi->cur),
+            CUR(),
+            msi->cur - msi->beg
+        );
     }
 
     // NOTE(brightprogrammer): Just here to check the current iteration in debugger
@@ -110,18 +167,25 @@ DemString*
     /* match atleast once, and then */
     if (first (CUR()) && rule (dem, msi, m) && ++iter_for_dbg) {
         if (m->trace) {
-            printf("[TRACE] match_one_or_more_rules: first match successful, iteration: %u\n", iter_for_dbg);
+            printf (
+                "[TRACE] match_one_or_more_rules: first match successful, iteration: %u\n",
+                iter_for_dbg
+            );
         }
-        
+
         /* match as many as possible */
         while (first (CUR())) {
             DemString tmp = {0};
             SAVE_POS();
             if (rule (&tmp, msi, m) && ++iter_for_dbg) {
                 if (m->trace) {
-                    printf("[TRACE] match_one_or_more_rules: additional match successful, iteration: %u\n", iter_for_dbg);
+                    printf (
+                        "[TRACE] match_one_or_more_rules: additional match successful, iteration: "
+                        "%u\n",
+                        iter_for_dbg
+                    );
                 }
-                
+
                 /* add separator before appending demangled string */
                 if (sep) {
                     dem_string_append_prefix_n (&tmp, sep, strlen (sep));
@@ -132,7 +196,9 @@ DemString*
                 dem_string_deinit (&tmp);
             } else {
                 if (m->trace) {
-                    printf("[TRACE] match_one_or_more_rules: additional match failed, stopping loop\n");
+                    printf (
+                        "[TRACE] match_one_or_more_rules: additional match failed, stopping loop\n"
+                    );
                 }
                 RESTORE_POS();
                 dem_string_deinit (&tmp);
@@ -141,13 +207,16 @@ DemString*
         }
 
         if (m->trace) {
-            printf("[TRACE] match_one_or_more_rules: success, total iterations: %u\n", iter_for_dbg);
+            printf (
+                "[TRACE] match_one_or_more_rules: success, total iterations: %u\n",
+                iter_for_dbg
+            );
         }
         return dem;
     }
 
     if (m->trace) {
-        printf("[TRACE] match_one_or_more_rules: failed to match even once\n");
+        printf ("[TRACE] match_one_or_more_rules: failed to match even once\n");
     }
     RESTORE_POS();
     return NULL;
@@ -163,24 +232,28 @@ DemString*
  * \p dem   Demangled string will be stored here.
  * \p msi   Mangled string iter.
  *
- * \return dem If given arguments are non-null. 
+ * \return dem If given arguments are non-null.
  * \return NULL otherwise.
  */
 DemString* match_zero_or_more_rules (
     DemRuleFirst first,
-    DemRule     rule,
-    const char* sep,
-    DemString*  dem,
-    StrIter*    msi,
-    Meta*       m
+    DemRule      rule,
+    const char*  sep,
+    DemString*   dem,
+    StrIter*     msi,
+    Meta*        m
 ) {
     if (!rule || !dem || !msi || !m) {
         return NULL;
     }
 
     if (m->trace) {
-        printf("[TRACE] match_zero_or_more_rules: entering, current char: '%.*s', pos: %zu\n", 
-               (int)(msi->end - msi->cur), CUR(), msi->cur - msi->beg);
+        printf (
+            "[TRACE] match_zero_or_more_rules: entering, current char: '%.*s', pos: %zu\n",
+            (int)(msi->end - msi->cur),
+            CUR(),
+            msi->cur - msi->beg
+        );
     }
 
     ut32 match_count = 0;
@@ -190,9 +263,12 @@ DemString* match_zero_or_more_rules (
         if (first (CUR()) && rule (&tmp, msi, m)) {
             match_count++;
             if (m->trace) {
-                printf("[TRACE] match_zero_or_more_rules: match successful, count: %u\n", match_count);
+                printf (
+                    "[TRACE] match_zero_or_more_rules: match successful, count: %u\n",
+                    match_count
+                );
             }
-            
+
             if (sep) {
                 dem_string_append (&tmp, sep);
             }
@@ -200,7 +276,7 @@ DemString* match_zero_or_more_rules (
             dem_string_deinit (&tmp);
         } else {
             if (m->trace) {
-                printf("[TRACE] match_zero_or_more_rules: match failed, stopping loop\n");
+                printf ("[TRACE] match_zero_or_more_rules: match failed, stopping loop\n");
             }
             RESTORE_POS();
             dem_string_deinit (&tmp);
@@ -216,11 +292,43 @@ DemString* match_zero_or_more_rules (
     // }
 
     if (m->trace) {
-        printf("[TRACE] match_zero_or_more_rules: success, total matches: %u\n", match_count);
+        printf ("[TRACE] match_zero_or_more_rules: success, total matches: %u\n", match_count);
     }
-    
+
     /* we always match, even if nothing matches */
     return dem;
+}
+
+// counts the number of :: in a name and adds 1 to it
+// but ignores :: inside template arguments (between < and >)
+static ut32 count_name_parts (Name* n) {
+    // count number of parts
+    const char* it     = n->name.buf;
+    const char* end    = it + n->name.len;
+    n->num_parts       = 1;
+    int template_depth = 0;
+
+    while (it < end) {
+        if (*it == '<') {
+            template_depth++;
+        } else if (*it == '>') {
+            template_depth--;
+        } else if (template_depth == 0 && it[0] == ':' && it[1] == ':') {
+            // Only count :: when we're not inside template arguments
+            if (it[2]) {
+                n->num_parts++;
+                it += 2; // advance past the "::" to avoid infinite loop
+                continue;
+            } else {
+                fprintf (stderr, "invalid name provided to be appended : %s", n->name.buf);
+                dem_string_deinit (&n->name);
+                n->num_parts = 0;
+                return 0;
+            }
+        }
+        it++;
+    }
+    return n->num_parts;
 }
 
 /**
@@ -239,7 +347,7 @@ bool append_type (Meta* m, DemString* t, bool force_append) {
         return true;
     }
 
-    // sometimes by mistake "std" is appended as type, but name manglers don't expect it to be a type
+    // sometimes by mistake "std" is appended as type, but name manglers don't generate it to be a type
     if (!strcmp (t->buf, "std")) {
         return true;
     }
@@ -247,7 +355,7 @@ bool append_type (Meta* m, DemString* t, bool force_append) {
     // If we're not forcefully appending values, then check for uniqueness of times
     if (!force_append) {
         vec_foreach_ptr (&m->detected_types, dt, {
-            if (!strcmp (dt->buf, t->buf)) {
+            if (!strcmp (dt->name.buf, t->buf)) {
                 return true;
             }
         });
@@ -255,13 +363,27 @@ bool append_type (Meta* m, DemString* t, bool force_append) {
 
     UNUSED (vec_reserve (&m->detected_types, m->detected_types.length + 1));
     m->detected_types.length += 1;
-    dem_string_init_clone (vec_end (&m->detected_types), t);
-    if(m->trace) {printf("[TRACE] append_type: %llu %s\n", m->detected_types.length, t->buf);}
+
+    Name* new_name = vec_end (&m->detected_types);
+    dem_string_init_clone (&new_name->name, t);
+    if (!count_name_parts (new_name)) {
+        m->detected_types.length--;
+        return false;
+    }
+
+    if (m->trace) {
+        printf (
+            "[TRACE] append_type: %llu %s (parts = %u)\n",
+            m->detected_types.length,
+            new_name->name.buf,
+            new_name->num_parts
+        );
+    }
     return true;
 }
 
 /**
- * Much like `append_type`, but for templates. 
+ * Much like `append_type`, but for templates.
  */
 bool append_tparam (Meta* m, DemString* t) {
     if (!m || !t || !t->len) {
@@ -270,113 +392,22 @@ bool append_tparam (Meta* m, DemString* t) {
 
     UNUSED (vec_reserve (&m->template_params, m->template_params.length + 1));
     m->template_params.length += 1;
-    dem_string_init_clone (vec_end (&m->template_params), t);
-    return true;
-}
 
-bool make_nested_name (DemString* dem, DemString* pfx, Meta* m) {
-    if (!dem || !pfx) {
+    Name* new_name = vec_end (&m->template_params);
+    dem_string_init_clone (&new_name->name, t);
+    if (!count_name_parts (new_name)) {
+        m->template_params.length--;
         return false;
     }
 
-    // if we encounter end of string or :: from reverse search
-    // then we have our constructor name
-    char* rbeg = strrchr (pfx->buf, ':');
-    if ((!rbeg && (rbeg = pfx->buf)) || (rbeg[-1] == ':' && rbeg++)) {
-        // generate constructor/destructor name
-        if (IS_CTOR()) {
-            dem_string_concat (dem, pfx);
-            dem_string_append (dem, "::");
-            dem_string_append (dem, rbeg);
-            if (!m->t_level) {
-                m->is_ctor_or_dtor_at_l0 = true;
-            }
-            UNSET_CTOR();
-        } else if (IS_DTOR()) {
-            dem_string_concat (dem, pfx);
-            dem_string_append (dem, "::~");
-            dem_string_append (dem, rbeg);
-            if (!m->t_level) {
-                m->is_ctor_or_dtor_at_l0 = true;
-            }
-            UNSET_CTOR();
-        } else {
-            dem_string_concat (dem, pfx);
-        }
-
-        dem_string_deinit (pfx);
-
-        return true;
-    } else {
-        dem_string_deinit (pfx);
-        return false;
+    if (m->trace) {
+        printf (
+            "[TRACE] append_tparam : %llu %s (parts = %u)\n",
+            m->template_params.length,
+            new_name->name.buf,
+            new_name->num_parts
+        );
     }
-}
-
-/*
- * NOTE(brightprogrammer):
- *
- * Another place we find where the grammar is not consistent with real examples.
- * we can have a `ctor_dtor_name` rule just after `template_args` in a `nested_name`,
- * and if you follow the original grammar, there's no way to reach this.
- *
- * I manually added to match an `unqualified_name` after `template_args` in `nested_name`
- * and now it works, with the help of this patch function.
- */
-bool make_template_nested_name (DemString* dem, DemString* pfx, DemString* targs, Meta* m) {
-    if (!dem || !pfx || !targs) {
-        return false;
-    }
-
-    // HACK: a hacky way to find name of constructor
-    // find content before first "<" (template argument start)
-    // find last appearance of "::" that comes just before found "<"
-
-    char* n_end = strchr (pfx->buf, '<');
-    char* n_beg = NULL;
-    if (n_end) {
-        char* pos = pfx->buf;
-        while (pos && pos < n_end && (n_beg = pos, pos = strchr (pos, ':'))) {
-            pos++;
-        }
-        if (n_beg == pfx->buf) {
-            n_beg = NULL;
-        }
-    }
-
-    size_t n_len = 0;
-    if (n_end && n_beg) {
-        n_len = n_end - n_beg;
-    } else {
-        n_beg = pfx->buf;
-        n_len = pfx->len;
-    }
-
-    if (IS_CTOR()) {
-        dem_string_concat (dem, pfx);
-        dem_string_concat (dem, targs);
-        dem_string_append (dem, "::");
-        dem_string_append_n (dem, n_beg, n_len);
-        if (!m->t_level) {
-            m->is_ctor_or_dtor_at_l0 = true;
-        }
-        UNSET_CTOR();
-    } else if (IS_DTOR()) {
-        dem_string_concat (dem, pfx);
-        dem_string_concat (dem, targs);
-        dem_string_append (dem, "::~");
-        dem_string_append_n (dem, n_beg, n_len);
-        if (!m->t_level) {
-            m->is_ctor_or_dtor_at_l0 = true;
-        }
-        UNSET_DTOR();
-    } else {
-        dem_string_concat (dem, pfx);
-        dem_string_concat (dem, targs);
-    }
-
-    dem_string_deinit (pfx);
-    dem_string_deinit (targs);
 
     return true;
 }

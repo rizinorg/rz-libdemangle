@@ -4,6 +4,4 @@
 
 #include "types.h"
 
-DEFN_RULE (qualifiers, { 
-    MATCH (RULE_MANY (extended_qualifier) && RULE (cv_qualifiers)); 
-}); 
+DEFN_RULE (qualifiers, { MATCH (RULE_MANY (extended_qualifier) && RULE (cv_qualifiers)); });

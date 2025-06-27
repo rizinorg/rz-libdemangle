@@ -7,4 +7,4 @@
 DEFN_RULE (extended_qualifier, {
     MATCH (READ ('U') && RULE (source_name) && RULE (template_args));
     MATCH (READ ('U') && RULE (source_name));
-}); 
+});

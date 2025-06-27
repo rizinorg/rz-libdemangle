@@ -7,7 +7,7 @@
 DEFN_RULE (closure_prefix, {
     // {closure-prefix-unit}
     MATCH (RULE (closure_prefix_unit) && RULE (closure_prefix_rr));
-    
+
     // {closure-prefix-unit} {closure-prefix-rr}
     MATCH (RULE (closure_prefix_unit));
-}); 
+});

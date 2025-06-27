@@ -8,55 +8,79 @@
 
 DEFN_RULE (closure_prefix_rr, {
     // {unqualified-name} M
-    MATCH (RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) && 
-           RULE (unqualified_name) && APPEND_TYPE(dem) && RULE (template_args) && READ ('M') && APPEND_TYPE (dem) && 
-           RULE (closure_prefix_rr));
-    
+    MATCH (
+        RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) &&
+        RULE (unqualified_name) && APPEND_TYPE (dem) && RULE (template_args) && READ ('M') &&
+        APPEND_TYPE (dem) && RULE (closure_prefix_rr)
+    );
+
     // {prefix-start-rr} {unqualified-name} M
-    MATCH (RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) && 
-           RULE (unqualified_name) && APPEND_TYPE(dem) && RULE (template_args) && READ ('M') && APPEND_TYPE (dem));
-    
+    MATCH (
+        RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) &&
+        RULE (unqualified_name) && APPEND_TYPE (dem) && RULE (template_args) && READ ('M') &&
+        APPEND_TYPE (dem)
+    );
+
     // {prefix-start-rr} {prefix-nested-class-or-namespace} {unqualified-name} M
-    MATCH (RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) && 
-           RULE (unqualified_name) && READ ('M') && APPEND_TYPE(dem) && RULE (closure_prefix_rr));
-    
+    MATCH (
+        RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) &&
+        RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem) && RULE (closure_prefix_rr)
+    );
+
     // {unqualified-name} {template-args} M
-    MATCH (RULE (prefix_start_rr) && RULE (unqualified_name) && APPEND_TYPE(dem) && RULE (template_args) && 
-           READ ('M') && APPEND_TYPE(dem) && RULE (closure_prefix_rr));
-    
+    MATCH (
+        RULE (prefix_start_rr) && RULE (unqualified_name) && APPEND_TYPE (dem) &&
+        RULE (template_args) && READ ('M') && APPEND_TYPE (dem) && RULE (closure_prefix_rr)
+    );
+
     // {prefix-start-rr} {unqualified-name} {template-args} M
-    MATCH (RULE (prefix_nested_class_or_namespace) && RULE (unqualified_name) && APPEND_TYPE(dem) && 
-           RULE (template_args) && READ ('M') && APPEND_TYPE(dem) && RULE (closure_prefix_rr));
-    
+    MATCH (
+        RULE (prefix_nested_class_or_namespace) && RULE (unqualified_name) && APPEND_TYPE (dem) &&
+        RULE (template_args) && READ ('M') && APPEND_TYPE (dem) && RULE (closure_prefix_rr)
+    );
+
     // {prefix-nested-class-or-namespace} {unqualified-name} {template-args} M
-    MATCH (RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) && 
-           RULE (unqualified_name) && READ ('M') && APPEND_TYPE(dem));
-    
+    MATCH (
+        RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) &&
+        RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem)
+    );
+
     // {prefix-start-rr} {prefix-nested-class-or-namespace} {unqualified-name} {template-args} M
-    MATCH (RULE (prefix_start_rr) && RULE (unqualified_name) && APPEND_TYPE(dem) && RULE (template_args) && 
-           READ ('M') && APPEND_TYPE(dem));
-    
+    MATCH (
+        RULE (prefix_start_rr) && RULE (unqualified_name) && APPEND_TYPE (dem) &&
+        RULE (template_args) && READ ('M') && APPEND_TYPE (dem)
+    );
+
     // {unqualified-name} M {closure-prefix-rr}
-    MATCH (RULE (prefix_nested_class_or_namespace) && RULE (unqualified_name) && APPEND_TYPE(dem) && 
-           RULE (template_args) && READ ('M') && APPEND_TYPE(dem));
-    
+    MATCH (
+        RULE (prefix_nested_class_or_namespace) && RULE (unqualified_name) && APPEND_TYPE (dem) &&
+        RULE (template_args) && READ ('M') && APPEND_TYPE (dem)
+    );
+
     // {prefix-start-rr} {unqualified-name} M {closure-prefix-rr}
-    MATCH (RULE (prefix_start_rr) && RULE (unqualified_name) && READ ('M') && APPEND_TYPE(dem) && 
-           RULE (closure_prefix_rr));
-    
+    MATCH (
+        RULE (prefix_start_rr) && RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem) &&
+        RULE (closure_prefix_rr)
+    );
+
     // {prefix-start-rr} {prefix-nested-class-or-namespace} {unqualified-name} M {closure-prefix-rr}
-    MATCH (RULE (unqualified_name) && APPEND_TYPE(dem) && RULE (template_args) && READ ('M') && APPEND_TYPE(dem) && 
-           RULE (closure_prefix_rr));
-    
+    MATCH (
+        RULE (unqualified_name) && APPEND_TYPE (dem) && RULE (template_args) && READ ('M') &&
+        APPEND_TYPE (dem) && RULE (closure_prefix_rr)
+    );
+
     // {unqualified-name} {template-args} M {closure-prefix-rr}
-    MATCH (RULE (prefix_start_rr) && RULE (unqualified_name) && READ ('M') && APPEND_TYPE(dem));
-    
+    MATCH (RULE (prefix_start_rr) && RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem));
+
     // {prefix-start-rr} {unqualified-name} {template-args} M {closure-prefix-rr}
-    MATCH (RULE (unqualified_name) && APPEND_TYPE(dem) && RULE (template_args) && READ ('M') && APPEND_TYPE(dem));
-    
+    MATCH (
+        RULE (unqualified_name) && APPEND_TYPE (dem) && RULE (template_args) && READ ('M') &&
+        APPEND_TYPE (dem)
+    );
+
     // {prefix-nested-class-or-namespace} {unqualified-name} {template-args} M {closure-prefix-rr}
-    MATCH (RULE (unqualified_name) && READ ('M') && APPEND_TYPE(dem) && RULE (closure_prefix_rr));
-    
+    MATCH (RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem) && RULE (closure_prefix_rr));
+
     // {prefix-start-rr} {prefix-nested-class-or-namespace} {unqualified-name} {template-args} M {closure-prefix-rr}
-    MATCH (RULE (unqualified_name) && READ ('M') && APPEND_TYPE(dem));
-}); 
+    MATCH (RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem));
+});

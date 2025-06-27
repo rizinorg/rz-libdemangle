@@ -16,10 +16,25 @@ DEFN_RULE (seq_id, {
             pow            *= 36;
             ADV();
         }
-        if(m->trace) {fprintf(stderr, "[TRACE] seq_id: %llu : %s : %s\n", sid, vec_ptr_at (&m->detected_types, sid)->buf, CUR() - 2);}
+        if (m->trace) {
+            fprintf (
+                stderr,
+                "[TRACE] seq_id: %llu : %s : %s\n",
+                sid,
+                vec_ptr_at (&m->detected_types, sid)->name.buf,
+                CUR() - 2
+            );
+        }
         return SUBSTITUTE_TYPE (sid);
     } else if (PEEK() == '_') {
-        if(m->trace) {fprintf(stderr, "[TRACE] seq_id: 0 : %s : %s\n", vec_ptr_at (&m->detected_types, 0)->buf, CUR() - 2);}
+        if (m->trace) {
+            fprintf (
+                stderr,
+                "[TRACE] seq_id: 0 : %s : %s\n",
+                vec_ptr_at (&m->detected_types, 0)->name.buf,
+                CUR() - 2
+            );
+        }
         return SUBSTITUTE_TYPE (0);
     }
-}); 
+});

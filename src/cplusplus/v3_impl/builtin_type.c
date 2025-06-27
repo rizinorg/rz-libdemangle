@@ -18,20 +18,18 @@ DEFN_RULE (builtin_type, {
         READ ('_')
     );
     MATCH (
-        READ_STR ("DB") && APPEND_STR ("signed _BitInt(") &&
-        RULE (expression) && APPEND_STR (")") && READ ('_')
+        READ_STR ("DB") && APPEND_STR ("signed _BitInt(") && RULE (expression) &&
+        APPEND_STR (")") && READ ('_')
     );
     MATCH (
         READ_STR ("DU") && APPEND_STR ("unsigned _BitInt(") && RULE (number) && APPEND_STR (")") &&
         READ ('_')
     );
     MATCH (
-        READ_STR ("DU") && APPEND_STR ("unsigned _BitInt(") &&
-        RULE (expression) && APPEND_STR (")") && READ ('_')
+        READ_STR ("DU") && APPEND_STR ("unsigned _BitInt(") && RULE (expression) &&
+        APPEND_STR (")") && READ ('_')
     );
-    MATCH (
-        READ ('u') && RULE (source_name) && OPTIONAL (RULE (template_args))
-    );
+    MATCH (READ ('u') && RULE (source_name) && OPTIONAL (RULE (template_args)));
     MATCH (READ_STR ("DS") && READ_STR ("DA") && APPEND_STR ("_Sat _Accum"));
     MATCH (READ_STR ("DS") && READ_STR ("DR") && APPEND_STR ("_Sat _Fract"));
     MATCH (READ ('v') && APPEND_STR ("void"));
@@ -67,4 +65,4 @@ DEFN_RULE (builtin_type, {
     MATCH (READ_STR ("Dn") && APPEND_STR ("std::nullptr_t"));
     MATCH (READ_STR ("DA") && APPEND_STR ("_Accum"));
     MATCH (READ_STR ("DR") && APPEND_STR ("_Fract"));
-}); 
+});

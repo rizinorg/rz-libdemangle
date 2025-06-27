@@ -151,84 +151,270 @@ DEFN_RULE (expression, {
         APPEND_CHR (')') && READ ('E')
     );
     // cc <type> <expression>                               # const_cast<type> (expression)
-    MATCH (READ_STR ("fLpl") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" + ... + ")     && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLpl") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" + ... + ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
     // rc <type> <expression>                               # reinterpret_cast<type> (expression)
-    MATCH (READ_STR ("fLmi") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" - ... - ")     && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLmi") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" - ... - ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
 
     // ti <type>                                            # typeid (type)
-    MATCH (READ_STR ("fLml") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" * ... * ")     && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLml") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" * ... * ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
     // te <expression>                                      # typeid (expression)
-    MATCH (READ_STR ("fLdv") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" / ... / ")     && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLdv") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" / ... / ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
     // st <type>                                            # sizeof (type)
-    MATCH (READ_STR ("fLrm") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" % ... % ")     && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLrm") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" % ... % ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
     // sz <expression>                                      # sizeof (expression)
-    MATCH (READ_STR ("fLan") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" & ... & ")     && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLan") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" & ... & ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
     // at <type>                                            # alignof (type)
-    MATCH (READ_STR ("fLor") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" | ... | ")     && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLor") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" | ... | ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
     // az <expression>                                      # alignof (expression)
-    MATCH (READ_STR ("fLeo") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" ^ ... ^ ")     && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLeo") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ^ ... ^ ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
     // nx <expression>                                      # noexcept (expression)
-    MATCH (READ_STR ("fLaS") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" = ... = ")     && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLaS") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" = ... = ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
 
-    MATCH (READ_STR ("fLpL") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" += ... += ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLmI") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" -= ... -= ")   && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLpL") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" += ... += ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLmI") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" -= ... -= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
 
-    MATCH (READ_STR ("fLmL") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" *= ... *= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLdV") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" /= ... /= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLrM") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" %= ... %= ")   && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLmL") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" *= ... *= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLdV") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" /= ... /= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLrM") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" %= ... %= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
 
-    MATCH (READ_STR ("fLaN") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" &= ... &= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLoR") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" |= ... |= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLeO") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" ^= ... ^= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLls") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" << ... << ")   && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLaN") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" &= ... &= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLoR") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" |= ... |= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLeO") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ^= ... ^= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLls") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" << ... << ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
 
     /* unary left fold */
-    MATCH (READ_STR ("fLrs") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" >> ... >> ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLlS") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" <<= ... <<= ") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLrS") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" >>= ... >>= ") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLeq") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" == ... == ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLne") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" != ... != ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLlt") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" < ... < ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLgt") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" > ... > ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLle") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" <= ... <= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLge") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" >= ... >= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLss") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" <=> ... <=> ") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLnt") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" ! ... ! ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLaa") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" && ... && ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fLoo") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" || ... || ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRpl") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" + ... + ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRmi") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" - ... - ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRml") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" * ... * ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRdv") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" / ... / ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRrm") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" % ... % ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRan") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" & ... & ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRor") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" | ... | ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fReo") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" ^ ... ^ ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRaS") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" = ... = ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRpL") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" += ... += ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRmI") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" -= ... -= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRmL") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" *= ... *= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRdV") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" /= ... /= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRrM") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" %= ... %= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRaN") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" &= ... &= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRoR") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" |= ... |= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fReO") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" ^= ... ^= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRls") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" << ... << ")   && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fLrs") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" >> ... >> ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLlS") && APPEND_CHR ('(') && RULE (expression) &&
+        APPEND_STR (" <<= ... <<= ") && RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLrS") && APPEND_CHR ('(') && RULE (expression) &&
+        APPEND_STR (" >>= ... >>= ") && RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLeq") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" == ... == ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLne") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" != ... != ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLlt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" < ... < ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLgt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" > ... > ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLle") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" <= ... <= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLge") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" >= ... >= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLss") && APPEND_CHR ('(') && RULE (expression) &&
+        APPEND_STR (" <=> ... <=> ") && RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLnt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ! ... ! ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLaa") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" && ... && ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLoo") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" || ... || ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRpl") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" + ... + ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRmi") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" - ... - ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRml") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" * ... * ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRdv") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" / ... / ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRrm") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" % ... % ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRan") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" & ... & ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRor") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" | ... | ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fReo") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ^ ... ^ ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRaS") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" = ... = ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRpL") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" += ... += ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRmI") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" -= ... -= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRmL") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" *= ... *= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRdV") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" /= ... /= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRrM") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" %= ... %= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRaN") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" &= ... &= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRoR") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" |= ... |= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fReO") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ^= ... ^= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRls") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" << ... << ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
 
     /* unary fold right */
-    MATCH (READ_STR ("fRrs") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" >> ... >> ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRlS") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" <<= ... <<= ") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRrS") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" >>= ... >>= ") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fReq") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" == ... == ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRne") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" != ... != ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRlt") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" < ... < ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRgt") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" > ... > ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRle") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" <= ... <= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRge") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" >= ... >= ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRss") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" <=> ... <=> ") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRnt") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" ! ... ! ")     && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRaa") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" && ... && ")   && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fRoo") && APPEND_CHR ('(') && RULE(expression) && APPEND_STR (" || ... || ")   && RULE (expression) && APPEND_CHR (')'));
+    MATCH (
+        READ_STR ("fRrs") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" >> ... >> ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRlS") && APPEND_CHR ('(') && RULE (expression) &&
+        APPEND_STR (" <<= ... <<= ") && RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRrS") && APPEND_CHR ('(') && RULE (expression) &&
+        APPEND_STR (" >>= ... >>= ") && RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fReq") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" == ... == ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRne") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" != ... != ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRlt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" < ... < ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRgt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" > ... > ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRle") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" <= ... <= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRge") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" >= ... >= ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRss") && APPEND_CHR ('(') && RULE (expression) &&
+        APPEND_STR (" <=> ... <=> ") && RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRnt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ! ... ! ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRaa") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" && ... && ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fRoo") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" || ... || ") &&
+        RULE (expression) && APPEND_CHR (')')
+    );
     MATCH (READ_STR ("ps") && APPEND_CHR ('+') && RULE (expression));
     MATCH (READ_STR ("ng") && APPEND_CHR ('-') && RULE (expression));
     MATCH (READ_STR ("ad") && APPEND_CHR ('&') && RULE (expression));
@@ -330,4 +516,4 @@ DEFN_RULE (expression, {
 
     MATCH (RULE (unresolved_name));
     MATCH (RULE (expr_primary));
-}); 
+});

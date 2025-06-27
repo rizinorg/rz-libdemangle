@@ -26,6 +26,6 @@ DEFN_RULE (dtor_name, {
 });
 
 DEFN_RULE (ctor_dtor_name, {
-    MATCH (RULE(ctor_name));
-    MATCH (RULE(dtor_name));
+    MATCH (RULE (ctor_name));
+    MATCH (RULE (dtor_name));
 });

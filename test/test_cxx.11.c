@@ -508,7 +508,7 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN5clang23ExternalSLocEntrySourceD1Ev", "clang::ExternalSLocEntrySource::~ExternalSLocEntrySource()"),
 	mu_demangle_test("_ZN5clang23ExternalSLocEntrySourceD2Ev", "clang::ExternalSLocEntrySource::~ExternalSLocEntrySource()"),
 	mu_demangle_test("_ZNK5clang13SourceManager24getDecomposedSpellingLocENS_14SourceLocationE", "clang::SourceManager::getDecomposedSpellingLoc(clang::SourceLocation) const"),
-  mu_demangle_test("_ZNK5clang13SourceManager9getBufferENS_6FileIDEPb", "clang::SourceManager::getBuffer(clang::FileID, bool*) const"),
+	mu_demangle_test("_ZNK5clang13SourceManager9getBufferENS_6FileIDEPb", "clang::SourceManager::getBuffer(clang::FileID, bool*) const"),
 	mu_demangle_test("_ZSt4fillSt13_Bit_iteratorS_RKb", "std::fill(std::_Bit_iterator, std::_Bit_iterator, bool const&)"),
 	mu_demangle_test("_ZNSt6__copyILb0ESt26random_access_iterator_tagE4copyISt13_Bit_iteratorS3_EET0_T_S5_S4_", "std::_Bit_iterator std::__copy<false, std::random_access_iterator_tag>::copy<std::_Bit_iterator, std::_Bit_iterator>(std::_Bit_iterator, std::_Bit_iterator, std::_Bit_iterator)"),
 	mu_demangle_test("_ZNSt6__copyILb0ESt26random_access_iterator_tagE4copyISt19_Bit_const_iteratorSt13_Bit_iteratorEET0_T_S6_S5_", "std::_Bit_iterator std::__copy<false, std::random_access_iterator_tag>::copy<std::_Bit_const_iterator, std::_Bit_iterator>(std::_Bit_const_iterator, std::_Bit_const_iterator, std::_Bit_iterator)"),
@@ -1004,6 +1004,5 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN12_GLOBAL__N_17PruneEHD0Ev", "(anonymous namespace)::PruneEH::~PruneEH()"),
 	mu_demangle_test("_ZN12_GLOBAL__N_17PruneEH8runOnSCCERN4llvm12CallGraphSCCE", "(anonymous namespace)::PruneEH::runOnSCC(llvm::CallGraphSCC&)"),
 	mu_demangle_test("_ZN12_GLOBAL__N_17PruneEH16SimplifyFunctionEPN4llvm8FunctionE", "(anonymous namespace)::PruneEH::SimplifyFunction(llvm::Function*)"),
-	mu_demangle_test("_ZN12_GLOBAL__N_17PruneEH16DeleteBasicBlockEPN4llvm10BasicBlockE", "(anonymous namespace)::PruneEH::DeleteBasicBlock(llvm::BasicBlock*)"),
-);
+	mu_demangle_test("_ZN12_GLOBAL__N_17PruneEH16DeleteBasicBlockEPN4llvm10BasicBlockE", "(anonymous namespace)::PruneEH::DeleteBasicBlock(llvm::BasicBlock*)"), );
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);

@@ -7,4 +7,4 @@
 DEFN_RULE (template_template_param, {
     MATCH (RULE (template_param));
     MATCH (RULE (substitution));
-}); 
+});

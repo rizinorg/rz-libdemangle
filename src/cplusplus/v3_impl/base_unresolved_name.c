@@ -9,4 +9,4 @@ DEFN_RULE (base_unresolved_name, {
     MATCH (READ_STR ("on") && RULE (operator_name));
     MATCH (READ_STR ("dn") && RULE (destructor_name));
     MATCH (RULE (simple_id));
-}); 
+});

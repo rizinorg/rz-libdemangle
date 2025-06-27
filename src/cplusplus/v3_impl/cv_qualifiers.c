@@ -8,4 +8,4 @@ DEFN_RULE (cv_qualifiers, {
     MATCH (READ ('r') && APPEND_STR ("restrict"));
     MATCH (READ ('V') && APPEND_STR ("volatile"));
     MATCH (READ ('K') && SET_CONST());
-}); 
+});

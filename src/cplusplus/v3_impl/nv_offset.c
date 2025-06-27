@@ -4,6 +4,4 @@
 
 #include "types.h"
 
-DEFN_RULE (nv_offset, {
-    MATCH (RULE (number));
-}); 
+DEFN_RULE (nv_offset, { MATCH (RULE (number)); });

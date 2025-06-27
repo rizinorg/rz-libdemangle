@@ -7,4 +7,4 @@
 DEFN_RULE (destructor_name, {
     MATCH (RULE (unresolved_type));
     MATCH (RULE (simple_id));
-}); 
+});

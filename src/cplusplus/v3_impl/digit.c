@@ -10,4 +10,4 @@ DEFN_RULE (digit, {
         ADV();
         return dem;
     }
-}); 
+});

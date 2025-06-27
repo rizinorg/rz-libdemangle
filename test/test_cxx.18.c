@@ -1004,6 +1004,5 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN4llvm10UndefValueD1Ev", "llvm::UndefValue::~UndefValue()"),
 	mu_demangle_test("_ZN4llvm10UndefValueD0Ev", "llvm::UndefValue::~UndefValue()"),
 	mu_demangle_test("_ZNK4llvm10UndefValue11isNullValueEv", "llvm::UndefValue::isNullValue() const"),
-	mu_demangle_test("_ZN4llvm10ConstantFPD1Ev", "llvm::ConstantFP::~ConstantFP()"),
-);
+	mu_demangle_test("_ZN4llvm10ConstantFPD1Ev", "llvm::ConstantFP::~ConstantFP()"), );
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);

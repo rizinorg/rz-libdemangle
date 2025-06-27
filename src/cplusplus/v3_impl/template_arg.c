@@ -9,4 +9,4 @@ DEFN_RULE (template_arg, {
     MATCH (READ ('J') && RULE_MANY (template_arg) && READ ('E'));
     MATCH (RULE (type));
     MATCH (RULE (expr_primary));
-}); 
+});

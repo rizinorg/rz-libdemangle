@@ -3993,7 +3993,6 @@ mu_demangle_tests(gpl,
 	// mu_demangle_test("__ZNKSt3__19nullptr_tcvPT_IKcEEv", "std::__1::nullptr_t::operator char const*<char const>() const"),
 	mu_demangle_test("__ZNSt3__19nullptr_tC1EMNS0_5__natEi", "std::__1::nullptr_t::nullptr_t(int std::__1::nullptr_t::__nat::*)"),
 	mu_demangle_test("__ZNSt3__19nullptr_tC2EMNS0_5__natEi", "std::__1::nullptr_t::nullptr_t(int std::__1::nullptr_t::__nat::*)"),
-	mu_demangle_test("__ZNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEC2INS_9nullptr_tEEEPKc", "std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string<std::__1::nullptr_t>(char const*)"),
-);
+	mu_demangle_test("__ZNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEC2INS_9nullptr_tEEEPKc", "std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string<std::__1::nullptr_t>(char const*)"), );
 
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_BASE);

@@ -18,4 +18,4 @@ DEFN_RULE (unnamed_type_name, {
             return dem;
         }
     }
-}); 
+});

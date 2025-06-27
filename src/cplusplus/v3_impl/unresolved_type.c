@@ -5,7 +5,10 @@
 #include "types.h"
 
 DEFN_RULE (unresolved_type, {
-    MATCH (RULE (template_param) && FORCE_APPEND_TYPE (dem) && OPTIONAL (RULE (template_args) && APPEND_TYPE (dem)));
+    MATCH (
+        RULE (template_param) && FORCE_APPEND_TYPE (dem) &&
+        OPTIONAL (RULE (template_args) && APPEND_TYPE (dem))
+    );
     MATCH (RULE (decltype));
     MATCH (RULE (substitution));
-}); 
+});

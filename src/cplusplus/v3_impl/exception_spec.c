@@ -8,4 +8,4 @@ DEFN_RULE (exception_spec, {
     MATCH (READ_STR ("DO") && RULE (expression) && READ ('E'));
     MATCH (READ_STR ("Dw") && RULE_ATLEAST_ONCE (type) && READ ('E'));
     MATCH (READ_STR ("Do"));
-}); 
+});

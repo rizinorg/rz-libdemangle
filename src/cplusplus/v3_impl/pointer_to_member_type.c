@@ -4,6 +4,4 @@
 
 #include "types.h"
 
-DEFN_RULE (pointer_to_member_type, {
-    MATCH (READ ('M') && RULE (type) && RULE (type));
-}); 
+DEFN_RULE (pointer_to_member_type, { MATCH (READ ('M') && RULE (type) && RULE (type)); });

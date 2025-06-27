@@ -8,4 +8,4 @@ DEFN_RULE (prefix_or_template_prefix_start, {
     MATCH (RULE (unqualified_name) && APPEND_TYPE (dem));
     MATCH (RULE (template_param) && APPEND_TYPE (dem));
     MATCH (RULE (substitution));
-}); 
+});

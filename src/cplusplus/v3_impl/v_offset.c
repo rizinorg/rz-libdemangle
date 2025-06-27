@@ -11,4 +11,4 @@ DEFN_RULE (v_offset, {
         RULE_DEFER (_, offset_number) && READ ('_') && RULE_DEFER (_, virtual_offset_number) &&
         (dem_string_deinit (_), 1)
     );
-}); 
+});

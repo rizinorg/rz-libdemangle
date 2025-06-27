@@ -5,6 +5,6 @@
 #include "types.h"
 
 DEFN_RULE (unscoped_name, {
-    MATCH (READ_STR ("St") && APPEND_STR ("std::")&& RULE (unqualified_name) && APPEND_TYPE(dem));
+    MATCH (READ_STR ("St") && APPEND_STR ("std::") && RULE (unqualified_name) && APPEND_TYPE (dem));
     MATCH (RULE (unqualified_name));
-}); 
+});

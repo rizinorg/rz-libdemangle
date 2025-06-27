@@ -9,4 +9,4 @@ DEFN_RULE (initializer, {
         READ_STR ("pi") && APPEND_STR (" (") && RULE_MANY_WITH_SEP (expression, ", ") &&
         APPEND_CHR (')') && READ ('E')
     );
-}); 
+});

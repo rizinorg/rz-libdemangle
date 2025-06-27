@@ -1004,6 +1004,5 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZTVN12_GLOBAL__N_120DarwinI386TargetInfoE", "vtable for (anonymous namespace)::DarwinI386TargetInfo"),
 	mu_demangle_test("_ZTVN12_GLOBAL__N_116DarwinTargetInfoINS_16X86_32TargetInfoEEE", "vtable for (anonymous namespace)::DarwinTargetInfo<(anonymous namespace)::X86_32TargetInfo>"),
 	mu_demangle_test("_ZTVN12_GLOBAL__N_118AuroraUXTargetInfoINS_16X86_32TargetInfoEEE", "vtable for (anonymous namespace)::AuroraUXTargetInfo<(anonymous namespace)::X86_32TargetInfo>"),
-	mu_demangle_test("_ZTVN12_GLOBAL__N_113TCETargetInfoE", "vtable for (anonymous namespace)::TCETargetInfo"),
-);
+	mu_demangle_test("_ZTVN12_GLOBAL__N_113TCETargetInfoE", "vtable for (anonymous namespace)::TCETargetInfo"), );
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);

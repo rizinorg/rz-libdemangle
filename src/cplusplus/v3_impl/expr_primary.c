@@ -54,4 +54,4 @@ DEFN_RULE (expr_primary, {
     MATCH (READ_STR ("L_Z") && RULE (encoding) && READ ('E'));
     MATCH (READ_STR ("LDnE") && APPEND_STR ("decltype(nullptr)0"));
     MATCH (READ_STR ("LDn0E") && APPEND_STR ("(decltype(nullptr))0"));
-}); 
+});

@@ -6,4 +6,4 @@
 
 DEFN_RULE (class_enum_type, {
     MATCH (OPTIONAL (READ_STR ("Ts") || READ_STR ("Tu") || READ_STR ("Te")) && RULE (name));
-}); 
+});

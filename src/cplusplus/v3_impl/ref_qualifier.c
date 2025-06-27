@@ -7,4 +7,4 @@
 DEFN_RULE (ref_qualifier, {
     MATCH (READ ('R') && APPEND_STR ("&"));
     MATCH (READ ('O') && APPEND_STR ("&&"));
-}); 
+});

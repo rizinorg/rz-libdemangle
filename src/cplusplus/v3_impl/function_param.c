@@ -20,4 +20,4 @@ DEFN_RULE (function_param, {
     );
     MATCH (READ_STR ("fp") && RULE (top_level_cv_qualifiers) && APPEND_CHR (' ') && READ ('_'));
     MATCH (READ_STR ("fPT"));
-}); 
+});

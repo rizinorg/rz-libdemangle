@@ -4,6 +4,4 @@
 
 #include "types.h"
 
-DEFN_RULE (number, { 
-    MATCH (OPTIONAL (READ ('n')) && RULE_ATLEAST_ONCE (digit)); 
-}); 
+DEFN_RULE (number, { MATCH (OPTIONAL (READ ('n')) && RULE_ATLEAST_ONCE (digit)); });

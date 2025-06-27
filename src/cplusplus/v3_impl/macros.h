@@ -310,12 +310,12 @@
     do {                                                                                           \
         SAVE_POS();                                                                                \
         /* make a temporary string to prevent from altering real string */                         \
-        DemString  _tmp_dem = {0};                                                                 \
-        DemString* _og_dem  = dem;                                                                 \
-        dem                 = &_tmp_dem;                                                           \
-        Meta  _tmp_meta     = {0};                                                                 \
-        Meta* _og_meta      = m;                                                                   \
-        m                   = &_tmp_meta;                                                          \
+        DemString  _tmp_dem  = {0};                                                                \
+        DemString* _og_dem   = dem;                                                                \
+        Meta       _tmp_meta = {0};                                                                \
+        Meta*      _og_meta  = m;                                                                  \
+        dem                  = &_tmp_dem;                                                          \
+        m                    = &_tmp_meta;                                                         \
         meta_tmp_init (_og_meta, &_tmp_meta);                                                      \
         if ((rules)) {                                                                             \
             /* caller execute code */                                                              \
@@ -384,12 +384,12 @@
  */
 #define SUBSTITUTE_TYPE(id)                                                                        \
     (m->detected_types.length > (id) ?                                                             \
-         (APPEND_STR (vec_ptr_at (&m->detected_types, (id))->buf) ? dem : NULL) :                  \
+         (APPEND_STR (vec_ptr_at (&m->detected_types, (id))->name.buf) ? dem : NULL) :             \
          NULL)
 
 #define SUBSTITUTE_TPARAM(id)                                                                      \
     (m->template_params.length > (id) ?                                                            \
-         (APPEND_STR (vec_ptr_at (&m->template_params, (id))->buf) ? dem : NULL) :                 \
+         (APPEND_STR (vec_ptr_at (&m->template_params, (id))->name.buf) ? dem : NULL) :            \
          NULL)
 
 #endif // V3_IMPL_MACROS_H

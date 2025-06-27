@@ -1004,6 +1004,5 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZNK4llvm14TargetLowering25getPreIndexedAddressPartsEPNS_6SDNodeERNS_7SDValueES4_RNS_3ISD14MemIndexedModeERNS_12SelectionDAGE", "llvm::TargetLowering::getPreIndexedAddressParts(llvm::SDNode*, llvm::SDValue&, llvm::SDValue&, llvm::ISD::MemIndexedMode&, llvm::SelectionDAG&) const"),
 	mu_demangle_test("_ZNK4llvm14TargetLowering26getPostIndexedAddressPartsEPNS_6SDNodeES2_RNS_7SDValueES4_RNS_3ISD14MemIndexedModeERNS_12SelectionDAGE", "llvm::TargetLowering::getPostIndexedAddressParts(llvm::SDNode*, llvm::SDNode*, llvm::SDValue&, llvm::SDValue&, llvm::ISD::MemIndexedMode&, llvm::SelectionDAG&) const"),
 	mu_demangle_test("_ZNK4llvm14TargetLowering22getMaximalGlobalOffsetEv", "llvm::TargetLowering::getMaximalGlobalOffset() const"),
-	mu_demangle_test("_ZNK4llvm14TargetLowering33isDesirableToTransformToIntegerOpEjNS_3EVTE", "llvm::TargetLowering::isDesirableToTransformToIntegerOp(unsigned int, llvm::EVT) const"),
-);
+	mu_demangle_test("_ZNK4llvm14TargetLowering33isDesirableToTransformToIntegerOpEjNS_3EVTE", "llvm::TargetLowering::isDesirableToTransformToIntegerOp(unsigned int, llvm::EVT) const"), );
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);

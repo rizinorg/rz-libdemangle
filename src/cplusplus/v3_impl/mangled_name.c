@@ -8,4 +8,4 @@ DEFN_RULE (mangled_name, {
     MATCH (
         READ_STR ("_Z") && RULE (encoding) && OPTIONAL (READ ('.') && RULE (vendor_specific_suffix))
     );
-}); 
+});

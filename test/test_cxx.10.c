@@ -1004,6 +1004,5 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN5clang19StringLiteralParserC1EPKNS_5TokenEjRNS_12PreprocessorEb", "clang::StringLiteralParser::StringLiteralParser(clang::Token const*, unsigned int, clang::Preprocessor&, bool)"),
 	mu_demangle_test("_ZN5clang19StringLiteralParserC2EPKNS_5TokenEjRNS_12PreprocessorEb", "clang::StringLiteralParser::StringLiteralParser(clang::Token const*, unsigned int, clang::Preprocessor&, bool)"),
 	mu_demangle_test("_ZN5clang19StringLiteralParser4initEPKNS_5TokenEj", "clang::StringLiteralParser::init(clang::Token const*, unsigned int)"),
-	mu_demangle_test("_ZNK5clang19StringLiteralParser21getOffsetOfStringByteERKNS_5TokenEj", "clang::StringLiteralParser::getOffsetOfStringByte(clang::Token const&, unsigned int) const"),
-);
+	mu_demangle_test("_ZNK5clang19StringLiteralParser21getOffsetOfStringByteERKNS_5TokenEj", "clang::StringLiteralParser::getOffsetOfStringByte(clang::Token const&, unsigned int) const"), );
 mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);

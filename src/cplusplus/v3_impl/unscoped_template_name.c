@@ -7,4 +7,4 @@
 DEFN_RULE (unscoped_template_name, {
     MATCH (RULE (unscoped_name));
     MATCH (RULE (substitution));
-}); 
+});
