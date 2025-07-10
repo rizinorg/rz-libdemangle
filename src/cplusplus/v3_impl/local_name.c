@@ -7,10 +7,10 @@
 DEFN_RULE (local_name, {
     MATCH (
         READ ('Z') && RULE (encoding) && READ_STR ("Ed") && OPTIONAL (RULE (number)) &&
-        READ ('_') && RULE (name)
+        READ ('_') && APPEND_STR("::") && RULE (name)
     );
     MATCH (
-        READ ('Z') && RULE (encoding) && READ ('E') && RULE (name) &&
+        READ ('Z') && RULE (encoding) && READ ('E') && APPEND_STR("::") && RULE (name) &&
         OPTIONAL (RULE (discriminator))
     );
     MATCH (READ ('Z') && RULE (encoding) && READ_STR ("Es") && OPTIONAL (RULE (discriminator)));

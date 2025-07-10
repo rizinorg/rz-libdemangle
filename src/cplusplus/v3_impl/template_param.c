@@ -20,22 +20,23 @@ DEFN_RULE (template_param, {
             }
             if (!READ ('_')) {
                 RESTORE_POS();
-                return NULL;
+                TRACE_RETURN_FAILURE();
             }
             sid = sid + m->template_idx_start;
             if (m->template_params.length > sid &&
                 vec_ptr_at (&m->template_params, sid)->name.buf) {
                 FORCE_APPEND_TYPE (&vec_ptr_at (&m->template_params, sid)->name);
             }
-            return SUBSTITUTE_TPARAM (sid);
+            TRACE_RETURN_SUCCESS (SUBSTITUTE_TPARAM (sid));
         } else if (READ ('_')) {
             size_t sid = m->template_idx_start;
             if (m->template_params.length > sid &&
                 vec_ptr_at (&m->template_params, sid)->name.buf) {
                 FORCE_APPEND_TYPE (&vec_ptr_at (&m->template_params, sid)->name);
             }
-            return SUBSTITUTE_TPARAM (sid);
+            TRACE_RETURN_SUCCESS (SUBSTITUTE_TPARAM (sid));
         }
     }
     RESTORE_POS();
+    TRACE_RETURN_FAILURE();
 });

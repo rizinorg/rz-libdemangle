@@ -12,7 +12,7 @@ DEFN_RULE (discriminator, {
             READ_NUMBER (numlt10);
             if (numlt10 >= 10) {
                 // do something
-                return dem;
+                TRACE_RETURN_SUCCESS (dem);
             }
         } else {
             // matched single "_"
@@ -20,8 +20,10 @@ DEFN_RULE (discriminator, {
             READ_NUMBER (numlt10);
             if (numlt10 >= 0 && numlt10 < 10) {
                 // do something
-                return dem;
+                TRACE_RETURN_SUCCESS (dem);
             }
         }
     }
+
+    TRACE_RETURN_FAILURE();
 });

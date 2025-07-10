@@ -5,7 +5,7 @@
 #include "types.h"
 
 DEFN_RULE (prefix_or_template_prefix_start, {
-    MATCH (RULE (unqualified_name) && APPEND_TYPE (dem));
-    MATCH (RULE (template_param) && APPEND_TYPE (dem));
+    MATCH (RULE (unqualified_name));
+    MATCH (RULE (template_param));
     MATCH (RULE (substitution));
 });

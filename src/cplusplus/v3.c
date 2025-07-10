@@ -114,31 +114,60 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
     Meta  meta = {0};
     Meta* m    = &meta;
 
-    if (RULE (mangled_name)) {
-#if DBG_PRINT_DETECTED_TYPES
-        dem_string_append (dem, " || ");
-        vec_foreach_ptr (&m->detected_types, t, {
-            dem_string_append_n (dem, "\n[", 2);
-            dem_string_concat (dem, t);
-            dem_string_append_n (dem, "]", 1);
-        });
+    // Initialize trace graph
+    TraceGraph  trace_graph = {0};
+    TraceGraph* graph       = &trace_graph;
+
+// Enable tracing via environment variable or compile-time flag
+#ifdef ENABLE_GRAPHVIZ_TRACE
+    graph->enabled = true;
+#else
+    graph->enabled = (getenv ("DEMANGLE_TRACE") != NULL);
 #endif
-#if DBG_PRINT_DETECTED_TPARAMS
-        dem_string_append (dem, " || ");
-        m->template_params.data     += m->template_idx_start;
-        m->template_params.length   -= m->template_idx_start;
-        m->template_params.capacity -= m->template_idx_start;
-        vec_foreach_ptr (&m->template_params, t, {
-            dem_string_append_n (dem, "\n", 1);
-            dem_string_concat (dem, t);
-        });
-        m->template_params.length   += m->template_idx_start;
-        m->template_params.capacity += m->template_idx_start;
-        m->template_params.data     -= m->template_idx_start;
-#endif
+
+    if (graph->enabled) {
+        trace_graph_init (graph);
+    }
+
+    if (first_of_rule_mangled_name (msi->cur) && rule_mangled_name (dem, msi, m, graph, -1)) {
+        // Output graphviz trace if enabled
+        if (graph->enabled) {
+            // Mark the final successful path
+            trace_graph_mark_final_path (graph);
+
+            char graph_filename[256];
+            snprintf (graph_filename, sizeof (graph_filename), "demangle_trace_%s.dot", mangled);
+            // Replace problematic characters in filename
+            for (char* p = graph_filename; *p; p++) {
+                if (*p == ':' || *p == '<' || *p == '>' || *p == '|' || *p == '*' || *p == '?') {
+                    *p = '_';
+                }
+            }
+            trace_graph_output_dot (graph, graph_filename, m);
+        }
+
+        trace_graph_cleanup (graph);
         vec_deinit (&meta.detected_types);
+
         return dem_string_drain (dem);
     } else {
+        // Output graphviz trace if enabled
+        if (graph->enabled) {
+            // Mark the final successful path
+            trace_graph_mark_final_path (graph);
+
+            char graph_filename[256];
+            snprintf (graph_filename, sizeof (graph_filename), "demangle_trace_%s.dot", mangled);
+            // Replace problematic characters in filename
+            for (char* p = graph_filename; *p; p++) {
+                if (*p == ':' || *p == '<' || *p == '>' || *p == '|' || *p == '*' || *p == '?') {
+                    *p = '_';
+                }
+            }
+            trace_graph_output_dot (graph, graph_filename, m);
+        }
+
+        trace_graph_cleanup (graph);
         vec_deinit (&meta.detected_types);
         dem_string_free (dem);
         return NULL;

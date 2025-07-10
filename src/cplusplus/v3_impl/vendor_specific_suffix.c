@@ -6,4 +6,4 @@
 
 // NOTE(brightprogrammer): I don't know how to decode this. Is this is a normal RULE(suffix)?
 // Will have to go through tests to see.
-DEFN_RULE (vendor_specific_suffix, { return NULL; });
+DEFN_RULE (vendor_specific_suffix, { TRACE_RETURN_FAILURE(); });

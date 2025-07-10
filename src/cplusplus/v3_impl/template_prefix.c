@@ -5,14 +5,18 @@
 #include "types.h"
 
 DEFN_RULE (template_prefix, {
-    // {prefix-or-template-prefix-start}
+    // {prefix-start} {prefix-nested-class-or-namespace} {unqualified-name}
+    // {prefix-start} {unqualified-name}
+    DEFER_VAR (nname);
     MATCH (
-        RULE (prefix_start) && RULE (prefix_nested_class_or_namespace) && RULE (unqualified_name)
+        RULE (prefix_start) &&
+        OPTIONAL (
+            RULE_DEFER (nname, prefix_nested_class_or_namespace) && APPEND_STR ("::") &&
+            APPEND_DEFER_VAR (nname)
+        ) &&
+        APPEND_STR ("::") && RULE (unqualified_name)
     );
 
-    // {prefix-start} {unqualified-name}
-    MATCH (RULE (prefix_start) && RULE (unqualified_name));
-
-    // {prefix-start} {prefix-nested-class-or-namespace} {unqualified-name}
+    // {prefix-or-template-prefix-start}
     MATCH (RULE (prefix_or_template_prefix_start));
 });

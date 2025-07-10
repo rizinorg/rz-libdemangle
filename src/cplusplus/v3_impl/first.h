@@ -176,22 +176,21 @@ static inline bool first_of_rule_v_offset (const char *input) {
 // ctor-name rule
 static inline bool first_of_rule_ctor_name (const char *input) {
     return strncmp (input, "C1", 2) == 0 || strncmp (input, "C2", 2) == 0 ||
-           strncmp (input, "C3", 2) == 0 || strncmp (input, "CI1", 3) == 0 ||
+           strncmp (input, "C3", 2) == 0 || strncmp (input, "C4", 2) == 0 ||
+           strncmp (input, "C5", 2) == 0 || strncmp (input, "CI1", 3) == 0 ||
            strncmp (input, "CI2", 3) == 0;
 }
 
 // dtor-name rule
 static inline bool first_of_rule_dtor_name (const char *input) {
     return strncmp (input, "D0", 2) == 0 || strncmp (input, "D1", 2) == 0 ||
-           strncmp (input, "D2", 2) == 0;
+           strncmp (input, "D2", 2) == 0 || strncmp (input, "D4", 2) == 0 ||
+           strncmp (input, "D5", 2) == 0;
 }
 
 // ctor-dtor-name rule (combination of ctor and dtor)
 static inline bool first_of_rule_ctor_dtor_name (const char *input) {
-    return strncmp (input, "C1", 2) == 0 || strncmp (input, "C2", 2) == 0 ||
-           strncmp (input, "C3", 2) == 0 || strncmp (input, "CI1", 3) == 0 ||
-           strncmp (input, "CI2", 3) == 0 || strncmp (input, "D0", 2) == 0 ||
-           strncmp (input, "D1", 2) == 0 || strncmp (input, "D2", 2) == 0;
+    return first_of_rule_ctor_name (input) || first_of_rule_dtor_name (input);
 }
 
 // extended-qualifier rule

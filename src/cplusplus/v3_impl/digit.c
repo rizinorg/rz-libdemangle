@@ -8,6 +8,8 @@ DEFN_RULE (digit, {
     if (IS_DIGIT (PEEK())) {
         APPEND_CHR (PEEK());
         ADV();
-        return dem;
+        TRACE_RETURN_SUCCESS (dem);
     }
+
+    TRACE_RETURN_FAILURE();
 });

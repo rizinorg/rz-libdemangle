@@ -30,13 +30,37 @@ typedef struct Name {
 
 typedef Vec (Name) Names;
 
+// Graphviz trace node for visual debugging
+typedef struct TraceNode {
+    int    id;            // Unique node ID
+    int    parent_id;     // Parent node ID (-1 for root)
+    char*  rule_name;     // Rule name
+    size_t start_pos;     // Start position in input
+    size_t end_pos;       // End position in input
+    char*  input_snippet; // Input snippet at this position
+    char*  result;        // Partial result (if successful)
+    int    status;        // 0=running, 1=success, 2=failed, 3=backtracked
+    int    attempt_order; // Order of attempt within parent
+    bool   final_path;    // True if this node is part of the final successful path
+} TraceNode;
+
+typedef Vec (TraceNode) TraceNodes;
+
+// Separate graph structure for tracing
+typedef struct TraceGraph {
+    TraceNodes nodes;           // All trace nodes
+    int        next_node_id;    // Next available node ID
+    int        current_node_id; // Current active node ID
+    bool       enabled;         // Whether tracing is enabled
+} TraceGraph;
+
 typedef struct Meta {
     Names detected_types;
     Names template_params;
     bool  is_ctor;
     bool  is_dtor;
     bool  is_const;
-    bool  trace; // Debug tracing flag
+    bool  trace; // Debug tracing flag (now just for compatibility)
 
     // detected templates are reset everytime a new template argument list starts at the same level
     // instead of taking care of that, we just rebase from where we start our substitution
@@ -59,11 +83,20 @@ typedef struct Meta {
  *
  * \p dem Demangled string.
  * \p msi Mangled string iter.
+ * \p m   Meta context.
+ * \p graph Trace graph for debugging.
+ * \p parent_node_id Parent node ID in the trace graph (-1 for root).
  *
  * \return dem on success.
  * \return NULL otherwise.
  */
-typedef DemString* (*DemRule) (DemString* dem, StrIter* msi, Meta* m);
+typedef DemString* (*DemRule) (
+    DemString*  dem,
+    StrIter*    msi,
+    Meta*       m,
+    TraceGraph* graph,
+    int         parent_node_id
+);
 
 typedef bool (*DemRuleFirst) (const char* input);
 
@@ -88,7 +121,9 @@ DemString* match_one_or_more_rules (
     const char*  sep,
     DemString*   dem,
     StrIter*     msi,
-    Meta*        m
+    Meta*        m,
+    TraceGraph*  graph,
+    int          parent_node_id
 );
 DemString* match_zero_or_more_rules (
     DemRuleFirst first,
@@ -96,8 +131,25 @@ DemString* match_zero_or_more_rules (
     const char*  sep,
     DemString*   dem,
     StrIter*     msi,
-    Meta*        m
+    Meta*        m,
+    TraceGraph*  graph,
+    int          parent_node_id
 );
+
+// Graphviz trace helper functions
+void trace_graph_init (TraceGraph* graph);
+int  trace_graph_add_node (
+     TraceGraph* graph,
+     const char* rule_name,
+     size_t      pos,
+     const char* input,
+     int         parent_id
+ );
+void trace_graph_set_result (TraceGraph* graph, int node_id, const char* result, int status);
+void trace_graph_mark_final_path (TraceGraph* graph);
+
+void trace_graph_output_dot (TraceGraph* graph, const char* filename, Meta* meta);
+void trace_graph_cleanup (TraceGraph* graph);
 
 // Rule declarations
 DECL_RULE (mangled_name);
@@ -196,5 +248,6 @@ DECL_RULE_ALIAS (virtual_offset_number, number);
 DECL_RULE_ALIAS (function_name, name);
 DECL_RULE_ALIAS (data_name, name);
 DECL_RULE_ALIAS (signature_type, type);
+
 
 #endif // V3_IMPL_TYPES_H

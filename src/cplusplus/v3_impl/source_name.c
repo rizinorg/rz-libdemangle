@@ -24,11 +24,13 @@ DEFN_RULE (source_name, {
             /* if length is non-zero after reading, then the name is invalid. */
             /* NOTE(brightprogrammer): for correct cases length actually goes "-1" here */
             if (name_len > 0) {
-                return NULL;
+                TRACE_RETURN_FAILURE();
             }
 
             /* if atleast one character matches */
-            return dem;
+            TRACE_RETURN_SUCCESS (dem);
         }
     }
+
+    TRACE_RETURN_FAILURE();
 });

@@ -31,21 +31,7 @@ DEFN_RULE (nested_name, {
             READ ('E'),
         {
             if (is_ctor || is_dtor) {
-                const char* cname = strrchr (pfx->buf, ':');
-                if (!cname) {
-                    cname = pfx->buf;
-                } else {
-                    cname += 1;
-                }
                 dem_string_concat (dem, pfx);
-                APPEND_TYPE (dem);
-                if (is_ctor) {
-                    dem_string_append_n (dem, "::", 2);
-                } else {
-                    dem_string_append_n (dem, "::~", 3);
-                }
-                const char* e = strchr (cname, '<');
-                dem_string_append_n (dem, cname, e ? e - cname : pfx->buf + pfx->len - cname);
             } else {
                 dem_string_concat (dem, pfx);
                 APPEND_TYPE (dem);
@@ -55,6 +41,7 @@ DEFN_RULE (nested_name, {
 
             dem_string_deinit (pfx);
             dem_string_deinit (uname);
+
             if (ref->len) {
                 APPEND_STR (" ");
                 (void)APPEND_DEFER_VAR (ref);
@@ -68,13 +55,6 @@ DEFN_RULE (nested_name, {
     dem_string_deinit (uname);
     is_ctor = is_dtor = false;
 
-    if (m->trace) {
-        printf (
-            "[TRACE] -- nested-name -- Parsing with <prefix> failed in nested-name, now trying "
-            "with <template-prefix>\n"
-        );
-    }
-
     DEFER_VAR (targs);
 
     // N [<CV-qualifiers>] [<ref-qualifier>] <template-prefix> <ctor-name> <template-args> E
@@ -86,24 +66,8 @@ DEFN_RULE (nested_name, {
             ((is_ctor = !!RULE (ctor_name)) || (is_dtor = !!RULE (dtor_name)) ||
              RULE_DEFER (uname, unqualified_name)),
         {
-            if (is_ctor || is_dtor) {
-                const char* cname = strrchr (pfx->buf, ':');
-                if (!cname) {
-                    cname = pfx->buf;
-                } else {
-                    cname += 1;
-                }
-                dem_string_concat (dem, pfx);
-                APPEND_TYPE (dem);
-                if (is_ctor) {
-                    dem_string_append_n (dem, "::", 2);
-                } else {
-                    dem_string_append_n (dem, "::~", 3);
-                }
-                const char* e = strchr (cname, '<');
-                dem_string_append_n (dem, cname, e ? e - cname : pfx->buf + pfx->len - cname);
-            } else {
-                dem_string_concat (dem, pfx);
+            dem_string_concat (dem, pfx);
+            if (!is_ctor && !is_dtor) {
                 APPEND_TYPE (dem);
                 dem_string_append_n (dem, "::", 2);
                 dem_string_concat (dem, uname);
@@ -119,7 +83,7 @@ DEFN_RULE (nested_name, {
                 dem_string_deinit (targs);
             } else {
                 dem_string_deinit (targs);
-                MATCH_FAILED();
+                TRACE_RETURN_FAILURE();
             }
 
             if (ref->len) {
@@ -135,10 +99,9 @@ DEFN_RULE (nested_name, {
     dem_string_deinit (targs);
     dem_string_deinit (uname);
 
-
-
     MATCH (RULE (nested_name_with_substitution_only));
 });
+
 DEFN_RULE (nested_name_with_substitution_only, {
     DEFER_VAR (ref);
     DEFER_VAR (targs);
