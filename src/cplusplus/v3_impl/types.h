@@ -145,7 +145,7 @@ int  trace_graph_add_node (
      const char* input,
      int         parent_id
  );
-void trace_graph_set_result (TraceGraph* graph, int node_id, const char* result, int status);
+void trace_graph_set_result_impl (TraceGraph* graph, int node_id, size_t pos, const char* result, int status);
 void trace_graph_mark_final_path (TraceGraph* graph);
 
 void trace_graph_output_dot (TraceGraph* graph, const char* filename, Meta* meta);

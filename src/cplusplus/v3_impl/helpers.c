@@ -393,16 +393,12 @@ int trace_graph_add_node (
         node->start_pos = pos;
         node->end_pos   = pos; // Will be updated on completion
 
-        // Create input snippet (max 20 chars)
+        // Create input snippet
         if (input) {
-            size_t snippet_len  = strlen (input) > 20 ? 20 : strlen (input);
+            size_t snippet_len  = strlen (input);
             node->input_snippet = malloc (snippet_len + 4);
             strncpy (node->input_snippet, input, snippet_len);
-            if (strlen (input) > 20) {
-                strcpy (node->input_snippet + snippet_len, "...");
-            } else {
-                node->input_snippet[snippet_len] = '\0';
-            }
+            node->input_snippet[snippet_len] = '\0';
         } else {
             node->input_snippet = strdup ("");
         }
@@ -442,7 +438,13 @@ static void propagate_failure_to_descendants (TraceGraph* graph, int parent_id) 
     }
 }
 
-void trace_graph_set_result (TraceGraph* graph, int node_id, const char* result, int status) {
+void trace_graph_set_result_impl (
+    TraceGraph* graph,
+    int         node_id,
+    size_t      pos,
+    const char* result,
+    int         status
+) {
     if (!graph || !graph->enabled || node_id < 0) {
         return;
     }
@@ -459,14 +461,14 @@ void trace_graph_set_result (TraceGraph* graph, int node_id, const char* result,
             node->status = status;
             if (result && strlen (result) > 0) {
                 // Limit result length for readability
-                size_t result_len = strlen (result) > 50 ? 50 : strlen (result);
+                size_t result_len = strlen (result);
                 node->result      = malloc (result_len + 4);
                 strncpy (node->result, result, result_len);
-                if (strlen (result) > 50) {
-                    strcpy (node->result + result_len, "...");
-                } else {
-                    node->result[result_len] = '\0';
-                }
+                node->result[result_len] = '\0';
+            }
+
+            if (pos - node->start_pos > 0) {
+                node->end_pos = pos;
             }
 
             // If this node is being marked as failed, propagate failure to all descendants
@@ -488,9 +490,8 @@ void trace_graph_output_dot (TraceGraph* graph, const char* filename, Meta* meta
         return;
     }
 
-    const char* dot_filename = dem_str_newf ("build/trace/%s", filename);
-    FILE*       f            = fopen (dot_filename, "w");
-    free ((void*)dot_filename);
+    char  buf[256] = {0};
+    FILE* f        = fopen (filename, "w");
     if (!f) {
         return;
     }
@@ -499,6 +500,7 @@ void trace_graph_output_dot (TraceGraph* graph, const char* filename, Meta* meta
     fprintf (f, "  rankdir=TB;\n");
     fprintf (f, "  node [shape=box, fontname=\"Courier\", fontsize=10];\n");
     fprintf (f, "  edge [fontname=\"Arial\", fontsize=8];\n\n");
+
 
     // Output nodes
     for (size_t i = 0; i < graph->nodes.length; i++) {
@@ -543,13 +545,21 @@ void trace_graph_output_dot (TraceGraph* graph, const char* filename, Meta* meta
             }
         }
 
+        buf[0]    = '\0';
+        size_t sz = node->end_pos - node->start_pos > sizeof (buf) - 1 ?
+                        sizeof (buf) - 1 :
+                        node->end_pos - node->start_pos;
+        memcpy (buf, node->input_snippet, sz);
+        buf[sz] = '\0';
+
+
         fprintf (
             f,
-            "  n%d [label=\"%s\\npos:%zu\\n'%s'",
+            "  n%d [label=\"%s@pos:%zu\\n'%s'",
             node->id,
             node->rule_name,
             node->start_pos,
-            node->input_snippet ? node->input_snippet : ""
+            buf
         );
 
         if (node->result && strlen (node->result) > 0) {

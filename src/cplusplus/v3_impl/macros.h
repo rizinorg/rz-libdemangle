@@ -240,6 +240,10 @@
  */
 #define DECL_RULE_ALIAS(alias_x, for_y) DEFN_RULE (alias_x, { MATCH (RULE (for_y)); })
 
+
+#define trace_graph_set_result(G, N, R, S)                                                         \
+    trace_graph_set_result_impl (G, N, (size_t)(msi->cur - msi->beg), R, S)
+
 /**
  * \b Define a rule with name x and given rule body.
  *
