@@ -11,6 +11,7 @@ bool meta_tmp_init (Meta* og, Meta* tmp) {
 
     vec_concat (&tmp->detected_types, &og->detected_types);
     vec_concat (&tmp->template_params, &og->template_params);
+    vec_concat (&tmp->parent_type_kinds, &og->parent_type_kinds);;
     tmp->is_ctor  = og->is_ctor;
     tmp->is_dtor  = og->is_dtor;
     tmp->is_const = og->is_const;
@@ -30,22 +31,9 @@ void meta_tmp_apply (Meta* og, Meta* tmp) {
     }
 
     // transfer of ownership from tmp to og
-    vec_reserve (&og->detected_types, tmp->detected_types.length);
-    memcpy (og->detected_types.data, tmp->detected_types.data, vec_mem_size (&tmp->detected_types));
-    og->detected_types.length = tmp->detected_types.length;
-    memset (tmp->detected_types.data, 0, vec_mem_size (&tmp->detected_types));
-    UNUSED (vec_deinit (&tmp->detected_types));
-
-    // transfer of ownership from tmp to og
-    vec_reserve (&og->template_params, tmp->template_params.length);
-    memcpy (
-        og->template_params.data,
-        tmp->template_params.data,
-        vec_mem_size (&tmp->template_params)
-    );
-    og->template_params.length = tmp->template_params.length;
-    memset (tmp->template_params.data, 0, vec_mem_size (&tmp->template_params));
-    UNUSED (vec_deinit (&tmp->template_params));
+    vec_move(&og->detected_types, &tmp->detected_types);
+    vec_move(&og->template_params, &tmp->template_params);
+    vec_move(&og->parent_type_kinds, &tmp->parent_type_kinds);
 
     og->is_ctor  = tmp->is_ctor;
     og->is_dtor  = tmp->is_dtor;
@@ -78,6 +66,7 @@ void meta_tmp_fini (Meta* og, Meta* tmp) {
         tp->num_parts = 0;
     }
     UNUSED (vec_deinit (&tmp->template_params));
+    UNUSED (vec_deinit (&tmp->parent_type_kinds));
 
     memset (tmp, 0, sizeof (*tmp));
 }

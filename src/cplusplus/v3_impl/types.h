@@ -79,7 +79,7 @@ typedef struct Meta {
     bool template_reset;
 
     bool is_ctor_or_dtor_at_l0;
-   CpDemTypeKinds parent_type_kinds;
+    CpDemTypeKinds parent_type_kinds;
 } Meta;
 
 /**

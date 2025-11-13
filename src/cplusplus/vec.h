@@ -109,6 +109,15 @@
               (vec)) :                                                                             \
          NULL)
 
+#define vec_move(dst, src)                                                                  \
+    ((dst && src) ?                                                                                       \
+          (vec_reserve (dst, (src)->length)&&\
+            memcpy ((dst)->data, (src)->data, vec_mem_size (src))&&\
+            ((dst)->length = (src)->length)&&\
+            memset ((src)->data, 0, vec_mem_size (src))&&\
+            vec_deinit (src))                                                                  \
+         :false)
+
 /**
  * Append an item into vector.
  * Appended item is completely owned by vector after this call. Any memory
