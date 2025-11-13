@@ -135,7 +135,7 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
             // Mark the final successful path
             trace_graph_mark_final_path (graph);
 
-            char graph_filename[256] = { 0 };
+            char graph_filename[256] = {0};
             snprintf (graph_filename, sizeof (graph_filename), "demangle_trace_%s.dot", mangled);
             // Replace problematic characters in filename
             for (char* p = graph_filename; *p; p++) {

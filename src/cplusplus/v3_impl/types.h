@@ -54,6 +54,9 @@ typedef struct TraceGraph {
     bool       enabled;         // Whether tracing is enabled
 } TraceGraph;
 
+enum CpDemTypeKind_t;
+typedef Vec (enum CpDemTypeKind_t) CpDemTypeKinds;
+
 typedef struct Meta {
     Names detected_types;
     Names template_params;
@@ -76,6 +79,7 @@ typedef struct Meta {
     bool template_reset;
 
     bool is_ctor_or_dtor_at_l0;
+   CpDemTypeKinds parent_type_kinds;
 } Meta;
 
 /**
@@ -150,6 +154,103 @@ void trace_graph_mark_final_path (TraceGraph* graph);
 
 void trace_graph_output_dot (TraceGraph* graph, const char* filename, Meta* meta);
 void trace_graph_cleanup (TraceGraph* graph);
+
+typedef enum CpDemTypeKind_t {
+    CP_DEM_TYPE_KIND_mangled_name,
+    CP_DEM_TYPE_KIND_encoding,
+    CP_DEM_TYPE_KIND_name,
+    CP_DEM_TYPE_KIND_unscoped_name,
+    CP_DEM_TYPE_KIND_nested_name,
+    CP_DEM_TYPE_KIND_cv_qualifiers,
+    CP_DEM_TYPE_KIND_ref_qualifier,
+    CP_DEM_TYPE_KIND_prefix,
+    CP_DEM_TYPE_KIND_template_param,
+    CP_DEM_TYPE_KIND_decltype,
+    CP_DEM_TYPE_KIND_template_prefix,
+    CP_DEM_TYPE_KIND_unqualified_name,
+    CP_DEM_TYPE_KIND_ctor_name,
+    CP_DEM_TYPE_KIND_dtor_name,
+    CP_DEM_TYPE_KIND_ctor_dtor_name,
+    CP_DEM_TYPE_KIND_source_name,
+    CP_DEM_TYPE_KIND_number,
+    CP_DEM_TYPE_KIND_unnamed_type_name,
+    CP_DEM_TYPE_KIND_abi_tag,
+    CP_DEM_TYPE_KIND_abi_tags,
+    CP_DEM_TYPE_KIND_operator_name,
+    CP_DEM_TYPE_KIND_type,
+    CP_DEM_TYPE_KIND_builtin_type,
+    CP_DEM_TYPE_KIND_expression,
+    CP_DEM_TYPE_KIND_unresolved_name,
+    CP_DEM_TYPE_KIND_function_param,
+    CP_DEM_TYPE_KIND_expr_primary,
+    CP_DEM_TYPE_KIND_float,
+    CP_DEM_TYPE_KIND_initializer,
+    CP_DEM_TYPE_KIND_braced_expression,
+    CP_DEM_TYPE_KIND_base_unresolved_name,
+    CP_DEM_TYPE_KIND_simple_id,
+    CP_DEM_TYPE_KIND_destructor_name,
+    CP_DEM_TYPE_KIND_unresolved_type,
+    CP_DEM_TYPE_KIND_unresolved_qualifier_level,
+    CP_DEM_TYPE_KIND_qualified_type,
+    CP_DEM_TYPE_KIND_qualifiers,
+    CP_DEM_TYPE_KIND_extended_qualifier,
+    CP_DEM_TYPE_KIND_function_type,
+    CP_DEM_TYPE_KIND_exception_spec,
+    CP_DEM_TYPE_KIND_class_enum_type,
+    CP_DEM_TYPE_KIND_array_type,
+    CP_DEM_TYPE_KIND_pointer_to_member_type,
+    CP_DEM_TYPE_KIND_template_template_param,
+    CP_DEM_TYPE_KIND_digit,
+    CP_DEM_TYPE_KIND_template_args,
+    CP_DEM_TYPE_KIND_template_arg,
+    CP_DEM_TYPE_KIND_substitution,
+    CP_DEM_TYPE_KIND_seq_id,
+    CP_DEM_TYPE_KIND_local_name,
+    CP_DEM_TYPE_KIND_discriminator,
+    CP_DEM_TYPE_KIND_vendor_specific_suffix,
+    CP_DEM_TYPE_KIND_special_name,
+    CP_DEM_TYPE_KIND_call_offset,
+    CP_DEM_TYPE_KIND_nv_offset,
+    CP_DEM_TYPE_KIND_v_offset,
+    CP_DEM_TYPE_KIND_bare_function_type,
+    CP_DEM_TYPE_KIND_prefix_or_template_prefix_start,
+    CP_DEM_TYPE_KIND_prefix_start_unit,
+    CP_DEM_TYPE_KIND_prefix_start_rr,
+    CP_DEM_TYPE_KIND_prefix_start,
+    CP_DEM_TYPE_KIND_prefix_nested_class_or_namespace,
+    CP_DEM_TYPE_KIND_closure_prefix_unit,
+    CP_DEM_TYPE_KIND_closure_prefix_rr,
+    CP_DEM_TYPE_KIND_closure_prefix,
+    CP_DEM_TYPE_KIND_unscoped_template_name,
+    CP_DEM_TYPE_KIND_top_level_cv_qualifiers,
+    CP_DEM_TYPE_KIND_non_negative_number,
+    CP_DEM_TYPE_KIND_value_number,
+    CP_DEM_TYPE_KIND_value_float,
+    CP_DEM_TYPE_KIND_string_type,
+    CP_DEM_TYPE_KIND_pointer_type,
+    CP_DEM_TYPE_KIND_real_part_float,
+    CP_DEM_TYPE_KIND_imag_part_float,
+    CP_DEM_TYPE_KIND_field_source_name,
+    CP_DEM_TYPE_KIND_index_expression,
+    CP_DEM_TYPE_KIND_range_begin_expression,
+    CP_DEM_TYPE_KIND_range_end_expression,
+    CP_DEM_TYPE_KIND_instantiation_dependent_expression,
+    CP_DEM_TYPE_KIND_element_type,
+    CP_DEM_TYPE_KIND_instantiation_dependent_array_bound_expression,
+    CP_DEM_TYPE_KIND_array_bound_number,
+    CP_DEM_TYPE_KIND_class_type,
+    CP_DEM_TYPE_KIND_function_encoding,
+    CP_DEM_TYPE_KIND_entity_name,
+    CP_DEM_TYPE_KIND_base_encoding,
+    CP_DEM_TYPE_KIND_offset_number,
+    CP_DEM_TYPE_KIND_virtual_offset_number,
+    CP_DEM_TYPE_KIND_function_name,
+    CP_DEM_TYPE_KIND_data_name,
+    CP_DEM_TYPE_KIND_signature_type,
+    CP_DEM_TYPE_KIND_nested_name_with_substitution_only,
+    CP_DEM_TYPE_KIND_nv_digit,
+    CP_DEM_TYPE_KIND_non_neg_number,
+} CpDemTypeKind;
 
 // Rule declarations
 DECL_RULE (mangled_name);
