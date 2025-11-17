@@ -273,8 +273,9 @@
         }                                                                                          \
         const char* _rule_start_pos = msi->cur;                                                    \
         ((void)_rule_start_pos);                                                                   \
-        vec_append_const(&m->parent_type_kinds, CP_DEM_TYPE_KIND_##x);\
-        { rule_body }            \
+        vec_append_const (&m->parent_type_kinds, CP_DEM_TYPE_KIND_##x);                            \
+        {rule_body};                                                                               \
+        vec_pop (&m->parent_type_kinds);                                                           \
         if (graph && graph->enabled && _my_node_id >= 0) {                                         \
             trace_graph_set_result (graph, _my_node_id, NULL, 2); /* failed */                     \
         }                                                                                          \

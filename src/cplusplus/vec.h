@@ -109,14 +109,12 @@
               (vec)) :                                                                             \
          NULL)
 
-#define vec_move(dst, src)                                                                  \
-    ((dst && src) ?                                                                                       \
-          (vec_reserve (dst, (src)->length)&&\
-            memcpy ((dst)->data, (src)->data, vec_mem_size (src))&&\
-            ((dst)->length = (src)->length)&&\
-            memset ((src)->data, 0, vec_mem_size (src))&&\
-            vec_deinit (src))                                                                  \
-         :false)
+#define vec_move(dst, src)                                                                         \
+    ((dst && src) ? (vec_reserve (dst, (src)->length) &&                                           \
+                     memcpy ((dst)->data, (src)->data, vec_mem_size (src)) &&                      \
+                     ((dst)->length = (src)->length) &&                                            \
+                     memset ((src)->data, 0, vec_mem_size (src)) && vec_deinit (src)) :            \
+                    false)
 
 /**
  * Append an item into vector.
@@ -129,36 +127,38 @@
  * \return vec on success.
  * \return NULL otherwise.
  */
-#define vec_append(vec, data_ptr)                                                                     \
-    ((vec) ?                                                                                          \
-         ((    /* make sure vector has sufficient space to insert one more item                       \
+#define vec_append(vec, data_ptr)                                                                   \
+    ((vec) ?                                                                                        \
+         ((/* make sure vector has sufficient space to insert one more item                       \
                 * this has no effect if vector length is less than capacity                        */ \
-           vec_reserve ((vec), (vec)->length + 1)                                                     \
-          ) ?                                                                                         \
-              (/* copy the data over from data_ptr to last element                               */   \
-               memcpy ((vec)->data + (vec)->length, (data_ptr), sizeof (VEC_DATA_TYPE (vec))),        \
-               (/* adjust the vector length after appending                                      */   \
-                (vec)->length += 1                                                                    \
-               ),                                                                                     \
-               (vec)                                                                                  \
-              ) :                                                                                     \
-              NULL) :                                                                                 \
+           vec_reserve ((vec), (vec)->length + 1)                                                   \
+          ) ?                                                                                       \
+              (/* copy the data over from data_ptr to last element                               */ \
+               memcpy ((vec)->data + (vec)->length, (data_ptr), sizeof (VEC_DATA_TYPE (vec))),      \
+               (/* adjust the vector length after appending                                      */ \
+                (vec)->length += 1                                                                  \
+               ),                                                                                   \
+               (vec)                                                                                \
+              ) :                                                                                   \
+              NULL) :                                                                               \
          NULL)
 
-#define vec_append_const(vec, data_const)                                                              \
-    ((vec) ?                                                                                           \
-         ((     /* make sure vector has sufficient space to insert one more item                       \
+#define vec_pop(vec) (vec ? ((vec)->length > 0 ? --((vec)->length) : 0) : 0)
+
+#define vec_append_const(vec, data_const)                                                           \
+    ((vec) ?                                                                                        \
+         ((/* make sure vector has sufficient space to insert one more item                       \
                  * this has no effect if vector length is less than capacity                        */ \
-           vec_reserve ((vec), (vec)->length + 1)                                                      \
-          ) ?                                                                                          \
-              ( /* copy the data over from data to last element                               */       \
-               (vec)->data[(vec)->length] = (data_const),                                              \
-               (/* adjust the vector length after appending                                      */    \
-                (vec)->length += 1                                                                     \
-               ),                                                                                      \
-               (vec)                                                                                   \
-              ) :                                                                                      \
-              NULL) :                                                                                  \
+           vec_reserve ((vec), (vec)->length + 1)                                                   \
+          ) ?                                                                                       \
+              ( /* copy the data over from data to last element                               */    \
+               (vec)->data[(vec)->length] = (data_const),                                           \
+               (/* adjust the vector length after appending                                      */ \
+                (vec)->length += 1                                                                  \
+               ),                                                                                   \
+               (vec)                                                                                \
+              ) :                                                                                   \
+              NULL) :                                                                               \
          NULL)
 
 #define vec_concat(vec, other) vec_foreach_ptr ((other), o, { UNUSED (vec_append ((vec), o)); })
