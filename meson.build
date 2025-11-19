@@ -65,6 +65,8 @@ tests = [
 
   'cxx_base',
   'cxx_gnu_v2',
+  'cxx_gnu_v3_template',
+  'cxx_gnu_v3_llvm',
 ]
 
 if get_option('use_swift_demangler')
