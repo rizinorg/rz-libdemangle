@@ -1,4 +1,4 @@
-project('libdemangle', 'c', meson_version: '>=0.49.0')
+project('libdemangle', 'c', meson_version : '>=0.49.0')
 
 cc = meson.get_compiler('c')
 
@@ -82,25 +82,25 @@ if get_option('default_library') == 'shared'
 endif
 
 if cc.has_argument('--std=gnu99')
-  add_project_arguments('--std=gnu99', language: 'c')
+  add_project_arguments('--std=gnu99', language : 'c')
 elif cc.has_argument('--std=c99')
-  add_project_arguments('--std=c99', language: 'c')
+  add_project_arguments('--std=c99', language : 'c')
 endif
 
 libdemangle = library(
   'demangle',
   libdemangle_src,
-  c_args: common_c_args + libdemangle_c_args,
-  dependencies: [],
-  implicit_include_directories: false,
-  install: get_option('install_lib'),
-  include_directories: include_directories(['include', 'src']),
+  c_args : common_c_args + libdemangle_c_args,
+  dependencies : [],
+  implicit_include_directories : false,
+  install : get_option('install_lib'),
+  include_directories : include_directories(['include', 'src']),
 )
 
 libdemangle_dep = declare_dependency(
-  link_with: libdemangle,
-  dependencies: [],
-  include_directories: include_directories('include'),
+  link_with : libdemangle,
+  dependencies : [],
+  include_directories : include_directories('include'),
 )
 
 if get_option('enable_cli')
@@ -110,11 +110,11 @@ if get_option('enable_cli')
   executable(
     'demangle',
     bin_demangle,
-    c_args: common_c_args,
-    dependencies: [libdemangle_dep],
-    include_directories: include_directories(['include', 'src']),
-    implicit_include_directories: false,
-    install: true,
+    c_args : common_c_args,
+    dependencies : [libdemangle_dep],
+    include_directories : include_directories(['include', 'src']),
+    implicit_include_directories : false,
+    install : true,
   )
 endif
 
@@ -130,12 +130,12 @@ if get_option('enable_tests') and not meson.is_subproject()
     exe = executable(
       'test_@0@'.format(test),
       'test/test_@0@.c'.format(test),
-      include_directories: include_directories(['include', 'test']),
-      dependencies: test_dependencies,
-      c_args: common_c_args,
-      install: false,
-      install_rpath: '',
-      implicit_include_directories: false,
+      include_directories : include_directories(['include', 'test']),
+      dependencies : test_dependencies,
+      c_args : common_c_args,
+      install : false,
+      install_rpath : '',
+      implicit_include_directories : false,
     )
     test(test, exe)
   endforeach
