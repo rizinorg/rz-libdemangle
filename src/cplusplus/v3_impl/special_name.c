@@ -37,7 +37,7 @@ DEFN_RULE (special_name, {
     MATCH (READ_STR ("GR") && APPEND_STR ("reference temporary for ") && RULE (name) && READ ('_'));
     MATCH (READ_STR ("TV") && APPEND_STR ("vtable for ") && RULE (type));
     MATCH (READ_STR ("TT") && APPEND_STR ("VTT structure for ") && RULE (type));
-    MATCH (READ_STR ("TI") && APPEND_STR ("typeinfo structure for ") && RULE (type));
+    MATCH (READ_STR ("TI") && APPEND_STR ("typeinfo for ") && RULE (type));
     MATCH (READ_STR ("TS") && APPEND_STR ("typeinfo name for ") && RULE (type));
     MATCH (READ_STR ("GV") && APPEND_STR ("guard variable for ") && RULE (name));
     MATCH (READ_STR ("GTt") && RULE (encoding));
