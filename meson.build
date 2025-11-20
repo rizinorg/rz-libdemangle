@@ -11,6 +11,9 @@ libdemangle_src = [
   'src' / 'cplusplus' / 'demangle.c',
   'src' / 'cplusplus' / 'common.c',
   'src' / 'cplusplus' / 'param.c',
+  'src' / 'cplusplus' / 'meta.c',
+  'src' / 'cplusplus' / 'trace_graph.c',
+  'src' / 'cplusplus' / 'parser_combinator.c',
   'src' / 'cplusplus' / 'v2.c',
   'src' / 'cplusplus' / 'v3.c',
 
@@ -65,6 +68,7 @@ tests = [
 
   'cxx_base',
   'cxx_gnu_v2',
+  'cxx_gnu_v3_type',
   'cxx_gnu_v3_template',
   'cxx_gnu_v3_llvm',
 ]

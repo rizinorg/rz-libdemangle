@@ -5,3 +5,4 @@ debug_demangler.c
 debug_demangler.dSYM/
 compile_commands.json
 steps-grammars
+**/*.dot

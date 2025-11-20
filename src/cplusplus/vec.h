@@ -110,7 +110,7 @@
          NULL)
 
 #define vec_move(dst, src)                                                                         \
-    ((dst && src) ? (vec_reserve (dst, (src)->length) &&                                           \
+    ((dst && src && (src)->data) ? (vec_reserve (dst, (src)->length) &&                                           \
                      memcpy ((dst)->data, (src)->data, vec_mem_size (src)) &&                      \
                      ((dst)->length = (src)->length) &&                                            \
                      memset ((src)->data, 0, vec_mem_size (src)) && vec_deinit (src)) :            \

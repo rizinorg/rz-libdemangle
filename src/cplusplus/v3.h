@@ -1,6 +1,6 @@
 #ifndef RZ_LIBDEMANGLE_V3_H
 #define RZ_LIBDEMANGLE_V3_H
-
+#include "macros.h"
 // Rule declarations
 DECL_RULE (mangled_name);
 DECL_RULE (encoding);
@@ -24,6 +24,7 @@ DECL_RULE (abi_tag);
 DECL_RULE (abi_tags);
 DECL_RULE (operator_name);
 DECL_RULE (type);
+DECL_RULE (type_type);
 DECL_RULE (builtin_type);
 DECL_RULE (expression);
 DECL_RULE (unresolved_name);
