@@ -137,7 +137,7 @@ bool append_tparam (Meta* m, DemString* t) {
  * Refer back to a previous type from detected types and then add that
  * type to the currently demangled string
  */
-DemString* SUBSTITUTE_TYPE (Meta* m, ut64 id, DemString* dem) {
+DemString* meta_substitute_type (Meta* m, ut64 id, DemString* dem) {
     if (m->detected_types.length > id) {
         Name* type_name = vec_ptr_at (&m->detected_types, id);
         if (type_name && type_name->name.buf) {
@@ -148,7 +148,7 @@ DemString* SUBSTITUTE_TYPE (Meta* m, ut64 id, DemString* dem) {
     return NULL;
 }
 
-DemString* SUBSTITUTE_TPARAM (Meta* m, ut64 id, DemString* dem) {
+DemString* meta_substitute_tparam (Meta* m, ut64 id, DemString* dem) {
     if (m->template_params.length > id) {
         Name* tparam_name = vec_ptr_at (&m->template_params, id);
         if (tparam_name && tparam_name->name.buf) {

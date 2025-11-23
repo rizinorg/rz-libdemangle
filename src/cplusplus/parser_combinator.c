@@ -87,12 +87,10 @@ DemString* match_zero_or_more_rules (
         return NULL;
     }
 
-    ut32 match_count = 0;
     while (true) {
         DemString tmp = {0};
         SAVE_POS(0);
         if (first (CUR()) && rule (&tmp, msi, m, graph, parent_node_id)) {
-            match_count++;
             if (sep) {
                 dem_string_append (&tmp, sep);
             }
@@ -106,11 +104,11 @@ DemString* match_zero_or_more_rules (
     }
 
     /* remove last sep */
-    // if (sep) {
-    //     for (int l = 0; l < strlen (sep); l++) {
-    //         dem->buf[--dem->len] = 0;
-    //     }
-    // }
+    if (sep && dem->buf) {
+        for (int l = 0; l < strlen (sep); l++) {
+            dem->buf[--dem->len] = 0;
+        }
+    }
 
     /* we always match, even if nothing matches */
     return dem;

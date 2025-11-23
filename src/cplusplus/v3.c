@@ -685,14 +685,14 @@ DEFN_RULE (template_param, {
                 vec_ptr_at (&m->template_params, sid)->name.buf) {
                 FORCE_APPEND_TYPE (&vec_ptr_at (&m->template_params, sid)->name);
             }
-            TRACE_RETURN_SUCCESS (SUBSTITUTE_TPARAM (m, sid, dem));
+            TRACE_RETURN_SUCCESS (meta_substitute_tparam (m, sid, dem));
         } else if (READ ('_')) {
             size_t sid = m->template_idx_start;
             if (m->template_params.length > sid &&
                 vec_ptr_at (&m->template_params, sid)->name.buf) {
                 FORCE_APPEND_TYPE (&vec_ptr_at (&m->template_params, sid)->name);
             }
-            TRACE_RETURN_SUCCESS (SUBSTITUTE_TPARAM (m, sid, dem));
+            TRACE_RETURN_SUCCESS (meta_substitute_tparam (m, sid, dem));
         }
     }
     RESTORE_POS (0);
@@ -818,14 +818,6 @@ DEFN_RULE (prefix, {
             (dem_string_deinit (last_name), dem_string_deinit (pfx_nested), 1)
         )
     );
-});
-
-
-
-DEFN_RULE (cv_qualifiers, {
-    MATCH (READ ('r') && APPEND_STR ("restrict"));
-    MATCH (READ ('V') && APPEND_STR ("volatile"));
-    MATCH (READ ('K') && SET_CONST());
 });
 
 
@@ -1121,34 +1113,43 @@ DEFN_RULE (mangled_name, {
     );
 });
 
-DEFN_RULE (qualifiers, {
-    if (PEEK() == 'K') {
-        msi->cur++;
-        APPEND_STR (" const");
-        goto ok;
-    }
-    if (PEEK() == 'V') {
-        msi->cur++;
-        APPEND_STR (" volatile");
-        goto ok;
-    }
-    if (PEEK() == 'r') {
-        msi->cur++;
-        APPEND_STR (" restrict");
-        goto ok;
-    }
-    DemString dem_extended_qualifier = {0};
-    if (rule_extended_qualifier (&dem_extended_qualifier, msi, m, graph, _my_node_id)) {
-        APPEND_STR (" ") && dem_string_concat (dem, &dem_extended_qualifier);
-        dem_string_deinit (&dem_extended_qualifier);
-        goto ok;
-    }
-    goto fail;
-ok:
-    TRACE_RETURN_SUCCESS (dem);
-fail:
-    TRACE_RETURN_FAILURE();
-});
+DemString* rule_cv_qualifiers (
+    DemString*  dem,
+    StrIter*    msi,
+    Meta*       m,
+    TraceGraph* graph,
+    int         parent_node_id
+) {
+    RULE_HEAD (cv_qualifiers);
+    MATCH (READ ('K') && APPEND_STR (" const") && SET_CONST());
+    MATCH (READ ('V') && APPEND_STR (" volatile"));
+    MATCH (READ ('r') && APPEND_STR (" restrict"));
+    RULE_FOOT (cv_qualifiers);
+}
+
+DemString*
+    rule_qualifiers (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
+    RULE_HEAD (qualifiers);
+
+    DEFER_VAR (dem_extended_qualifiers);
+    (match_zero_or_more_rules (
+        first_of_rule_extended_qualifier,
+        rule_extended_qualifier,
+        " ",
+        dem_extended_qualifiers,
+        msi,
+        m,
+        graph,
+        _my_node_id
+    ));
+    MATCH_AND_DO (RULE (cv_qualifiers), {
+        dem_extended_qualifiers->buf&& APPEND_CHR (' ') &&
+            APPEND_STR (dem_extended_qualifiers->buf);
+        dem_string_deinit (dem_extended_qualifiers);
+    });
+
+    RULE_FOOT (qualifiers);
+}
 
 DemString* rule_qualified_type (
     DemString*  dem,
@@ -1157,7 +1158,7 @@ DemString* rule_qualified_type (
     TraceGraph* graph,
     int         parent_node_id
 ) {
-    RULE_HEAD (type);
+    RULE_HEAD (qualified_type);
 
     DemString dem_qualifiers = {0};
     DemString dem_type       = {0};
@@ -1240,9 +1241,9 @@ DEFN_RULE (seq_id, {
             pow            *= 36;
             ADV();
         }
-        return SUBSTITUTE_TYPE (m, sid, dem);
+        return meta_substitute_type (m, sid, dem);
     } else if (PEEK() == '_') {
-        return SUBSTITUTE_TYPE (m, 0, dem);
+        return meta_substitute_type (m, 0, dem);
     }
 });
 
@@ -1644,13 +1645,10 @@ DEFN_RULE (closure_prefix_rr, {
 });
 
 
-
-DECL_RULE (nested_name_with_substitution_only);
-
 // NOTE: Prefix parsing does not work well with multiple unqualified names
 // We can create a new rule named second_last_unqualified_name and perform a trick
 // to get the second last unqualified name always.
-
+DECL_RULE (nested_name_with_substitution_only);
 DEFN_RULE (nested_name, {
     DEFER_VAR (ref);
     DEFER_VAR (pfx);

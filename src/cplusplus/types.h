@@ -92,8 +92,8 @@ void meta_tmp_fini (Meta* og, Meta* tmp);
 size_t     parse_sequence_id (StrIter* msi, Meta* m);
 bool       append_type (Meta* m, DemString* t, bool force_append);
 bool       append_tparam (Meta* m, DemString* t);
-DemString* SUBSTITUTE_TYPE (Meta* m, ut64 id, DemString* dem);
-DemString* SUBSTITUTE_TPARAM (Meta* m, ut64 id, DemString* dem);
+DemString* meta_substitute_type (Meta* m, ut64 id, DemString* dem);
+DemString* meta_substitute_tparam (Meta* m, ut64 id, DemString* dem);
 
 ut32 count_name_parts (Name* n);
 
