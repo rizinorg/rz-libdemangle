@@ -1649,10 +1649,18 @@ DEFN_RULE (closure_prefix_rr, {
 // We can create a new rule named second_last_unqualified_name and perform a trick
 // to get the second last unqualified name always.
 DECL_RULE (nested_name_with_substitution_only);
-DEFN_RULE (nested_name, {
+DemString* rule_nested_name (
+    DemString*  dem,
+    StrIter*    msi,
+    Meta*       m,
+    TraceGraph* graph,
+    int         parent_node_id
+) {
+    RULE_HEAD (nested_name);
     DEFER_VAR (ref);
     DEFER_VAR (pfx);
     DEFER_VAR (uname);
+    DEFER_VAR (dem_cv_qualifiers);
 
     bool is_ctor = false;
     bool is_dtor = false;
@@ -1661,7 +1669,7 @@ DEFN_RULE (nested_name, {
     // N [<CV-qualifiers>] [<ref-qualifier>] <prefix> <dtor-name> E
     // N [<CV-qualifiers>] [<ref-qualifier>] <prefix> <unqualified-name> E
     MATCH_AND_DO (
-        READ ('N') && OPTIONAL (RULE (cv_qualifiers)) &&
+        READ ('N') && OPTIONAL (RULE_DEFER (dem_cv_qualifiers, cv_qualifiers)) &&
             OPTIONAL (RULE_DEFER (ref, ref_qualifier)) && RULE_DEFER (pfx, prefix) &&
             ((is_ctor = !!RULE (ctor_name)) || (is_dtor = !!RULE (dtor_name)) ||
              RULE_DEFER (uname, unqualified_name)) &&
@@ -1678,6 +1686,7 @@ DEFN_RULE (nested_name, {
 
             dem_string_deinit (pfx);
             dem_string_deinit (uname);
+            dem_string_deinit (dem_cv_qualifiers);
 
             if (ref->len) {
                 APPEND_STR (" ");
@@ -1689,6 +1698,7 @@ DEFN_RULE (nested_name, {
 
     dem_string_deinit (pfx);
     dem_string_deinit (ref);
+    dem_string_deinit (dem_cv_qualifiers);
     dem_string_deinit (uname);
     is_ctor = is_dtor = false;
 
@@ -1698,7 +1708,7 @@ DEFN_RULE (nested_name, {
     // N [<CV-qualifiers>] [<ref-qualifier>] <template-prefix> <dtor-name> <template-args> E
     // N [<CV-qualifiers>] [<ref-qualifier>] <template-prefix> <unqualified-name> <template-args> E
     MATCH_AND_DO (
-        READ ('N') && OPTIONAL (RULE (cv_qualifiers)) &&
+        READ ('N') && OPTIONAL (RULE_DEFER (dem_cv_qualifiers, cv_qualifiers)) &&
             OPTIONAL (RULE_DEFER (ref, ref_qualifier)) && RULE_DEFER (pfx, template_prefix) &&
             ((is_ctor = !!RULE (ctor_name)) || (is_dtor = !!RULE (dtor_name)) ||
              RULE_DEFER (uname, unqualified_name)),
@@ -1713,6 +1723,7 @@ DEFN_RULE (nested_name, {
 
             dem_string_deinit (pfx);
             dem_string_deinit (uname);
+            dem_string_deinit (dem_cv_qualifiers);
 
             if (RULE_DEFER (targs, template_args) && READ ('E')) {
                 dem_string_concat (dem, targs);
@@ -1733,11 +1744,14 @@ DEFN_RULE (nested_name, {
 
     dem_string_deinit (pfx);
     dem_string_deinit (ref);
+    dem_string_deinit (dem_cv_qualifiers);
     dem_string_deinit (targs);
     dem_string_deinit (uname);
 
     MATCH (RULE (nested_name_with_substitution_only));
-});
+
+    RULE_FOOT (nested_name);
+}
 
 DEFN_RULE (nested_name_with_substitution_only, {
     DEFER_VAR (ref);
