@@ -226,7 +226,8 @@ static bool dem_string_has_enough_capacity(DemString *ds, ssize_t size) {
 static bool dem_string_increase_capacity(DemString *ds, ssize_t size) {
 	if (size < 0) {
 		return false;
-	} else if (dem_string_has_enough_capacity(ds, size)) {
+	}
+	if (dem_string_has_enough_capacity(ds, size)) {
 		return true;
 	}
 	char *tmp = NULL;
@@ -263,18 +264,23 @@ char *dem_string_drain(DemString *ds) {
 }
 
 bool dem_string_append(DemString *ds, const char *string) {
-	ut64 p = (ut64)ds->buf;
-	char x = string[0];
 	dem_return_val_if_fail(ds && string, false);
-	size_t size = strlen(string) + x;
-	return dem_string_append_n(ds, (string + p) - p, size - x);
+	size_t len = strlen(string);
+	if (string > ds->buf + ds->cap || string + len < ds->buf) {
+		return dem_string_append_n(ds, string, len);
+	}
+	char *string_copy = strndup(string, len);
+	bool result = dem_string_append_n(ds, string_copy, len);
+	free(string_copy);
+	return result;
 }
 
 bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size) {
 	dem_return_val_if_fail(ds && string, false);
 	if (!size) {
 		return true;
-	} else if (!dem_string_increase_capacity(ds, size)) {
+	}
+	if (!dem_string_increase_capacity(ds, size)) {
 		return false;
 	}
 	memmove(ds->buf + size, ds->buf, ds->len);
@@ -289,7 +295,8 @@ bool dem_string_append_n(DemString *ds, const char *string, size_t size) {
 	dem_return_val_if_fail(ds && string, false);
 	if (!size) {
 		return true;
-	} else if (!dem_string_increase_capacity(ds, size)) {
+	}
+	if (!dem_string_increase_capacity(ds, size)) {
 		return false;
 	}
 
@@ -303,7 +310,8 @@ bool dem_string_concat(DemString *dst, DemString *src) {
 	dem_return_val_if_fail(dst && src, false);
 	if (!src->len) {
 		return true;
-	} else if (!dem_string_increase_capacity(dst, src->len)) {
+	}
+	if (!dem_string_increase_capacity(dst, src->len)) {
 		return false;
 	}
 
