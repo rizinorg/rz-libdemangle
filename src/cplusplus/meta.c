@@ -69,6 +69,79 @@ void meta_tmp_fini (Meta* og, Meta* tmp) {
     memset (tmp, 0, sizeof (*tmp));
 }
 
+static const char* builtin_type_stings[] = {
+    "void",
+    "wchar_t",
+    "bool",
+    "char",
+    "signed char",
+    "unsigned char",
+    "short",
+    "unsigned short",
+    "int",
+    "unsigned int",
+    "long",
+    "unsigned long",
+    "long long",
+    "__int64",
+    "unsigned long long",
+    "__int64",
+    "__int128",
+    "unsigned __int128",
+    "float",
+    "double",
+    "long double",
+    "__float80",
+    "__float128",
+    "...",
+    "decimal64",
+    "decimal128",
+    "decimal32",
+    "half",
+    "char32_t",
+    "char16_t",
+    "char8_t",
+    "auto",
+    "decltype(auto)",
+    "std::nullptr_t",
+    "_Accum",
+    "_Fract",
+    NULL,
+};
+static const char* builtin_type_prefix_stings[] = {
+    "_Float",
+    "std::bfloat",
+    "signed _BitInt(",
+    "signed _BitInt(",
+    "unsigned _BitInt(",
+    "unsigned _BitInt(",
+};
+
+bool is_builtin_type (const char* t) {
+    if (!(t && *t)) {
+        return false;
+    }
+    for (size_t i = 0; i < sizeof (builtin_type_stings) / sizeof (builtin_type_stings[0]); i++) {
+        if (!builtin_type_stings[i]) {
+            break;
+        }
+        if (strcmp (builtin_type_stings[i], t) == 0) {
+            return true;
+        }
+    }
+    for (size_t i = 0;
+         i < sizeof (builtin_type_prefix_stings) / sizeof (builtin_type_prefix_stings[0]);
+         i++) {
+        if (!builtin_type_prefix_stings[i]) {
+            break;
+        }
+        if (strncmp (t, builtin_type_stings[i], strlen (builtin_type_stings[i])) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
 * Append given type name to list of all detected types.
  * This vector is then used to refer back to a detected type in substitution
@@ -77,6 +150,10 @@ void meta_tmp_fini (Meta* og, Meta* tmp) {
 bool append_type (Meta* m, DemString* t, bool force_append) {
     if (!m || !t || !t->len) {
         return false;
+    }
+
+    if (is_builtin_type (t->buf)) {
+        return true;
     }
 
     // A hack to ingore constant values getting forcefully added from RULE(template_param)

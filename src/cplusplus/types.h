@@ -96,6 +96,7 @@ DemString* meta_substitute_type (Meta* m, ut64 id, DemString* dem);
 DemString* meta_substitute_tparam (Meta* m, ut64 id, DemString* dem);
 
 ut32 count_name_parts (Name* n);
+bool is_builtin_type (const char* t);
 
 
 typedef enum CpDemTypeKind_t {
