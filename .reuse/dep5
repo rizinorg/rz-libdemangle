@@ -8,6 +8,10 @@ Copyright: 2021 RizinOrg <info@rizin.re>
 License: LGPL-3.0-only
 
 Files: **/.clang-format
+Copyright: 2025 RizinOrg <info@rizin.re>
+License: LGPL-3.0-only
+
+Files: .clang-format
 Copyright: 2020 RizinOrg <info@rizin.re>
 License: LGPL-3.0-only
 
