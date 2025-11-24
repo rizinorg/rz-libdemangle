@@ -135,7 +135,7 @@ bool is_builtin_type (const char* t) {
         if (!builtin_type_prefix_stings[i]) {
             break;
         }
-        if (strncmp (t, builtin_type_stings[i], strlen (builtin_type_stings[i])) == 0) {
+        if (strncmp (t, builtin_type_prefix_stings[i], strlen (builtin_type_prefix_stings[i])) == 0) {
             return true;
         }
     }

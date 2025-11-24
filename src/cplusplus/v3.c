@@ -1179,7 +1179,7 @@ DemString*
     RULE_HEAD (type_type);
 
     MATCH (RULE (function_type));
-    MATCH (RULE_CALL (qualified_type));
+    MATCH (RULE_CALL (qualified_type) && APPEND_TYPE (dem));
     MATCH (READ ('C') && RULE_CALL (type_type)); // complex pair (C99)
     MATCH (READ ('G') && RULE_CALL (type_type)); // imaginary (C99)
     MATCH (READ ('P') && RULE_CALL (type_type) && APPEND_STR ("*"));
@@ -1228,21 +1228,30 @@ DEFN_RULE (base_unresolved_name, {
     MATCH (RULE (simple_id));
 });
 
+static ut64 base36_to_int (const char* buf, ut64* px) {
+    static const char* base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
+    char*              pos  = NULL;
+    ut64               pow  = 1;
+    ut64               x    = 0;
+    ut64               sz   = 0;
+    while ((pos = strchr (base, buf[sz]))) {
+        st64 based_val  = pos - base;
+        x              += based_val * pow;
+        pow            *= 36;
+        sz++;
+    }
+    *px = x;
+    return sz;
+}
+
 
 DEFN_RULE (seq_id, {
     if (IS_DIGIT (PEEK()) || IS_UPPER (PEEK())) {
-        char* base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
-        char* pos  = NULL;
-        ut64  pow  = 1;
-        ut64  sid  = 1;
-        while ((pos = strchr (base, PEEK()))) {
-            st64 based_val  = pos - base;
-            sid            += based_val * pow;
-            pow            *= 36;
-            ADV();
-        }
-        return meta_substitute_type (m, sid, dem);
-    } else if (PEEK() == '_') {
+        ut64 sid  = 0;
+        msi->cur += base36_to_int (msi->cur, &sid);
+        return meta_substitute_type (m, sid + 1, dem);
+    }
+    if (PEEK() == '_') {
         return meta_substitute_type (m, 0, dem);
     }
 });
