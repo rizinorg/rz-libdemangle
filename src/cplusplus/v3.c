@@ -72,7 +72,7 @@ DEFN_RULE (unresolved_name, {
 });
 
 DEFN_RULE (unscoped_name, {
-    MATCH (READ_STR ("St") && APPEND_STR ("std::") && RULE (unqualified_name) && APPEND_TYPE (dem));
+    MATCH (READ_STR ("St") && APPEND_STR ("std::") && RULE (unqualified_name));
     MATCH (RULE (unqualified_name));
 });
 DEFN_RULE (unscoped_template_name, {
@@ -989,8 +989,14 @@ DEFN_RULE (extended_qualifier, {
     MATCH (READ ('U') && RULE (source_name));
 });
 
-
-DEFN_RULE (source_name, {
+DemString* rule_source_name (
+    DemString*  dem,
+    StrIter*    msi,
+    Meta*       m,
+    TraceGraph* graph,
+    int         parent_node_id
+) {
+    RULE_HEAD (source_name);
     /* positive number providing length of name followed by it */
     st64 name_len = 0;
     READ_NUMBER (name_len);
@@ -1018,8 +1024,8 @@ DEFN_RULE (source_name, {
         }
     }
 
-    TRACE_RETURN_FAILURE();
-});
+    RULE_FOOT (source_name);
+}
 
 
 DEFN_RULE (abi_tags, { MATCH (RULE_ATLEAST_ONCE (abi_tag)); });
@@ -1561,15 +1567,29 @@ DEFN_RULE (destructor_name, {
 });
 
 
-DEFN_RULE (name, {
-    MATCH (RULE (unscoped_name) && APPEND_TYPE (dem) && RULE (template_args) && APPEND_TYPE (dem));
+DemString*
+    rule_name (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
+    RULE_HEAD (name);
+    DEFER_VAR (dem_template_args);
+
+    MATCH_AND_CONTINUE (RULE (unscoped_name) && RULE_DEFER (dem_template_args, template_args));
+    if (dem_template_args->buf) {
+        APPEND_TYPE (dem);
+        dem_string_concat (dem, dem_template_args);
+        dem_string_deinit (dem_template_args);
+        APPEND_TYPE (dem);
+        TRACE_RETURN_SUCCESS (dem);
+    }
+
     MATCH (RULE (substitution) && RULE (template_args) && APPEND_TYPE (dem));
 
     MATCH (RULE (nested_name)
     ); // NOTE: Nested name adds type selectively automatically, so no need to do it here!
     MATCH (RULE (unscoped_name));
     MATCH (RULE (local_name) && APPEND_TYPE (dem));
-});
+
+    RULE_FOOT (name);
+}
 
 
 
@@ -2061,7 +2081,10 @@ bool is_template (DemString* n) {
     return n->buf[n->len - 1] == '>' && n->buf[n->len - 2] != '>';
 }
 
-DEFN_RULE (encoding, {
+DemString*
+    rule_encoding (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
+    RULE_HEAD (encoding);
+
     bool is_const_fn = false;
     DEFER_VAR (n);
     DEFER_VAR (rt);
@@ -2109,7 +2132,9 @@ DEFN_RULE (encoding, {
     // MATCH (RULE (name));
 
     MATCH (RULE (special_name));
-});
+
+    RULE_FOOT (encoding);
+}
 
 
 
@@ -2208,7 +2233,7 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
     TraceGraph  trace_graph = {0};
     TraceGraph* graph       = &trace_graph;
 
-// Enable tracing via environment variable or compile-time flag
+    // Enable tracing via environment variable or compile-time flag
 #ifdef ENABLE_GRAPHVIZ_TRACE
     graph->enabled = true;
 #else
