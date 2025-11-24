@@ -1192,7 +1192,7 @@ DemString*
     MATCH (READ_STR ("Dp") && RULE_CALL (type_type)); // pack expansion (C++11)
 
     // Extended qualifiers with CV qualifiers
-    MATCH (RULE (class_enum_type));
+    MATCH (RULE (class_enum_type) && APPEND_TYPE (dem));
     MATCH (RULE (array_type));
     MATCH (RULE (pointer_to_member_type));
     // MATCH (RULE (template_param));
