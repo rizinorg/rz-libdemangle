@@ -33,6 +33,7 @@ bool DemAstNode_init (DemAstNode* dan) {
 void DemAstNode_deinit (DemAstNode* dan) {
     if (!dan)
         return;
+    vec_foreach_ptr (&dan->children, x, { DemAstNode_dtor (x); });
     vec_deinit (&dan->children);
     dem_string_deinit (&dan->dem);
     memset (dan, 0, sizeof (DemAstNode));
