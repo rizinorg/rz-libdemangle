@@ -1304,48 +1304,39 @@ bool rule_nested_name (
     int         parent_node_id
 ) {
     RULE_HEAD (nested_name);
-    DEFER_VAR (ref);
-    DEFER_VAR (pfx);
-    DEFER_VAR (uname);
-    DEFER_VAR (dem_cv_qualifiers);
-    DEFER_VAR (targs);
+    DEFER_VAR (x0);
+    DEFER_VAR (x1);
+    DEFER_VAR (x2);
+    DEFER_VAR (x3);
 
-    bool is_ctor = false;
-    bool is_dtor = false;
-
+    MATCH_AND_CONTINUE (READ ('N'));
+    bool has_cv  = RULE_CALL_DEFER (x0, cv_qualifiers);
+    bool has_ref = RULE_CALL_DEFER (x1, ref_qualifier);
     MATCH_AND_DO (
-        READ ('N') && OPTIONAL (RULE_DEFER (dem_cv_qualifiers, cv_qualifiers)) &&
-            OPTIONAL (RULE_DEFER (ref, ref_qualifier)) && RULE_DEFER (pfx, prefix) &&
-            ((is_ctor = !!RULE (ctor_name)) || (is_dtor = !!RULE (dtor_name)) ||
-             RULE_DEFER (uname, unqualified_name)) &&
-            READ ('E'),
+        RULE_CALL_DEFER (x2, prefix) && RULE_CALL_DEFER (x3, unqualified_name) &&
+            AST_APPEND_NODE (x2) && AST_APPEND_NODE (x3),
         {
-            if (is_ctor || is_dtor) {
-                AST_APPEND_NODE (pfx);
-            } else {
-                AST_APPEND_NODE (pfx);
-                AST_APPEND_TYPE;
-                AST_APPEND_STR ("::");
-                AST_APPEND_NODE (uname);
+            if (has_cv) {
+                AST_APPEND_NODE (x0);
             }
-
-            DemAstNode_deinit (pfx);
-            DemAstNode_deinit (uname);
-            DemAstNode_deinit (dem_cv_qualifiers);
-
-            if (ref->dem.len) {
-                AST_APPEND_STR (" ");
-                (void)APPEND_DEFER_VAR (ref);
-                AST_APPEND_TYPE;
+            if (has_ref) {
+                AST_APPEND_NODE (x1);
             }
         }
     );
 
-    DemAstNode_deinit (pfx);
-    DemAstNode_deinit (ref);
-    DemAstNode_deinit (dem_cv_qualifiers);
-    DemAstNode_deinit (targs);
-    DemAstNode_deinit (uname);
+    MATCH_AND_DO (
+        RULE_CALL_DEFER (x2, template_prefix) && RULE_CALL_DEFER (x3, template_args) &&
+            AST_APPEND_NODE (x2) && AST_APPEND_NODE (x3),
+        {
+            if (has_cv) {
+                AST_APPEND_NODE (x0);
+            }
+            if (has_ref) {
+                AST_APPEND_NODE (x1);
+            }
+        }
+    );
 
     RULE_FOOT (nested_name);
 }
@@ -1657,9 +1648,11 @@ bool rule_prefix_suffix (
     DEFER_VAR (x0);
     DEFER_VAR (x1);
 
+    MATCH (RULE (template_args));
+    MATCH (READ ('M') && (dan->tag = CP_DEM_TYPE_KIND_closure_prefix, true));
     MATCH (
-        OPTIONAL (RULE_DEFER (x0, template_args) && AST_APPEND_NODE (x0)) &&
-        OPTIONAL (READ ('M') && (dan->tag = CP_DEM_TYPE_KIND_closure_prefix, true))
+        RULE_DEFER (x0, template_args) && AST_APPEND_NODE (x0) && READ ('M') &&
+        (dan->tag = CP_DEM_TYPE_KIND_closure_prefix, true)
     );
     RULE_FOOT (prefix_suffix);
 }
@@ -1676,11 +1669,17 @@ bool rule_prefix_start (
     DEFER_VAR (x1);
 
     MATCH (RULE_DEFER (x0, decltype) && AST_APPEND_NODE (x0));
-    MATCH (
+    MATCH_AND_DO (
         (RULE_DEFER (x0, unqualified_name) || RULE_DEFER (x0, template_param) ||
-         RULE_DEFER (x0, substitution)) &&
-        AST_APPEND_NODE (x0) &&
-        OPTIONAL (RULE_CALL_DEFER (x1, prefix_suffix) && AST_APPEND_NODE (x1))
+         RULE_DEFER (x0, substitution)),
+        {
+            if (PEEK() == 'E') {
+                TRACE_RETURN_FAILURE();
+            } else {
+                AST_APPEND_NODE (x0) &&
+                    OPTIONAL (RULE_CALL_DEFER (x1, prefix_suffix) && AST_APPEND_NODE (x1));
+            }
+        }
     );
 
     RULE_FOOT (prefix_start);
@@ -1698,11 +1697,13 @@ bool rule_prefix_tail (
     DEFER_VAR (x1);
     DEFER_VAR (x2);
 
-    MATCH (
-        RULE_DEFER (x0, unqualified_name) && AST_APPEND_NODE (x0) &&
-        OPTIONAL (RULE_CALL_DEFER (x1, prefix_suffix) && AST_APPEND_NODE (x1)) &&
-        OPTIONAL (RULE_CALL_DEFER (x2, prefix_tail) && AST_APPEND_NODE (x2))
+    MATCH_AND_CONTINUE (
+        RULE_DEFER (x0, unqualified_name) && PEEK() != 'E' && AST_APPEND_NODE (x0) &&
+        OPTIONAL (RULE_CALL_DEFER (x1, prefix_suffix) && AST_APPEND_NODE (x1))
     );
+    MATCH (OPTIONAL (
+        dan->dem.buf && RULE_CALL_DEFER (x2, prefix_tail) && AST_APPEND_NODE (x2) && PEEK() != 'E'
+    ));
 
     RULE_FOOT (prefix_tail);
 }
@@ -1712,10 +1713,8 @@ bool rule_prefix (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int
     DEFER_VAR (x0);
     DEFER_VAR (x1);
 
-    MATCH (
-        RULE_CALL_DEFER (x0, prefix_start) && AST_APPEND_NODE (x0) &&
-        OPTIONAL (RULE_CALL_DEFER (x1, prefix_tail) && AST_APPEND_NODE (x1))
-    );
+    MATCH_AND_CONTINUE (RULE_CALL_DEFER (x0, prefix_start) && AST_APPEND_NODE (x0));
+    MATCH (OPTIONAL (RULE_CALL_DEFER (x1, prefix_tail) && AST_APPEND_NODE (x1)));
 
     RULE_FOOT (prefix);
 }
@@ -1734,11 +1733,16 @@ bool rule_template_prefix (
     int         parent_node_id
 ) {
     RULE_HEAD (template_prefix);
+    DEFER_VAR (x0);
+    DEFER_VAR (x1);
 
-    MATCH (RULE (unqualified_name));
-    MATCH (RULE_CALL (prefix) && RULE (unqualified_name));
-    MATCH (RULE (template_param));
-    MATCH (RULE (substitution));
+    MATCH1 (unqualified_name);
+    MATCH (
+        RULE_CALL_DEFER (x0, prefix) && RULE_DEFER (x1, unqualified_name) && AST_APPEND_NODE (x0) &&
+        AST_APPEND_NODE (x1)
+    );
+    MATCH1 (template_param);
+    MATCH1 (substitution);
 
     RULE_FOOT (template_prefix);
 }
