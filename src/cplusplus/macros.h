@@ -191,6 +191,8 @@
     DemAstNode* var                 = &tmp_defer_var_##var;                                        \
     DemAstNode_init (var);
 
+#define MATCH1(R) MATCH (RULE_DEFER (x0, R) && AST_APPEND_NODE (x0))
+
 #define APPEND_DEFER_VAR(var) (DemAstNode_append (dan, (var)), DemAstNode_deinit (var), 1)
 
 /**
@@ -243,7 +245,7 @@
     trace_graph_set_result_impl (G, N, (size_t)(msi->cur - msi->beg), R, S)
 
 #define RULE_HEAD(X)                                                                               \
-    if (!dan || !msi || !m) {                                                                      \
+    if (!dan || !msi || !m || !IN_RANGE (CUR())) {                                                 \
         return false;                                                                              \
     }                                                                                              \
     int _my_node_id = -1;                                                                          \
@@ -268,6 +270,13 @@
     dan->val.len = msi->cur - dan->val.buf;                                                        \
     return false;
 
+#define RULE_IMPL(X, XS)                                                                           \
+    do {                                                                                           \
+        RULE_HEAD (X);                                                                             \
+        {XS};                                                                                      \
+        RULE_FOOT (X);                                                                             \
+    } while (0)
+
 /**
  * \b Define a rule with name x and given rule body.
  *
@@ -282,9 +291,7 @@
  */
 #define DEFN_RULE(x, rule_body)                                                                    \
     DECL_RULE (x) {                                                                                \
-        RULE_HEAD (x);                                                                             \
-        {rule_body};                                                                               \
-        RULE_FOOT (x);                                                                             \
+        RULE_IMPL (x, rule_body);                                                                  \
     }
 
 
