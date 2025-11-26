@@ -6,6 +6,10 @@
 #ifndef RZ_LIBDEMANGLE_V3_H
 #define RZ_LIBDEMANGLE_V3_H
 #include "macros.h"
+#include "demangle.h"
+
+char* demangle_rule (const char* mangled, DemRule rule, CpDemOptions opts);
+
 // Rule declarations
 DECL_RULE (mangled_name);
 DECL_RULE (encoding);

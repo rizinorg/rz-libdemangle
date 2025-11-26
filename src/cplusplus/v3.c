@@ -625,40 +625,11 @@ DEFN_RULE (expression, {
 });
 
 
-DEFN_RULE (closure_prefix, {
-    // {closure-prefix-unit}
-    MATCH (RULE (closure_prefix_unit) && RULE (closure_prefix_rr));
-
-    // {closure-prefix-unit} {closure-prefix-rr}
-    MATCH (RULE (closure_prefix_unit));
-});
-
-
 DEFN_RULE (simple_id, {
     MATCH (
         RULE (source_name) && APPEND_TYPE (dem) &&
         OPTIONAL (RULE (template_args) && APPEND_TYPE (dem))
     );
-});
-
-
-DEFN_RULE (prefix_start_unit, {
-    DEFER_VAR (cname);
-    MATCH (
-        RULE_DEFER (cname, prefix_or_template_prefix_start) && dem_string_concat (dem, cname) &&
-        APPEND_TYPE (dem) && OPTIONAL (RULE (template_args) && APPEND_TYPE (dem)) &&
-        OPTIONAL (
-            (first_of_rule_ctor_name (CUR()) && APPEND_STR ("::") && dem_string_concat (dem, cname)
-            ) ||
-            (first_of_rule_dtor_name (CUR()) && APPEND_STR ("::~") && dem_string_concat (dem, cname)
-            )
-        ) &&
-        (dem_string_deinit (cname), 1)
-    );
-    dem_string_deinit (cname);
-
-    MATCH (RULE (decltype) && APPEND_TYPE (dem));
-    MATCH (RULE (closure_prefix));
 });
 
 
@@ -737,88 +708,6 @@ DEFN_RULE (initializer, {
 DEFN_RULE (abi_tag, {
     // will generate " \"<source_name>\","
     MATCH (READ ('B') && APPEND_STR (" \"") && RULE (source_name) && APPEND_STR ("\","));
-});
-
-
-DEFN_RULE (prefix_start_rr, {
-    DEFER_VAR (pfx_rr);
-    DEFER_VAR (cname);
-    // {prefix-nested-class-or-namespace} {ctor-dtor-name} {template-args} [optional: {prefix-start-rr}]
-    MATCH (
-        RULE (prefix_nested_class_or_namespace) && APPEND_TYPE (dem) &&
-        OPTIONAL (
-            (RULE (ctor_name) && APPEND_STR ("::")) || (RULE (dtor_name) && APPEND_STR ("::~"))
-        ) &&
-        dem_string_append (dem, extract_last_unqualified_name (dem)) && RULE (template_args) &&
-        APPEND_TYPE (dem) &&
-        OPTIONAL (
-            RULE_DEFER (pfx_rr, prefix_start_rr) && APPEND_STR ("::") && APPEND_DEFER_VAR (pfx_rr)
-        )
-    );
-
-    // {prefix-nested-class-or-namespace} {unqualified-name} {template-args} [optional: {prefix-start-rr}]
-    MATCH (
-        RULE (prefix_nested_class_or_namespace) && APPEND_STR ("::") && RULE (unqualified_name) &&
-        APPEND_TYPE (dem) && RULE (template_args) && APPEND_TYPE (dem) &&
-        OPTIONAL (
-            RULE_DEFER (pfx_rr, prefix_start_rr) && APPEND_STR ("::") && APPEND_DEFER_VAR (pfx_rr)
-        )
-    );
-    dem_string_deinit (pfx_rr);
-
-    // {unqualified-name} {template-args} [optional: {prefix-start-rr}]
-    MATCH (
-        RULE_DEFER (cname, unqualified_name) && dem_string_concat (dem, cname) &&
-        APPEND_TYPE (dem) && RULE (template_args) && APPEND_TYPE (dem) &&
-        OPTIONAL (
-            RULE_DEFER (pfx_rr, prefix_start_rr) && APPEND_STR ("::") && APPEND_DEFER_VAR (pfx_rr)
-        ) &&
-        OPTIONAL (
-            (first_of_rule_ctor_name (CUR()) && APPEND_STR ("::") && dem_string_concat (dem, cname)
-            ) ||
-            (first_of_rule_dtor_name (CUR()) && APPEND_STR ("::~") && dem_string_concat (dem, cname)
-            )
-        ) &&
-        (dem_string_deinit (cname), 1)
-    );
-    dem_string_deinit (cname);
-    dem_string_deinit (pfx_rr);
-});
-
-
-
-DemString* get_last_nested_name (DemString* full, DemString* last) {
-    const char* b = strrchr (full->buf, ':');
-    b             = b ? b + 1 : full->buf;
-
-    dem_string_init (last);
-    dem_string_appends (last, b);
-
-    return last;
-}
-
-DEFN_RULE (prefix, {
-    DEFER_VAR (pfx_nested);
-    DEFER_VAR (last_name);
-    // {prefix-start} {prefix-nested-class-or-namespace}
-    // {prefix-start}
-    MATCH (
-        RULE (prefix_start) &&
-        OPTIONAL (
-            RULE_DEFER (pfx_nested, prefix_nested_class_or_namespace) && APPEND_STR ("::") &&
-            dem_string_concat (dem, pfx_nested) && APPEND_TYPE (dem) &&
-            OPTIONAL (
-                first_of_rule_ctor_name (CUR()) ?
-                    (APPEND_STR ("::") && get_last_nested_name (pfx_nested, last_name) &&
-                     dem_string_concat (dem, last_name)) :
-                first_of_rule_dtor_name (CUR()) ?
-                    (APPEND_STR ("::~") && get_last_nested_name (pfx_nested, last_name) &&
-                     dem_string_concat (dem, last_name)) :
-                    (0)
-            ) &&
-            (dem_string_deinit (last_name), dem_string_deinit (pfx_nested), 1)
-        )
-    );
 });
 
 
@@ -1031,16 +920,6 @@ DemString* rule_source_name (
 DEFN_RULE (abi_tags, { MATCH (RULE_ATLEAST_ONCE (abi_tag)); });
 
 
-DEFN_RULE (prefix_start, {
-    DEFER_VAR (pfx_rr);
-    MATCH (
-        RULE (prefix_start_unit) &&
-        OPTIONAL (
-            RULE_DEFER (pfx_rr, prefix_start_rr) && APPEND_STR ("::") && APPEND_DEFER_VAR (pfx_rr)
-        )
-    );
-});
-
 /**
  * \b Parse sequence ID from mangled string iterator.
  *
@@ -1093,25 +972,6 @@ DEFN_RULE (class_enum_type, {
 
 
 DEFN_RULE (bare_function_type, { MATCH (RULE_ATLEAST_ONCE_WITH_SEP (type, ", ")); });
-
-
-DEFN_RULE (template_prefix, {
-    // {prefix-start} {prefix-nested-class-or-namespace} {unqualified-name}
-    // {prefix-start} {unqualified-name}
-    DEFER_VAR (nname);
-    MATCH (
-        RULE (prefix_start) &&
-        OPTIONAL (
-            RULE_DEFER (nname, prefix_nested_class_or_namespace) && APPEND_STR ("::") &&
-            APPEND_DEFER_VAR (nname)
-        ) &&
-        APPEND_STR ("::") && RULE (unqualified_name)
-    );
-
-    // {prefix-or-template-prefix-start}
-    MATCH (RULE (prefix_or_template_prefix_start));
-});
-
 
 
 DEFN_RULE (mangled_name, {
@@ -1475,19 +1335,6 @@ bool we_are_at_an_unqualified_name_starting (const char* p) {
     return false;
 }
 
-DEFN_RULE (prefix_nested_class_or_namespace, {
-    // {unqualified-name} {prefix-nested-class-or-namespace}
-    MATCH (
-        RULE (unqualified_name) && APPEND_STR ("::") && RULE (prefix_nested_class_or_namespace) &&
-        APPEND_TYPE (dem)
-    );
-
-    // {unqualified-name}
-    MATCH (RULE (unqualified_name) && we_are_at_an_unqualified_name_starting (msi->cur));
-});
-
-
-
 DEFN_RULE (operator_name, {
     MATCH (READ ('v') && RULE (digit) && RULE (source_name));
     MATCH (READ_STR ("cv") && APPEND_STR ("operator (") && RULE (type) && APPEND_STR (")"));
@@ -1591,88 +1438,6 @@ DemString*
     RULE_FOOT (name);
 }
 
-
-
-// TODO: merge common patterns, to keep trace as small as possible!
-
-DEFN_RULE (closure_prefix_rr, {
-    // {unqualified-name} M
-    MATCH (
-        RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) &&
-        RULE (unqualified_name) && APPEND_TYPE (dem) && RULE (template_args) && READ ('M') &&
-        APPEND_TYPE (dem) && RULE (closure_prefix_rr)
-    );
-
-    // {prefix-start-rr} {unqualified-name} M
-    MATCH (
-        RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) &&
-        RULE (unqualified_name) && APPEND_TYPE (dem) && RULE (template_args) && READ ('M') &&
-        APPEND_TYPE (dem)
-    );
-
-    // {prefix-start-rr} {prefix-nested-class-or-namespace} {unqualified-name} M
-    MATCH (
-        RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) &&
-        RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem) && RULE (closure_prefix_rr)
-    );
-
-    // {unqualified-name} {template-args} M
-    MATCH (
-        RULE (prefix_start_rr) && RULE (unqualified_name) && APPEND_TYPE (dem) &&
-        RULE (template_args) && READ ('M') && APPEND_TYPE (dem) && RULE (closure_prefix_rr)
-    );
-
-    // {prefix-start-rr} {unqualified-name} {template-args} M
-    MATCH (
-        RULE (prefix_nested_class_or_namespace) && RULE (unqualified_name) && APPEND_TYPE (dem) &&
-        RULE (template_args) && READ ('M') && APPEND_TYPE (dem) && RULE (closure_prefix_rr)
-    );
-
-    // {prefix-nested-class-or-namespace} {unqualified-name} {template-args} M
-    MATCH (
-        RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) &&
-        RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {prefix-start-rr} {prefix-nested-class-or-namespace} {unqualified-name} {template-args} M
-    MATCH (
-        RULE (prefix_start_rr) && RULE (unqualified_name) && APPEND_TYPE (dem) &&
-        RULE (template_args) && READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {unqualified-name} M {closure-prefix-rr}
-    MATCH (
-        RULE (prefix_nested_class_or_namespace) && RULE (unqualified_name) && APPEND_TYPE (dem) &&
-        RULE (template_args) && READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {prefix-start-rr} {unqualified-name} M {closure-prefix-rr}
-    MATCH (
-        RULE (prefix_start_rr) && RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem) &&
-        RULE (closure_prefix_rr)
-    );
-
-    // {prefix-start-rr} {prefix-nested-class-or-namespace} {unqualified-name} M {closure-prefix-rr}
-    MATCH (
-        RULE (unqualified_name) && APPEND_TYPE (dem) && RULE (template_args) && READ ('M') &&
-        APPEND_TYPE (dem) && RULE (closure_prefix_rr)
-    );
-
-    // {unqualified-name} {template-args} M {closure-prefix-rr}
-    MATCH (RULE (prefix_start_rr) && RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem));
-
-    // {prefix-start-rr} {unqualified-name} {template-args} M {closure-prefix-rr}
-    MATCH (
-        RULE (unqualified_name) && APPEND_TYPE (dem) && RULE (template_args) && READ ('M') &&
-        APPEND_TYPE (dem)
-    );
-
-    // {prefix-nested-class-or-namespace} {unqualified-name} {template-args} M {closure-prefix-rr}
-    MATCH (RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem) && RULE (closure_prefix_rr));
-
-    // {prefix-start-rr} {prefix-nested-class-or-namespace} {unqualified-name} {template-args} M {closure-prefix-rr}
-    MATCH (RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem));
-});
 
 
 // NOTE: Prefix parsing does not work well with multiple unqualified names
@@ -1866,116 +1631,6 @@ DEFN_RULE (nv_digit, {
 DEFN_RULE (nv_offset, { MATCH (OPTIONAL (READ ('n')) && RULE_ATLEAST_ONCE (nv_digit)); });
 
 
-
-// TODO: merge common patterns, to keep trace as small as possible!
-
-
-DEFN_RULE (closure_prefix_unit, {
-    // {prefix-or-template-prefix-start} {unqualified-name} M
-    MATCH (
-        RULE (prefix_or_template_prefix_start) && RULE (template_args) && APPEND_TYPE (dem) &&
-        RULE (prefix_start_rr) && RULE (prefix_nested_class_or_namespace) &&
-        RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {decltype} {unqualified-name} M
-    MATCH (
-        RULE (prefix_or_template_prefix_start) && RULE (template_args) && APPEND_TYPE (dem) &&
-        RULE (prefix_start_rr) && RULE (unqualified_name) && RULE (template_args) && READ ('M') &&
-        APPEND_TYPE (dem)
-    );
-
-    // {prefix-or-template-prefix-start} {template-args} {unqualified-name} M
-    MATCH (
-        RULE (prefix_or_template_prefix_start) && RULE (template_args) && APPEND_TYPE (dem) &&
-        RULE (prefix_start_rr) && RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {prefix-or-template-prefix-start} {prefix-start-rr} {unqualified-name} M
-    MATCH (
-        RULE (prefix_or_template_prefix_start) && RULE (prefix_start_rr) &&
-        RULE (prefix_nested_class_or_namespace) && RULE (unqualified_name) && READ ('M') &&
-        APPEND_TYPE (dem)
-    );
-
-    // {decltype} {prefix-start-rr} {unqualified-name} M
-    MATCH (
-        RULE (decltype) && APPEND_TYPE (dem) && RULE (prefix_start_rr) &&
-        RULE (prefix_nested_class_or_namespace) && RULE (unqualified_name) && READ ('M') &&
-        APPEND_TYPE (dem)
-    );
-
-    // {prefix-or-template-prefix-start} {template-args} {prefix-start-rr} {unqualified-name} M
-    MATCH (
-        RULE (prefix_or_template_prefix_start) && RULE (template_args) && APPEND_TYPE (dem) &&
-        RULE (unqualified_name) && RULE (template_args) && READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {prefix-or-template-prefix-start} {prefix-start-rr} {prefix-nested-class-or-namespace} {unqualified-name} M
-    MATCH (
-        RULE (prefix_or_template_prefix_start) && RULE (prefix_start_rr) &&
-        RULE (unqualified_name) && RULE (template_args) && READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {decltype} {prefix-start-rr} {prefix-nested-class-or-namespace} {unqualified-name} M
-    MATCH (
-        RULE (decltype) && APPEND_TYPE (dem) && RULE (prefix_start_rr) && RULE (unqualified_name) &&
-        RULE (template_args) && READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {prefix-or-template-prefix-start} {template-args} {prefix-start-rr} {prefix-nested-class-or-namespace} {unqualified-name} M
-    MATCH (
-        RULE (prefix_or_template_prefix_start) && RULE (template_args) && APPEND_TYPE (dem) &&
-        RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {unqualified-name} M
-    MATCH (
-        RULE (prefix_or_template_prefix_start) && RULE (prefix_start_rr) &&
-        RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {prefix-or-template-prefix-start} {unqualified-name} {template-args} M
-    MATCH (
-        RULE (decltype) && APPEND_TYPE (dem) && RULE (prefix_start_rr) && RULE (unqualified_name) &&
-        READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {decltype} {unqualified-name} {template-args} M
-    MATCH (
-        RULE (prefix_or_template_prefix_start) && RULE (unqualified_name) && RULE (template_args) &&
-        READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {prefix-or-template-prefix-start} {template-args} {unqualified-name} {template-args} M
-    MATCH (
-        RULE (decltype) && APPEND_TYPE (dem) && RULE (unqualified_name) && RULE (template_args) &&
-        READ ('M') && APPEND_TYPE (dem)
-    );
-
-    // {prefix-or-template-prefix-start} {prefix-start-rr} {unqualified-name} {template-args} M
-    MATCH (
-        RULE (prefix_or_template_prefix_start) && RULE (unqualified_name) && READ ('M') &&
-        APPEND_TYPE (dem)
-    );
-
-    // {decltype} {prefix-start-rr} {unqualified-name} {template-args} M
-    MATCH (
-        RULE (decltype) && APPEND_TYPE (dem) && RULE (unqualified_name) && READ ('M') &&
-        APPEND_TYPE (dem)
-    );
-
-    // {prefix-or-template-prefix-start} {template-args} {prefix-start-rr} {unqualified-name} {template-args} M
-    MATCH (
-        RULE (prefix_or_template_prefix_start) && RULE (template_args) && APPEND_TYPE (dem) &&
-        READ ('M')
-    );
-
-    // {prefix-or-template-prefix-start} {template-args} M
-    MATCH (RULE (unqualified_name) && READ ('M') && APPEND_TYPE (dem));
-});
-
-
 DEFN_RULE (template_args, {
     bool is_const;
 
@@ -2136,16 +1791,6 @@ DemString*
     RULE_FOOT (encoding);
 }
 
-
-
-DEFN_RULE (prefix_or_template_prefix_start, {
-    MATCH (RULE (unqualified_name));
-    MATCH (RULE (template_param));
-    MATCH (RULE (substitution));
-});
-
-
-
 DEFN_RULE (braced_expression, {
     MATCH (
         READ_STR ("dX") && APPEND_STR (" [") && RULE (range_begin_expression) &&
@@ -2216,7 +1861,103 @@ DEFN_RULE (expr_primary, {
     MATCH (READ_STR ("LDn0E") && APPEND_STR ("(decltype(nullptr))0"));
 });
 
-const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
+/**
+ * prefix
+ * = prefix-start, [prefix-tail];
+ *
+ * prefix-start
+ * = decltype
+ * | unqualified-name, [prefix-suffix]
+ * | template-param, [prefix-suffix]
+ * | substitution, [prefix-suffix];
+ *
+ * prefix-tail
+ * = unqualified-name, [prefix-suffix], [prefix-tail];
+ *
+ * prefix-suffix
+ * = [template-args], ["M"];
+ *
+ */
+
+DemString* rule_prefix_suffix (
+    DemString*  dem,
+    StrIter*    msi,
+    Meta*       m,
+    TraceGraph* graph,
+    int         parent_node_id
+) {
+    RULE_HEAD (prefix_suffix);
+    MATCH (OPTIONAL (RULE (template_args)) && OPTIONAL (READ ('M')));
+    RULE_FOOT (prefix_suffix);
+}
+
+DemString* rule_prefix_start (
+    DemString*  dem,
+    StrIter*    msi,
+    Meta*       m,
+    TraceGraph* graph,
+    int         parent_node_id
+) {
+    RULE_HEAD (prefix_start);
+
+    MATCH (RULE (decltype));
+    MATCH (RULE (unqualified_name) && OPTIONAL (RULE_CALL (prefix_suffix)));
+    MATCH (RULE (template_param) && OPTIONAL (RULE_CALL (prefix_suffix)));
+    MATCH (RULE (substitution) && OPTIONAL (RULE_CALL (prefix_suffix)));
+
+    RULE_FOOT (prefix_start);
+}
+
+DemString* rule_prefix_tail (
+    DemString*  dem,
+    StrIter*    msi,
+    Meta*       m,
+    TraceGraph* graph,
+    int         parent_node_id
+) {
+    RULE_HEAD (prefix_tail);
+
+    MATCH (
+        RULE (unqualified_name) && OPTIONAL (RULE_CALL (prefix_suffix)) &&
+        OPTIONAL (RULE_CALL (prefix_tail))
+    );
+
+    RULE_FOOT (prefix_tail);
+}
+
+DemString*
+    rule_prefix (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
+    RULE_HEAD (prefix);
+
+    MATCH (RULE_CALL (prefix_start) && OPTIONAL (RULE_CALL (prefix_tail)));
+
+    RULE_FOOT (prefix);
+}
+
+/**
+ * <template-prefix> ::= <template unqualified-name>           # global template
+ *                   ::= <prefix> <template unqualified-name>  # nested template
+ *                   ::= <template-param>                      # template template parameter
+ *                   ::= <substitution>
+*/
+DemString* rule_template_prefix (
+    DemString*  dem,
+    StrIter*    msi,
+    Meta*       m,
+    TraceGraph* graph,
+    int         parent_node_id
+) {
+    RULE_HEAD (template_prefix);
+
+    MATCH (RULE (unqualified_name));
+    MATCH (RULE_CALL (prefix) && RULE (unqualified_name));
+    MATCH (RULE (template_param));
+    MATCH (RULE (substitution));
+
+    RULE_FOOT (template_prefix);
+}
+
+char* demangle_rule (const char* mangled, DemRule rule, CpDemOptions opts) {
     if (!mangled) {
         return NULL;
     }
@@ -2244,7 +1985,7 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
         trace_graph_init (graph);
     }
 
-    if (first_of_rule_mangled_name (msi->cur) && rule_mangled_name (dem, msi, m, graph, -1)) {
+    if (rule (dem, msi, m, graph, -1)) {
         // Output graphviz trace if enabled
         if (graph->enabled) {
             // Mark the final successful path
@@ -2289,4 +2030,14 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
     }
 
     return NULL;
+}
+
+/**
+ *
+ * @param mangled
+ * @param opts
+ * @return
+ */
+char* cp_demangle_v3 (const char* mangled, CpDemOptions opts) {
+    return demangle_rule (mangled, rule_mangled_name, opts);
 }

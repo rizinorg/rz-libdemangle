@@ -116,7 +116,7 @@ static const struct {
  * \return Demangled output on success.
  * \return NULL otherwise.
  */
-const char* cp_demangle_v2 (const char* mangled, CpDemOptions opts) {
+char* cp_demangle_v2 (const char* mangled, CpDemOptions opts) {
     if (!mangled) {
         fprintf (stderr, "invalid arguments\n");
         return NULL;

@@ -5,12 +5,6 @@
 
 #include "demangle.h"
 
-/* defined in src/cp/v2.c */
-const char* cp_demangle_v2 (const char* mangled, CpDemOptions opts);
-
-/* defined in src/cp/v3.c */
-const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts);
-
 /**
  * \b Demangle given "mangled" declaration using either GNU v2 or GNU v3 grammar.
  *
@@ -22,12 +16,12 @@ const char* cp_demangle_v3 (const char* mangled, CpDemOptions opts);
  * \return Demangled name on success.
  * \return NULL otherwise.
  * */
-const char* cp_demangle (const char* mangled, CpDemOptions opts) {
+char* cp_demangle (const char* mangled, CpDemOptions opts) {
     if (!mangled) {
         return NULL;
     }
 
-    const char* res = NULL;
+    char* res = NULL;
 
     if (mangled[0] == '_') {
         if (mangled[1] == 'Z') {
@@ -40,7 +34,6 @@ const char* cp_demangle (const char* mangled, CpDemOptions opts) {
     if (!res) {
         /* match : _ */
         return cp_demangle_v2 (mangled, opts);
-    } else {
-        return res;
     }
+    return res;
 }

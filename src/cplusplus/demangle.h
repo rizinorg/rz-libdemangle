@@ -16,6 +16,8 @@ typedef enum {
     DEM_OPT_ALL    = 0xff    /**< \b Everything, everywhere, all at once! */
 } CpDemOptions;
 
-const char *cp_demangle (const char *mangled, CpDemOptions opts);
+char* cp_demangle_v2 (const char* mangled, CpDemOptions opts);
+char* cp_demangle_v3 (const char* mangled, CpDemOptions opts);
+char *cp_demangle (const char *mangled, CpDemOptions opts);
 
 #endif // CP_DEMANGLE_H
