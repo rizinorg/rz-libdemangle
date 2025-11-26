@@ -19,9 +19,9 @@
 DEFN_RULE (vendor_specific_suffix, { TRACE_RETURN_FAILURE(); });
 DEFN_RULE (digit, {
     if (IS_DIGIT (PEEK())) {
-        APPEND_CHR (PEEK());
+        AST_APPEND_CHR (PEEK());
         ADV();
-        TRACE_RETURN_SUCCESS (dem);
+        TRACE_RETURN_SUCCESS;
     }
 
     TRACE_RETURN_FAILURE();
@@ -31,7 +31,7 @@ DEFN_RULE (v_offset, {
     // ignore the number
     DEFER_VAR (_);
     MATCH (
-        RULE_DEFER (_, number) && READ ('_') && RULE_DEFER (_, number) && (dem_string_deinit (_), 1)
+        RULE_DEFER (_, number) && READ ('_') && RULE_DEFER (_, number) && (DemAstNode_deinit (_), 1)
     );
 });
 
@@ -51,7 +51,7 @@ const char* extract_last_unqualified_name (DemString* dem) {
 DEFN_RULE (unqualified_name, {
     MATCH (READ_STR ("DC") && RULE_ATLEAST_ONCE (source_name) && READ ('E'));
     MATCH (RULE (operator_name) && OPTIONAL (RULE (abi_tags)));
-    MATCH (READ_STR ("12_GLOBAL__N_1") && APPEND_STR ("(anonymous namespace)"));
+    MATCH (READ_STR ("12_GLOBAL__N_1") && AST_APPEND_STR ("(anonymous namespace)"));
     MATCH (RULE (ctor_dtor_name));
     MATCH (RULE (source_name));
     /* MATCH (RULE (expr_primary)); */
@@ -64,15 +64,15 @@ DEFN_RULE (unresolved_name, {
         RULE_ATLEAST_ONCE (unresolved_qualifier_level) && READ ('E') && RULE (base_unresolved_name)
     );
     MATCH (
-        OPTIONAL (READ_STR ("gs") && APPEND_STR ("::")) && READ_STR ("sr") &&
+        OPTIONAL (READ_STR ("gs") && AST_APPEND_STR ("::")) && READ_STR ("sr") &&
         RULE_ATLEAST_ONCE (unresolved_qualifier_level) && READ ('E') && RULE (base_unresolved_name)
     );
     MATCH (READ_STR ("sr") && RULE (unresolved_type) && RULE (base_unresolved_name));
-    MATCH (OPTIONAL (READ_STR ("gs") && APPEND_STR ("::")) && RULE (base_unresolved_name));
+    MATCH (OPTIONAL (READ_STR ("gs") && AST_APPEND_STR ("::")) && RULE (base_unresolved_name));
 });
 
 DEFN_RULE (unscoped_name, {
-    MATCH (READ_STR ("St") && APPEND_STR ("std::") && RULE (unqualified_name));
+    MATCH (READ_STR ("St") && AST_APPEND_STR ("std::") && RULE (unqualified_name));
     MATCH (RULE (unqualified_name));
 });
 DEFN_RULE (unscoped_template_name, {
@@ -81,10 +81,7 @@ DEFN_RULE (unscoped_template_name, {
 });
 
 DEFN_RULE (unresolved_type, {
-    MATCH (
-        RULE (template_param) && FORCE_APPEND_TYPE (dem) &&
-        OPTIONAL (RULE (template_args) && APPEND_TYPE (dem))
-    );
+    MATCH (RULE (template_param) && OPTIONAL (RULE (template_args)));
     MATCH (RULE (decltype));
     MATCH (RULE (substitution));
 });
@@ -113,503 +110,522 @@ DEFN_RULE (array_type, {
 DEFN_RULE (expression, {
     /* unary operators */
     MATCH (
-        (READ_STR ("gsnw") || READ_STR ("nw")) && APPEND_STR ("new (") &&
-        RULE_MANY_WITH_SEP (expression, ", ") && APPEND_STR (") ") && READ ('_') && RULE (type) &&
-        READ ('E')
+        (READ_STR ("gsnw") || READ_STR ("nw")) && AST_APPEND_STR ("new (") &&
+        RULE_MANY_WITH_SEP (expression, ", ") && AST_APPEND_STR (") ") && READ ('_') &&
+        RULE (type) && READ ('E')
     );
     MATCH (
-        (READ_STR ("gsnw") || READ_STR ("nw")) && APPEND_STR ("new (") &&
-        RULE_MANY_WITH_SEP (expression, ", ") && APPEND_STR (") ") && READ ('_') && RULE (type) &&
-        RULE (initializer)
+        (READ_STR ("gsnw") || READ_STR ("nw")) && AST_APPEND_STR ("new (") &&
+        RULE_MANY_WITH_SEP (expression, ", ") && AST_APPEND_STR (") ") && READ ('_') &&
+        RULE (type) && RULE (initializer)
     );
     MATCH (
-        (READ_STR ("gsna") || READ_STR ("na")) && APPEND_STR ("new[] (") &&
-        RULE_MANY_WITH_SEP (expression, ", ") && APPEND_STR (") ") && READ ('_') && RULE (type) &&
-        READ ('E')
+        (READ_STR ("gsna") || READ_STR ("na")) && AST_APPEND_STR ("new[] (") &&
+        RULE_MANY_WITH_SEP (expression, ", ") && AST_APPEND_STR (") ") && READ ('_') &&
+        RULE (type) && READ ('E')
     );
     MATCH (
-        (READ_STR ("gsna") || READ_STR ("na")) && APPEND_STR ("new[] (") &&
-        RULE_MANY_WITH_SEP (expression, ", ") && APPEND_STR (") ") && READ ('_') && RULE (type) &&
-        RULE (initializer)
+        (READ_STR ("gsna") || READ_STR ("na")) && AST_APPEND_STR ("new[] (") &&
+        RULE_MANY_WITH_SEP (expression, ", ") && AST_APPEND_STR (") ") && READ ('_') &&
+        RULE (type) && RULE (initializer)
     );
     MATCH (
-        READ_STR ("cv") && RULE (type) && READ ('_') && APPEND_STR ("(") &&
-        RULE_MANY_WITH_SEP (expression, ", ") && APPEND_STR (")") && READ ('E')
+        READ_STR ("cv") && RULE (type) && READ ('_') && AST_APPEND_STR ("(") &&
+        RULE_MANY_WITH_SEP (expression, ", ") && AST_APPEND_STR (")") && READ ('E')
     );
 
     /* binary operators */
     MATCH (
-        READ_STR ("qu") && RULE (expression) && APPEND_STR ("?") && RULE (expression) &&
-        APPEND_STR (":") && RULE (expression)
+        READ_STR ("qu") && RULE (expression) && AST_APPEND_STR ("?") && RULE (expression) &&
+        AST_APPEND_STR (":") && RULE (expression)
     );
     MATCH (
-        READ_STR ("cl") && RULE (expression) && APPEND_STR ("(") &&
-        RULE_MANY_WITH_SEP (expression, ", ") && APPEND_STR (")") && READ ('E')
+        READ_STR ("cl") && RULE (expression) && AST_APPEND_STR ("(") &&
+        RULE_MANY_WITH_SEP (expression, ", ") && AST_APPEND_STR (")") && READ ('E')
     );
     MATCH (
-        READ_STR ("cp") && APPEND_STR ("(") && RULE (base_unresolved_name) && APPEND_STR (")") &&
-        APPEND_STR ("(") && RULE_MANY_WITH_SEP (expression, ", ") && APPEND_STR (")") && READ ('E')
+        READ_STR ("cp") && AST_APPEND_STR ("(") && RULE (base_unresolved_name) &&
+        AST_APPEND_STR (")") && AST_APPEND_STR ("(") && RULE_MANY_WITH_SEP (expression, ", ") &&
+        AST_APPEND_STR (")") && READ ('E')
     );
     MATCH (
-        READ_STR ("tl") && RULE (type) && APPEND_STR ("{") &&
-        RULE_MANY_WITH_SEP (braced_expression, ", ") && APPEND_STR ("}") && READ ('E')
+        READ_STR ("tl") && RULE (type) && AST_APPEND_STR ("{") &&
+        RULE_MANY_WITH_SEP (braced_expression, ", ") && AST_APPEND_STR ("}") && READ ('E')
     );
     MATCH (
         READ ('u') && RULE (source_name) && RULE_MANY_WITH_SEP (template_arg, ", ") && READ ('E')
     );
-    MATCH (READ_STR ("pl") && RULE (expression) && APPEND_STR ("+") && RULE (expression));
-    MATCH (READ_STR ("mi") && RULE (expression) && APPEND_STR ("-") && RULE (expression));
-    MATCH (READ_STR ("ml") && RULE (expression) && APPEND_STR ("*") && RULE (expression));
-    MATCH (READ_STR ("dv") && RULE (expression) && APPEND_STR ("/") && RULE (expression));
-    MATCH (READ_STR ("rm") && RULE (expression) && APPEND_STR ("%") && RULE (expression));
-    MATCH (READ_STR ("an") && RULE (expression) && APPEND_STR ("&") && RULE (expression));
-    MATCH (READ_STR ("or") && RULE (expression) && APPEND_STR ("|") && RULE (expression));
-    MATCH (READ_STR ("eo") && RULE (expression) && APPEND_STR ("^") && RULE (expression));
-    MATCH (READ_STR ("aS") && RULE (expression) && APPEND_STR ("=") && RULE (expression));
-    MATCH (READ_STR ("pL") && RULE (expression) && APPEND_STR ("+=") && RULE (expression));
-    MATCH (READ_STR ("mI") && RULE (expression) && APPEND_STR ("-=") && RULE (expression));
-    MATCH (READ_STR ("mL") && RULE (expression) && APPEND_STR ("*=") && RULE (expression));
-    MATCH (READ_STR ("dV") && RULE (expression) && APPEND_STR ("/=") && RULE (expression));
-    MATCH (READ_STR ("rM") && RULE (expression) && APPEND_STR ("%=") && RULE (expression));
-    MATCH (READ_STR ("aN") && RULE (expression) && APPEND_STR ("&=") && RULE (expression));
-    MATCH (READ_STR ("oR") && RULE (expression) && APPEND_STR ("|=") && RULE (expression));
-    MATCH (READ_STR ("eO") && RULE (expression) && APPEND_STR ("^=") && RULE (expression));
-    MATCH (READ_STR ("ls") && RULE (expression) && APPEND_STR ("<<") && RULE (expression));
-    MATCH (READ_STR ("rs") && RULE (expression) && APPEND_STR (">>") && RULE (expression));
-    MATCH (READ_STR ("lS") && RULE (expression) && APPEND_STR ("<<=") && RULE (expression));
-    MATCH (READ_STR ("rS") && RULE (expression) && APPEND_STR (">>=") && RULE (expression));
-    MATCH (READ_STR ("eq") && RULE (expression) && APPEND_STR ("==") && RULE (expression));
-    MATCH (READ_STR ("ne") && RULE (expression) && APPEND_STR ("!=") && RULE (expression));
-    MATCH (READ_STR ("lt") && RULE (expression) && APPEND_STR ("<") && RULE (expression));
-    MATCH (READ_STR ("gt") && RULE (expression) && APPEND_STR (">") && RULE (expression));
-    MATCH (READ_STR ("le") && RULE (expression) && APPEND_STR ("<=") && RULE (expression));
+    MATCH (READ_STR ("pl") && RULE (expression) && AST_APPEND_STR ("+") && RULE (expression));
+    MATCH (READ_STR ("mi") && RULE (expression) && AST_APPEND_STR ("-") && RULE (expression));
+    MATCH (READ_STR ("ml") && RULE (expression) && AST_APPEND_STR ("*") && RULE (expression));
+    MATCH (READ_STR ("dv") && RULE (expression) && AST_APPEND_STR ("/") && RULE (expression));
+    MATCH (READ_STR ("rm") && RULE (expression) && AST_APPEND_STR ("%") && RULE (expression));
+    MATCH (READ_STR ("an") && RULE (expression) && AST_APPEND_STR ("&") && RULE (expression));
+    MATCH (READ_STR ("or") && RULE (expression) && AST_APPEND_STR ("|") && RULE (expression));
+    MATCH (READ_STR ("eo") && RULE (expression) && AST_APPEND_STR ("^") && RULE (expression));
+    MATCH (READ_STR ("aS") && RULE (expression) && AST_APPEND_STR ("=") && RULE (expression));
+    MATCH (READ_STR ("pL") && RULE (expression) && AST_APPEND_STR ("+=") && RULE (expression));
+    MATCH (READ_STR ("mI") && RULE (expression) && AST_APPEND_STR ("-=") && RULE (expression));
+    MATCH (READ_STR ("mL") && RULE (expression) && AST_APPEND_STR ("*=") && RULE (expression));
+    MATCH (READ_STR ("dV") && RULE (expression) && AST_APPEND_STR ("/=") && RULE (expression));
+    MATCH (READ_STR ("rM") && RULE (expression) && AST_APPEND_STR ("%=") && RULE (expression));
+    MATCH (READ_STR ("aN") && RULE (expression) && AST_APPEND_STR ("&=") && RULE (expression));
+    MATCH (READ_STR ("oR") && RULE (expression) && AST_APPEND_STR ("|=") && RULE (expression));
+    MATCH (READ_STR ("eO") && RULE (expression) && AST_APPEND_STR ("^=") && RULE (expression));
+    MATCH (READ_STR ("ls") && RULE (expression) && AST_APPEND_STR ("<<") && RULE (expression));
+    MATCH (READ_STR ("rs") && RULE (expression) && AST_APPEND_STR (">>") && RULE (expression));
+    MATCH (READ_STR ("lS") && RULE (expression) && AST_APPEND_STR ("<<=") && RULE (expression));
+    MATCH (READ_STR ("rS") && RULE (expression) && AST_APPEND_STR (">>=") && RULE (expression));
+    MATCH (READ_STR ("eq") && RULE (expression) && AST_APPEND_STR ("==") && RULE (expression));
+    MATCH (READ_STR ("ne") && RULE (expression) && AST_APPEND_STR ("!=") && RULE (expression));
+    MATCH (READ_STR ("lt") && RULE (expression) && AST_APPEND_STR ("<") && RULE (expression));
+    MATCH (READ_STR ("gt") && RULE (expression) && AST_APPEND_STR (">") && RULE (expression));
+    MATCH (READ_STR ("le") && RULE (expression) && AST_APPEND_STR ("<=") && RULE (expression));
     /* ternary operator */
-    MATCH (READ_STR ("ge") && RULE (expression) && APPEND_STR (">=") && RULE (expression));
+    MATCH (READ_STR ("ge") && RULE (expression) && AST_APPEND_STR (">=") && RULE (expression));
 
     /* type casting */
     /* will generate " (type)" */
-    MATCH (READ_STR ("ss") && RULE (expression) && APPEND_STR ("<=>") && RULE (expression));
+    MATCH (READ_STR ("ss") && RULE (expression) && AST_APPEND_STR ("<=>") && RULE (expression));
 
     /* prefix operators */
-    MATCH (READ_STR ("nt") && RULE (expression) && APPEND_STR ("!") && RULE (expression));
-    MATCH (READ_STR ("aa") && RULE (expression) && APPEND_STR ("&&") && RULE (expression));
+    MATCH (READ_STR ("nt") && RULE (expression) && AST_APPEND_STR ("!") && RULE (expression));
+    MATCH (READ_STR ("aa") && RULE (expression) && AST_APPEND_STR ("&&") && RULE (expression));
 
     /* expression (expr-list), call */
-    MATCH (READ_STR ("oo") && RULE (expression) && APPEND_STR ("||") && RULE (expression));
+    MATCH (READ_STR ("oo") && RULE (expression) && AST_APPEND_STR ("||") && RULE (expression));
 
     /* (name) (expr-list), call that would use argument-dependent lookup but for the parentheses*/
     MATCH (
-        READ_STR ("cv") && APPEND_STR ("(") && RULE (type) && APPEND_STR (")") && RULE (expression)
+        READ_STR ("cv") && AST_APPEND_STR ("(") && RULE (type) && AST_APPEND_STR (")") &&
+        RULE (expression)
     );
 
     /* type (expression), conversion with one argument */
     MATCH (
-        READ_STR ("cv") && RULE (type) && APPEND_STR ("(") && RULE (expression) && APPEND_STR (")")
+        READ_STR ("cv") && RULE (type) && AST_APPEND_STR ("(") && RULE (expression) &&
+        AST_APPEND_STR (")")
     );
 
     /* type (expr-list), conversion with other than one argument */
     MATCH (
-        READ_STR ("il") && APPEND_STR ("{") && RULE_MANY_WITH_SEP (braced_expression, ", ") &&
-        APPEND_STR ("}") && READ ('E')
+        READ_STR ("il") && AST_APPEND_STR ("{") && RULE_MANY_WITH_SEP (braced_expression, ", ") &&
+        AST_APPEND_STR ("}") && READ ('E')
     );
 
     /* type {expr-list}, conversion with braced-init-list argument */
-    MATCH ((READ_STR ("gsdl") || READ_STR ("dl")) && APPEND_STR ("delete ") && RULE (expression));
+    MATCH (
+        (READ_STR ("gsdl") || READ_STR ("dl")) && AST_APPEND_STR ("delete ") && RULE (expression)
+    );
 
     /* {expr-list}, braced-init-list in any other context */
-    MATCH ((READ_STR ("gsda") || READ_STR ("da")) && APPEND_STR ("delete[] ") && RULE (expression));
+    MATCH (
+        (READ_STR ("gsda") || READ_STR ("da")) && AST_APPEND_STR ("delete[] ") && RULE (expression)
+    );
 
     /* new (expr-list) type */
     MATCH (
-        READ_STR ("dc") && APPEND_STR ("dynamic_cast<") && RULE (type) && APPEND_STR ("> (") &&
-        RULE (expression) && APPEND_STR (")")
+        READ_STR ("dc") && AST_APPEND_STR ("dynamic_cast<") && RULE (type) &&
+        AST_APPEND_STR ("> (") && RULE (expression) && AST_APPEND_STR (")")
     );
 
     /* new (expr-list) type (init) */
     MATCH (
-        READ_STR ("sc") && APPEND_STR ("static_cast<") && RULE (type) && APPEND_STR ("> (") &&
-        RULE (expression) && APPEND_STR (")")
+        READ_STR ("sc") && AST_APPEND_STR ("static_cast<") && RULE (type) &&
+        AST_APPEND_STR ("> (") && RULE (expression) && AST_APPEND_STR (")")
     );
 
     /* new[] (expr-list) type */
     MATCH (
-        READ_STR ("cc") && APPEND_STR ("const_cast<") && RULE (type) && APPEND_STR ("> (") &&
-        RULE (expression) && APPEND_STR (")")
+        READ_STR ("cc") && AST_APPEND_STR ("const_cast<") && RULE (type) &&
+        AST_APPEND_STR ("> (") && RULE (expression) && AST_APPEND_STR (")")
     );
 
     /* new[] (expr-list) type (init) */
     MATCH (
-        READ_STR ("rc") && APPEND_STR ("reinterpret_cast<") && RULE (type) && APPEND_STR ("> (") &&
-        RULE (expression) && APPEND_STR (")")
+        READ_STR ("rc") && AST_APPEND_STR ("reinterpret_cast<") && RULE (type) &&
+        AST_APPEND_STR ("> (") && RULE (expression) && AST_APPEND_STR (")")
     );
 
     /* delete expression */
-    MATCH (READ_STR ("dt") && RULE (expression) && APPEND_CHR ('.') && RULE (unresolved_name));
+    MATCH (READ_STR ("dt") && RULE (expression) && AST_APPEND_CHR ('.') && RULE (unresolved_name));
 
     /* delete [] expression */
-    MATCH (READ_STR ("pt") && RULE (expression) && APPEND_STR ("->") && RULE (unresolved_name));
+    MATCH (READ_STR ("pt") && RULE (expression) && AST_APPEND_STR ("->") && RULE (unresolved_name));
 
     // dc <type> <expression>                               # dynamic_cast<type> (expression)
-    MATCH (READ_STR ("ds") && RULE (expression) && APPEND_STR (".*") && RULE (expression));
+    MATCH (READ_STR ("ds") && RULE (expression) && AST_APPEND_STR (".*") && RULE (expression));
     // sc <type> <expression>                               # static_cast<type> (expression)
     MATCH (
-        READ_STR ("sP") && APPEND_STR ("sizeof...(") && RULE_MANY (template_arg) &&
-        APPEND_CHR (')') && READ ('E')
+        READ_STR ("sP") && AST_APPEND_STR ("sizeof...(") && RULE_MANY (template_arg) &&
+        AST_APPEND_CHR (')') && READ ('E')
     );
     // cc <type> <expression>                               # const_cast<type> (expression)
     MATCH (
-        READ_STR ("fLpl") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" + ... + ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLpl") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" + ... + ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     // rc <type> <expression>                               # reinterpret_cast<type> (expression)
     MATCH (
-        READ_STR ("fLmi") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" - ... - ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLmi") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" - ... - ") && RULE (expression) && AST_APPEND_CHR (')')
     );
 
     // ti <type>                                            # typeid (type)
     MATCH (
-        READ_STR ("fLml") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" * ... * ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLml") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" * ... * ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     // te <expression>                                      # typeid (expression)
     MATCH (
-        READ_STR ("fLdv") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" / ... / ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLdv") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" / ... / ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     // st <type>                                            # sizeof (type)
     MATCH (
-        READ_STR ("fLrm") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" % ... % ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLrm") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" % ... % ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     // sz <expression>                                      # sizeof (expression)
     MATCH (
-        READ_STR ("fLan") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" & ... & ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLan") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" & ... & ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     // at <type>                                            # alignof (type)
     MATCH (
-        READ_STR ("fLor") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" | ... | ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLor") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" | ... | ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     // az <expression>                                      # alignof (expression)
     MATCH (
-        READ_STR ("fLeo") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ^ ... ^ ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLeo") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" ^ ... ^ ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     // nx <expression>                                      # noexcept (expression)
     MATCH (
-        READ_STR ("fLaS") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" = ... = ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLaS") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" = ... = ") && RULE (expression) && AST_APPEND_CHR (')')
     );
 
     MATCH (
-        READ_STR ("fLpL") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" += ... += ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLpL") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" += ... += ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLmI") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" -= ... -= ") &&
-        RULE (expression) && APPEND_CHR (')')
-    );
-
-    MATCH (
-        READ_STR ("fLmL") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" *= ... *= ") &&
-        RULE (expression) && APPEND_CHR (')')
-    );
-    MATCH (
-        READ_STR ("fLdV") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" /= ... /= ") &&
-        RULE (expression) && APPEND_CHR (')')
-    );
-    MATCH (
-        READ_STR ("fLrM") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" %= ... %= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLmI") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" -= ... -= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
 
     MATCH (
-        READ_STR ("fLaN") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" &= ... &= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLmL") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" *= ... *= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLoR") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" |= ... |= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLdV") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" /= ... /= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLeO") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ^= ... ^= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLrM") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" %= ... %= ") && RULE (expression) && AST_APPEND_CHR (')')
+    );
+
+    MATCH (
+        READ_STR ("fLaN") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" &= ... &= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLls") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" << ... << ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLoR") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" |= ... |= ") && RULE (expression) && AST_APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLeO") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" ^= ... ^= ") && RULE (expression) && AST_APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("fLls") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" << ... << ") && RULE (expression) && AST_APPEND_CHR (')')
     );
 
     /* unary left fold */
     MATCH (
-        READ_STR ("fLrs") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" >> ... >> ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLrs") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" >> ... >> ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLlS") && APPEND_CHR ('(') && RULE (expression) &&
-        APPEND_STR (" <<= ... <<= ") && RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLlS") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" <<= ... <<= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLrS") && APPEND_CHR ('(') && RULE (expression) &&
-        APPEND_STR (" >>= ... >>= ") && RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLrS") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" >>= ... >>= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLeq") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" == ... == ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLeq") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" == ... == ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLne") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" != ... != ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLne") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" != ... != ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLlt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" < ... < ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLlt") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" < ... < ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLgt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" > ... > ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLgt") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" > ... > ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLle") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" <= ... <= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLle") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" <= ... <= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLge") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" >= ... >= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLge") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" >= ... >= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLss") && APPEND_CHR ('(') && RULE (expression) &&
-        APPEND_STR (" <=> ... <=> ") && RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLss") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" <=> ... <=> ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLnt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ! ... ! ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLnt") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" ! ... ! ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLaa") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" && ... && ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLaa") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" && ... && ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fLoo") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" || ... || ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fLoo") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" || ... || ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRpl") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" + ... + ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRpl") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" + ... + ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRmi") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" - ... - ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRmi") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" - ... - ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRml") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" * ... * ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRml") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" * ... * ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRdv") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" / ... / ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRdv") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" / ... / ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRrm") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" % ... % ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRrm") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" % ... % ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRan") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" & ... & ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRan") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" & ... & ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRor") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" | ... | ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRor") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" | ... | ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fReo") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ^ ... ^ ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fReo") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" ^ ... ^ ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRaS") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" = ... = ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRaS") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" = ... = ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRpL") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" += ... += ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRpL") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" += ... += ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRmI") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" -= ... -= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRmI") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" -= ... -= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRmL") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" *= ... *= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRmL") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" *= ... *= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRdV") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" /= ... /= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRdV") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" /= ... /= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRrM") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" %= ... %= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRrM") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" %= ... %= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRaN") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" &= ... &= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRaN") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" &= ... &= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRoR") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" |= ... |= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRoR") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" |= ... |= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fReO") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ^= ... ^= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fReO") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" ^= ... ^= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRls") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" << ... << ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRls") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" << ... << ") && RULE (expression) && AST_APPEND_CHR (')')
     );
 
     /* unary fold right */
     MATCH (
-        READ_STR ("fRrs") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" >> ... >> ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRrs") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" >> ... >> ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRlS") && APPEND_CHR ('(') && RULE (expression) &&
-        APPEND_STR (" <<= ... <<= ") && RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRlS") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" <<= ... <<= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRrS") && APPEND_CHR ('(') && RULE (expression) &&
-        APPEND_STR (" >>= ... >>= ") && RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRrS") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" >>= ... >>= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fReq") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" == ... == ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fReq") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" == ... == ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRne") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" != ... != ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRne") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" != ... != ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRlt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" < ... < ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRlt") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" < ... < ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRgt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" > ... > ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRgt") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" > ... > ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRle") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" <= ... <= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRle") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" <= ... <= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRge") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" >= ... >= ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRge") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" >= ... >= ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRss") && APPEND_CHR ('(') && RULE (expression) &&
-        APPEND_STR (" <=> ... <=> ") && RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRss") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" <=> ... <=> ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRnt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ! ... ! ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRnt") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" ! ... ! ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRaa") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" && ... && ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRaa") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" && ... && ") && RULE (expression) && AST_APPEND_CHR (')')
     );
     MATCH (
-        READ_STR ("fRoo") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" || ... || ") &&
-        RULE (expression) && APPEND_CHR (')')
+        READ_STR ("fRoo") && AST_APPEND_CHR ('(') && RULE (expression) &&
+        AST_APPEND_STR (" || ... || ") && RULE (expression) && AST_APPEND_CHR (')')
     );
-    MATCH (READ_STR ("ps") && APPEND_CHR ('+') && RULE (expression));
-    MATCH (READ_STR ("ng") && APPEND_CHR ('-') && RULE (expression));
-    MATCH (READ_STR ("ad") && APPEND_CHR ('&') && RULE (expression));
-    MATCH (READ_STR ("de") && APPEND_CHR ('*') && RULE (expression));
-    MATCH (READ_STR ("co") && APPEND_STR ("~") && RULE (expression));
-    MATCH (READ_STR ("pp_") && APPEND_STR ("++") && RULE (expression));
-    MATCH (READ_STR ("mm_") && APPEND_STR ("--") && RULE (expression));
-    MATCH (READ_STR ("ti") && APPEND_STR ("typeid(") && RULE (type) && APPEND_STR (")"));
-    MATCH (READ_STR ("te") && APPEND_STR ("typeid(") && RULE (expression) && APPEND_STR (")"));
-    MATCH (READ_STR ("st") && APPEND_STR ("sizeof(") && RULE (type) && APPEND_STR (")"));
-    MATCH (READ_STR ("sz") && APPEND_STR ("sizeof(") && RULE (expression) && APPEND_STR (")"));
-    MATCH (READ_STR ("at") && APPEND_STR ("alignof(") && RULE (type) && APPEND_STR (")"));
-    MATCH (READ_STR ("az") && APPEND_STR ("alignof(") && RULE (expression) && APPEND_STR (")"));
-    MATCH (READ_STR ("nx") && APPEND_STR ("noexcept(") && RULE (expression) && APPEND_STR (")"));
-    MATCH (READ_STR ("frss") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" <=>..."));
+    MATCH (READ_STR ("ps") && AST_APPEND_CHR ('+') && RULE (expression));
+    MATCH (READ_STR ("ng") && AST_APPEND_CHR ('-') && RULE (expression));
+    MATCH (READ_STR ("ad") && AST_APPEND_CHR ('&') && RULE (expression));
+    MATCH (READ_STR ("de") && AST_APPEND_CHR ('*') && RULE (expression));
+    MATCH (READ_STR ("co") && AST_APPEND_STR ("~") && RULE (expression));
+    MATCH (READ_STR ("pp_") && AST_APPEND_STR ("++") && RULE (expression));
+    MATCH (READ_STR ("mm_") && AST_APPEND_STR ("--") && RULE (expression));
+    MATCH (READ_STR ("ti") && AST_APPEND_STR ("typeid(") && RULE (type) && AST_APPEND_STR (")"));
     MATCH (
-        READ_STR ("sZ") && APPEND_STR ("sizeof...(") && RULE (template_param) && APPEND_CHR (')')
+        READ_STR ("te") && AST_APPEND_STR ("typeid(") && RULE (expression) && AST_APPEND_STR (")")
+    );
+    MATCH (READ_STR ("st") && AST_APPEND_STR ("sizeof(") && RULE (type) && AST_APPEND_STR (")"));
+    MATCH (
+        READ_STR ("sz") && AST_APPEND_STR ("sizeof(") && RULE (expression) && AST_APPEND_STR (")")
+    );
+    MATCH (READ_STR ("at") && AST_APPEND_STR ("alignof(") && RULE (type) && AST_APPEND_STR (")"));
+    MATCH (
+        READ_STR ("az") && AST_APPEND_STR ("alignof(") && RULE (expression) && AST_APPEND_STR (")")
     );
     MATCH (
-        READ_STR ("sZ") && APPEND_STR ("sizeof...(") && RULE (function_param) && APPEND_CHR (')')
+        READ_STR ("nx") && AST_APPEND_STR ("noexcept(") && RULE (expression) && AST_APPEND_STR (")")
     );
-    MATCH (READ_STR ("sp") && RULE (expression) && APPEND_STR ("..."));
+    MATCH (
+        READ_STR ("frss") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" <=>...")
+    );
+    MATCH (
+        READ_STR ("sZ") && AST_APPEND_STR ("sizeof...(") && RULE (template_param) &&
+        AST_APPEND_CHR (')')
+    );
+    MATCH (
+        READ_STR ("sZ") && AST_APPEND_STR ("sizeof...(") && RULE (function_param) &&
+        AST_APPEND_CHR (')')
+    );
+    MATCH (READ_STR ("sp") && RULE (expression) && AST_APPEND_STR ("..."));
 
     /* binary left fold */
     // clang-format off
-    MATCH (READ_STR ("flpl") && APPEND_STR ("(... +") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flmi") && APPEND_STR ("(... -") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flml") && APPEND_STR ("(... *") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fldv") && APPEND_STR ("(... /") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flrm") && APPEND_STR ("(... %") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flan") && APPEND_STR ("(... &") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flor") && APPEND_STR ("(... |") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fleo") && APPEND_STR ("(... ^") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flaS") && APPEND_STR ("(... =") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flpL") && APPEND_STR ("(... +=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flmI") && APPEND_STR ("(... -=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flmL") && APPEND_STR ("(... *=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fldV") && APPEND_STR ("(... /=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flrM") && APPEND_STR ("(... %=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flaN") && APPEND_STR ("(... &=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("floR") && APPEND_STR ("(... |=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fleO") && APPEND_STR ("(... ^=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flls") && APPEND_STR ("(... <<") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flrs") && APPEND_STR ("(... >>") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fllS") && APPEND_STR ("(... <<=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flrS") && APPEND_STR ("(... >>=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fleq") && APPEND_STR ("(... ==") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flne") && APPEND_STR ("(... !=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("fllt") && APPEND_STR ("(... <") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flgt") && APPEND_STR ("(... >") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flle") && APPEND_STR ("(... <=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flge") && APPEND_STR ("(... >=") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flss") && APPEND_STR ("(... <=>") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flnt") && APPEND_STR ("(... !") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("flaa") && APPEND_STR ("(... &&") && RULE (expression) && APPEND_CHR (')'));
-    MATCH (READ_STR ("floo") && APPEND_STR ("(... ||") && RULE (expression) && APPEND_CHR (')'));
+    MATCH (READ_STR ("flpl") && AST_APPEND_STR ("(... +") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flmi") && AST_APPEND_STR ("(... -") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flml") && AST_APPEND_STR ("(... *") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fldv") && AST_APPEND_STR ("(... /") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flrm") && AST_APPEND_STR ("(... %") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flan") && AST_APPEND_STR ("(... &") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flor") && AST_APPEND_STR ("(... |") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fleo") && AST_APPEND_STR ("(... ^") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flaS") && AST_APPEND_STR ("(... =") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flpL") && AST_APPEND_STR ("(... +=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flmI") && AST_APPEND_STR ("(... -=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flmL") && AST_APPEND_STR ("(... *=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fldV") && AST_APPEND_STR ("(... /=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flrM") && AST_APPEND_STR ("(... %=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flaN") && AST_APPEND_STR ("(... &=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("floR") && AST_APPEND_STR ("(... |=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fleO") && AST_APPEND_STR ("(... ^=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flls") && AST_APPEND_STR ("(... <<") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flrs") && AST_APPEND_STR ("(... >>") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fllS") && AST_APPEND_STR ("(... <<=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flrS") && AST_APPEND_STR ("(... >>=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fleq") && AST_APPEND_STR ("(... ==") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flne") && AST_APPEND_STR ("(... !=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fllt") && AST_APPEND_STR ("(... <") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flgt") && AST_APPEND_STR ("(... >") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flle") && AST_APPEND_STR ("(... <=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flge") && AST_APPEND_STR ("(... >=") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flss") && AST_APPEND_STR ("(... <=>") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flnt") && AST_APPEND_STR ("(... !") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flaa") && AST_APPEND_STR ("(... &&") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("floo") && AST_APPEND_STR ("(... ||") && RULE (expression) && AST_APPEND_CHR (')'));
 
     /* binary fold right */
-    MATCH (READ_STR ("frpl") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" + ...)"));
-    MATCH (READ_STR ("frmi") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" - ...)"));
-    MATCH (READ_STR ("frml") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" * ...)"));
-    MATCH (READ_STR ("frdv") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" / ...)"));
-    MATCH (READ_STR ("frrm") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" % ...)"));
-    MATCH (READ_STR ("fran") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" & ...)"));
-    MATCH (READ_STR ("fror") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" | ...)"));
-    MATCH (READ_STR ("freo") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ^ ...)"));
-    MATCH (READ_STR ("fraS") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" = ...)"));
-    MATCH (READ_STR ("frpL") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" += ...)"));
-    MATCH (READ_STR ("frmI") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" -= ...)"));
-    MATCH (READ_STR ("frmL") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" *= ...)"));
-    MATCH (READ_STR ("frdV") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" /= ...)"));
-    MATCH (READ_STR ("frrM") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" %= ...)"));
-    MATCH (READ_STR ("fraN") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" &= ...)"));
-    MATCH (READ_STR ("froR") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" |= ...)"));
-    MATCH (READ_STR ("freO") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ^= ...)"));
-    MATCH (READ_STR ("frls") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" << ...)"));
-    MATCH (READ_STR ("frrs") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" >> ...)"));
-    MATCH (READ_STR ("frlS") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" <<= ...)"));
-    MATCH (READ_STR ("frrS") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" >>= ...)"));
-    MATCH (READ_STR ("freq") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" == ...)"));
-    MATCH (READ_STR ("frne") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" != ...)"));
-    MATCH (READ_STR ("frlt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" < ...)"));
-    MATCH (READ_STR ("frgt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" > ...)"));
-    MATCH (READ_STR ("frle") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" <= ...)"));
-    MATCH (READ_STR ("frge") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" >= ...)"));
-    MATCH (READ_STR ("frnt") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" ! ...)"));
-    MATCH (READ_STR ("fraa") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" && ...)"));
-    MATCH (READ_STR ("froo") && APPEND_CHR ('(') && RULE (expression) && APPEND_STR (" || ...)"));
-    MATCH (READ_STR ("tw") && APPEND_STR ("throw ") && RULE (expression));
+    MATCH (READ_STR ("frpl") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" + ...)"));
+    MATCH (READ_STR ("frmi") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" - ...)"));
+    MATCH (READ_STR ("frml") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" * ...)"));
+    MATCH (READ_STR ("frdv") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" / ...)"));
+    MATCH (READ_STR ("frrm") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" % ...)"));
+    MATCH (READ_STR ("fran") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" & ...)"));
+    MATCH (READ_STR ("fror") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" | ...)"));
+    MATCH (READ_STR ("freo") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" ^ ...)"));
+    MATCH (READ_STR ("fraS") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" = ...)"));
+    MATCH (READ_STR ("frpL") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" += ...)"));
+    MATCH (READ_STR ("frmI") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" -= ...)"));
+    MATCH (READ_STR ("frmL") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" *= ...)"));
+    MATCH (READ_STR ("frdV") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" /= ...)"));
+    MATCH (READ_STR ("frrM") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" %= ...)"));
+    MATCH (READ_STR ("fraN") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" &= ...)"));
+    MATCH (READ_STR ("froR") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" |= ...)"));
+    MATCH (READ_STR ("freO") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" ^= ...)"));
+    MATCH (READ_STR ("frls") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" << ...)"));
+    MATCH (READ_STR ("frrs") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" >> ...)"));
+    MATCH (READ_STR ("frlS") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" <<= ...)"));
+    MATCH (READ_STR ("frrS") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" >>= ...)"));
+    MATCH (READ_STR ("freq") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" == ...)"));
+    MATCH (READ_STR ("frne") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" != ...)"));
+    MATCH (READ_STR ("frlt") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" < ...)"));
+    MATCH (READ_STR ("frgt") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" > ...)"));
+    MATCH (READ_STR ("frle") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" <= ...)"));
+    MATCH (READ_STR ("frge") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" >= ...)"));
+    MATCH (READ_STR ("frnt") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" ! ...)"));
+    MATCH (READ_STR ("fraa") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" && ...)"));
+    MATCH (READ_STR ("froo") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" || ...)"));
+    MATCH (READ_STR ("tw") && AST_APPEND_STR ("throw ") && RULE (expression));
     // clang-format on
 
     // tw <expression>                                      # throw expression
@@ -618,19 +634,14 @@ DEFN_RULE (expression, {
     MATCH (RULE (function_param));
 
     // u <source-name> <template-arg>* E                    # vendor extended expression
-    MATCH (READ_STR ("tr") && APPEND_STR ("throw"));
+    MATCH (READ_STR ("tr") && AST_APPEND_STR ("throw"));
 
     MATCH (RULE (unresolved_name));
     MATCH (RULE (expr_primary));
 });
 
 
-DEFN_RULE (simple_id, {
-    MATCH (
-        RULE (source_name) && APPEND_TYPE (dem) &&
-        OPTIONAL (RULE (template_args) && APPEND_TYPE (dem))
-    );
-});
+DEFN_RULE (simple_id, { MATCH (RULE (source_name) && OPTIONAL (RULE (template_args))); });
 
 
 
@@ -654,17 +665,13 @@ DEFN_RULE (template_param, {
             }
             sid = sid + m->template_idx_start;
             if (m->template_params.length > sid &&
-                vec_ptr_at (&m->template_params, sid)->name.buf) {
-                FORCE_APPEND_TYPE (&vec_ptr_at (&m->template_params, sid)->name);
-            }
-            TRACE_RETURN_SUCCESS (meta_substitute_tparam (m, sid, dem));
+                vec_ptr_at (&m->template_params, sid)->name.buf) {}
+            TRACE_RETURN_SUCCESS;
         } else if (READ ('_')) {
             size_t sid = m->template_idx_start;
             if (m->template_params.length > sid &&
-                vec_ptr_at (&m->template_params, sid)->name.buf) {
-                FORCE_APPEND_TYPE (&vec_ptr_at (&m->template_params, sid)->name);
-            }
-            TRACE_RETURN_SUCCESS (meta_substitute_tparam (m, sid, dem));
+                vec_ptr_at (&m->template_params, sid)->name.buf) {}
+            TRACE_RETURN_SUCCESS;
         }
     }
     RESTORE_POS (0);
@@ -680,7 +687,7 @@ DEFN_RULE (discriminator, {
             READ_NUMBER (numlt10);
             if (numlt10 >= 10) {
                 // do something
-                TRACE_RETURN_SUCCESS (dem);
+                TRACE_RETURN_SUCCESS;
             }
         } else {
             // matched single "_"
@@ -688,7 +695,7 @@ DEFN_RULE (discriminator, {
             READ_NUMBER (numlt10);
             if (numlt10 >= 0 && numlt10 < 10) {
                 // do something
-                TRACE_RETURN_SUCCESS (dem);
+                TRACE_RETURN_SUCCESS;
             }
         }
     }
@@ -699,21 +706,23 @@ DEFN_RULE (discriminator, {
 
 DEFN_RULE (initializer, {
     MATCH (
-        READ_STR ("pi") && APPEND_STR (" (") && RULE_MANY_WITH_SEP (expression, ", ") &&
-        APPEND_CHR (')') && READ ('E')
+        READ_STR ("pi") && AST_APPEND_STR (" (") && RULE_MANY_WITH_SEP (expression, ", ") &&
+        AST_APPEND_CHR (')') && READ ('E')
     );
 });
 
 
 DEFN_RULE (abi_tag, {
     // will generate " \"<source_name>\","
-    MATCH (READ ('B') && APPEND_STR (" \"") && RULE (source_name) && APPEND_STR ("\","));
+    MATCH (READ ('B') && AST_APPEND_STR (" \"") && RULE (source_name) && AST_APPEND_STR ("\","));
 });
 
 
 DEFN_RULE (call_offset, {
-    MATCH (READ ('h') && APPEND_STR ("non-virtual thunk to ") && RULE (nv_offset) && READ ('_'));
-    MATCH (READ ('v') && APPEND_STR ("virtual thunk to ") && RULE (v_offset) && READ ('_'));
+    MATCH (
+        READ ('h') && AST_APPEND_STR ("non-virtual thunk to ") && RULE (nv_offset) && READ ('_')
+    );
+    MATCH (READ ('v') && AST_APPEND_STR ("virtual thunk to ") && RULE (v_offset) && READ ('_'));
 });
 
 
@@ -743,16 +752,18 @@ DEFN_RULE (call_offset, {
 DEFN_RULE (special_name, {
     MATCH (READ_STR ("Tc") && RULE (call_offset) && RULE (call_offset) && RULE (encoding));
     MATCH (
-        READ_STR ("GR") && APPEND_STR ("reference temporary for ") && RULE (name) &&
+        READ_STR ("GR") && AST_APPEND_STR ("reference temporary for ") && RULE (name) &&
         RULE (seq_id) && READ ('_')
     );
     MATCH (READ ('T') && RULE (call_offset) && RULE (encoding));
-    MATCH (READ_STR ("GR") && APPEND_STR ("reference temporary for ") && RULE (name) && READ ('_'));
-    MATCH (READ_STR ("TV") && APPEND_STR ("vtable for ") && RULE (type));
-    MATCH (READ_STR ("TT") && APPEND_STR ("VTT structure for ") && RULE (type));
-    MATCH (READ_STR ("TI") && APPEND_STR ("typeinfo for ") && RULE (type));
-    MATCH (READ_STR ("TS") && APPEND_STR ("typeinfo name for ") && RULE (type));
-    MATCH (READ_STR ("GV") && APPEND_STR ("guard variable for ") && RULE (name));
+    MATCH (
+        READ_STR ("GR") && AST_APPEND_STR ("reference temporary for ") && RULE (name) && READ ('_')
+    );
+    MATCH (READ_STR ("TV") && AST_APPEND_STR ("vtable for ") && RULE (type));
+    MATCH (READ_STR ("TT") && AST_APPEND_STR ("VTT structure for ") && RULE (type));
+    MATCH (READ_STR ("TI") && AST_APPEND_STR ("typeinfo for ") && RULE (type));
+    MATCH (READ_STR ("TS") && AST_APPEND_STR ("typeinfo name for ") && RULE (type));
+    MATCH (READ_STR ("GV") && AST_APPEND_STR ("guard variable for ") && RULE (name));
     MATCH (READ_STR ("GTt") && RULE (encoding));
 });
 
@@ -774,18 +785,17 @@ DEFN_RULE (function_type, {
 
         // Return type. If return type is builtin type, then it's not substitutable
         // If return type is a type, then it's substitutable, so add using APPEND_TYPE
-        (RULE_DEFER (rtype, builtin_type) || ((RULE_DEFER (rtype, type)) && APPEND_TYPE (rtype))) &&
-        APPEND_DEFER_VAR (rtype) &&
+        (RULE_DEFER (rtype, builtin_type) || ((RULE_DEFER (rtype, type)))) &&
 
         // if a pointer then we'll have a function pointer (*)
-        (is_ptr ? APPEND_STR (" (*)") : APPEND_CHR (' ')) &&
+        (is_ptr ? AST_APPEND_STR (" (*)") : AST_APPEND_CHR (' ')) &&
 
         // arguments
-        APPEND_STR ("(") && RULE_ATLEAST_ONCE_WITH_SEP (type, ", ") && APPEND_STR (")") &&
+        AST_APPEND_STR ("(") && RULE_ATLEAST_ONCE_WITH_SEP (type, ", ") && AST_APPEND_STR (")") &&
 
         OPTIONAL (RULE (ref_qualifier)) && READ ('E')
     );
-    dem_string_deinit (rtype);
+    DemAstNode_deinit (rtype);
 });
 
 
@@ -793,83 +803,84 @@ DEFN_RULE (function_type, {
 DEFN_RULE (function_param, {
     MATCH (
         READ_STR ("fL") && RULE (non_negative_number) && READ ('p') &&
-        RULE (top_level_cv_qualifiers) && APPEND_CHR (' ') && RULE (non_negative_number) &&
+        RULE (top_level_cv_qualifiers) && AST_APPEND_CHR (' ') && RULE (non_negative_number) &&
         READ ('_')
     );
     MATCH (
         READ_STR ("fL") && RULE (non_negative_number) && READ ('p') &&
-        RULE (top_level_cv_qualifiers) && APPEND_CHR (' ') && READ ('_')
+        RULE (top_level_cv_qualifiers) && AST_APPEND_CHR (' ') && READ ('_')
     );
     MATCH (
-        READ_STR ("fp") && RULE (top_level_cv_qualifiers) && APPEND_CHR (' ') &&
+        READ_STR ("fp") && RULE (top_level_cv_qualifiers) && AST_APPEND_CHR (' ') &&
         RULE (non_negative_number) && READ ('_')
     );
-    MATCH (READ_STR ("fp") && RULE (top_level_cv_qualifiers) && APPEND_CHR (' ') && READ ('_'));
+    MATCH (READ_STR ("fp") && RULE (top_level_cv_qualifiers) && AST_APPEND_CHR (' ') && READ ('_'));
     MATCH (READ_STR ("fPT"));
 });
 
 
 DEFN_RULE (builtin_type, {
-    MATCH (READ_STR ("DF") && APPEND_STR ("_Float") && RULE (number) && READ ('_'));
+    MATCH (READ_STR ("DF") && AST_APPEND_STR ("_Float") && RULE (number) && READ ('_'));
     MATCH (
-        READ_STR ("DF") && APPEND_STR ("_Float") && RULE (number) && READ ('x') && APPEND_STR ("x")
+        READ_STR ("DF") && AST_APPEND_STR ("_Float") && RULE (number) && READ ('x') &&
+        AST_APPEND_STR ("x")
     );
     MATCH (
-        READ_STR ("DF") && APPEND_STR ("std::bfloat") && RULE (number) && READ ('b') &&
-        APPEND_STR ("_t")
+        READ_STR ("DF") && AST_APPEND_STR ("std::bfloat") && RULE (number) && READ ('b') &&
+        AST_APPEND_STR ("_t")
     );
     MATCH (
-        READ_STR ("DB") && APPEND_STR ("signed _BitInt(") && RULE (number) && APPEND_STR (")") &&
-        READ ('_')
+        READ_STR ("DB") && AST_APPEND_STR ("signed _BitInt(") && RULE (number) &&
+        AST_APPEND_STR (")") && READ ('_')
     );
     MATCH (
-        READ_STR ("DB") && APPEND_STR ("signed _BitInt(") && RULE (expression) &&
-        APPEND_STR (")") && READ ('_')
+        READ_STR ("DB") && AST_APPEND_STR ("signed _BitInt(") && RULE (expression) &&
+        AST_APPEND_STR (")") && READ ('_')
     );
     MATCH (
-        READ_STR ("DU") && APPEND_STR ("unsigned _BitInt(") && RULE (number) && APPEND_STR (")") &&
-        READ ('_')
+        READ_STR ("DU") && AST_APPEND_STR ("unsigned _BitInt(") && RULE (number) &&
+        AST_APPEND_STR (")") && READ ('_')
     );
     MATCH (
-        READ_STR ("DU") && APPEND_STR ("unsigned _BitInt(") && RULE (expression) &&
-        APPEND_STR (")") && READ ('_')
+        READ_STR ("DU") && AST_APPEND_STR ("unsigned _BitInt(") && RULE (expression) &&
+        AST_APPEND_STR (")") && READ ('_')
     );
     MATCH (READ ('u') && RULE (source_name) && OPTIONAL (RULE (template_args)));
-    MATCH (READ_STR ("DS") && READ_STR ("DA") && APPEND_STR ("_Sat _Accum"));
-    MATCH (READ_STR ("DS") && READ_STR ("DR") && APPEND_STR ("_Sat _Fract"));
-    MATCH (READ ('v') && APPEND_STR ("void"));
-    MATCH (READ ('w') && APPEND_STR ("wchar_t"));
-    MATCH (READ ('b') && APPEND_STR ("bool"));
-    MATCH (READ ('c') && APPEND_STR ("char"));
-    MATCH (READ ('a') && APPEND_STR ("signed char"));
-    MATCH (READ ('h') && APPEND_STR ("unsigned char"));
-    MATCH (READ ('s') && APPEND_STR ("short"));
-    MATCH (READ ('t') && APPEND_STR ("unsigned short"));
-    MATCH (READ ('i') && APPEND_STR ("int"));
-    MATCH (READ ('j') && APPEND_STR ("unsigned int"));
-    MATCH (READ ('l') && APPEND_STR ("long"));
-    MATCH (READ ('m') && APPEND_STR ("unsigned long"));
-    MATCH (READ ('x') && APPEND_STR ("long long"));
-    MATCH (READ ('y') && APPEND_STR ("unsigned long long"));
-    MATCH (READ ('n') && APPEND_STR ("__int128"));
-    MATCH (READ ('o') && APPEND_STR ("unsigned __int128"));
-    MATCH (READ ('f') && APPEND_STR ("float"));
-    MATCH (READ ('d') && APPEND_STR ("double"));
-    MATCH (READ ('e') && APPEND_STR ("long double"));
-    MATCH (READ ('g') && APPEND_STR ("__float128"));
-    MATCH (READ ('z') && APPEND_STR ("..."));
-    MATCH (READ_STR ("Dd") && APPEND_STR ("decimal64"));
-    MATCH (READ_STR ("De") && APPEND_STR ("decimal128"));
-    MATCH (READ_STR ("Df") && APPEND_STR ("decimal32"));
-    MATCH (READ_STR ("Dh") && APPEND_STR ("half"));
-    MATCH (READ_STR ("Di") && APPEND_STR ("char32_t"));
-    MATCH (READ_STR ("Ds") && APPEND_STR ("char16_t"));
-    MATCH (READ_STR ("Du") && APPEND_STR ("char8_t"));
-    MATCH (READ_STR ("Da") && APPEND_STR ("auto"));
-    MATCH (READ_STR ("Dc") && APPEND_STR ("decltype(auto)"));
-    MATCH (READ_STR ("Dn") && APPEND_STR ("std::nullptr_t"));
-    MATCH (READ_STR ("DA") && APPEND_STR ("_Accum"));
-    MATCH (READ_STR ("DR") && APPEND_STR ("_Fract"));
+    MATCH (READ_STR ("DS") && READ_STR ("DA") && AST_APPEND_STR ("_Sat _Accum"));
+    MATCH (READ_STR ("DS") && READ_STR ("DR") && AST_APPEND_STR ("_Sat _Fract"));
+    MATCH (READ ('v') && AST_APPEND_STR ("void"));
+    MATCH (READ ('w') && AST_APPEND_STR ("wchar_t"));
+    MATCH (READ ('b') && AST_APPEND_STR ("bool"));
+    MATCH (READ ('c') && AST_APPEND_STR ("char"));
+    MATCH (READ ('a') && AST_APPEND_STR ("signed char"));
+    MATCH (READ ('h') && AST_APPEND_STR ("unsigned char"));
+    MATCH (READ ('s') && AST_APPEND_STR ("short"));
+    MATCH (READ ('t') && AST_APPEND_STR ("unsigned short"));
+    MATCH (READ ('i') && AST_APPEND_STR ("int"));
+    MATCH (READ ('j') && AST_APPEND_STR ("unsigned int"));
+    MATCH (READ ('l') && AST_APPEND_STR ("long"));
+    MATCH (READ ('m') && AST_APPEND_STR ("unsigned long"));
+    MATCH (READ ('x') && AST_APPEND_STR ("long long"));
+    MATCH (READ ('y') && AST_APPEND_STR ("unsigned long long"));
+    MATCH (READ ('n') && AST_APPEND_STR ("__int128"));
+    MATCH (READ ('o') && AST_APPEND_STR ("unsigned __int128"));
+    MATCH (READ ('f') && AST_APPEND_STR ("float"));
+    MATCH (READ ('d') && AST_APPEND_STR ("double"));
+    MATCH (READ ('e') && AST_APPEND_STR ("long double"));
+    MATCH (READ ('g') && AST_APPEND_STR ("__float128"));
+    MATCH (READ ('z') && AST_APPEND_STR ("..."));
+    MATCH (READ_STR ("Dd") && AST_APPEND_STR ("decimal64"));
+    MATCH (READ_STR ("De") && AST_APPEND_STR ("decimal128"));
+    MATCH (READ_STR ("Df") && AST_APPEND_STR ("decimal32"));
+    MATCH (READ_STR ("Dh") && AST_APPEND_STR ("half"));
+    MATCH (READ_STR ("Di") && AST_APPEND_STR ("char32_t"));
+    MATCH (READ_STR ("Ds") && AST_APPEND_STR ("char16_t"));
+    MATCH (READ_STR ("Du") && AST_APPEND_STR ("char8_t"));
+    MATCH (READ_STR ("Da") && AST_APPEND_STR ("auto"));
+    MATCH (READ_STR ("Dc") && AST_APPEND_STR ("decltype(auto)"));
+    MATCH (READ_STR ("Dn") && AST_APPEND_STR ("std::nullptr_t"));
+    MATCH (READ_STR ("DA") && AST_APPEND_STR ("_Accum"));
+    MATCH (READ_STR ("DR") && AST_APPEND_STR ("_Fract"));
 });
 
 
@@ -878,8 +889,8 @@ DEFN_RULE (extended_qualifier, {
     MATCH (READ ('U') && RULE (source_name));
 });
 
-DemString* rule_source_name (
-    DemString*  dem,
+bool rule_source_name (
+    DemAstNode* dan,
     StrIter*    msi,
     Meta*       m,
     TraceGraph* graph,
@@ -893,12 +904,12 @@ DemString* rule_source_name (
     if (name_len > 0) {
         /* identifiers don't start with digits or any other special characters */
         if (name_len-- && (IS_ALPHA (PEEK()) || PEEK() == '_')) {
-            APPEND_CHR (PEEK());
+            AST_APPEND_CHR (PEEK());
             ADV();
 
             /* keep matching while length remains and a valid character is found*/
             while (name_len-- && (IS_ALPHA (PEEK()) || IS_DIGIT (PEEK()) || PEEK() == '_')) {
-                APPEND_CHR (PEEK());
+                AST_APPEND_CHR (PEEK());
                 ADV();
             }
 
@@ -909,7 +920,7 @@ DemString* rule_source_name (
             }
 
             /* if atleast one character matches */
-            TRACE_RETURN_SUCCESS (dem);
+            TRACE_RETURN_SUCCESS;
         }
     }
 
@@ -980,26 +991,31 @@ DEFN_RULE (mangled_name, {
     );
 });
 
-DemString* rule_cv_qualifiers (
-    DemString*  dem,
+bool rule_cv_qualifiers (
+    DemAstNode* dan,
     StrIter*    msi,
     Meta*       m,
     TraceGraph* graph,
     int         parent_node_id
 ) {
     RULE_HEAD (cv_qualifiers);
-    MATCH (READ ('K') && APPEND_STR (" const") && SET_CONST());
-    MATCH (READ ('V') && APPEND_STR (" volatile"));
-    MATCH (READ ('r') && APPEND_STR (" restrict"));
+    MATCH (READ ('K') && AST_APPEND_STR (" const") && SET_CONST());
+    MATCH (READ ('V') && AST_APPEND_STR (" volatile"));
+    MATCH (READ ('r') && AST_APPEND_STR (" restrict"));
     RULE_FOOT (cv_qualifiers);
 }
 
-DemString*
-    rule_qualifiers (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
+bool rule_qualifiers (
+    DemAstNode* dan,
+    StrIter*    msi,
+    Meta*       m,
+    TraceGraph* graph,
+    int         parent_node_id
+) {
     RULE_HEAD (qualifiers);
 
     DEFER_VAR (dem_extended_qualifiers);
-    (match_zero_or_more_rules (
+    bool has_qualifiers = match_zero_or_more_rules (
         first_of_rule_extended_qualifier,
         rule_extended_qualifier,
         " ",
@@ -1008,18 +1024,17 @@ DemString*
         m,
         graph,
         _my_node_id
-    ));
+    );
     MATCH_AND_DO (RULE (cv_qualifiers), {
-        dem_extended_qualifiers->buf&& APPEND_CHR (' ') &&
-            APPEND_STR (dem_extended_qualifiers->buf);
-        dem_string_deinit (dem_extended_qualifiers);
+        has_qualifiers&& AST_APPEND_CHR (' ') && AST_APPEND_NODE (dem_extended_qualifiers);
+        DemAstNode_deinit (dem_extended_qualifiers);
     });
 
     RULE_FOOT (qualifiers);
 }
 
-DemString* rule_qualified_type (
-    DemString*  dem,
+bool rule_qualified_type (
+    DemAstNode* dan,
     StrIter*    msi,
     Meta*       m,
     TraceGraph* graph,
@@ -1027,31 +1042,37 @@ DemString* rule_qualified_type (
 ) {
     RULE_HEAD (qualified_type);
 
-    DemString dem_qualifiers = {0};
-    DemString dem_type       = {0};
+    DemAstNode dem_qualifiers = {0};
+    DemAstNode dem_type       = {0};
     if (rule_qualifiers (&dem_qualifiers, msi, m, graph, _my_node_id) &&
         rule_type_type (&dem_type, msi, m, graph, _my_node_id)) {
-        dem_string_concat (dem, &dem_type) && dem_string_concat (dem, &dem_qualifiers);
-        dem_string_deinit (&dem_qualifiers);
-        dem_string_deinit (&dem_type);
-        TRACE_RETURN_SUCCESS (dem);
+        AST_APPEND_NODE (&dem_type) && AST_APPEND_NODE (&dem_qualifiers);
+        DemAstNode_deinit (&dem_qualifiers);
+        DemAstNode_deinit (&dem_type);
+        TRACE_RETURN_SUCCESS;
     }
     TRACE_RETURN_FAILURE();
 
     RULE_FOOT (qualified_type);
 }
 
-DemString*
-    rule_type_type (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
+
+bool rule_type_type (
+    DemAstNode* dan,
+    StrIter*    msi,
+    Meta*       m,
+    TraceGraph* graph,
+    int         parent_node_id
+) {
     RULE_HEAD (type_type);
 
     MATCH (RULE (function_type));
-    MATCH (RULE_CALL (qualified_type) && APPEND_TYPE (dem));
+    MATCH (RULE_CALL (qualified_type) && AST_APPEND_TYPE);
     MATCH (READ ('C') && RULE_CALL (type_type)); // complex pair (C99)
     MATCH (READ ('G') && RULE_CALL (type_type)); // imaginary (C99)
-    MATCH (READ ('P') && RULE_CALL (type_type) && APPEND_STR ("*"));
-    MATCH (READ ('R') && RULE_CALL (type_type) && APPEND_STR ("&"));
-    MATCH (READ ('O') && RULE_CALL (type_type) && APPEND_STR ("&&"));
+    MATCH (READ ('P') && RULE_CALL (type_type) && AST_APPEND_STR ("*"));
+    MATCH (READ ('R') && RULE_CALL (type_type) && AST_APPEND_STR ("&"));
+    MATCH (READ ('O') && RULE_CALL (type_type) && AST_APPEND_STR ("&&"));
     // MATCH (RULE (template_template_param) && RULE (template_args));
     MATCH (RULE (template_param) && OPTIONAL (RULE (template_args)));
     MATCH (RULE (substitution) && RULE (template_args));
@@ -1059,7 +1080,7 @@ DemString*
     MATCH (READ_STR ("Dp") && RULE_CALL (type_type)); // pack expansion (C++11)
 
     // Extended qualifiers with CV qualifiers
-    MATCH (RULE (class_enum_type) && APPEND_TYPE (dem));
+    MATCH (RULE (class_enum_type) && AST_APPEND_TYPE);
     MATCH (RULE (array_type));
     MATCH (RULE (pointer_to_member_type));
     // MATCH (RULE (template_param));
@@ -1069,11 +1090,10 @@ DemString*
     RULE_FOOT (type_type);
 }
 
-DemString*
-    rule_type (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
+bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
     RULE_HEAD (type);
 
-    MATCH (rule_type_type (dem, msi, m, graph, _my_node_id) && APPEND_TYPE (dem));
+    MATCH (rule_type_type (dan, msi, m, graph, _my_node_id) && AST_APPEND_TYPE);
 
     RULE_FOOT (type);
 }
@@ -1116,10 +1136,10 @@ DEFN_RULE (seq_id, {
     if (IS_DIGIT (PEEK()) || IS_UPPER (PEEK())) {
         ut64 sid  = 0;
         msi->cur += base36_to_int (msi->cur, &sid);
-        return meta_substitute_type (m, sid + 1, dem);
+        return meta_substitute_type (m, sid + 1, &dan->dem);
     }
     if (PEEK() == '_') {
-        return meta_substitute_type (m, 0, dem);
+        return meta_substitute_type (m, 0, &dan->dem);
     }
 });
 
@@ -1128,10 +1148,10 @@ DEFN_RULE (seq_id, {
 DEFN_RULE (local_name, {
     MATCH (
         READ ('Z') && RULE (encoding) && READ_STR ("Ed") && OPTIONAL (RULE (number)) &&
-        READ ('_') && APPEND_STR ("::") && RULE (name)
+        READ ('_') && AST_APPEND_STR ("::") && RULE (name)
     );
     MATCH (
-        READ ('Z') && RULE (encoding) && READ ('E') && APPEND_STR ("::") && RULE (name) &&
+        READ ('Z') && RULE (encoding) && READ ('E') && AST_APPEND_STR ("::") && RULE (name) &&
         OPTIONAL (RULE (discriminator))
     );
     MATCH (READ ('Z') && RULE (encoding) && READ_STR ("Es") && OPTIONAL (RULE (discriminator)));
@@ -1145,27 +1165,27 @@ DEFN_RULE (substitution, {
     // Placing it here is also important, the order matters!
     MATCH (READ ('S') && RULE (seq_id) && READ ('_'));
 
-    MATCH (READ_STR ("St7__cxx11") && APPEND_STR ("std::__cxx11"));
-    MATCH (READ_STR ("St") && APPEND_STR ("std"));
-    MATCH (READ_STR ("Sa") && APPEND_STR ("std::allocator"));
-    MATCH (READ_STR ("Sb") && APPEND_STR ("std::basic_string"));
+    MATCH (READ_STR ("St7__cxx11") && AST_APPEND_STR ("std::__cxx11"));
+    MATCH (READ_STR ("St") && AST_APPEND_STR ("std"));
+    MATCH (READ_STR ("Sa") && AST_APPEND_STR ("std::allocator"));
+    MATCH (READ_STR ("Sb") && AST_APPEND_STR ("std::basic_string"));
     MATCH (
         READ_STR ("Ss") &&
-        // APPEND_STR ("std::basic_string<char, std::char_traits<char>, std::allocator<char>>")
-        APPEND_STR ("std::string")
+        // AST_APPEND_STR ("std::basic_string<char, std::char_traits<char>, std::allocator<char>>")
+        AST_APPEND_STR ("std::string")
     );
     MATCH (
-        READ_STR ("Si") && APPEND_STR ("std::istream")
-        // APPEND_STR ("std::basic_istream<char, std::char_traits<char>>")
+        READ_STR ("Si") && AST_APPEND_STR ("std::istream")
+        // AST_APPEND_STR ("std::basic_istream<char, std::char_traits<char>>")
     );
     MATCH (
-        READ_STR ("So") && APPEND_STR ("std::ostream")
-        // APPEND_STR ("std::basic_ostream<char, std::char_traits<char>>")
+        READ_STR ("So") && AST_APPEND_STR ("std::ostream")
+        // AST_APPEND_STR ("std::basic_ostream<char, std::char_traits<char>>")
     );
 
     MATCH (
-        READ_STR ("Sd") && APPEND_STR ("std::iostream")
-        // APPEND_STR ("std::basic_iostream<char, std::char_traits<char>>")
+        READ_STR ("Sd") && AST_APPEND_STR ("std::iostream")
+        // AST_APPEND_STR ("std::basic_iostream<char, std::char_traits<char>>")
     );
 });
 
@@ -1337,64 +1357,64 @@ bool we_are_at_an_unqualified_name_starting (const char* p) {
 
 DEFN_RULE (operator_name, {
     MATCH (READ ('v') && RULE (digit) && RULE (source_name));
-    MATCH (READ_STR ("cv") && APPEND_STR ("operator (") && RULE (type) && APPEND_STR (")"));
-    MATCH (READ_STR ("nw") && APPEND_STR ("operator new"));
-    MATCH (READ_STR ("na") && APPEND_STR ("operator new[]"));
-    MATCH (READ_STR ("dl") && APPEND_STR ("operator delete"));
-    MATCH (READ_STR ("da") && APPEND_STR ("operator delete[]"));
-    MATCH (READ_STR ("aw") && APPEND_STR ("operator co_await"));
-    MATCH (READ_STR ("ps") && APPEND_STR ("operator+"));
-    MATCH (READ_STR ("ng") && APPEND_STR ("operator-"));
-    MATCH (READ_STR ("ad") && APPEND_STR ("operator&"));
-    MATCH (READ_STR ("de") && APPEND_STR ("operator*"));
-    MATCH (READ_STR ("co") && APPEND_STR ("operator~"));
-    MATCH (READ_STR ("pl") && APPEND_STR ("operator+"));
-    MATCH (READ_STR ("mi") && APPEND_STR ("operator-"));
-    MATCH (READ_STR ("ml") && APPEND_STR ("operator*"));
-    MATCH (READ_STR ("dv") && APPEND_STR ("operator/"));
-    MATCH (READ_STR ("rm") && APPEND_STR ("operator%"));
-    MATCH (READ_STR ("an") && APPEND_STR ("operator&"));
-    MATCH (READ_STR ("or") && APPEND_STR ("operator|"));
-    MATCH (READ_STR ("eo") && APPEND_STR ("operator^"));
-    MATCH (READ_STR ("aS") && APPEND_STR ("operator="));
-    MATCH (READ_STR ("pL") && APPEND_STR ("operator+="));
-    MATCH (READ_STR ("mI") && APPEND_STR ("operator-="));
-    MATCH (READ_STR ("mL") && APPEND_STR ("operator*="));
-    MATCH (READ_STR ("dV") && APPEND_STR ("operator/="));
-    MATCH (READ_STR ("rM") && APPEND_STR ("operator%="));
-    MATCH (READ_STR ("aN") && APPEND_STR ("operator&="));
-    MATCH (READ_STR ("oR") && APPEND_STR ("operator|="));
-    MATCH (READ_STR ("eO") && APPEND_STR ("operator^="));
-    MATCH (READ_STR ("ls") && APPEND_STR ("operator<<"));
-    MATCH (READ_STR ("rs") && APPEND_STR ("operator>>"));
-    MATCH (READ_STR ("lS") && APPEND_STR ("operator<<="));
-    MATCH (READ_STR ("rS") && APPEND_STR ("operator>>="));
-    MATCH (READ_STR ("eq") && APPEND_STR ("operator=="));
-    MATCH (READ_STR ("ne") && APPEND_STR ("operator!="));
-    MATCH (READ_STR ("lt") && APPEND_STR ("operator<"));
-    MATCH (READ_STR ("gt") && APPEND_STR ("operator>"));
-    MATCH (READ_STR ("le") && APPEND_STR ("operator<="));
-    MATCH (READ_STR ("ge") && APPEND_STR ("operator>="));
-    MATCH (READ_STR ("ss") && APPEND_STR ("operator<=>"));
-    MATCH (READ_STR ("nt") && APPEND_STR ("operator!"));
-    MATCH (READ_STR ("aa") && APPEND_STR ("operator&&"));
-    MATCH (READ_STR ("oo") && APPEND_STR ("operator||"));
-    MATCH (READ_STR ("pp") && APPEND_STR ("operator++"));
-    MATCH (READ_STR ("mm") && APPEND_STR ("operator--"));
-    MATCH (READ_STR ("cm") && APPEND_STR ("operator,"));
-    MATCH (READ_STR ("pm") && APPEND_STR ("operator->*"));
-    MATCH (READ_STR ("pt") && APPEND_STR ("operator->"));
-    MATCH (READ_STR ("cl") && APPEND_STR ("operator()"));
+    MATCH (READ_STR ("cv") && AST_APPEND_STR ("operator (") && RULE (type) && AST_APPEND_STR (")"));
+    MATCH (READ_STR ("nw") && AST_APPEND_STR ("operator new"));
+    MATCH (READ_STR ("na") && AST_APPEND_STR ("operator new[]"));
+    MATCH (READ_STR ("dl") && AST_APPEND_STR ("operator delete"));
+    MATCH (READ_STR ("da") && AST_APPEND_STR ("operator delete[]"));
+    MATCH (READ_STR ("aw") && AST_APPEND_STR ("operator co_await"));
+    MATCH (READ_STR ("ps") && AST_APPEND_STR ("operator+"));
+    MATCH (READ_STR ("ng") && AST_APPEND_STR ("operator-"));
+    MATCH (READ_STR ("ad") && AST_APPEND_STR ("operator&"));
+    MATCH (READ_STR ("de") && AST_APPEND_STR ("operator*"));
+    MATCH (READ_STR ("co") && AST_APPEND_STR ("operator~"));
+    MATCH (READ_STR ("pl") && AST_APPEND_STR ("operator+"));
+    MATCH (READ_STR ("mi") && AST_APPEND_STR ("operator-"));
+    MATCH (READ_STR ("ml") && AST_APPEND_STR ("operator*"));
+    MATCH (READ_STR ("dv") && AST_APPEND_STR ("operator/"));
+    MATCH (READ_STR ("rm") && AST_APPEND_STR ("operator%"));
+    MATCH (READ_STR ("an") && AST_APPEND_STR ("operator&"));
+    MATCH (READ_STR ("or") && AST_APPEND_STR ("operator|"));
+    MATCH (READ_STR ("eo") && AST_APPEND_STR ("operator^"));
+    MATCH (READ_STR ("aS") && AST_APPEND_STR ("operator="));
+    MATCH (READ_STR ("pL") && AST_APPEND_STR ("operator+="));
+    MATCH (READ_STR ("mI") && AST_APPEND_STR ("operator-="));
+    MATCH (READ_STR ("mL") && AST_APPEND_STR ("operator*="));
+    MATCH (READ_STR ("dV") && AST_APPEND_STR ("operator/="));
+    MATCH (READ_STR ("rM") && AST_APPEND_STR ("operator%="));
+    MATCH (READ_STR ("aN") && AST_APPEND_STR ("operator&="));
+    MATCH (READ_STR ("oR") && AST_APPEND_STR ("operator|="));
+    MATCH (READ_STR ("eO") && AST_APPEND_STR ("operator^="));
+    MATCH (READ_STR ("ls") && AST_APPEND_STR ("operator<<"));
+    MATCH (READ_STR ("rs") && AST_APPEND_STR ("operator>>"));
+    MATCH (READ_STR ("lS") && AST_APPEND_STR ("operator<<="));
+    MATCH (READ_STR ("rS") && AST_APPEND_STR ("operator>>="));
+    MATCH (READ_STR ("eq") && AST_APPEND_STR ("operator=="));
+    MATCH (READ_STR ("ne") && AST_APPEND_STR ("operator!="));
+    MATCH (READ_STR ("lt") && AST_APPEND_STR ("operator<"));
+    MATCH (READ_STR ("gt") && AST_APPEND_STR ("operator>"));
+    MATCH (READ_STR ("le") && AST_APPEND_STR ("operator<="));
+    MATCH (READ_STR ("ge") && AST_APPEND_STR ("operator>="));
+    MATCH (READ_STR ("ss") && AST_APPEND_STR ("operator<=>"));
+    MATCH (READ_STR ("nt") && AST_APPEND_STR ("operator!"));
+    MATCH (READ_STR ("aa") && AST_APPEND_STR ("operator&&"));
+    MATCH (READ_STR ("oo") && AST_APPEND_STR ("operator||"));
+    MATCH (READ_STR ("pp") && AST_APPEND_STR ("operator++"));
+    MATCH (READ_STR ("mm") && AST_APPEND_STR ("operator--"));
+    MATCH (READ_STR ("cm") && AST_APPEND_STR ("operator,"));
+    MATCH (READ_STR ("pm") && AST_APPEND_STR ("operator->*"));
+    MATCH (READ_STR ("pt") && AST_APPEND_STR ("operator->"));
+    MATCH (READ_STR ("cl") && AST_APPEND_STR ("operator()"));
 
     /* will generate " (type)" */
-    MATCH (READ_STR ("ix") && APPEND_STR ("operator[]"));
+    MATCH (READ_STR ("ix") && AST_APPEND_STR ("operator[]"));
 
     /* operator-name ::= li <source-name>          # operator ""*/
     MATCH (
         READ_STR ("li") && RULE (source_name)
     ); // TODO(brightprogrammer): How to generate for this operator?
 
-    MATCH (READ_STR ("qu") && APPEND_STR ("operator?"));
+    MATCH (READ_STR ("qu") && AST_APPEND_STR ("operator?"));
 });
 
 
@@ -1404,7 +1424,7 @@ DEFN_RULE (float, {
         r = true;
         ADV();
     }
-    return r ? dem : NULL;
+    return r;
 });
 
 
@@ -1414,38 +1434,32 @@ DEFN_RULE (destructor_name, {
 });
 
 
-DemString*
-    rule_name (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
+bool rule_name (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
     RULE_HEAD (name);
     DEFER_VAR (dem_template_args);
 
     MATCH_AND_CONTINUE (RULE (unscoped_name) && RULE_DEFER (dem_template_args, template_args));
-    if (dem_template_args->buf) {
-        APPEND_TYPE (dem);
-        dem_string_concat (dem, dem_template_args);
-        dem_string_deinit (dem_template_args);
-        APPEND_TYPE (dem);
-        TRACE_RETURN_SUCCESS (dem);
+    if (dem_template_args->dem.buf) {
+        AST_APPEND_TYPE;
+        AST_APPEND_NODE (dem_template_args);
+        AST_APPEND_TYPE;
+        TRACE_RETURN_SUCCESS;
     }
 
-    MATCH (RULE (substitution) && RULE (template_args) && APPEND_TYPE (dem));
+    MATCH (RULE (substitution) && RULE (template_args) && AST_APPEND_TYPE);
 
     MATCH (RULE (nested_name)
     ); // NOTE: Nested name adds type selectively automatically, so no need to do it here!
     MATCH (RULE (unscoped_name));
-    MATCH (RULE (local_name) && APPEND_TYPE (dem));
+    MATCH (RULE (local_name) && AST_APPEND_TYPE);
 
     RULE_FOOT (name);
 }
 
 
 
-// NOTE: Prefix parsing does not work well with multiple unqualified names
-// We can create a new rule named second_last_unqualified_name and perform a trick
-// to get the second last unqualified name always.
-DECL_RULE (nested_name_with_substitution_only);
-DemString* rule_nested_name (
-    DemString*  dem,
+bool rule_nested_name (
+    DemAstNode* dan,
     StrIter*    msi,
     Meta*       m,
     TraceGraph* graph,
@@ -1456,13 +1470,11 @@ DemString* rule_nested_name (
     DEFER_VAR (pfx);
     DEFER_VAR (uname);
     DEFER_VAR (dem_cv_qualifiers);
+    DEFER_VAR (targs);
 
     bool is_ctor = false;
     bool is_dtor = false;
 
-    // N [<CV-qualifiers>] [<ref-qualifier>] <prefix> <ctor-name> E
-    // N [<CV-qualifiers>] [<ref-qualifier>] <prefix> <dtor-name> E
-    // N [<CV-qualifiers>] [<ref-qualifier>] <prefix> <unqualified-name> E
     MATCH_AND_DO (
         READ ('N') && OPTIONAL (RULE_DEFER (dem_cv_qualifiers, cv_qualifiers)) &&
             OPTIONAL (RULE_DEFER (ref, ref_qualifier)) && RULE_DEFER (pfx, prefix) &&
@@ -1471,119 +1483,34 @@ DemString* rule_nested_name (
             READ ('E'),
         {
             if (is_ctor || is_dtor) {
-                dem_string_concat (dem, pfx);
+                AST_APPEND_NODE (pfx);
             } else {
-                dem_string_concat (dem, pfx);
-                APPEND_TYPE (dem);
-                dem_string_append_n (dem, "::", 2);
-                dem_string_concat (dem, uname);
+                AST_APPEND_NODE (pfx);
+                AST_APPEND_TYPE;
+                AST_APPEND_STR ("::");
+                AST_APPEND_NODE (uname);
             }
 
-            dem_string_deinit (pfx);
-            dem_string_deinit (uname);
-            dem_string_deinit (dem_cv_qualifiers);
+            DemAstNode_deinit (pfx);
+            DemAstNode_deinit (uname);
+            DemAstNode_deinit (dem_cv_qualifiers);
 
-            if (ref->len) {
-                APPEND_STR (" ");
+            if (ref->dem.len) {
+                AST_APPEND_STR (" ");
                 (void)APPEND_DEFER_VAR (ref);
-                APPEND_TYPE (dem);
+                AST_APPEND_TYPE;
             }
         }
     );
 
-    dem_string_deinit (pfx);
-    dem_string_deinit (ref);
-    dem_string_deinit (dem_cv_qualifiers);
-    dem_string_deinit (uname);
-    is_ctor = is_dtor = false;
-
-    DEFER_VAR (targs);
-
-    // N [<CV-qualifiers>] [<ref-qualifier>] <template-prefix> <ctor-name> <template-args> E
-    // N [<CV-qualifiers>] [<ref-qualifier>] <template-prefix> <dtor-name> <template-args> E
-    // N [<CV-qualifiers>] [<ref-qualifier>] <template-prefix> <unqualified-name> <template-args> E
-    MATCH_AND_DO (
-        READ ('N') && OPTIONAL (RULE_DEFER (dem_cv_qualifiers, cv_qualifiers)) &&
-            OPTIONAL (RULE_DEFER (ref, ref_qualifier)) && RULE_DEFER (pfx, template_prefix) &&
-            ((is_ctor = !!RULE (ctor_name)) || (is_dtor = !!RULE (dtor_name)) ||
-             RULE_DEFER (uname, unqualified_name)),
-        {
-            dem_string_concat (dem, pfx);
-            if (!is_ctor && !is_dtor) {
-                APPEND_TYPE (dem);
-                dem_string_append_n (dem, "::", 2);
-                dem_string_concat (dem, uname);
-                APPEND_TYPE (dem);
-            }
-
-            dem_string_deinit (pfx);
-            dem_string_deinit (uname);
-            dem_string_deinit (dem_cv_qualifiers);
-
-            if (RULE_DEFER (targs, template_args) && READ ('E')) {
-                dem_string_concat (dem, targs);
-                APPEND_TYPE (dem);
-                dem_string_deinit (targs);
-            } else {
-                dem_string_deinit (targs);
-                TRACE_RETURN_FAILURE();
-            }
-
-            if (ref->len) {
-                APPEND_STR (" ");
-                (void)APPEND_DEFER_VAR (ref);
-                APPEND_TYPE (dem);
-            }
-        }
-    );
-
-    dem_string_deinit (pfx);
-    dem_string_deinit (ref);
-    dem_string_deinit (dem_cv_qualifiers);
-    dem_string_deinit (targs);
-    dem_string_deinit (uname);
-
-    MATCH (RULE (nested_name_with_substitution_only));
+    DemAstNode_deinit (pfx);
+    DemAstNode_deinit (ref);
+    DemAstNode_deinit (dem_cv_qualifiers);
+    DemAstNode_deinit (targs);
+    DemAstNode_deinit (uname);
 
     RULE_FOOT (nested_name);
 }
-
-DEFN_RULE (nested_name_with_substitution_only, {
-    DEFER_VAR (ref);
-    DEFER_VAR (targs);
-    Name*  substituted_name = NULL;
-    size_t sid              = 0;
-
-    // N [<CV-qualifiers>] [<ref-qualifier>] S<seq-id>_ [I<template-args>E] E
-    MATCH_AND_DO (
-        READ ('N') && OPTIONAL (RULE (cv_qualifiers)) &&
-            OPTIONAL (RULE_DEFER (ref, ref_qualifier)) && READ ('S') &&
-            (sid = parse_sequence_id (msi, m)) && (m->detected_types.length > sid - 1) &&
-            (substituted_name = vec_ptr_at (&m->detected_types, sid - 1)) &&
-            (substituted_name->num_parts > 1) && OPTIONAL (RULE_DEFER (targs, template_args)) &&
-            READ ('E'),
-        {
-            dem_string_concat (dem, &substituted_name->name);
-
-            if (targs->len) {
-                (void)APPEND_DEFER_VAR (targs);
-                APPEND_TYPE (dem);
-            }
-
-            // Add ref-qualifier if present
-            if (ref->len) {
-                APPEND_STR (" ");
-                (void)APPEND_DEFER_VAR (ref);
-                APPEND_TYPE (dem);
-            }
-        }
-    );
-
-    dem_string_deinit (ref);
-    dem_string_deinit (targs);
-});
-
-
 
 DEFN_RULE (template_template_param, {
     MATCH (RULE (template_param));
@@ -1620,7 +1547,7 @@ DEFN_RULE (ctor_dtor_name, {
 DEFN_RULE (nv_digit, {
     if (IS_DIGIT (PEEK())) {
         ADV();
-        TRACE_RETURN_SUCCESS (dem);
+        TRACE_RETURN_SUCCESS;
     }
 
     TRACE_RETURN_FAILURE();
@@ -1653,8 +1580,8 @@ DEFN_RULE (template_args, {
     }
 
     MATCH_AND_DO (
-        OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && READ ('I') && APPEND_CHR ('<') &&
-            RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && APPEND_CHR ('>') && READ ('E'),
+        OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && READ ('I') && AST_APPEND_CHR ('<') &&
+            RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && AST_APPEND_CHR ('>') && READ ('E'),
         {
             // uppity up up
             m->t_level--;
@@ -1680,8 +1607,8 @@ bool first_of_rule_non_neg_number (const char* i) {
 
 DEFN_RULE (non_neg_number, {
     if (READ ('_')) {
-        dem_string_append_char (dem, '1');
-        TRACE_RETURN_SUCCESS (dem);
+        dem_string_append_char (&dan->dem, '1');
+        TRACE_RETURN_SUCCESS;
     }
 
     char* e   = NULL;
@@ -1689,10 +1616,10 @@ DEFN_RULE (non_neg_number, {
     if (!e) {
         TRACE_RETURN_FAILURE();
     }
-    dem_string_appendf (dem, "%u", num);
+    dem_string_appendf (&dan->dem, "%u", num);
     msi->cur = e;
 
-    TRACE_RETURN_SUCCESS (dem);
+    TRACE_RETURN_SUCCESS;
 });
 
 DEFN_RULE (unnamed_type_name, {
@@ -1706,15 +1633,17 @@ DEFN_RULE (unnamed_type_name, {
         }
 
         if (READ ('_')) {
-            TRACE_RETURN_SUCCESS (dem);
+            TRACE_RETURN_SUCCESS;
         }
     } else if (READ_STR ("Ul")) {
         DEFER_VAR (d);
         MATCH (
-            APPEND_STR ("{lambda(") && RULE_ATLEAST_ONCE_WITH_SEP (type, ", ") && READ ('E') &&
-            APPEND_CHR (')') &&
-            OPTIONAL (RULE_DEFER (d, non_neg_number) && APPEND_CHR ('#') && APPEND_DEFER_VAR (d)) &&
-            APPEND_CHR ('}') && APPEND_TYPE (dem)
+            AST_APPEND_STR ("{lambda(") && RULE_ATLEAST_ONCE_WITH_SEP (type, ", ") && READ ('E') &&
+            AST_APPEND_CHR (')') &&
+            OPTIONAL (
+                RULE_DEFER (d, non_neg_number) && AST_APPEND_CHR ('#') && APPEND_DEFER_VAR (d)
+            ) &&
+            AST_APPEND_CHR ('}') && AST_APPEND_TYPE
         );
     }
 
@@ -1727,17 +1656,16 @@ DEFN_RULE (pointer_to_member_type, { MATCH (READ ('M') && RULE (type) && RULE (t
 
 
 DEFN_RULE (ref_qualifier, {
-    MATCH (READ ('R') && APPEND_STR ("&"));
-    MATCH (READ ('O') && APPEND_STR ("&&"));
+    MATCH (READ ('R') && AST_APPEND_STR ("&"));
+    MATCH (READ ('O') && AST_APPEND_STR ("&&"));
 });
 
 
-bool is_template (DemString* n) {
-    return n->buf[n->len - 1] == '>' && n->buf[n->len - 2] != '>';
+bool is_template (DemAstNode* n) {
+    return n->tag == CP_DEM_TYPE_KIND_template_prefix;
 }
 
-DemString*
-    rule_encoding (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
+bool rule_encoding (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
     RULE_HEAD (encoding);
 
     bool is_const_fn = false;
@@ -1752,37 +1680,37 @@ DemString*
         ) &&
 
         // get function name (can be template or non-template)
-        RULE_DEFER (n, name) && dem_string_concat (dem, n) &&
+        RULE_DEFER (n, name) && AST_APPEND_NODE (n) &&
 
         // determine whether this is a template function alongside normal demangling
         // template functions specify a return type
         // If this is a template function then get return type first
         OPTIONAL (
-            is_template (n) && RULE_DEFER (rt, type) && dem_string_append_prefix_n (dem, " ", 1) &&
-            dem_string_append_prefix_n (dem, rt->buf, rt->len) && (dem_string_deinit (rt), 1)
+            is_template (n) && RULE_DEFER (rt, type) && AST_PREPEND_STR (" ") &&
+            AST_PREPEND_DEMSTR (&rt->dem) && (DemAstNode_deinit (rt), 1)
         ) &&
 
         // get function params
         // set it as optional, because there's a rule which just matches for name,
         // so to supress the noise of backtracking, we just make it optional here
         OPTIONAL (
-            RULE_DEFER (p, bare_function_type) && APPEND_CHR ('(') && APPEND_DEFER_VAR (p) &&
-            APPEND_CHR (')')
+            RULE_DEFER (p, bare_function_type) && AST_APPEND_CHR ('(') && APPEND_DEFER_VAR (p) &&
+            AST_APPEND_CHR (')')
         ) &&
 
         // append const if it was detected to be a constant function
-        OPTIONAL (is_const_fn && APPEND_STR (" const")) &&
+        OPTIONAL (is_const_fn && AST_APPEND_STR (" const")) &&
 
         // deinit name on a successful match for
         // - name
         // - name <params>
         // - <ret> name <params>
-        (dem_string_deinit (n), 1)
+        (DemAstNode_deinit (n), 1)
     );
 
-    dem_string_deinit (n);
-    dem_string_deinit (rt);
-    dem_string_deinit (p);
+    DemAstNode_deinit (n);
+    DemAstNode_deinit (rt);
+    DemAstNode_deinit (p);
 
     // MATCH (RULE (name));
 
@@ -1793,17 +1721,17 @@ DemString*
 
 DEFN_RULE (braced_expression, {
     MATCH (
-        READ_STR ("dX") && APPEND_STR (" [") && RULE (range_begin_expression) &&
-        APPEND_STR (" ... ") && RULE (range_end_expression) && APPEND_STR ("] = ") &&
+        READ_STR ("dX") && AST_APPEND_STR (" [") && RULE (range_begin_expression) &&
+        AST_APPEND_STR (" ... ") && RULE (range_end_expression) && AST_APPEND_STR ("] = ") &&
         RULE (braced_expression)
     );
     MATCH (
-        READ_STR ("di") && APPEND_STR (" .") && RULE (field_source_name) && APPEND_STR (" = ") &&
-        RULE (braced_expression)
+        READ_STR ("di") && AST_APPEND_STR (" .") && RULE (field_source_name) &&
+        AST_APPEND_STR (" = ") && RULE (braced_expression)
     );
     MATCH (
-        READ_STR ("dx") && APPEND_STR (" [") && RULE (index_expression) && APPEND_STR ("] = ") &&
-        RULE (braced_expression)
+        READ_STR ("dx") && AST_APPEND_STR (" [") && RULE (index_expression) &&
+        AST_APPEND_STR ("] = ") && RULE (braced_expression)
     );
     MATCH (RULE (expression));
 });
@@ -1828,37 +1756,37 @@ DEFN_RULE (expr_primary, {
         RULE (imag_part_float) && READ ('E')
     );
     MATCH (
-        READ ('L') && APPEND_STR ("(") && (PEEK() == 'P') && RULE (pointer_type) &&
-        APPEND_STR (")") && READ ('0') && APPEND_CHR ('0') && READ ('E')
+        READ ('L') && AST_APPEND_STR ("(") && (PEEK() == 'P') && RULE (pointer_type) &&
+        AST_APPEND_STR (")") && READ ('0') && AST_APPEND_CHR ('0') && READ ('E')
     );
     MATCH (
         READ ('L') && RULE_DEFER (t, type) && RULE_DEFER (n, value_number) &&
         OPTIONAL (
             // change to bool
-            !strcmp (t->buf, "bool") ?
-                (!strcmp (n->buf, "0") ? (dem_string_deinit (t),
-                                          dem_string_deinit (n),
-                                          dem_string_append_n (dem, "false", 5)) :
-                                         (dem_string_deinit (t),
-                                          dem_string_deinit (n),
-                                          dem_string_append_n (dem, "true", 4))) :
+            !strcmp (t->dem.buf, "bool") ?
+                (!strcmp (n->dem.buf, "0") ? (DemAstNode_deinit (t),
+                                              DemAstNode_deinit (n),
+                                              dem_string_append_n (&dan->dem, "false", 5)) :
+                                             (DemAstNode_deinit (t),
+                                              DemAstNode_deinit (n),
+                                              dem_string_append_n (&dan->dem, "true", 4))) :
                 // shorten unsigned int typecast
-                !strcmp (t->buf, "unsigned int") ?
-                (dem_string_deinit (t), APPEND_DEFER_VAR (n) && dem_string_append_char (dem, 'u')) :
+                !strcmp (t->dem.buf, "unsigned int") ?
+                (DemAstNode_deinit (t), APPEND_DEFER_VAR (n) && AST_APPEND_CHR ('u')) :
                 true
         ) &&
         READ ('E')
     );
 
-    dem_string_deinit (t);
-    dem_string_deinit (n);
+    DemAstNode_deinit (t);
+    DemAstNode_deinit (n);
 
     MATCH (READ ('L') && RULE (type) && RULE (value_float) && READ ('E'));
 
     MATCH (READ ('L') && RULE (string_type) && READ ('E'));
     MATCH (READ_STR ("L_Z") && RULE (encoding) && READ ('E'));
-    MATCH (READ_STR ("LDnE") && APPEND_STR ("decltype(nullptr)0"));
-    MATCH (READ_STR ("LDn0E") && APPEND_STR ("(decltype(nullptr))0"));
+    MATCH (READ_STR ("LDnE") && AST_APPEND_STR ("decltype(nullptr)0"));
+    MATCH (READ_STR ("LDn0E") && AST_APPEND_STR ("(decltype(nullptr))0"));
 });
 
 /**
@@ -1878,9 +1806,8 @@ DEFN_RULE (expr_primary, {
  * = [template-args], ["M"];
  *
  */
-
-DemString* rule_prefix_suffix (
-    DemString*  dem,
+bool rule_prefix_suffix (
+    DemAstNode* dan,
     StrIter*    msi,
     Meta*       m,
     TraceGraph* graph,
@@ -1891,8 +1818,8 @@ DemString* rule_prefix_suffix (
     RULE_FOOT (prefix_suffix);
 }
 
-DemString* rule_prefix_start (
-    DemString*  dem,
+bool rule_prefix_start (
+    DemAstNode* dan,
     StrIter*    msi,
     Meta*       m,
     TraceGraph* graph,
@@ -1908,8 +1835,8 @@ DemString* rule_prefix_start (
     RULE_FOOT (prefix_start);
 }
 
-DemString* rule_prefix_tail (
-    DemString*  dem,
+bool rule_prefix_tail (
+    DemAstNode* dan,
     StrIter*    msi,
     Meta*       m,
     TraceGraph* graph,
@@ -1925,8 +1852,7 @@ DemString* rule_prefix_tail (
     RULE_FOOT (prefix_tail);
 }
 
-DemString*
-    rule_prefix (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
+bool rule_prefix (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
     RULE_HEAD (prefix);
 
     MATCH (RULE_CALL (prefix_start) && OPTIONAL (RULE_CALL (prefix_tail)));
@@ -1940,8 +1866,8 @@ DemString*
  *                   ::= <template-param>                      # template template parameter
  *                   ::= <substitution>
 */
-DemString* rule_template_prefix (
-    DemString*  dem,
+bool rule_template_prefix (
+    DemAstNode* dan,
     StrIter*    msi,
     Meta*       m,
     TraceGraph* graph,
@@ -1965,7 +1891,7 @@ char* demangle_rule (const char* mangled, DemRule rule, CpDemOptions opts) {
     StrIter  si  = {.beg = mangled, .cur = mangled, .end = mangled + strlen (mangled) + 1};
     StrIter* msi = &si;
 
-    DemString* dem = dem_string_new();
+    DemAstNode* dan = calloc (sizeof (DemAstNode), 1);
 
     Meta  meta = {0};
     Meta* m    = &meta;
@@ -1984,52 +1910,35 @@ char* demangle_rule (const char* mangled, DemRule rule, CpDemOptions opts) {
     if (graph->enabled) {
         trace_graph_init (graph);
     }
+    char* result = NULL;
 
-    if (rule (dem, msi, m, graph, -1)) {
-        // Output graphviz trace if enabled
-        if (graph->enabled) {
-            // Mark the final successful path
-            trace_graph_mark_final_path (graph);
-
-            char graph_filename[256] = {0};
-            snprintf (graph_filename, sizeof (graph_filename), "demangle_trace_%s.dot", mangled);
-            // Replace problematic characters in filename
-            for (char* p = graph_filename; *p; p++) {
-                if (*p == ':' || *p == '<' || *p == '>' || *p == '|' || *p == '*' || *p == '?') {
-                    *p = '_';
-                }
-            }
-            trace_graph_output_dot (graph, graph_filename, m);
-        }
-
-        trace_graph_cleanup (graph);
-        names_deinit (&m->detected_types);
-
-        return dem_string_drain (dem);
-    } else {
-        // Output graphviz trace if enabled
-        if (graph->enabled) {
-            // Mark the final successful path
-            trace_graph_mark_final_path (graph);
-
-            char graph_filename[256];
-            snprintf (graph_filename, sizeof (graph_filename), "demangle_trace_%s.dot", mangled);
-            // Replace problematic characters in filename
-            for (char* p = graph_filename; *p; p++) {
-                if (*p == ':' || *p == '<' || *p == '>' || *p == '|' || *p == '*' || *p == '?') {
-                    *p = '_';
-                }
-            }
-            trace_graph_output_dot (graph, graph_filename, m);
-        }
-
-        trace_graph_cleanup (graph);
-        vec_deinit (&meta.detected_types);
-        dem_string_free (dem);
-        return NULL;
+    if (rule (dan, msi, m, graph, -1)) {
+        result = dan->dem.buf;
+        dan->dem.buf = NULL;
+        dem_string_deinit (&dan->dem);
     }
 
-    return NULL;
+    // Output graphviz trace if enabled
+    if (graph->enabled) {
+        // Mark the final successful path
+        trace_graph_mark_final_path (graph);
+
+        char graph_filename[256];
+        snprintf (graph_filename, sizeof (graph_filename), "demangle_trace_%s.dot", mangled);
+        // Replace problematic characters in filename
+        for (char* p = graph_filename; *p; p++) {
+            if (*p == ':' || *p == '<' || *p == '>' || *p == '|' || *p == '*' || *p == '?') {
+                *p = '_';
+            }
+        }
+        trace_graph_output_dot (graph, graph_filename, m);
+    }
+
+    trace_graph_cleanup (graph);
+    vec_deinit (&meta.detected_types);
+    DemAstNode_dtor (dan);
+
+    return result;
 }
 
 /**

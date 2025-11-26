@@ -8,21 +8,21 @@
 #include "../demangler_util.h"
 #include "types.h"
 
-DemString* match_one_or_more_rules (
+bool match_one_or_more_rules (
     DemRuleFirst first,
     DemRule      rule,
     const char*  sep,
-    DemString*   dem,
+    DemAstNode*  ast_node,
     StrIter*     msi,
     Meta*        m,
     TraceGraph*  graph,
     int          parent_node_id
 );
-DemString* match_zero_or_more_rules (
+bool match_zero_or_more_rules (
     DemRuleFirst first,
     DemRule      rule,
     const char*  sep,
-    DemString*   dem,
+    DemAstNode*  ast_node,
     StrIter*     msi,
     Meta*        m,
     TraceGraph*  graph,

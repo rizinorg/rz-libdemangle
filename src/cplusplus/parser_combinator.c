@@ -16,52 +16,23 @@
  * \return dem If at least one rule match exists for given rule.
  * \return NULL otherwise.
  */
-DemString* match_one_or_more_rules (
+bool match_one_or_more_rules (
     DemRuleFirst first,
     DemRule      rule,
     const char*  sep,
-    DemString*   dem,
+    DemAstNode*  ast_node,
     StrIter*     msi,
     Meta*        m,
     TraceGraph*  graph,
     int          parent_node_id
 ) {
-    if (!first || !rule || !dem || !msi || !m) {
-        return NULL;
+    if (!match_zero_or_more_rules (first, rule, sep, ast_node, msi, m, graph, parent_node_id)) {
+        return false;
     }
-
-    // NOTE(brightprogrammer): Just here to check the current iteration in debugger
-    // No special use
-    ut32 iter_for_dbg = 0;
-
-    SAVE_POS(0);
-    /* match atleast once, and then */
-    if (first (CUR()) && rule (dem, msi, m, graph, parent_node_id) && ++iter_for_dbg) {
-        /* match as many as possible */
-        while (first (CUR())) {
-            DemString tmp = {0};
-            SAVE_POS(1);
-            if (rule (&tmp, msi, m, graph, parent_node_id) && ++iter_for_dbg) {
-                /* add separator before appending demangled string */
-                if (sep) {
-                    dem_string_append_prefix_n (&tmp, sep, strlen (sep));
-                }
-
-                /* append the demangled string and deinit tmp */
-                dem_string_concat (dem, &tmp);
-                dem_string_deinit (&tmp);
-            } else {
-                RESTORE_POS(1);
-                dem_string_deinit (&tmp);
-                break;
-            }
-        }
-
-        return dem;
+    if (!ast_node->dem.buf) {
+        return false;
     }
-
-    RESTORE_POS(0);
-    return NULL;
+    return true;
 }
 
 /**
@@ -77,43 +48,43 @@ DemString* match_one_or_more_rules (
  * \return dem If given arguments are non-null.
  * \return NULL otherwise.
  */
-DemString* match_zero_or_more_rules (
+bool match_zero_or_more_rules (
     DemRuleFirst first,
     DemRule      rule,
     const char*  sep,
-    DemString*   dem,
+    DemAstNode*  ast_node,
     StrIter*     msi,
     Meta*        m,
     TraceGraph*  graph,
     int          parent_node_id
 ) {
-    if (!rule || !dem || !msi || !m) {
-        return NULL;
+    if (!rule || !ast_node || !msi || !m) {
+        return false;
     }
 
     while (true) {
-        DemString tmp = {0};
-        SAVE_POS(0);
+        DemAstNode tmp = {0};
+        SAVE_POS (0);
         if (first (CUR()) && rule (&tmp, msi, m, graph, parent_node_id)) {
+            dem_string_concat (&ast_node->dem, &tmp.dem);
             if (sep) {
-                dem_string_append (&tmp, sep);
+                dem_string_append (&ast_node->dem, sep);
             }
-            dem_string_concat (dem, &tmp);
-            dem_string_deinit (&tmp);
+            vec_append (&ast_node->children, &tmp);
         } else {
-            RESTORE_POS(0);
-            dem_string_deinit (&tmp);
+            RESTORE_POS (0);
+            DemAstNode_deinit (&tmp);
             break;
         }
     }
 
     /* remove last sep */
-    if (sep && dem->buf) {
+    if (sep && ast_node->dem.buf) {
         for (int l = 0; l < strlen (sep); l++) {
-            dem->buf[--dem->len] = 0;
+            ast_node->dem.buf[--ast_node->dem.len] = 0;
         }
     }
 
     /* we always match, even if nothing matches */
-    return dem;
+    return true;
 }
