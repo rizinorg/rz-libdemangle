@@ -32,74 +32,6 @@ typedef Vec (Name) Names;
 
 void names_deinit (Names* xs);
 
-enum CpDemTypeKind_t;
-typedef Vec (enum CpDemTypeKind_t) CpDemTypeKinds;
-
-typedef struct Meta {
-    Names detected_types;
-    Names template_params;
-    bool  is_ctor;
-    bool  is_dtor;
-    bool  is_const;
-    bool  trace; // Debug tracing flag (now just for compatibility)
-
-    // detected templates are reset everytime a new template argument list starts at the same level
-    // instead of taking care of that, we just rebase from where we start our substitution
-    // this way we just keep adding templates and incrementing this idx_start on every reset
-    // so a T_ (index = 0) can actually refer to index = 5
-    int template_idx_start;
-    int last_reset_idx;
-
-    // template level, detects the depth of RULE(template_args) expansion
-    // if we expand above level 1 (starts at level 1), then we stop appending parameters to template
-    // parameter list
-    int  t_level;
-    bool template_reset;
-
-    bool           is_ctor_or_dtor_at_l0;
-    CpDemTypeKinds parent_type_kinds;
-} Meta;
-
-struct TraceGraph;
-
-/**
- * Type of rules.
- *
- * \p dem Demangled string.
- * \p msi Mangled string iter.
- * \p m   Meta context.
- * \p graph Trace graph for debugging.
- * \p parent_node_id Parent node ID in the trace graph (-1 for root).
- *
- * \return dem on success.
- * \return NULL otherwise.
- */
-typedef DemString* (*DemRule) (
-    DemString*         dem,
-    StrIter*           msi,
-    Meta*              m,
-    struct TraceGraph* graph,
-    int                parent_node_id
-);
-
-typedef bool (*DemRuleFirst) (const char* input);
-
-// Meta helper functions
-bool meta_tmp_init (Meta* og, Meta* tmp);
-void meta_tmp_apply (Meta* og, Meta* tmp);
-void meta_tmp_fini (Meta* og, Meta* tmp);
-
-// Helper functions
-size_t     parse_sequence_id (StrIter* msi, Meta* m);
-bool       append_type (Meta* m, DemString* t, bool force_append);
-bool       append_tparam (Meta* m, DemString* t);
-DemString* meta_substitute_type (Meta* m, ut64 id, DemString* dem);
-DemString* meta_substitute_tparam (Meta* m, ut64 id, DemString* dem);
-
-ut32 count_name_parts (Name* n);
-bool is_builtin_type (const char* t);
-
-
 typedef enum CpDemTypeKind_t {
     CP_DEM_TYPE_KIND_mangled_name,
     CP_DEM_TYPE_KIND_encoding,
@@ -197,5 +129,91 @@ typedef enum CpDemTypeKind_t {
     CP_DEM_TYPE_KIND_non_neg_number,
 } CpDemTypeKind;
 
+typedef Vec (CpDemTypeKind) CpDemTypeKinds;
+
+struct DemAstNode_t;
+typedef Vec (struct DemAstNode_t) DemAstNodeVec;
+
+typedef struct {
+    const char* buf;
+    size_t      len;
+} DemStringView;
+
+typedef struct DemAstNode_t {
+    DemAstNodeVec children;
+    DemString     dem;
+    DemStringView val;
+    CpDemTypeKind tag;
+} DemAstNode;
+
+DemAstNode* DemAstNode_ctor (DemString* dem, DemStringView* val, CpDemTypeKind tag);
+void        DemAstNode_dtor (DemAstNode* dan);
+bool        DemAstNode_init (DemAstNode* dan);
+void        DemAstNode_deinit (DemAstNode* dan);
+bool        DemAstNode_append (DemAstNode* xs, DemAstNode* x);
+
+typedef struct Meta {
+    Names detected_types;
+    Names template_params;
+    bool  is_ctor;
+    bool  is_dtor;
+    bool  is_const;
+    bool  trace; // Debug tracing flag (now just for compatibility)
+
+    // detected templates are reset everytime a new template argument list starts at the same level
+    // instead of taking care of that, we just rebase from where we start our substitution
+    // this way we just keep adding templates and incrementing this idx_start on every reset
+    // so a T_ (index = 0) can actually refer to index = 5
+    int template_idx_start;
+    int last_reset_idx;
+
+    // template level, detects the depth of RULE(template_args) expansion
+    // if we expand above level 1 (starts at level 1), then we stop appending parameters to template
+    // parameter list
+    int  t_level;
+    bool template_reset;
+
+    bool           is_ctor_or_dtor_at_l0;
+    CpDemTypeKinds parent_type_kinds;
+} Meta;
+
+struct TraceGraph;
+
+/**
+ * Type of rules.
+ *
+ * \p dem Demangled string.
+ * \p msi Mangled string iter.
+ * \p m   Meta context.
+ * \p graph Trace graph for debugging.
+ * \p parent_node_id Parent node ID in the trace graph (-1 for root).
+ *
+ * \return dem on success.
+ * \return NULL otherwise.
+ */
+typedef bool (*DemRule) (
+    DemAstNode*        ast_node,
+    StrIter*           msi,
+    Meta*              m,
+    struct TraceGraph* graph,
+    int                parent_node_id
+);
+
+typedef bool (*DemRuleFirst) (const char* input);
+
+// Meta helper functions
+bool meta_tmp_init (Meta* og, Meta* tmp);
+void meta_tmp_apply (Meta* og, Meta* tmp);
+void meta_tmp_fini (Meta* og, Meta* tmp);
+
+// Helper functions
+size_t parse_sequence_id (StrIter* msi, Meta* m);
+bool   append_type (Meta* m, DemString* t, bool force_append);
+bool   append_tparam (Meta* m, DemString* t);
+bool   meta_substitute_type (Meta* m, ut64 id, DemString* dem);
+bool   meta_substitute_tparam (Meta* m, ut64 id, DemString* dem);
+
+ut32 count_name_parts (Name* n);
+bool is_builtin_type (const char* t);
 
 #endif // V3_IMPL_TYPES_H
