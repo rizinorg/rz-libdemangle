@@ -73,6 +73,12 @@
  */
 #define READ(ch)          (IN_RANGE (CUR()) ? ((*msi->cur == ch) ? (ADV(), 1) : 0) : 0)
 #define READ_OPTIONAL(ch) (READ (ch) || true)
+#define SKIP_CH(ch)                                                                                \
+    do {                                                                                           \
+        if (IN_RANGE (CUR()) && *msi->cur == ch) {                                                 \
+            ADV();                                                                                 \
+        }                                                                                          \
+    } while (0)
 
 /**
  * \b Read multiple characters in a null-terminated character array,
@@ -179,13 +185,13 @@
  */
 #define RULE_DEFER(var, x)                                                                         \
     (first_of_rule_##x (CUR()) ? rule_##x ((var), msi, m, graph, _my_node_id) : false)
+#define RULE_CALL_DEFER(var, x) rule_##x ((var), msi, m, graph, _my_node_id)
 #define DEFER_VAR(var)                                                                             \
     DemAstNode  tmp_defer_var_##var = {};                                                          \
     DemAstNode* var                 = &tmp_defer_var_##var;                                        \
     DemAstNode_init (var);
 
-#define APPEND_DEFER_VAR(var)                                                                      \
-    (DemAstNode_append (dan, (var)), DemAstNode_deinit (var), 1)
+#define APPEND_DEFER_VAR(var) (DemAstNode_append (dan, (var)), DemAstNode_deinit (var), 1)
 
 /**
  * Always evaluate to true, even if rule does not match.
@@ -250,6 +256,8 @@
             parent_node_id                                                                         \
         );                                                                                         \
     }                                                                                              \
+    dan->tag                    = CP_DEM_TYPE_KIND_##X;                                            \
+    dan->val.buf                = msi->cur;                                                        \
     const char* _rule_start_pos = msi->cur;                                                        \
     ((void)_rule_start_pos);
 
@@ -257,6 +265,7 @@
     if (graph && graph->enabled && _my_node_id >= 0) {                                             \
         trace_graph_set_result (graph, _my_node_id, NULL, 2); /* failed */                         \
     }                                                                                              \
+    dan->val.len = msi->cur - dan->val.buf;                                                        \
     return false;
 
 /**
@@ -273,26 +282,9 @@
  */
 #define DEFN_RULE(x, rule_body)                                                                    \
     DECL_RULE (x) {                                                                                \
-        if (!dan || !msi || !m) {                                                                  \
-            return false;                                                                          \
-        }                                                                                          \
-        int _my_node_id = -1;                                                                      \
-        if (graph && graph->enabled) {                                                             \
-            _my_node_id = trace_graph_add_node (                                                   \
-                graph,                                                                             \
-                #x,                                                                                \
-                (size_t)(msi->cur - msi->beg),                                                     \
-                msi->cur,                                                                          \
-                parent_node_id                                                                     \
-            );                                                                                     \
-        }                                                                                          \
-        const char* _rule_start_pos = msi->cur;                                                    \
-        ((void)_rule_start_pos);                                                                   \
+        RULE_HEAD (x);                                                                             \
         {rule_body};                                                                               \
-        if (graph && graph->enabled && _my_node_id >= 0) {                                         \
-            trace_graph_set_result (graph, _my_node_id, NULL, 2); /* failed */                     \
-        }                                                                                          \
-        return false;                                                                              \
+        RULE_FOOT (x);                                                                             \
     }
 
 
@@ -322,6 +314,7 @@
             }                                                                                      \
             trace_graph_set_result (graph, _my_node_id, _res_str, 1);                              \
         }                                                                                          \
+        dan->val.len = msi->cur - dan->val.buf;                                                    \
         return true;                                                                               \
     } while (0)
 
@@ -395,7 +388,6 @@
         if ((rules)) {                                                                             \
             /* caller execute code */                                                              \
             {body};                                                                                \
-                                                                                                   \
             if (graph && graph->enabled && _my_node_id >= 0) {                                     \
                 trace_graph_set_result (                                                           \
                     graph,                                                                         \
@@ -404,9 +396,9 @@
                     1                                                                              \
                 );                                                                                 \
             }                                                                                      \
-                                                                                                   \
             meta_tmp_apply (_og_meta, &_tmp_meta);                                                 \
-            m = _og_meta;                                                                          \
+            m            = _og_meta;                                                               \
+            dan->val.len = msi->cur - dan->val.buf;                                                \
             return true;                                                                           \
         } else {                                                                                   \
             if (graph && graph->enabled && _my_node_id >= 0) {                                     \
@@ -438,13 +430,14 @@
         }                                                                                          \
     } while (0)
 
-#define AST_APPEND_STR(s)     dem_string_append (&dan->dem, s)
-#define AST_APPEND_DEMSTR(D)  dem_string_append_prefix_n (&dan->dem, (D)->buf, (D)->len)
-#define AST_PREPEND_STR(s)    dem_string_append_prefix_n (&dan->dem, s, strlen (s))
-#define AST_PREPEND_DEMSTR(D) dem_string_append_prefix_n (&dan->dem, (D)->buf, (D)->len)
-#define AST_APPEND_CHR(c)     dem_string_append_char (&dan->dem, c)
-#define AST_APPEND_TYPE       append_type (m, &dan->dem, false)
-#define AST_APPEND_NODE(X)    DemAstNode_append (dan, (X))
+#define AST_APPEND_STR(s)      dem_string_append (&dan->dem, s)
+#define AST_APPEND_STR_N(s, n) dem_string_append_n (&dan->dem, s, n);
+#define AST_APPEND_DEMSTR(D)   dem_string_append_prefix_n (&dan->dem, (D)->buf, (D)->len)
+#define AST_PREPEND_STR(s)     dem_string_append_prefix_n (&dan->dem, s, strlen (s))
+#define AST_PREPEND_DEMSTR(D)  dem_string_append_prefix_n (&dan->dem, (D)->buf, (D)->len)
+#define AST_APPEND_CHR(c)      dem_string_append_char (&dan->dem, c)
+#define AST_APPEND_TYPE        append_type (m, &dan->dem, false)
+#define AST_APPEND_NODE(X)     DemAstNode_append (dan, (X))
 
 #define APPEND_TYPE(tname)       append_type (m, (tname), false)
 #define FORCE_APPEND_TYPE(tname) append_type (m, (tname), true)

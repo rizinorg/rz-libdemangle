@@ -7,6 +7,7 @@
 int test_rule_prefix() {
 	CpDemOptions options = {};
 	mu_assert_streq_free(demangle_rule("DC1a2abE", rule_prefix, options), "aab", "");
+	mu_assert_streq_free(demangle_rule("DC1a2bcEDC1d2efE", rule_prefix, options), "abcdef", "");
 	mu_end;
 }
 

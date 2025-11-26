@@ -66,11 +66,10 @@ bool match_zero_or_more_rules (
         DemAstNode tmp = {0};
         SAVE_POS (0);
         if (first (CUR()) && rule (&tmp, msi, m, graph, parent_node_id)) {
-            dem_string_concat (&ast_node->dem, &tmp.dem);
+            DemAstNode_append (ast_node, &tmp);
             if (sep) {
                 dem_string_append (&ast_node->dem, sep);
             }
-            vec_append (&ast_node->children, &tmp);
         } else {
             RESTORE_POS (0);
             DemAstNode_deinit (&tmp);
