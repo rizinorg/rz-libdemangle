@@ -5,7 +5,7 @@
 #ifndef RZ_LIBDEMANGLE_TRACE_GRAPH_H
 #define RZ_LIBDEMANGLE_TRACE_GRAPH_H
 
-#include "demangler_util.h"
+#include "../demangler_util.h"
 #include "vec.h"
 
 // Graphviz trace node for visual debugging

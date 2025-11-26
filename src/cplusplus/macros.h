@@ -230,7 +230,9 @@
 #define DECL_RULE(x)                                                                               \
     DemString*                                                                                     \
         rule_##x (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id)
-
+#define DECL_RULE_STATIC(x)                                                                        \
+    static inline DemString*                                                                       \
+        rule_##x (DemString* dem, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id)
 
 #define trace_graph_set_result(G, N, R, S)                                                         \
     trace_graph_set_result_impl (G, N, (size_t)(msi->cur - msi->beg), R, S)
@@ -306,7 +308,7 @@
  * \p Y Name of rule to create alias for.
  */
 #define DECL_RULE_ALIAS(X, Y)                                                                      \
-    DECL_RULE (X) {                                                                                \
+    DECL_RULE_STATIC (X) {                                                                                \
         return rule_##Y (dem, msi, m, graph, parent_node_id);                                      \
     }
 

@@ -5,7 +5,7 @@
 #ifndef RZ_LIBDEMANGLE_PARSER_COMBINATOR_H
 #define RZ_LIBDEMANGLE_PARSER_COMBINATOR_H
 
-#include "demangler_util.h"
+#include "../demangler_util.h"
 #include "types.h"
 
 DemString* match_one_or_more_rules (
