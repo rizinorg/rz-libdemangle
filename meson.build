@@ -75,7 +75,8 @@ tests = [
 ]
 
 unit_tests = [
-    'cxx_rules'
+    'cxx_rules',
+    'vec_impl'
 ]
 
 if get_option('use_swift_demangler')
