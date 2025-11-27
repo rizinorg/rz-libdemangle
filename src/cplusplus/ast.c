@@ -59,6 +59,10 @@ DemAstNode* DemAstNode_append (DemAstNode* xs, DemAstNode* x) {
     dem_string_concat (&xs->dem, &x->dem);
     xs->val.len += x->val.len;
     xs->val.buf  = xs->val.buf == NULL ? x->val.buf : xs->val.buf;
+    
+    // Transfer ownership to the vector
+    memset(x, 0, sizeof(DemAstNode));
+    
     return node;
 }
 

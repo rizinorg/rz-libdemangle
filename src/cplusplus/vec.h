@@ -345,11 +345,13 @@
                 return NULL;                                                                       \
             }                                                                                      \
         }                                                                                          \
-        memcpy (                                                                                   \
-            self->data + self->length,                                                             \
-            xs->data,                                                                              \
-            xs->length * sizeof(T)                                                                 \
-        );                                                                                         \
+        if (xs->length > 0) {                                                                      \
+            memcpy (                                                                               \
+                self->data + self->length,                                                         \
+                xs->data,                                                                          \
+                xs->length * sizeof(T)                                                             \
+            );                                                                                     \
+        }                                                                                          \
         self->length = new_len;                                                                    \
         return self;                                                                               \
     }                                                                                              \

@@ -393,6 +393,8 @@
         Meta* _og_meta  = m;                                                                       \
         m               = &_tmp_meta;                                                              \
         meta_tmp_init (_og_meta, &_tmp_meta);                                                      \
+        size_t _og_dem_len = dan->dem.len;                                                         \
+        size_t _og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0;            \
         if ((rules)) {                                                                             \
             /* caller execute code */                                                              \
             {body};                                                                                \
@@ -412,6 +414,16 @@
             if (graph && graph->enabled && _my_node_id >= 0) {                                     \
                 trace_graph_set_result (graph, _my_node_id, NULL, 3); /* backtracked */            \
             }                                                                                      \
+            dan->dem.len = _og_dem_len;                                                            \
+            if (dan->dem.buf) dan->dem.buf[_og_dem_len] = 0;                                       \
+            if (dan->children) {                                                                   \
+                while (VecDemAstNode_len(dan->children) > _og_children_len) {                      \
+                    DemAstNode* node = VecDemAstNode_pop(dan->children);                           \
+                    if (node) {                                                                    \
+                        DemAstNode_deinit (node);                                                  \
+                    }                                                                              \
+                }                                                                                  \
+            }                                                                                      \
             MATCH_FAILED (0);                                                                      \
         }                                                                                          \
     } while (0)
@@ -426,6 +438,8 @@
         Meta* _og_meta  = m;                                                                       \
         m               = &_tmp_meta;                                                              \
         meta_tmp_init (_og_meta, &_tmp_meta);                                                      \
+        size_t _og_dem_len = dan->dem.len;                                                         \
+        size_t _og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0;            \
         if ((rules)) {                                                                             \
             meta_tmp_apply (_og_meta, &_tmp_meta);                                                 \
             /* if rule matched, then concat tmp with original and switch back names */             \
@@ -433,6 +447,16 @@
         } else {                                                                                   \
             if (graph && graph->enabled && _my_node_id >= 0) {                                     \
                 trace_graph_set_result (graph, _my_node_id, NULL, 3); /* backtracked */            \
+            }                                                                                      \
+            dan->dem.len = _og_dem_len;                                                            \
+            if (dan->dem.buf) dan->dem.buf[_og_dem_len] = 0;                                       \
+            if (dan->children) {                                                                   \
+                while (VecDemAstNode_len(dan->children) > _og_children_len) {                      \
+                    DemAstNode* node = VecDemAstNode_pop(dan->children);                           \
+                    if (node) {                                                                    \
+                        DemAstNode_deinit (node);                                                  \
+                    }                                                                              \
+                }                                                                                  \
             }                                                                                      \
             MATCH_FAILED (0);                                                                      \
         }                                                                                          \
@@ -454,6 +478,10 @@
 #define FORCE_APPEND_TYPE(tname) append_type (m, (tname), true)
 
 #define APPEND_TPARAM(tname) OPTIONAL (m->t_level < 2 && append_tparam (m, (tname)))
+
+#define AST_MERGE(X)                                                                               \
+    (dem_string_concat (&dan->dem, &(X)->dem), dan->val.len += (X)->val.len,                       \
+     dan->val.buf = dan->val.buf ? dan->val.buf : (X)->val.buf, (X))
 
 
 #endif // V3_IMPL_MACROS_H

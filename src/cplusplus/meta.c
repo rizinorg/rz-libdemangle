@@ -31,8 +31,18 @@ bool meta_tmp_init (Meta* og, Meta* tmp) {
         return false;
     }
     meta_copy (tmp, og);
-    VecF (Name, concat) (&tmp->detected_types, &og->detected_types);
-    VecF (Name, concat) (&tmp->template_params, &og->template_params);
+    vec_foreach_ptr (&og->detected_types, n, {
+        Name new_name = {0};
+        dem_string_init_clone (&new_name.name, &n->name);
+        new_name.num_parts = n->num_parts;
+        VecF (Name, append) (&tmp->detected_types, &new_name);
+    });
+    vec_foreach_ptr (&og->template_params, n, {
+        Name new_name = {0};
+        dem_string_init_clone (&new_name.name, &n->name);
+        new_name.num_parts = n->num_parts;
+        VecF (Name, append) (&tmp->template_params, &new_name);
+    });
     return true;
 }
 
@@ -55,16 +65,15 @@ void meta_tmp_fini (Meta* og, Meta* tmp) {
         return;
     }
 
-    // Only clean up newly added items in tmp (beyond og's original length)
-    // Items 0..og->length-1 are shared and should not be cleaned up
-    for (size_t i = og->detected_types.length; i < tmp->detected_types.length; i++) {
+    // Clean up all items in tmp as they are deep copies
+    for (size_t i = 0; i < tmp->detected_types.length; i++) {
         Name* dt = VecF (Name, at) (&tmp->detected_types, i);
         dem_string_deinit (&dt->name);
         dt->num_parts = 0;
     }
     free (VecF (Name, data) (&tmp->detected_types));
 
-    for (size_t i = og->template_params.length; i < tmp->template_params.length; i++) {
+    for (size_t i = 0; i < tmp->template_params.length; i++) {
         Name* tp = VecF (Name, at) (&tmp->template_params, i);
         dem_string_deinit (&tp->name);
         tp->num_parts = 0;
