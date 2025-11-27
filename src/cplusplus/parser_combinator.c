@@ -62,6 +62,7 @@ bool match_zero_or_more_rules (
         return false;
     }
 
+    size_t count = 0;
     while (true) {
         DemAstNode tmp = {0};
         SAVE_POS (0);
@@ -70,6 +71,7 @@ bool match_zero_or_more_rules (
             if (sep) {
                 dem_string_append (&ast_node->dem, sep);
             }
+            count++;
         } else {
             RESTORE_POS (0);
             DemAstNode_deinit (&tmp);
@@ -78,7 +80,7 @@ bool match_zero_or_more_rules (
     }
 
     /* remove last sep */
-    if (sep && ast_node->dem.buf) {
+    if (sep && ast_node->dem.buf && count > 0) {
         for (int l = 0; l < strlen (sep); l++) {
             ast_node->dem.buf[--ast_node->dem.len] = 0;
         }

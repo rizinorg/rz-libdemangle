@@ -130,7 +130,7 @@ endif
 if get_option('enable_tests') and not meson.is_subproject()
     test_dependencies = []
     if get_option('b_sanitize').contains('address')
-        unit_test_dependencies += cc.find_library('asan')
+        test_dependencies += cc.find_library('asan')
     endif
     if get_option('b_sanitize').contains('undefined')
         test_dependencies += cc.find_library('ubsan')

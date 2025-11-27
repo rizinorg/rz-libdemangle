@@ -3,6 +3,8 @@
 // SPDX-FileCopyrightText: 2025 Billow <billow.fun@gmail.com>
 // SPDX-License-Identifier: LGPL-3.0-only
 
+#include <time.h>
+
 #include "types.h"
 
 
@@ -10,21 +12,9 @@ bool meta_tmp_init (Meta* og, Meta* tmp) {
     if (!og || !tmp) {
         return false;
     }
-
-    vec_concat (&tmp->detected_types, &og->detected_types);
-    vec_concat (&tmp->template_params, &og->template_params);
-    vec_concat (&tmp->parent_type_kinds, &og->parent_type_kinds);
-    ;
-    tmp->is_ctor  = og->is_ctor;
-    tmp->is_dtor  = og->is_dtor;
-    tmp->is_const = og->is_const;
-
-    tmp->template_idx_start    = og->template_idx_start;
-    tmp->last_reset_idx        = og->last_reset_idx;
-    tmp->t_level               = og->t_level;
-    tmp->template_reset        = og->template_reset;
-    tmp->is_ctor_or_dtor_at_l0 = og->is_ctor_or_dtor_at_l0;
-
+    memcpy (tmp, og, sizeof (Meta));
+    VecF (Name, concat) (&tmp->detected_types, &og->detected_types);
+    VecF (Name, concat) (&tmp->template_params, &og->template_params);
     return false;
 }
 
@@ -32,21 +22,10 @@ void meta_tmp_apply (Meta* og, Meta* tmp) {
     if (!og || !tmp) {
         return;
     }
-
+    memcpy (og, tmp, sizeof (Meta));
     // transfer of ownership from tmp to og
-    vec_move (&og->detected_types, &tmp->detected_types);
-    vec_move (&og->template_params, &tmp->template_params);
-    vec_move (&og->parent_type_kinds, &tmp->parent_type_kinds);
-
-    og->is_ctor  = tmp->is_ctor;
-    og->is_dtor  = tmp->is_dtor;
-    og->is_const = tmp->is_const;
-
-    og->template_idx_start    = tmp->template_idx_start;
-    og->last_reset_idx        = tmp->last_reset_idx;
-    og->t_level               = tmp->t_level;
-    og->template_reset        = tmp->template_reset;
-    og->is_ctor_or_dtor_at_l0 = tmp->is_ctor_or_dtor_at_l0;
+    VecF (Name, move) (&og->detected_types, &tmp->detected_types);
+    VecF (Name, move) (&og->template_params, &tmp->template_params);
 }
 
 void meta_tmp_fini (Meta* og, Meta* tmp) {
@@ -57,19 +36,18 @@ void meta_tmp_fini (Meta* og, Meta* tmp) {
     // Only clean up newly added items in tmp (beyond og's original length)
     // Items 0..og->length-1 are shared and should not be cleaned up
     for (size_t i = og->detected_types.length; i < tmp->detected_types.length; i++) {
-        Name* dt = vec_ptr_at (&tmp->detected_types, i);
+        Name* dt = VecF (Name, at) (&tmp->detected_types, i);
         dem_string_deinit (&dt->name);
         dt->num_parts = 0;
     }
-    UNUSED (vec_deinit (&tmp->detected_types));
+    free (VecF (Name, data)(&tmp->detected_types));
 
     for (size_t i = og->template_params.length; i < tmp->template_params.length; i++) {
-        Name* tp = vec_ptr_at (&tmp->template_params, i);
+        Name* tp = VecF (Name, at) (&tmp->template_params, i);
         dem_string_deinit (&tp->name);
         tp->num_parts = 0;
     }
-    UNUSED (vec_deinit (&tmp->template_params));
-    UNUSED (vec_deinit (&tmp->parent_type_kinds));
+    free (VecF (Name, data)(&tmp->template_params));
 
     memset (tmp, 0, sizeof (*tmp));
 }
@@ -140,7 +118,8 @@ bool is_builtin_type (const char* t) {
         if (!builtin_type_prefix_stings[i]) {
             break;
         }
-        if (strncmp (t, builtin_type_prefix_stings[i], strlen (builtin_type_prefix_stings[i])) == 0) {
+        if (strncmp (t, builtin_type_prefix_stings[i], strlen (builtin_type_prefix_stings[i])) ==
+            0) {
             return true;
         }
     }
@@ -154,6 +133,10 @@ bool is_builtin_type (const char* t) {
  */
 bool append_type (Meta* m, DemString* t, bool force_append) {
     if (!m || !t || !t->len) {
+        return false;
+    }
+
+    if (!t->buf) {
         return false;
     }
 
@@ -181,10 +164,7 @@ bool append_type (Meta* m, DemString* t, bool force_append) {
         });
     }
 
-    UNUSED (vec_reserve (&m->detected_types, m->detected_types.length + 1));
-    m->detected_types.length += 1;
-
-    Name* new_name = vec_end (&m->detected_types);
+    Name* new_name = VecF (Name, append) (&m->detected_types, NULL);
     dem_string_init_clone (&new_name->name, t);
     if (!count_name_parts (new_name)) {
         m->detected_types.length--;
@@ -273,7 +253,8 @@ ut32 count_name_parts (Name* n) {
     return n->num_parts;
 }
 
-void names_deinit (Names* xs) {
-    vec_foreach_ptr (xs, x, { dem_string_deinit (&x->name); });
-    vec_deinit (xs);
+void name_deinit (Name* x) {
+    if (!x)
+        return;
+    dem_string_deinit (&x->name);
 }

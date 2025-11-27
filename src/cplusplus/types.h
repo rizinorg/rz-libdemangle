@@ -23,15 +23,6 @@ typedef struct StrIter {
     const char* cur; /**< \b Current read position. */
 } StrIter;
 
-typedef struct Name {
-    DemString name;
-    ut32      num_parts; // if part count greater than 1 then a nested name
-} Name;
-
-typedef Vec (Name) Names;
-
-void names_deinit (Names* xs);
-
 typedef enum CpDemTypeKind_t {
     CP_DEM_TYPE_KIND_unknown,
     CP_DEM_TYPE_KIND_mangled_name,
@@ -128,16 +119,15 @@ typedef enum CpDemTypeKind_t {
 
 typedef Vec (CpDemTypeKind) CpDemTypeKinds;
 
-struct DemAstNode_t;
-typedef Vec (struct DemAstNode_t) DemAstNodeVec;
-
 typedef struct {
     const char* buf;
     size_t      len;
 } DemStringView;
 
+struct Vec_t (DemAstNode);
+
 typedef struct DemAstNode_t {
-    DemAstNodeVec children;
+    struct Vec_t (DemAstNode) * children;
     DemString     dem;
     DemStringView val;
     CpDemTypeKind tag;
@@ -149,9 +139,20 @@ bool        DemAstNode_init (DemAstNode* dan);
 void        DemAstNode_deinit (DemAstNode* dan);
 bool        DemAstNode_append (DemAstNode* xs, DemAstNode* x);
 
+VecIMPL (DemAstNode, DemAstNode_deinit);
+
+typedef struct Name {
+    DemString name;
+    ut32      num_parts; // if part count greater than 1 then a nested name
+} Name;
+
+void name_deinit (Name* x);
+
+VecIMPL (Name, name_deinit);
+
 typedef struct Meta {
-    Names detected_types;
-    Names template_params;
+    VecT(Name) detected_types;
+    VecT(Name) template_params;
     bool  is_ctor;
     bool  is_dtor;
     bool  is_const;
@@ -171,7 +172,6 @@ typedef struct Meta {
     bool template_reset;
 
     bool           is_ctor_or_dtor_at_l0;
-    CpDemTypeKinds parent_type_kinds;
 } Meta;
 
 struct TraceGraph;

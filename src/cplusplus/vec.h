@@ -111,11 +111,12 @@
          NULL)
 
 #define vec_move(dst, src)                                                                         \
-    ((dst && src && (src)->data) ? (vec_reserve (dst, (src)->length) &&                                           \
-                     memcpy ((dst)->data, (src)->data, vec_mem_size (src)) &&                      \
-                     ((dst)->length = (src)->length) &&                                            \
-                     memset ((src)->data, 0, vec_mem_size (src)) && vec_deinit (src)) :            \
-                    false)
+    ((dst && src && (src)->data) ?                                                                 \
+         (vec_reserve (dst, (src)->length) &&                                                      \
+          memcpy ((dst)->data, (src)->data, vec_mem_size (src)) &&                                 \
+          ((dst)->length = (src)->length) && memset ((src)->data, 0, vec_mem_size (src)) &&        \
+          vec_deinit (src)) :                                                                      \
+         false)
 
 /**
  * Append an item into vector.
@@ -213,5 +214,119 @@
             }                                                                                      \
         }                                                                                          \
     } while (0)
+
+#define Vec_t(T)   Vec##T##_t
+#define VecT(T)    Vec##T
+#define VecF(T, N) Vec##T##_##N
+#define VecIMPL(T, F)                                                                              \
+    typedef struct Vec_t (T) {                                                                     \
+        T*   data;                                                                                 \
+        ut64 length;                                                                               \
+        ut64 capacity;                                                                             \
+    } Vec##T;                                                                                      \
+    static inline T* VecF (T, data) (Vec##T * self) {                                              \
+        return self ? self->data : NULL;                                                           \
+    }                                                                                              \
+    static inline size_t VecF (T, len) (Vec##T * self) {                                           \
+        return self ? self->length : 0;                                                            \
+    }                                                                                              \
+    static inline size_t VecF (T, cap) (Vec##T * self) {                                           \
+        return self ? self->capacity : 0;                                                          \
+    }                                                                                              \
+    static inline bool VecF (T, empty) (Vec##T * self) {                                           \
+        return self && VecF (T, data) (self) && VecF (T, len) (self) > 0;                          \
+    }                                                                                              \
+    static inline size_t VecF (T, mem_size) (Vec##T * self) {                                      \
+        return VecF (T, len) (self) * sizeof (T);                                                  \
+    }                                                                                              \
+    static inline void VecF (T, init) (Vec##T * self) {                                            \
+        if (self) {                                                                                \
+            memset (self, 0, VecF (T, mem_size) (self));                                           \
+        }                                                                                          \
+    }                                                                                              \
+    static inline void VecF (T, deinit) (Vec##T * self) {                                          \
+        if (self && self->data) {                                                                  \
+            vec_foreach_ptr (self, x, { F (x); });                                                 \
+            free (self->data);                                                                     \
+        }                                                                                          \
+    }                                                                                              \
+    static inline VecT (T) * VecF (T, ctor)() {                                                    \
+        return calloc (1, sizeof (VecT (T)));                                                      \
+    }                                                                                              \
+    static inline void VecF (T, dtor) (Vec##T * self) {                                            \
+        if (self && self->data) {                                                                  \
+            VecF (T, deinit) (self);                                                               \
+            free (self);                                                                           \
+        }                                                                                          \
+    }                                                                                              \
+    static inline T* VecF (T, at) (Vec##T * self, size_t idx) {                                    \
+        if (self && self->data && idx < self->length) {                                            \
+            return &self->data[idx];                                                               \
+        }                                                                                          \
+        return NULL;                                                                               \
+    }                                                                                              \
+    static inline T* VecF (T, head) (Vec##T * self) {                                              \
+        return VecF (T, at) (self, 0);                                                             \
+    }                                                                                              \
+    static inline T* VecF (T, tail) (Vec##T * self) {                                              \
+        return VecF (T, at) (self, VecF (T, len) (self) - 1);                                      \
+    }                                                                                              \
+    static inline bool VecF (T, reserve) (Vec##T * self, size_t new_cap) {                         \
+        if (!(self && self->capacity < new_cap)) {                                                 \
+            return false;                                                                          \
+        }                                                                                          \
+        self->data     = realloc (self->data, sizeof (T) * new_cap);                               \
+        self->capacity = new_cap;                                                                  \
+        return true;                                                                               \
+    }                                                                                              \
+    static inline T* VecF (T, append) (Vec##T * self, T * x) {                                     \
+        if (!(self)) {                                                                             \
+            return NULL;                                                                           \
+        }                                                                                          \
+        if (VecF (T, len) (self) + 1 >= VecF (T, cap) (self)) {                                    \
+            VecF (T, reserve) (self, (VecF (T, len) (self) + 1) * 2);                              \
+        }                                                                                          \
+        T* result = NULL;                                                                          \
+        if (x) {                                                                                   \
+            result = memcpy (VecF (T, data) (self) + VecF (T, len) (self), x, sizeof (T));         \
+        } else {                                                                                   \
+            result = VecF (T, data) (self) + VecF (T, len) (self);                                                        \
+            memset (result, 0, sizeof (T));                                                        \
+        }                                                                                          \
+        self->length++;                                                                            \
+        return result;                                                                             \
+    }                                                                                              \
+    static inline T* VecF (T, pop) (Vec##T * self) {                                               \
+        if (!VecF (T, empty)) {                                                                    \
+            return NULL;                                                                           \
+        }                                                                                          \
+        T* x = VecF (T, tail) (self);                                                              \
+        self->length--;                                                                            \
+        return x;                                                                                  \
+    }                                                                                              \
+    static inline Vec##T* VecF (T, concat) (Vec##T * self, Vec##T * xs) {                          \
+        if (!(VecF (T, empty) (self) && VecF (T, empty) (xs))) {                                   \
+            return NULL;                                                                           \
+        }                                                                                          \
+        if (VecF (T, len) (self) + VecF (T, len) (xs) >= VecF (T, cap) (self)) {                   \
+            VecF (T, reserve) (self, VecF (T, len) (self) * VecF (T, len) (xs));                   \
+        }                                                                                          \
+        memcpy (                                                                                   \
+            VecF (T, data) (self) + VecF (T, len) (self),                                          \
+            VecF (T, data) (xs),                                                                   \
+            VecF (T, mem_size) (xs)                                                                \
+        );                                                                                         \
+        return self;                                                                               \
+    }                                                                                              \
+    static inline Vec##T* VecF (T, move) (Vec##T * self, Vec##T * xs) {                            \
+        if (!(VecF (T, empty) (self) && VecF (T, empty) (xs))) {                                   \
+            return NULL;                                                                           \
+        }                                                                                          \
+        VecF (T, reserve) (self, VecF (T, len) (self));                                            \
+        memcpy (VecF (T, data) (self), VecF (T, data) (xs), VecF (T, mem_size) (xs));              \
+        self->length = VecF (T, len) (xs);                                                         \
+        memset (VecF (T, data) (xs), 0, VecF (T, mem_size) (xs));                                  \
+        return self;                                                                               \
+    }
 
 #endif // CPDEM_VEC_H

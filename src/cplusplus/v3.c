@@ -982,7 +982,11 @@ size_t parse_sequence_id (StrIter* msi, Meta* m) {
 
 
 DEFN_RULE (class_enum_type, {
-    MATCH (OPTIONAL (READ_STR ("Ts") || READ_STR ("Tu") || READ_STR ("Te")) && RULE (name));
+    DEFER_VAR (x0);
+    MATCH (
+        OPTIONAL (READ_STR ("Ts") || READ_STR ("Tu") || READ_STR ("Te")) && RULE_DEFER (x0, name) &&
+        AST_APPEND_NODE (x0)
+    );
 });
 
 
@@ -1021,17 +1025,21 @@ bool rule_qualifiers (
     DEFER_VAR (x1);
 
     bool has_qualifiers = match_zero_or_more_rules (
-        first_of_rule_extended_qualifier,
-        rule_extended_qualifier,
-        " ",
-        x0,
-        msi,
-        m,
-        graph,
-        _my_node_id
-    );
-    MATCH_AND_DO (RULE_DEFER (x1, cv_qualifiers), {
-        has_qualifiers&& AST_APPEND_NODE (x1) && AST_APPEND_CHR (' ') && AST_APPEND_NODE (x0);
+                              first_of_rule_extended_qualifier,
+                              rule_extended_qualifier,
+                              " ",
+                              x0,
+                              msi,
+                              m,
+                              graph,
+                              _my_node_id
+                          ) &&
+                          VecDemAstNode_len (x0->children) > 0;
+
+    MATCH_AND_DO (RULE_DEFER (x1, cv_qualifiers) && AST_APPEND_NODE (x1), {
+        if (has_qualifiers) {
+            AST_APPEND_CHR (' ') && AST_APPEND_NODE (x0);
+        }
     });
 
     RULE_FOOT (qualifiers);
@@ -1274,22 +1282,31 @@ DEFN_RULE (destructor_name, {
 
 bool rule_name (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
     RULE_HEAD (name);
-    DEFER_VAR (dem_template_args);
+    DEFER_VAR (x0);
+    DEFER_VAR (x1);
 
-    MATCH_AND_CONTINUE (RULE (unscoped_name) && RULE_DEFER (dem_template_args, template_args));
-    if (dem_template_args->dem.buf) {
-        AST_APPEND_TYPE;
-        AST_APPEND_NODE (dem_template_args);
-        AST_APPEND_TYPE;
-        TRACE_RETURN_SUCCESS;
-    }
+    MATCH_AND_DO (RULE_DEFER (x0, unscoped_name) && RULE_DEFER (x1, template_args), {
+        if (x0->dem.buf && x1->dem.buf) {
+            AST_APPEND_NODE (x0);
+            AST_APPEND_TYPE;
+            AST_APPEND_NODE (x1);
+            AST_APPEND_TYPE;
+            TRACE_RETURN_SUCCESS;
+        } else {
+            TRACE_RETURN_FAILURE();
+        }
+    });
 
-    MATCH (RULE (substitution) && RULE (template_args) && AST_APPEND_TYPE);
+    DemAstNode_deinit (x0);
+    DemAstNode_deinit (x1);
+    MATCH (
+        RULE_DEFER (x0, substitution) && RULE_DEFER (x1, template_args) && AST_APPEND_NODE (x0) &&
+        AST_APPEND_NODE (x1) && AST_APPEND_TYPE
+    );
 
-    MATCH (RULE (nested_name)
-    ); // NOTE: Nested name adds type selectively automatically, so no need to do it here!
-    MATCH (RULE (unscoped_name));
-    MATCH (RULE (local_name) && AST_APPEND_TYPE);
+    MATCH1 (nested_name);
+    MATCH1 (unscoped_name);
+    MATCH1 (local_name);
 
     RULE_FOOT (name);
 }
@@ -1325,6 +1342,8 @@ bool rule_nested_name (
         }
     );
 
+    DemAstNode_deinit (x2);
+    DemAstNode_deinit (x3);
     MATCH_AND_DO (
         RULE_CALL_DEFER (x2, template_prefix) && RULE_CALL_DEFER (x3, template_args) &&
             AST_APPEND_NODE (x2) && AST_APPEND_NODE (x3),
@@ -1648,12 +1667,13 @@ bool rule_prefix_suffix (
     DEFER_VAR (x0);
     DEFER_VAR (x1);
 
-    MATCH (RULE (template_args));
+    MATCH1 (template_args);
     MATCH (READ ('M') && (dan->tag = CP_DEM_TYPE_KIND_closure_prefix, true));
     MATCH (
         RULE_DEFER (x0, template_args) && AST_APPEND_NODE (x0) && READ ('M') &&
         (dan->tag = CP_DEM_TYPE_KIND_closure_prefix, true)
     );
+
     RULE_FOOT (prefix_suffix);
 }
 
@@ -1668,7 +1688,7 @@ bool rule_prefix_start (
     DEFER_VAR (x0);
     DEFER_VAR (x1);
 
-    MATCH (RULE_DEFER (x0, decltype) && AST_APPEND_NODE (x0));
+    MATCH1 (decltype);
     MATCH_AND_DO (
         (RULE_DEFER (x0, unqualified_name) || RULE_DEFER (x0, template_param) ||
          RULE_DEFER (x0, substitution)),
@@ -1695,15 +1715,16 @@ bool rule_prefix_tail (
     RULE_HEAD (prefix_tail);
     DEFER_VAR (x0);
     DEFER_VAR (x1);
-    DEFER_VAR (x2);
+    bool result = false;
 
     MATCH_AND_CONTINUE (
         RULE_DEFER (x0, unqualified_name) && PEEK() != 'E' && AST_APPEND_NODE (x0) &&
-        OPTIONAL (RULE_CALL_DEFER (x1, prefix_suffix) && AST_APPEND_NODE (x1))
+        OPTIONAL (RULE_CALL_DEFER (x1, prefix_suffix) && AST_APPEND_NODE (x1)) &&
+        (result = true, true)
     );
-    MATCH (OPTIONAL (
-        dan->dem.buf && RULE_CALL_DEFER (x2, prefix_tail) && AST_APPEND_NODE (x2) && PEEK() != 'E'
-    ));
+    if (result) {
+        MATCH (OPTIONAL (RULE_CALL (prefix_tail)));
+    }
 
     RULE_FOOT (prefix_tail);
 }

@@ -191,7 +191,11 @@
     DemAstNode* var                 = &tmp_defer_var_##var;                                        \
     DemAstNode_init (var);
 
-#define MATCH1(R) MATCH (RULE_DEFER (x0, R) && AST_APPEND_NODE (x0))
+#define MATCH1(R)                                                                                  \
+    do {                                                                                           \
+        MATCH (RULE_DEFER (x0, R) && AST_APPEND_NODE (x0));                                        \
+        DemAstNode_deinit (x0);                                                                    \
+    } while (0)
 
 #define APPEND_DEFER_VAR(var) (DemAstNode_append (dan, (var)), DemAstNode_deinit (var), 1)
 
@@ -336,6 +340,7 @@
 #define MATCH_FAILED(I)                                                                            \
     do { /*match fail*/                                                                            \
         meta_tmp_fini (_og_meta, &_tmp_meta);                                                      \
+        m = _og_meta;                                                                              \
         /* if rule matched, then concat tmp with original and switch back names */                 \
         RESTORE_POS (I);                                                                           \
         break;                                                                                     \
@@ -444,6 +449,7 @@
 #define AST_PREPEND_DEMSTR(D)  dem_string_append_prefix_n (&dan->dem, (D)->buf, (D)->len)
 #define AST_APPEND_CHR(c)      dem_string_append_char (&dan->dem, c)
 #define AST_APPEND_TYPE        append_type (m, &dan->dem, false)
+#define AST_APPEND_TYPE1(T)    append_type (m, (T), false)
 #define AST_APPEND_NODE(X)     DemAstNode_append (dan, (X))
 
 #define APPEND_TYPE(tname)       append_type (m, (tname), false)
