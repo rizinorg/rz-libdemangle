@@ -197,7 +197,7 @@
         DemAstNode_deinit (x0);                                                                    \
     } while (0)
 
-#define APPEND_DEFER_VAR(var) (DemAstNode_append (dan, (var)), DemAstNode_deinit (var), 1)
+#define APPEND_DEFER_VAR(var) DemAstNode_append (dan, (var))
 
 /**
  * Always evaluate to true, even if rule does not match.

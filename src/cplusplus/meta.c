@@ -7,29 +7,47 @@
 
 #include "types.h"
 
+static inline void meta_copy (Meta* dst, Meta* src) {
+    if (dst == src) {
+        return;
+    }
+    dst->is_const              = src->is_const;
+    dst->is_ctor               = src->is_ctor;
+    dst->is_dtor               = src->is_dtor;
+    dst->is_const              = src->is_const;
+    dst->trace                 = src->trace;
+    dst->template_idx_start    = src->template_idx_start;
+    dst->last_reset_idx        = src->last_reset_idx;
+    dst->t_level               = src->t_level;
+    dst->template_reset        = src->template_reset;
+    dst->is_ctor_or_dtor_at_l0 = src->is_ctor_or_dtor_at_l0;
+    VecF (Name, deinit) (&dst->detected_types);
+    VecF (Name, deinit) (&dst->template_params);
+}
+
 
 bool meta_tmp_init (Meta* og, Meta* tmp) {
-    if (!og || !tmp) {
+    if (!(og && tmp && og != tmp)) {
         return false;
     }
-    memcpy (tmp, og, sizeof (Meta));
+    meta_copy (tmp, og);
     VecF (Name, concat) (&tmp->detected_types, &og->detected_types);
     VecF (Name, concat) (&tmp->template_params, &og->template_params);
-    return false;
+    return true;
 }
 
 void meta_tmp_apply (Meta* og, Meta* tmp) {
-    if (!og || !tmp) {
+    if (!(og && tmp && og != tmp)) {
         return;
     }
     if (!(VecF (Name, empty) (&tmp->detected_types) || VecF (Name, empty) (&tmp->template_params)
         )) {
         return;
     }
-    memcpy (og, tmp, sizeof (Meta));
-    // transfer of ownership from tmp to og
-    memset (&tmp->detected_types, 0, sizeof (tmp->detected_types));
-    memset (&tmp->template_params, 0, sizeof (tmp->template_params));
+    meta_copy (og, tmp);
+    VecF (Name, move) (&og->detected_types, &tmp->detected_types);
+    VecF (Name, move) (&og->template_params, &tmp->template_params);
+    memset (tmp, 0, sizeof (Meta));
 }
 
 void meta_tmp_fini (Meta* og, Meta* tmp) {

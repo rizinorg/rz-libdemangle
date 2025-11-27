@@ -290,7 +290,7 @@
         if (x) {                                                                                   \
             result = memcpy (VecF (T, data) (self) + VecF (T, len) (self), x, sizeof (T));         \
         } else {                                                                                   \
-            result = VecF (T, data) (self) + VecF (T, len) (self);                                                        \
+            result = VecF (T, data) (self) + VecF (T, len) (self);                                 \
             memset (result, 0, sizeof (T));                                                        \
         }                                                                                          \
         self->length++;                                                                            \
@@ -319,13 +319,11 @@
         return self;                                                                               \
     }                                                                                              \
     static inline Vec##T* VecF (T, move) (Vec##T * self, Vec##T * xs) {                            \
-        if (!(VecF (T, empty) (self) && VecF (T, empty) (xs))) {                                   \
+        if (!(VecF (T, empty) (self) && VecF (T, empty) (xs) && self != xs)) {                     \
             return NULL;                                                                           \
         }                                                                                          \
-        VecF (T, reserve) (self, VecF (T, len) (xs));                                            \
-        memmove (VecF (T, data) (self), VecF (T, data) (xs), VecF (T, mem_size) (xs));              \
-        self->length = VecF (T, len) (xs);                                                         \
-        memset (VecF (T, data) (xs), 0, VecF (T, mem_size) (xs));                                  \
+        memmove (self, xs, sizeof (VecT (T)));                                                     \
+        memset (xs, 0, sizeof (VecT (T)));                                                         \
         return self;                                                                               \
     }
 
