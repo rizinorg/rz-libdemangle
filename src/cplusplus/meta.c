@@ -7,7 +7,7 @@
 
 #include "types.h"
 
-static inline void meta_copy (Meta* dst, Meta* src) {
+static inline void meta_copy_scalars (Meta* dst, Meta* src) {
     if (dst == src) {
         return;
     }
@@ -21,16 +21,24 @@ static inline void meta_copy (Meta* dst, Meta* src) {
     dst->t_level               = src->t_level;
     dst->template_reset        = src->template_reset;
     dst->is_ctor_or_dtor_at_l0 = src->is_ctor_or_dtor_at_l0;
-    VecF (Name, deinit) (&dst->detected_types);
-    VecF (Name, deinit) (&dst->template_params);
 }
 
+void meta_deinit (Meta* m) {
+    vec_foreach_ptr (&m->detected_types, n, {
+        dem_string_deinit (&n->name);
+    });
+    VecF (Name, deinit) (&m->detected_types);
+    vec_foreach_ptr (&m->template_params, n, {
+        dem_string_deinit (&n->name);
+    });
+    VecF (Name, deinit) (&m->template_params);
+}
 
 bool meta_tmp_init (Meta* og, Meta* tmp) {
     if (!(og && tmp && og != tmp)) {
         return false;
     }
-    meta_copy (tmp, og);
+    meta_copy_scalars (tmp, og);
     vec_foreach_ptr (&og->detected_types, n, {
         Name new_name = {0};
         dem_string_init_clone (&new_name.name, &n->name);
@@ -50,11 +58,8 @@ void meta_tmp_apply (Meta* og, Meta* tmp) {
     if (!(og && tmp && og != tmp)) {
         return;
     }
-    if (!(VecF (Name, empty) (&tmp->detected_types) || VecF (Name, empty) (&tmp->template_params)
-        )) {
-        return;
-    }
-    meta_copy (og, tmp);
+    meta_copy_scalars (og, tmp);
+    meta_deinit (og);
     VecF (Name, move) (&og->detected_types, &tmp->detected_types);
     VecF (Name, move) (&og->template_params, &tmp->template_params);
     memset (tmp, 0, sizeof (Meta));

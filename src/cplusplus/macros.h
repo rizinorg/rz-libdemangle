@@ -337,6 +337,7 @@
     do { /*match fail*/                                                                            \
         meta_tmp_fini (_og_meta, &_tmp_meta);                                                      \
         m = _og_meta;                                                                              \
+        DemAstNode_deinit(dan);                                                                    \
         /* if rule matched, then concat tmp with original and switch back names */                 \
         RESTORE_POS (I);                                                                           \
         break;                                                                                     \

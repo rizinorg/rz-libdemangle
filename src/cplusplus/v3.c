@@ -823,34 +823,34 @@ DEFN_RULE (function_param, {
     MATCH (READ_STR ("fPT"));
 });
 
-
-DEFN_RULE (builtin_type, {
-    MATCH (READ_STR ("DF") && AST_APPEND_STR ("_Float") && RULE (number) && READ ('_'));
+bool rule_builtin_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
+    RULE_HEAD (builtin_type);
+    MATCH (READ_STR ("DF") && AST_APPEND_STR ("_Float") && RULE_DEFER (AST(0),number) && READ ('_') && AST_MERGE (AST(0)));
     MATCH (
-        READ_STR ("DF") && AST_APPEND_STR ("_Float") && RULE (number) && READ ('x') &&
+        READ_STR ("DF") && AST_APPEND_STR ("_Float") && RULE_DEFER (AST(0),number) && READ ('x') && AST_MERGE (AST(0)) &&
         AST_APPEND_STR ("x")
     );
     MATCH (
-        READ_STR ("DF") && AST_APPEND_STR ("std::bfloat") && RULE (number) && READ ('b') &&
+        READ_STR ("DF") && AST_APPEND_STR ("std::bfloat") && RULE_DEFER (AST(0),number) && READ ('b') && AST_MERGE (AST(0)) &&
         AST_APPEND_STR ("_t")
     );
     MATCH (
-        READ_STR ("DB") && AST_APPEND_STR ("signed _BitInt(") && RULE (number) &&
+        READ_STR ("DB") && AST_APPEND_STR ("signed _BitInt(") && RULE_DEFER (AST(0),number) && AST_MERGE (AST(0)) &&
         AST_APPEND_STR (")") && READ ('_')
     );
     MATCH (
-        READ_STR ("DB") && AST_APPEND_STR ("signed _BitInt(") && RULE (expression) &&
+        READ_STR ("DB") && AST_APPEND_STR ("signed _BitInt(") && RULE_DEFER (AST(0),expression) && AST_MERGE (AST(0)) &&
         AST_APPEND_STR (")") && READ ('_')
     );
     MATCH (
-        READ_STR ("DU") && AST_APPEND_STR ("unsigned _BitInt(") && RULE (number) &&
+        READ_STR ("DU") && AST_APPEND_STR ("unsigned _BitInt(") && RULE_DEFER (AST(0),number) && AST_MERGE (AST(0)) &&
         AST_APPEND_STR (")") && READ ('_')
     );
     MATCH (
-        READ_STR ("DU") && AST_APPEND_STR ("unsigned _BitInt(") && RULE (expression) &&
+        READ_STR ("DU") && AST_APPEND_STR ("unsigned _BitInt(") && RULE_DEFER (AST(0),expression) && AST_MERGE (AST(0)) &&
         AST_APPEND_STR (")") && READ ('_')
     );
-    MATCH (READ ('u') && RULE (source_name) && OPTIONAL (RULE (template_args)));
+    MATCH (READ ('u') && RULE_DEFER (AST(0),source_name) && AST_MERGE (AST(0)) && OPTIONAL (RULE_DEFER (AST(1),template_args) && AST_MERGE (AST(1))));
     MATCH (READ_STR ("DS") && READ_STR ("DA") && AST_APPEND_STR ("_Sat _Accum"));
     MATCH (READ_STR ("DS") && READ_STR ("DR") && AST_APPEND_STR ("_Sat _Fract"));
     MATCH (READ ('v') && AST_APPEND_STR ("void"));
@@ -886,7 +886,9 @@ DEFN_RULE (builtin_type, {
     MATCH (READ_STR ("Dn") && AST_APPEND_STR ("std::nullptr_t"));
     MATCH (READ_STR ("DA") && AST_APPEND_STR ("_Accum"));
     MATCH (READ_STR ("DR") && AST_APPEND_STR ("_Fract"));
-});
+
+    RULE_FOOT (builtin_type);
+}
 
 
 DEFN_RULE (extended_qualifier, {
@@ -1091,10 +1093,10 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
 
 
 DEFN_RULE (template_arg, {
-    MATCH (READ ('X') && RULE (expression) && READ ('E'));
+    MATCH (READ ('X') && RULE_DEFER (AST(0),expression)&&AST_MERGE (AST(0)) && READ ('E'));
     MATCH (READ ('J') && RULE_MANY (template_arg) && READ ('E'));
-    MATCH (RULE (type));
-    MATCH (RULE (expr_primary));
+    MATCH (RULE_DEFER (AST(0),type) && AST_MERGE (AST(0)));
+    MATCH (RULE_DEFER (AST(0),expr_primary) && AST_MERGE (AST(0)));
 });
 
 
@@ -1268,7 +1270,7 @@ bool rule_name (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
             AST_APPEND_TYPE;
             TRACE_RETURN_SUCCESS;
         } else {
-            TRACE_RETURN_FAILURE();
+            MATCH_FAILED(0);
         }
     });
 

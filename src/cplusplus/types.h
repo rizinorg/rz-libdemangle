@@ -203,6 +203,7 @@ typedef bool (*DemRuleFirst) (const char* input);
 bool meta_tmp_init (Meta* og, Meta* tmp);
 void meta_tmp_apply (Meta* og, Meta* tmp);
 void meta_tmp_fini (Meta* og, Meta* tmp);
+void meta_deinit (Meta* m);
 
 // Helper functions
 size_t parse_sequence_id (StrIter* msi, Meta* m);
