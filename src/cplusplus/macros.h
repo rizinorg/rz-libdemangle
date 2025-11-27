@@ -191,11 +191,7 @@
     DemAstNode* var                 = &tmp_defer_var_##var;                                        \
     DemAstNode_init (var);
 
-#define MATCH1(R)                                                                                  \
-    do {                                                                                           \
-        MATCH (RULE_DEFER (x0, R) && AST_APPEND_NODE (x0));                                        \
-        DemAstNode_deinit (x0);                                                                    \
-    } while (0)
+#define MATCH1(R) MATCH (RULE_DEFER (AST (0), R));
 
 #define APPEND_DEFER_VAR(var) DemAstNode_append (dan, (var))
 
@@ -451,6 +447,8 @@
 #define AST_APPEND_TYPE        append_type (m, &dan->dem, false)
 #define AST_APPEND_TYPE1(T)    append_type (m, (T), false)
 #define AST_APPEND_NODE(X)     DemAstNode_append (dan, (X))
+#define AST(I)                 DemAstNode_children_at (dan, (I))
+
 
 #define APPEND_TYPE(tname)       append_type (m, (tname), false)
 #define FORCE_APPEND_TYPE(tname) append_type (m, (tname), true)

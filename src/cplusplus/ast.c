@@ -38,8 +38,8 @@ void DemAstNode_deinit (DemAstNode* dan) {
     memset (dan, 0, sizeof (DemAstNode));
 }
 
-bool DemAstNode_append (DemAstNode* xs, DemAstNode* x) {
-    if (!(xs && x)) {
+DemAstNode* DemAstNode_append (DemAstNode* xs, DemAstNode* x) {
+    if (!xs) {
         return false;
     }
     if (!xs->children) {
@@ -48,9 +48,32 @@ bool DemAstNode_append (DemAstNode* xs, DemAstNode* x) {
             return false;
         }
     }
-    VecDemAstNode_append (xs->children, x);
+    DemAstNode* node = VecDemAstNode_append (xs->children, x);
+    if (!x) {
+        return node;
+    }
+    if (!node) {
+        return NULL;
+    }
+
     dem_string_concat (&xs->dem, &x->dem);
     xs->val.len += x->val.len;
     xs->val.buf  = xs->val.buf == NULL ? x->val.buf : xs->val.buf;
-    return true;
+    return node;
+}
+
+DemAstNode* DemAstNode_children_at (DemAstNode* xs, size_t idx) {
+    if (!xs) {
+        return NULL;
+    }
+    if (!xs->children) {
+        xs->children = VecF (DemAstNode, ctor)();
+        if (!xs->children) {
+            return false;
+        }
+    }
+    if (VecF (DemAstNode, len) (xs->children) <= idx) {
+        VecF (DemAstNode, resize) (xs->children, idx + 1);
+    }
+    return VecF (DemAstNode, at) (xs->children, idx);
 }

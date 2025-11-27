@@ -272,11 +272,24 @@
         return VecF (T, at) (self, VecF (T, len) (self) - 1);                                      \
     }                                                                                              \
     static inline bool VecF (T, reserve) (Vec##T * self, size_t new_cap) {                         \
-        if (!(self && self->capacity < new_cap)) {                                                 \
+        if (!(self && self->capacity >= new_cap)) {                                                 \
             return false;                                                                          \
         }                                                                                          \
         self->data     = realloc (self->data, sizeof (T) * new_cap);                               \
         self->capacity = new_cap;                                                                  \
+        return true;                                                                               \
+    }                                                                                              \
+    static inline bool VecF (T, resize) (Vec##T * self, size_t new_size) {                         \
+        if (!(self && VecF (T, len) (self) >= new_size)) {                                                      \
+            return false;                                                                          \
+        }                                                                                          \
+        VecF (T, reserve) (self, new_size);                                                    \
+        memset (                                                                                   \
+            VecF (T, data) (self) + VecF (T, len) (self),                                          \
+            0,                                                                                     \
+            (new_size - VecF (T, len) (self)) * sizeof (T)                                         \
+        );                                                                                         \
+        self->length = new_size;                                                                   \
         return true;                                                                               \
     }                                                                                              \
     static inline T* VecF (T, append) (Vec##T * self, T * x) {                                     \

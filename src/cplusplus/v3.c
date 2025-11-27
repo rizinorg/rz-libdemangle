@@ -58,10 +58,7 @@ bool rule_unqualified_name (
     DEFER_VAR (x1);
 
     MATCH (READ_STR ("DC") && RULE_ATLEAST_ONCE (source_name) && READ ('E'));
-    MATCH (
-        RULE_DEFER (x0, operator_name) && AST_APPEND_NODE (x0) &&
-        OPTIONAL (RULE_DEFER (x1, abi_tags) && AST_APPEND_NODE (x1))
-    );
+    MATCH (RULE_DEFER (AST (0), operator_name) && OPTIONAL (RULE_DEFER (AST (1), abi_tags)));
     MATCH (READ_STR ("12_GLOBAL__N_1") && AST_APPEND_STR ("(anonymous namespace)"));
     MATCH1 (ctor_dtor_name);
     MATCH1 (source_name);
@@ -1277,14 +1274,10 @@ DEFN_RULE (destructor_name, {
 
 bool rule_name (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
     RULE_HEAD (name);
-    DEFER_VAR (x0);
-    DEFER_VAR (x1);
 
-    MATCH_AND_DO (RULE_DEFER (x0, unscoped_name) && RULE_DEFER (x1, template_args), {
-        if (x0->dem.buf && x1->dem.buf) {
-            AST_APPEND_NODE (x0);
+    MATCH_AND_DO (RULE_DEFER (AST (0), unscoped_name) && RULE_DEFER (AST (1), template_args), {
+        if (AST (0)->dem.buf && AST (1)->dem.buf) {
             AST_APPEND_TYPE;
-            AST_APPEND_NODE (x1);
             AST_APPEND_TYPE;
             TRACE_RETURN_SUCCESS;
         } else {
@@ -1292,11 +1285,8 @@ bool rule_name (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
         }
     });
 
-    DemAstNode_deinit (x0);
-    DemAstNode_deinit (x1);
     MATCH (
-        RULE_DEFER (x0, substitution) && RULE_DEFER (x1, template_args) && AST_APPEND_NODE (x0) &&
-        AST_APPEND_NODE (x1) && AST_APPEND_TYPE
+        RULE_DEFER (AST (0), substitution) && RULE_DEFER (AST (1), template_args) && AST_APPEND_TYPE
     );
 
     MATCH1 (nested_name);
@@ -1316,43 +1306,12 @@ bool rule_nested_name (
     int         parent_node_id
 ) {
     RULE_HEAD (nested_name);
-    DEFER_VAR (x0);
-    DEFER_VAR (x1);
-    DEFER_VAR (x2);
-    DEFER_VAR (x3);
 
     MATCH_AND_CONTINUE (READ ('N'));
-    bool has_cv  = RULE_CALL_DEFER (x0, cv_qualifiers);
-    bool has_ref = RULE_CALL_DEFER (x1, ref_qualifier);
-    MATCH_AND_DO (
-        RULE_CALL_DEFER (x2, prefix) && RULE_CALL_DEFER (x3, unqualified_name) &&
-            AST_APPEND_NODE (x2) && AST_APPEND_NODE (x3),
-        {
-            if (has_cv) {
-                AST_APPEND_NODE (x0);
-            }
-            if (has_ref) {
-                AST_APPEND_NODE (x1);
-            }
-        }
-    );
-    DemAstNode_deinit (x2);
-    DemAstNode_deinit (x3);
-
-    MATCH_AND_DO (
-        RULE_CALL_DEFER (x2, template_prefix) && RULE_CALL_DEFER (x3, template_args) &&
-            AST_APPEND_NODE (x2) && AST_APPEND_NODE (x3),
-        {
-            if (has_cv) {
-                AST_APPEND_NODE (x0);
-            }
-            if (has_ref) {
-                AST_APPEND_NODE (x1);
-            }
-        }
-    );
-    DemAstNode_deinit (x2);
-    DemAstNode_deinit (x3);
+    RULE_CALL_DEFER (AST (0), cv_qualifiers);
+    RULE_CALL_DEFER (AST (1), ref_qualifier);
+    MATCH (RULE_CALL_DEFER (AST (2), prefix) && RULE_CALL_DEFER (AST (3), unqualified_name));
+    MATCH (RULE_CALL_DEFER (AST (2), template_prefix) && RULE_CALL_DEFER (AST (3), template_args));
 
     RULE_FOOT (nested_name);
 }

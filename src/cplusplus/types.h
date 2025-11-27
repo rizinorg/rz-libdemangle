@@ -137,7 +137,8 @@ DemAstNode* DemAstNode_ctor (DemString* dem, DemStringView* val, CpDemTypeKind t
 void        DemAstNode_dtor (DemAstNode* dan);
 bool        DemAstNode_init (DemAstNode* dan);
 void        DemAstNode_deinit (DemAstNode* dan);
-bool        DemAstNode_append (DemAstNode* xs, DemAstNode* x);
+DemAstNode* DemAstNode_append (DemAstNode* xs, DemAstNode* x);
+DemAstNode* DemAstNode_children_at (DemAstNode* xs, size_t idx);
 
 VecIMPL (DemAstNode, DemAstNode_deinit);
 
@@ -151,12 +152,12 @@ void name_deinit (Name* x);
 VecIMPL (Name, name_deinit);
 
 typedef struct Meta {
-    VecT(Name) detected_types;
-    VecT(Name) template_params;
-    bool  is_ctor;
-    bool  is_dtor;
-    bool  is_const;
-    bool  trace; // Debug tracing flag (now just for compatibility)
+    VecT (Name) detected_types;
+    VecT (Name) template_params;
+    bool is_ctor;
+    bool is_dtor;
+    bool is_const;
+    bool trace; // Debug tracing flag (now just for compatibility)
 
     // detected templates are reset everytime a new template argument list starts at the same level
     // instead of taking care of that, we just rebase from where we start our substitution
@@ -171,7 +172,7 @@ typedef struct Meta {
     int  t_level;
     bool template_reset;
 
-    bool           is_ctor_or_dtor_at_l0;
+    bool is_ctor_or_dtor_at_l0;
 } Meta;
 
 struct TraceGraph;
