@@ -277,11 +277,13 @@ CpDem* cpdem_public_name (CpDem* dem) {
                             ADV();
                         }
                     } else if (cpdem_name (dem)) {
+                        vec_deinit (&class_names);
                         if (IS_TERM (dem)) {
                             dem_string_append_n (&dem->base_name, "::", 2);
                             ADV();
                         }
                     } else if (cpdem_custom_type_name (dem, &custom_name)) {
+                        vec_deinit (&class_names);
                         dem_string_concat (&dem->base_name, &custom_name);
                         dem_string_deinit (&custom_name);
 
@@ -290,6 +292,8 @@ CpDem* cpdem_public_name (CpDem* dem) {
                             ADV();
                         }
                     } else {
+                        vec_deinit (&class_names);
+                        dem_string_deinit (&custom_name);
                         break;
                     }
                 }
@@ -331,6 +335,7 @@ CpDem* cpdem_public_name (CpDem* dem) {
                     vec_deinit (&class_names);
                     return dem;
                 } else {
+                    vec_deinit (&class_names);
                     ParamVec types = {0};
                     param_vec_init (&types);
                     if (cpdem_param_type (dem, &types) && types.length) {
@@ -699,6 +704,7 @@ CpDem* cpdem_class_names (CpDem* dem, ClassNameVec* class_names, ut64 qualifiers
             }
 
             default : {
+                dem_string_deinit (&name);
                 return NULL;
             }
         }
@@ -1005,6 +1011,7 @@ case_a:
                     param_append_to (&param, suffix, "[");
                     param_append_to (&param, suffix, val_str);
                     param_append_to (&param, suffix, "]");
+                    free ((void*)val_str);
 
                     if (PEEK() == '_') {
                         ADV();
