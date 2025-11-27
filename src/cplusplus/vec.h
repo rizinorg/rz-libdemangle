@@ -322,8 +322,8 @@
         if (!(VecF (T, empty) (self) && VecF (T, empty) (xs))) {                                   \
             return NULL;                                                                           \
         }                                                                                          \
-        VecF (T, reserve) (self, VecF (T, len) (self));                                            \
-        memcpy (VecF (T, data) (self), VecF (T, data) (xs), VecF (T, mem_size) (xs));              \
+        VecF (T, reserve) (self, VecF (T, len) (xs));                                            \
+        memmove (VecF (T, data) (self), VecF (T, data) (xs), VecF (T, mem_size) (xs));              \
         self->length = VecF (T, len) (xs);                                                         \
         memset (VecF (T, data) (xs), 0, VecF (T, mem_size) (xs));                                  \
         return self;                                                                               \

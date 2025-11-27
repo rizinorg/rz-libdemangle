@@ -22,10 +22,14 @@ void meta_tmp_apply (Meta* og, Meta* tmp) {
     if (!og || !tmp) {
         return;
     }
+    if (!(VecF (Name, empty) (&tmp->detected_types) || VecF (Name, empty) (&tmp->template_params)
+        )) {
+        return;
+    }
     memcpy (og, tmp, sizeof (Meta));
     // transfer of ownership from tmp to og
-    VecF (Name, move) (&og->detected_types, &tmp->detected_types);
-    VecF (Name, move) (&og->template_params, &tmp->template_params);
+    memset (&tmp->detected_types, 0, sizeof (tmp->detected_types));
+    memset (&tmp->template_params, 0, sizeof (tmp->template_params));
 }
 
 void meta_tmp_fini (Meta* og, Meta* tmp) {
@@ -40,14 +44,14 @@ void meta_tmp_fini (Meta* og, Meta* tmp) {
         dem_string_deinit (&dt->name);
         dt->num_parts = 0;
     }
-    free (VecF (Name, data)(&tmp->detected_types));
+    free (VecF (Name, data) (&tmp->detected_types));
 
     for (size_t i = og->template_params.length; i < tmp->template_params.length; i++) {
         Name* tp = VecF (Name, at) (&tmp->template_params, i);
         dem_string_deinit (&tp->name);
         tp->num_parts = 0;
     }
-    free (VecF (Name, data)(&tmp->template_params));
+    free (VecF (Name, data) (&tmp->template_params));
 
     memset (tmp, 0, sizeof (*tmp));
 }

@@ -30,9 +30,7 @@ DEFN_RULE (number, { MATCH (OPTIONAL (READ ('n')) && RULE_ATLEAST_ONCE (digit));
 DEFN_RULE (v_offset, {
     // ignore the number
     DEFER_VAR (_);
-    MATCH (
-        RULE_DEFER (_, number) && READ ('_') && RULE_DEFER (_, number) && (DemAstNode_deinit (_), 1)
-    );
+    MATCH (RULE_DEFER (_, number) && READ ('_') && RULE_DEFER (_, number));
 });
 
 // unqualified names come in sequence from prefix_nested_class_or_namespace in form of A::B::C
@@ -59,10 +57,7 @@ bool rule_unqualified_name (
     DEFER_VAR (x0);
     DEFER_VAR (x1);
 
-    MATCH (
-        READ_STR ("DC") && RULE_DEFER_ATLEAST_ONCE (x0, source_name) && READ ('E') &&
-        AST_APPEND_NODE (x0)
-    );
+    MATCH (READ_STR ("DC") && RULE_ATLEAST_ONCE (source_name) && READ ('E'));
     MATCH (
         RULE_DEFER (x0, operator_name) && AST_APPEND_NODE (x0) &&
         OPTIONAL (RULE_DEFER (x1, abi_tags) && AST_APPEND_NODE (x1))
@@ -1341,9 +1336,9 @@ bool rule_nested_name (
             }
         }
     );
-
     DemAstNode_deinit (x2);
     DemAstNode_deinit (x3);
+
     MATCH_AND_DO (
         RULE_CALL_DEFER (x2, template_prefix) && RULE_CALL_DEFER (x3, template_args) &&
             AST_APPEND_NODE (x2) && AST_APPEND_NODE (x3),
@@ -1356,6 +1351,8 @@ bool rule_nested_name (
             }
         }
     );
+    DemAstNode_deinit (x2);
+    DemAstNode_deinit (x3);
 
     RULE_FOOT (nested_name);
 }
@@ -1537,7 +1534,7 @@ bool rule_encoding (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, i
         // If this is a template function then get return type first
         OPTIONAL (
             is_template (n) && RULE_DEFER (rt, type) && AST_PREPEND_STR (" ") &&
-            AST_PREPEND_DEMSTR (&rt->dem) && (DemAstNode_deinit (rt), 1)
+            AST_PREPEND_DEMSTR (&rt->dem)
         ) &&
 
         // get function params
@@ -1549,13 +1546,7 @@ bool rule_encoding (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, i
         ) &&
 
         // append const if it was detected to be a constant function
-        OPTIONAL (is_const_fn && AST_APPEND_STR (" const")) &&
-
-        // deinit name on a successful match for
-        // - name
-        // - name <params>
-        // - <ret> name <params>
-        (DemAstNode_deinit (n), 1)
+        OPTIONAL (is_const_fn && AST_APPEND_STR (" const"))
     );
 
     DemAstNode_deinit (n);
@@ -1609,24 +1600,8 @@ DEFN_RULE (expr_primary, {
         READ ('L') && AST_APPEND_STR ("(") && (PEEK() == 'P') && RULE (pointer_type) &&
         AST_APPEND_STR (")") && READ ('0') && AST_APPEND_CHR ('0') && READ ('E')
     );
-    MATCH (
-        READ ('L') && RULE_DEFER (t, type) && RULE_DEFER (n, value_number) &&
-        OPTIONAL (
-            // change to bool
-            !strcmp (t->dem.buf, "bool") ?
-                (!strcmp (n->dem.buf, "0") ? (DemAstNode_deinit (t),
-                                              DemAstNode_deinit (n),
-                                              dem_string_append_n (&dan->dem, "false", 5)) :
-                                             (DemAstNode_deinit (t),
-                                              DemAstNode_deinit (n),
-                                              dem_string_append_n (&dan->dem, "true", 4))) :
-                // shorten unsigned int typecast
-                !strcmp (t->dem.buf, "unsigned int") ?
-                (DemAstNode_deinit (t), APPEND_DEFER_VAR (n) && AST_APPEND_CHR ('u')) :
-                true
-        ) &&
-        READ ('E')
-    );
+    // TODO: fixme
+    MATCH (READ ('L') && RULE_DEFER (t, type) && RULE_DEFER (n, value_number) && READ ('E'));
 
     DemAstNode_deinit (t);
     DemAstNode_deinit (n);
@@ -1665,14 +1640,15 @@ bool rule_prefix_suffix (
 ) {
     RULE_HEAD (prefix_suffix);
     DEFER_VAR (x0);
-    DEFER_VAR (x1);
 
     MATCH1 (template_args);
+
     MATCH (READ ('M') && (dan->tag = CP_DEM_TYPE_KIND_closure_prefix, true));
     MATCH (
         RULE_DEFER (x0, template_args) && AST_APPEND_NODE (x0) && READ ('M') &&
         (dan->tag = CP_DEM_TYPE_KIND_closure_prefix, true)
     );
+    DemAstNode_deinit (x0);
 
     RULE_FOOT (prefix_suffix);
 }
@@ -1719,11 +1695,12 @@ bool rule_prefix_tail (
 
     MATCH_AND_CONTINUE (
         RULE_DEFER (x0, unqualified_name) && PEEK() != 'E' && AST_APPEND_NODE (x0) &&
-        OPTIONAL (RULE_CALL_DEFER (x1, prefix_suffix) && AST_APPEND_NODE (x1)) &&
         (result = true, true)
     );
     if (result) {
-        MATCH (OPTIONAL (RULE_CALL (prefix_tail)));
+        MATCH_AND_CONTINUE (RULE_CALL_DEFER (x1, prefix_suffix) && AST_APPEND_NODE (x1));
+        MATCH_AND_CONTINUE (RULE_CALL (prefix_tail));
+        TRACE_RETURN_SUCCESS;
     }
 
     RULE_FOOT (prefix_tail);
