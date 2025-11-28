@@ -200,9 +200,8 @@ typedef bool (*DemRule) (
 typedef bool (*DemRuleFirst) (const char* input);
 
 // Meta helper functions
-bool meta_tmp_init (Meta* og, Meta* tmp);
-void meta_tmp_apply (Meta* og, Meta* tmp);
-void meta_tmp_fini (Meta* og, Meta* tmp);
+bool meta_copy (Meta* dst, Meta* src);
+void meta_move (Meta* dst, Meta* src);
 void meta_deinit (Meta* m);
 
 // Helper functions

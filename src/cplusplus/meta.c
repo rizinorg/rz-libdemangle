@@ -24,68 +24,45 @@ static inline void meta_copy_scalars (Meta* dst, Meta* src) {
 }
 
 void meta_deinit (Meta* m) {
-    vec_foreach_ptr (&m->detected_types, n, {
-        dem_string_deinit (&n->name);
-    });
+    if (!m) {
+        return;
+    }
+
     VecF (Name, deinit) (&m->detected_types);
-    vec_foreach_ptr (&m->template_params, n, {
-        dem_string_deinit (&n->name);
-    });
     VecF (Name, deinit) (&m->template_params);
+    memset (m, 0, sizeof (Meta));
 }
 
-bool meta_tmp_init (Meta* og, Meta* tmp) {
-    if (!(og && tmp && og != tmp)) {
+bool meta_copy (Meta* dst, Meta* src) {
+    if (!(src && dst && src != dst)) {
         return false;
     }
-    meta_copy_scalars (tmp, og);
-    vec_foreach_ptr (&og->detected_types, n, {
+    meta_copy_scalars (dst, src);
+    vec_foreach_ptr (&src->detected_types, n, {
         Name new_name = {0};
         dem_string_init_clone (&new_name.name, &n->name);
         new_name.num_parts = n->num_parts;
-        VecF (Name, append) (&tmp->detected_types, &new_name);
+        VecF (Name, append) (&dst->detected_types, &new_name);
     });
-    vec_foreach_ptr (&og->template_params, n, {
+    vec_foreach_ptr (&src->template_params, n, {
         Name new_name = {0};
         dem_string_init_clone (&new_name.name, &n->name);
         new_name.num_parts = n->num_parts;
-        VecF (Name, append) (&tmp->template_params, &new_name);
+        VecF (Name, append) (&dst->template_params, &new_name);
     });
     return true;
 }
 
-void meta_tmp_apply (Meta* og, Meta* tmp) {
-    if (!(og && tmp && og != tmp)) {
+void meta_move (Meta* dst, Meta* src) {
+    if (!(dst && src && dst != src)) {
         return;
     }
-    meta_copy_scalars (og, tmp);
-    meta_deinit (og);
-    VecF (Name, move) (&og->detected_types, &tmp->detected_types);
-    VecF (Name, move) (&og->template_params, &tmp->template_params);
-    memset (tmp, 0, sizeof (Meta));
-}
-
-void meta_tmp_fini (Meta* og, Meta* tmp) {
-    if (!og || !tmp) {
-        return;
-    }
-
-    // Clean up all items in tmp as they are deep copies
-    for (size_t i = 0; i < tmp->detected_types.length; i++) {
-        Name* dt = VecF (Name, at) (&tmp->detected_types, i);
-        dem_string_deinit (&dt->name);
-        dt->num_parts = 0;
-    }
-    free (VecF (Name, data) (&tmp->detected_types));
-
-    for (size_t i = 0; i < tmp->template_params.length; i++) {
-        Name* tp = VecF (Name, at) (&tmp->template_params, i);
-        dem_string_deinit (&tp->name);
-        tp->num_parts = 0;
-    }
-    free (VecF (Name, data) (&tmp->template_params));
-
-    memset (tmp, 0, sizeof (*tmp));
+    meta_copy_scalars (dst, src);
+    VecF (Name, deinit) (&dst->detected_types);
+    VecF (Name, deinit) (&dst->template_params);
+    VecF (Name, move) (&dst->detected_types, &src->detected_types);
+    VecF (Name, move) (&dst->template_params, &src->template_params);
+    memset (src, 0, sizeof (Meta));
 }
 
 static const char* builtin_type_stings[] = {

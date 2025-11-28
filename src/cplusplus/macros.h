@@ -191,7 +191,7 @@
     DemAstNode* var                 = &tmp_defer_var_##var;                                        \
     DemAstNode_init (var);
 
-#define MATCH1(R) MATCH (RULE_DEFER (AST (0), R));
+#define MATCH1(R) MATCH (RULE_DEFER (AST (0), R) && AST_MERGE (AST (0)));
 
 #define APPEND_DEFER_VAR(var) DemAstNode_append (dan, (var))
 
@@ -335,31 +335,13 @@
 
 #define MATCH_FAILED(I)                                                                            \
     do { /*match fail*/                                                                            \
-        meta_tmp_fini (_og_meta, &_tmp_meta);                                                      \
+        meta_deinit (&_tmp_meta);                                                      \
         m = _og_meta;                                                                              \
         DemAstNode_deinit(dan);                                                                    \
         /* if rule matched, then concat tmp with original and switch back names */                 \
         RESTORE_POS (I);                                                                           \
         break;                                                                                     \
     } while (0)
-
-#define SAVE_CONTEXT(S)                                                                            \
-    SAVE_POS (S);                                                                                  \
-    DemString  dem_##S      = {0};                                                                 \
-    DemString* dem_orig_##S = dem;                                                                 \
-    Meta       m_##S        = {0};                                                                 \
-    Meta*      m_orig_##S   = m;                                                                   \
-    dem                     = &dem_##S;                                                            \
-    m                       = &m_##S;                                                              \
-    meta_tmp_init (m_orig_##S, &m_##S);
-
-#define RESTORE_CONTEXT(S)                                                                         \
-    meta_tmp_apply (m_orig_##S, &m_##S);                                                           \
-    /* if rule matched, then concat tmp with original and switch back names */                     \
-    dem_string_concat (dem_orig_##S, &dem_##S);                                                    \
-    dem_string_deinit (&dem_##S);                                                                  \
-    dem = dem_orig_##S;                                                                            \
-    m   = m_orig_##S;
 
 
 /**
@@ -393,7 +375,7 @@
         Meta  _tmp_meta = {0};                                                                     \
         Meta* _og_meta  = m;                                                                       \
         m               = &_tmp_meta;                                                              \
-        meta_tmp_init (_og_meta, &_tmp_meta);                                                      \
+        meta_copy (&_tmp_meta, _og_meta);                                                      \
         size_t _og_dem_len = dan->dem.len;                                                         \
         size_t _og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0;            \
         if ((rules)) {                                                                             \
@@ -407,7 +389,7 @@
                     1                                                                              \
                 );                                                                                 \
             }                                                                                      \
-            meta_tmp_apply (_og_meta, &_tmp_meta);                                                 \
+            meta_move (_og_meta, &_tmp_meta);                                                     \
             m            = _og_meta;                                                               \
             dan->val.len = msi->cur - dan->val.buf;                                                \
             return true;                                                                           \
@@ -438,11 +420,11 @@
         Meta  _tmp_meta = {0};                                                                     \
         Meta* _og_meta  = m;                                                                       \
         m               = &_tmp_meta;                                                              \
-        meta_tmp_init (_og_meta, &_tmp_meta);                                                      \
+        meta_copy (&_tmp_meta, _og_meta);                                                      \
         size_t _og_dem_len = dan->dem.len;                                                         \
         size_t _og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0;            \
         if ((rules)) {                                                                             \
-            meta_tmp_apply (_og_meta, &_tmp_meta);                                                 \
+            meta_move (_og_meta, &_tmp_meta);                                                     \
             /* if rule matched, then concat tmp with original and switch back names */             \
             m = _og_meta;                                                                          \
         } else {                                                                                   \
