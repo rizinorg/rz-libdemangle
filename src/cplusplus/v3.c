@@ -1091,7 +1091,7 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
     );
     MATCH (
         RULE_DEFER (AST (0), substitution) && RULE_DEFER (AST (1), template_args) &&
-        AST_MERGE (AST (0)) && AST_MERGE (AST (1))
+        AST_MERGE (AST (0)) && AST_MERGE (AST (1)) && AST_APPEND_TYPE
     );
     MATCH (RULE_DEFER (AST (0), builtin_type) && AST_MERGE (AST (0)));
     MATCH (
