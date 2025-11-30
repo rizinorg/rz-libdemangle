@@ -32,18 +32,6 @@ DEFN_RULE (v_offset, {
     MATCH (RULE_DEFER (AST (0), number) && READ ('_') && RULE_DEFER (AST (1), number));
 });
 
-// unqualified names come in sequence from prefix_nested_class_or_namespace in form of A::B::C
-// we need to extract the last unqualified name from the dem string
-const char* extract_last_unqualified_name (DemString* dem) {
-    if (!dem) {
-        return NULL;
-    }
-    const char* ptr = dem->buf + dem->len - 1;
-    while (ptr >= dem->buf && *ptr != ':') {
-        ptr--;
-    }
-    return ptr + 1;
-}
 
 bool rule_unqualified_name (
     DemAstNode* dan,
