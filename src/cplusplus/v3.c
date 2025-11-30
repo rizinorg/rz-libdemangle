@@ -1325,26 +1325,54 @@ DEFN_RULE (template_template_param, {
     MATCH (RULE (substitution));
 });
 
+// Helper to append the last detected class name for ctor/dtor
+static bool append_last_class_name(DemAstNode* dan, Meta* m) {
+    if (m->detected_types.length > 0) {
+        Name* last_type = vec_ptr_at(&m->detected_types, m->detected_types.length - 1);
+        if (last_type && last_type->name.buf) {
+            // Find the last :: to get just the class name
+            const char* name = last_type->name.buf;
+            const char* last_sep = name;
+            const char* p = name;
+            while (*p) {
+                if (p[0] == ':' && p[1] == ':') {
+                    last_sep = p + 2;
+                    p += 2;
+                } else {
+                    p++;
+                }
+            }
+            // Also strip template arguments
+            const char* tmpl = last_sep;
+            while (*tmpl && *tmpl != '<') {
+                tmpl++;
+            }
+            dem_string_append_n(&dan->dem, last_sep, tmpl - last_sep);
+            return true;
+        }
+    }
+    return false;
+}
 
 DEFN_RULE (ctor_name, {
     // NOTE: reference taken from https://github.com/rizinorg/rz-libdemangle/blob/c2847137398cf8d378d46a7510510aaefcffc8c6/src/cxx/cp-demangle.c#L2143
-    MATCH (READ_STR ("C1") && SET_CTOR()); // gnu complete object ctor
-    MATCH (READ_STR ("C2") && SET_CTOR()); // gnu base object ctor
-    MATCH (READ_STR ("C3") && SET_CTOR()); // gnu complete object allocating ctor
-    MATCH (READ_STR ("C4") && SET_CTOR()); // gnu unified ctor
-    MATCH (READ_STR ("C5") && SET_CTOR()); // gnu object ctor group
-    MATCH (READ_STR ("CI1") && SET_CTOR());
-    MATCH (READ_STR ("CI2") && SET_CTOR());
+    MATCH (READ_STR ("C1") && SET_CTOR() && append_last_class_name(dan, m)); // gnu complete object ctor
+    MATCH (READ_STR ("C2") && SET_CTOR() && append_last_class_name(dan, m)); // gnu base object ctor
+    MATCH (READ_STR ("C3") && SET_CTOR() && append_last_class_name(dan, m)); // gnu complete object allocating ctor
+    MATCH (READ_STR ("C4") && SET_CTOR() && append_last_class_name(dan, m)); // gnu unified ctor
+    MATCH (READ_STR ("C5") && SET_CTOR() && append_last_class_name(dan, m)); // gnu object ctor group
+    MATCH (READ_STR ("CI1") && SET_CTOR() && append_last_class_name(dan, m));
+    MATCH (READ_STR ("CI2") && SET_CTOR() && append_last_class_name(dan, m));
 });
 
 DEFN_RULE (dtor_name, {
     // NOTE: reference taken from https://github.com/rizinorg/rz-libdemangle/blob/c2847137398cf8d378d46a7510510aaefcffc8c6/src/cxx/cp-demangle.c#L2143
-    MATCH (READ_STR ("D0") && SET_DTOR()); // gnu deleting dtor
-    MATCH (READ_STR ("D1") && SET_DTOR()); // gnu complete object dtor
-    MATCH (READ_STR ("D2") && SET_DTOR()); // gnu base object dtor
+    MATCH (READ_STR ("D0") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu deleting dtor
+    MATCH (READ_STR ("D1") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu complete object dtor
+    MATCH (READ_STR ("D2") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu base object dtor
     // 3 is not used
-    MATCH (READ_STR ("D4") && SET_DTOR()); // gnu unified dtor
-    MATCH (READ_STR ("D5") && SET_DTOR()); // gnu object dtor group
+    MATCH (READ_STR ("D4") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu unified dtor
+    MATCH (READ_STR ("D5") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu object dtor group
 });
 
 DEFN_RULE (ctor_dtor_name, {
