@@ -791,7 +791,10 @@ DEFN_RULE (function_type, {
         // arguments
         AST_APPEND_STR ("(") && RULE_ATLEAST_ONCE_WITH_SEP (type, ", ") && AST_APPEND_STR (")") &&
 
-        OPTIONAL (RULE (ref_qualifier)) && READ ('E')
+        OPTIONAL (RULE (ref_qualifier)) && READ ('E') &&
+
+        // Function types are substitutable
+        AST_APPEND_TYPE
     );
 });
 
