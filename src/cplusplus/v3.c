@@ -1320,7 +1320,7 @@ bool rule_nested_name (
     RULE_CALL_DEFER (AST (0), cv_qualifiers);
     RULE_CALL_DEFER (AST (1), ref_qualifier);
 
-    // Case 1: template_prefix + template_args + E (try first because template_prefix is more specific)
+    // Case 1: template_prefix + template_args + E (for simple template types like std::vector<int>)
     MATCH_AND_DO (
         RULE_CALL_DEFER (AST (2), template_prefix) && RULE_CALL_DEFER (AST (3), template_args) &&
             READ ('E'),
@@ -1330,7 +1330,22 @@ bool rule_nested_name (
         }
     );
 
-    // Case 2: prefix + unqualified_name + E
+    // Case 2: template_prefix + template_args + unqualified_name + E (for methods in template classes)
+    // e.g., std::vector<int>::erase or std::vector<int>::~vector
+    // IMPORTANT: We must merge template_prefix + template_args and call AST_APPEND_TYPE
+    // BEFORE parsing unqualified_name, so that dtor_name can find the correct class name
+    // in the substitution table.
+    MATCH_AND_DO (
+        RULE_CALL_DEFER (AST (2), template_prefix) && RULE_CALL_DEFER (AST (3), template_args) &&
+            AST_MERGE (AST (2)) && AST_MERGE (AST (3)) && AST_APPEND_TYPE &&
+            RULE_CALL_DEFER (AST (4), unqualified_name) && READ ('E'),
+        {
+            AST_APPEND_STR ("::");
+            AST_MERGE (AST (4));
+        }
+    );
+
+    // Case 3: prefix + unqualified_name + E
     MATCH_AND_DO (
         RULE_CALL_DEFER (AST (2), prefix) && RULE_CALL_DEFER (AST (3), unqualified_name) &&
             READ ('E'),
@@ -1356,19 +1371,24 @@ static bool append_last_class_name (DemAstNode* dan, Meta* m) {
     if (m->detected_types.length > 0) {
         Name* last_type = vec_ptr_at (&m->detected_types, m->detected_types.length - 1);
         if (last_type && last_type->name.buf) {
-            // Find the last :: to get just the class name
+            // Find the last :: that is NOT inside template arguments <...>
             const char* name     = last_type->name.buf;
             const char* last_sep = name;
             const char* p        = name;
+            int         depth    = 0;  // Track template argument nesting depth
             while (*p) {
-                if (p[0] == ':' && p[1] == ':') {
+                if (*p == '<') {
+                    depth++;
+                } else if (*p == '>') {
+                    depth--;
+                } else if (p[0] == ':' && p[1] == ':' && depth == 0) {
                     last_sep  = p + 2;
                     p        += 2;
-                } else {
-                    p++;
+                    continue;
                 }
+                p++;
             }
-            // Also strip template arguments
+            // Also strip template arguments (find first < at depth 0)
             const char* tmpl = last_sep;
             while (*tmpl && *tmpl != '<') {
                 tmpl++;
