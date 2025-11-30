@@ -983,9 +983,9 @@ bool rule_cv_qualifiers (
     int         parent_node_id
 ) {
     RULE_HEAD (cv_qualifiers);
-    MATCH (READ ('K') && AST_APPEND_STR (" const") && SET_CONST());
-    MATCH (READ ('V') && AST_APPEND_STR (" volatile"));
-    MATCH (READ ('r') && AST_APPEND_STR (" restrict"));
+    MATCH (READ ('K') && AST_APPEND_STR ("const") && SET_CONST());
+    MATCH (READ ('V') && AST_APPEND_STR ("volatile"));
+    MATCH (READ ('r') && AST_APPEND_STR ("restrict"));
     RULE_FOOT (cv_qualifiers);
 }
 
@@ -1028,8 +1028,12 @@ bool rule_qualified_type (
 
     if (rule_qualifiers (AST (0), msi, m, graph, _my_node_id) &&
         rule_type (AST (1), msi, m, graph, _my_node_id)) {
-        AST_MERGE (AST (0));
+        // Output type first, then qualifiers (e.g., "QString const" not "constQString")
         AST_MERGE (AST (1));
+        if (AST (0)->dem.len > 0) {
+            AST_APPEND_STR (" ");
+            AST_MERGE (AST (0));
+        }
         TRACE_RETURN_SUCCESS;
     }
     TRACE_RETURN_FAILURE();
