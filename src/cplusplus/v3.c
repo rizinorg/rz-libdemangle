@@ -1279,19 +1279,21 @@ DEFN_RULE (destructor_name, {
 bool rule_name (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
     RULE_HEAD (name);
 
-    MATCH_AND_DO (RULE_DEFER (AST (0), unscoped_name) && RULE_DEFER (AST (1), template_args), {
-        if (AST (0)->dem.buf && AST (1)->dem.buf) {
-            AST_APPEND_TYPE;
-            AST_APPEND_TYPE;
-            TRACE_RETURN_SUCCESS;
-        } else {
-            MATCH_FAILED (0);
-        }
+    // For unscoped_name + template_args, we need to record:
+    // 1. The template name (unscoped_name) BEFORE processing template_args
+    // 2. The complete template instantiation AFTER merging both
+    MATCH_AND_DO (RULE_DEFER (AST (0), unscoped_name) && AST_APPEND_TYPE1 (&AST (0)->dem) && RULE_DEFER (AST (1), template_args), {
+        AST_MERGE (AST (0));
+        AST_MERGE (AST (1));
+        AST_APPEND_TYPE;
     });
 
-    MATCH (
-        RULE_DEFER (AST (0), substitution) && RULE_DEFER (AST (1), template_args) && AST_APPEND_TYPE
-    );
+    // For substitution + template_args, the substitution reference itself is already in the table
+    MATCH_AND_DO (RULE_DEFER (AST (0), substitution) && RULE_DEFER (AST (1), template_args), {
+        AST_MERGE (AST (0));
+        AST_MERGE (AST (1));
+        AST_APPEND_TYPE;
+    });
 
     MATCH1 (nested_name);
     MATCH1 (unscoped_name);
@@ -1684,8 +1686,13 @@ bool rule_prefix_start (
          RULE_DEFER (AST (0), substitution)) &&
         (PEEK() == 'E' ?
              false :
-             (AST_MERGE (AST (0)) && AST_APPEND_TYPE &&
-              OPTIONAL (RULE_CALL_DEFER (AST (1), prefix_suffix) && AST_MERGE (AST (1)))))
+             (AST_MERGE (AST (0)) &&
+              // First record the unqualified_name (template name like QList)
+              AST_APPEND_TYPE &&
+              // Then optionally match and merge template_args
+              OPTIONAL (RULE_CALL_DEFER (AST (1), prefix_suffix) && AST_MERGE (AST (1)) &&
+                        // Record the complete template instantiation (QList<QOpenGLShader*>)
+                        AST_APPEND_TYPE)))
     );
 
     RULE_FOOT (prefix_start);
@@ -1715,6 +1722,8 @@ bool rule_prefix_tail (
         // Add :: before merging this component
         AST_APPEND_STR ("::");
         AST_MERGE (AST (0));
+        // Record the qualified name as a substitution (e.g., "QMetaObject::Connection")
+        AST_APPEND_TYPE;
         // Optional prefix_suffix
         if (rule_prefix_suffix (AST (1), msi, m, graph, _my_node_id)) {
             AST_MERGE (AST (1));
@@ -1750,11 +1759,11 @@ bool rule_template_prefix (
     RULE_HEAD (template_prefix);
 
     // Match unqualified_name only if followed by 'I' (template_args)
-    MATCH (RULE_DEFER (AST (0), unqualified_name) && PEEK() == 'I' && AST_MERGE (AST (0)));
+    MATCH (RULE_DEFER (AST (0), unqualified_name) && PEEK() == 'I' && AST_MERGE (AST (0)) && AST_APPEND_TYPE);
     // Match prefix + unqualified_name followed by 'I'
     MATCH (
         RULE_CALL_DEFER (AST (0), prefix) && RULE_DEFER (AST (1), unqualified_name) &&
-        PEEK() == 'I' && AST_MERGE (AST (0)) && AST_APPEND_STR ("::") && AST_MERGE (AST (1))
+        PEEK() == 'I' && AST_MERGE (AST (0)) && AST_APPEND_STR ("::") && AST_MERGE (AST (1)) && AST_APPEND_TYPE
     );
 
     MATCH1 (template_param);

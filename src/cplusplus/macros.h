@@ -337,8 +337,9 @@
     do { /*match fail*/                                                                            \
         meta_deinit (&_tmp_meta);                                                                  \
         m = _og_meta;                                                                              \
-        DemAstNode_deinit (dan);                                                                   \
-        /* if rule matched, then concat tmp with original and switch back names */                 \
+        /* NOTE: Do NOT call DemAstNode_deinit(dan) here! */                                       \
+        /* dan->dem was already restored to _og_dem_len by MATCH_AND_DO */                         \
+        /* Calling deinit would clear content written by parent rules */                           \
         RESTORE_POS (I);                                                                           \
         break;                                                                                     \
     } while (0)
