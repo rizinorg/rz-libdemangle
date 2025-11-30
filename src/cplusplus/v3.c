@@ -43,7 +43,7 @@ bool rule_unqualified_name (
     RULE_HEAD (unqualified_name);
 
     MATCH (READ_STR ("DC") && RULE_ATLEAST_ONCE (source_name) && READ ('E'));
-    MATCH (RULE_DEFER (AST (0), operator_name) && OPTIONAL (RULE_DEFER (AST (1), abi_tags)));
+    MATCH (RULE_DEFER (AST (0), operator_name) && AST_MERGE (AST (0)) && OPTIONAL (RULE_DEFER (AST (1), abi_tags) && AST_MERGE (AST (1))));
     MATCH (READ_STR ("12_GLOBAL__N_1") && AST_APPEND_STR ("(anonymous namespace)"));
     MATCH1 (ctor_dtor_name);
     MATCH1 (source_name);
@@ -1291,8 +1291,31 @@ bool rule_nested_name (
     MATCH_AND_CONTINUE (READ ('N'));
     RULE_CALL_DEFER (AST (0), cv_qualifiers);
     RULE_CALL_DEFER (AST (1), ref_qualifier);
-    MATCH (RULE_CALL_DEFER (AST (2), prefix) && RULE_CALL_DEFER (AST (3), unqualified_name));
-    MATCH (RULE_CALL_DEFER (AST (2), template_prefix) && RULE_CALL_DEFER (AST (3), template_args));
+    
+    // Case 1: prefix + unqualified_name + E
+    MATCH_AND_DO (
+        RULE_CALL_DEFER (AST (2), prefix) && 
+        RULE_CALL_DEFER (AST (3), unqualified_name) &&
+        READ ('E'),
+        {
+            AST_MERGE (AST (2));
+            if (AST (2)->dem.len > 0) {
+                AST_APPEND_STR ("::");
+            }
+            AST_MERGE (AST (3));
+        }
+    );
+    
+    // Case 2: template_prefix + template_args + E
+    MATCH_AND_DO (
+        RULE_CALL_DEFER (AST (2), template_prefix) && 
+        RULE_CALL_DEFER (AST (3), template_args) &&
+        READ ('E'),
+        {
+            AST_MERGE (AST (2));
+            AST_MERGE (AST (3));
+        }
+    );
 
     RULE_FOOT (nested_name);
 }
@@ -1605,15 +1628,31 @@ bool rule_prefix_tail (
     int         parent_node_id
 ) {
     RULE_HEAD (prefix_tail);
-    bool result = false;
 
-    MATCH_AND_CONTINUE (
-        RULE_DEFER (AST (0), unqualified_name) && PEEK() != 'E' && AST_MERGE (AST (0)) &&
-        (result = true, true)
-    );
-    if (result) {
-        MATCH_AND_CONTINUE (RULE_CALL_DEFER (AST (1), prefix_suffix) && AST_MERGE (AST (1)));
-        MATCH_AND_CONTINUE (RULE_CALL (prefix_tail));
+    // Save position for potential backtrack
+    const char* saved_pos = CUR();
+    
+    // Match unqualified_name and continue to next prefix_tail
+    if (first_of_rule_unqualified_name(CUR()) && 
+        rule_unqualified_name(AST(0), msi, m, graph, _my_node_id)) {
+        // Check if followed by 'E' - if so, this unqualified_name belongs to nested_name
+        if (PEEK() == 'E') {
+            // Restore position and fail - let nested_name consume this
+            CUR() = saved_pos;
+            RULE_FOOT (prefix_tail);
+        }
+        // Add :: before merging this component
+        AST_APPEND_STR("::");
+        AST_MERGE(AST(0));
+        // Optional prefix_suffix
+        if (rule_prefix_suffix(AST(1), msi, m, graph, _my_node_id)) {
+            AST_MERGE(AST(1));
+        }
+        // Recursive prefix_tail
+        if (first_of_rule_unqualified_name(CUR()) &&
+            rule_prefix_tail(AST(2), msi, m, graph, _my_node_id)) {
+            AST_MERGE(AST(2));
+        }
         TRACE_RETURN_SUCCESS;
     }
 
@@ -1624,7 +1663,8 @@ bool rule_prefix (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int
     RULE_HEAD (prefix);
 
     MATCH_AND_CONTINUE (RULE_CALL_DEFER (AST (0), prefix_start) && AST_MERGE (AST (0)));
-    MATCH (OPTIONAL (RULE_CALL_DEFER (AST (1), prefix_tail) && AST_MERGE (AST (1))));
+    OPTIONAL (RULE_CALL_DEFER (AST (1), prefix_tail) && AST_MERGE (AST (1)));
+    TRACE_RETURN_SUCCESS;
 
     RULE_FOOT (prefix);
 }

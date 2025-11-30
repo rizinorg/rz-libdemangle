@@ -7,11 +7,11 @@
 int test_rule_prefix() {
 	CpDemOptions options = { 0 };
 	mu_assert_streq_free(demangle_rule("DC1a2abE", rule_prefix, options), "aab", "");
-	mu_assert_streq_free(demangle_rule("DC1a2bcEDC1d2efE", rule_prefix, options), "abcdef", "");
+	mu_assert_streq_free(demangle_rule("DC1a2bcEDC1d2efE", rule_prefix, options), "abc::def", "");
 
-	mu_assert_streq_free(demangle_rule("NDC1a2bcEDC1d2efEDC1gEE", rule_nested_name, options), "abcdefg", "");
+	mu_assert_streq_free(demangle_rule("NDC1a2bcEDC1d2efEDC1gEE", rule_nested_name, options), "abc::def::g", "");
 
-	mu_assert_streq_free(demangle_rule("_ZNDC1a2bcEDC1d2efEE", rule_mangled_name, options), "abcdef", "");
+	mu_assert_streq_free(demangle_rule("_ZNDC1a2bcEDC1d2efEE", rule_mangled_name, options), "abc::def", "");
 	mu_end;
 }
 
