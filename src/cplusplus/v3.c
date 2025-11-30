@@ -1050,13 +1050,13 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
     MATCH (READ ('C') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0))); // complex pair (C99)
     MATCH (READ ('G') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0))); // imaginary (C99)
     MATCH (
-        READ ('P') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)) && AST_APPEND_STR ("*")
+        READ ('P') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)) && AST_APPEND_STR ("*") && AST_APPEND_TYPE
     );
     MATCH (
-        READ ('R') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)) && AST_APPEND_STR ("&")
+        READ ('R') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)) && AST_APPEND_STR ("&") && AST_APPEND_TYPE
     );
     MATCH (
-        READ ('O') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)) && AST_APPEND_STR ("&&")
+        READ ('O') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)) && AST_APPEND_STR ("&&") && AST_APPEND_TYPE
     );
     // MATCH (RULE (template_template_param) && RULE (template_args));
     MATCH (
@@ -1614,7 +1614,7 @@ bool rule_prefix_start (
     MATCH (
         (RULE_DEFER (AST (0), unqualified_name) || RULE_DEFER (AST (0), template_param) ||
          RULE_DEFER (AST (0), substitution)) &&
-        (PEEK () == 'E' ? false : (AST_MERGE (AST (0)) && OPTIONAL (RULE_CALL_DEFER (AST (1), prefix_suffix) && AST_MERGE (AST (1)))))
+        (PEEK () == 'E' ? false : (AST_MERGE (AST (0)) && AST_APPEND_TYPE && OPTIONAL (RULE_CALL_DEFER (AST (1), prefix_suffix) && AST_MERGE (AST (1)))))
     );
 
     RULE_FOOT (prefix_start);
