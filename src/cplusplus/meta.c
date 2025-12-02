@@ -168,14 +168,9 @@ bool append_type (Meta* m, DemString* t, bool force_append) {
         return true;
     }
 
-    // If we're not forcefully appending values, then check for uniqueness of times
-    if (!force_append) {
-        vec_foreach_ptr (&m->detected_types, dt, {
-            if (!strcmp (dt->name.buf, t->buf)) {
-                return true;
-            }
-        });
-    }
+    // NOTE: In Itanium ABI, the same type can appear multiple times in the substitution table.
+    // Each occurrence gets a new substitution index. So we do NOT check for uniqueness here.
+    // The force_append parameter is kept for backwards compatibility but is not used for deduplication.
 
     Name* new_name = VecF (Name, append) (&m->detected_types, NULL);
     dem_string_init_clone (&new_name->name, t);

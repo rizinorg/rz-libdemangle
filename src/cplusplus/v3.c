@@ -768,16 +768,10 @@ DEFN_RULE (special_name, {
 
 
 DEFN_RULE (function_type, {
-    bool is_ptr = false;
-
-    // if PF creates a (*)
-    // simple F does not create any bracket
-    // Example : PFvPvE -> void (*)(void*)
-    // Example : FvPvE -> void (void*)
-
-    MATCH (
-        OPTIONAL (is_ptr = READ ('P')) &&
-
+    // This rule only handles F...E (bare function type)
+    // P prefix is handled in the type rule, which properly inserts * for function pointers
+    
+    MATCH_AND_DO (
         OPTIONAL (RULE (cv_qualifiers)) && OPTIONAL (RULE (exception_spec)) &&
         OPTIONAL (READ_STR ("Dx")) && READ ('F') && OPTIONAL (READ ('Y')) &&
 
@@ -785,17 +779,18 @@ DEFN_RULE (function_type, {
         // If return type is a type, then it's substitutable, so add using APPEND_TYPE
         ((RULE_DEFER (AST (0), builtin_type) || ((RULE_DEFER (AST (0), type)))) &&
          AST_MERGE (AST (0))) &&
-
-        // if a pointer then we'll have a function pointer (*)
-        (is_ptr ? AST_APPEND_STR (" (*)") : AST_APPEND_CHR (' ')) &&
+        
+        // A space before the arguments
+        AST_APPEND_CHR (' ') &&
 
         // arguments
         AST_APPEND_STR ("(") && RULE_ATLEAST_ONCE_WITH_SEP (type, ", ") && AST_APPEND_STR (")") &&
 
-        OPTIONAL (RULE (ref_qualifier)) && READ ('E') &&
-
-        // Function types are substitutable
-        AST_APPEND_TYPE
+        OPTIONAL (RULE (ref_qualifier)) && READ ('E'),
+        {
+            // Add function type to substitution table
+            append_type (m, &dan->dem, false);
+        }
     );
 });
 
@@ -1050,11 +1045,28 @@ bool rule_qualified_type (
 
     if (rule_qualifiers (AST (0), msi, m, graph, _my_node_id) &&
         rule_type (AST (1), msi, m, graph, _my_node_id)) {
-        // Output type first, then qualifiers (e.g., "QString const" not "constQString")
-        AST_MERGE (AST (1));
-        if (AST (0)->dem.len > 0) {
-            AST_APPEND_STR (" ");
-            AST_MERGE (AST (0));
+        // Check if type is a function pointer: look for " (*)" or " (**)" pattern
+        char* func_ptr_marker = strstr(AST(1)->dem.buf, " (*");
+        if (func_ptr_marker && AST(0)->dem.len > 0) {
+            // Function pointer: insert qualifiers inside the (*) 
+            // "void (*)(int)" + "const" -> "void (* const)(int)"
+            // Find the closing ) after (*
+            char* stars_end = func_ptr_marker + 2;  // after " ("
+            while (*stars_end == '*') stars_end++;
+            // Insert qualifiers between * and )
+            size_t prefix_len = stars_end - AST(1)->dem.buf;
+            size_t suffix_len = AST(1)->dem.len - prefix_len;
+            dem_string_append_n(&dan->dem, AST(1)->dem.buf, prefix_len);
+            dem_string_append(&dan->dem, " ");
+            dem_string_concat(&dan->dem, &AST(0)->dem);
+            dem_string_append_n(&dan->dem, AST(1)->dem.buf + prefix_len, suffix_len);
+        } else {
+            // Regular type: Output type first, then qualifiers (e.g., "QString const" not "constQString")
+            AST_MERGE (AST (1));
+            if (AST (0)->dem.len > 0) {
+                AST_APPEND_STR (" ");
+                AST_MERGE (AST (0));
+            }
         }
         TRACE_RETURN_SUCCESS;
     }
@@ -1073,17 +1085,105 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
         READ ('C') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0))
     ); // complex pair (C99)
     MATCH (READ ('G') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0))); // imaginary (C99)
-    MATCH (
-        READ ('P') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)) &&
-        AST_APPEND_STR ("*") && AST_APPEND_TYPE
+    
+    // Handle pointer types - special handling for function types
+    // For PF...E, we need to produce "ret (*)(args)" and add both S_entries
+    MATCH_AND_DO (
+        READ ('P') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)),
+        {
+            // Check if this is a function type by looking for " (" pattern
+            // Function types look like "ret (args)" 
+            // Function pointers look like "ret (*)(args)" or "ret (**)(args)"
+            char* space_paren = strstr(dan->dem.buf, " (");
+            if (space_paren) {
+                // Check if it's already a function pointer: " (*)" or " (**)"
+                if (space_paren[2] == '*') {
+                    // Already a function pointer like "ret (*)(args)" -> "ret (**)(args)"
+                    // Insert "*" after " ("
+                    size_t prefix_len = (space_paren + 2) - dan->dem.buf;  // includes " ("
+                    size_t suffix_len = dan->dem.len - prefix_len;
+                    DemString new_dem = {0};
+                    dem_string_append_n(&new_dem, dan->dem.buf, prefix_len);
+                    dem_string_append(&new_dem, "*");
+                    dem_string_append_n(&new_dem, dan->dem.buf + prefix_len, suffix_len);
+                    dem_string_deinit(&dan->dem);
+                    dan->dem = new_dem;
+                } else {
+                    // Bare function type "ret (args)" -> "ret (*)(args)"
+                    // Insert "(*)" after " " (before "(args)")
+                    size_t prefix_len = (space_paren + 1) - dan->dem.buf;  // includes " "
+                    size_t suffix_len = dan->dem.len - prefix_len;
+                    DemString new_dem = {0};
+                    dem_string_append_n(&new_dem, dan->dem.buf, prefix_len);
+                    dem_string_append(&new_dem, "(*)");
+                    dem_string_append_n(&new_dem, dan->dem.buf + prefix_len, suffix_len);
+                    dem_string_deinit(&dan->dem);
+                    dan->dem = new_dem;
+                }
+            } else {
+                // Regular pointer: just append "*"
+                dem_string_append(&dan->dem, "*");
+            }
+            append_type(m, &dan->dem, false);
+        }
     );
-    MATCH (
-        READ ('R') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)) &&
-        AST_APPEND_STR ("&") && AST_APPEND_TYPE
+    
+    MATCH_AND_DO (
+        READ ('R') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)),
+        {
+            // Check if this is a function pointer type
+            char* func_ptr_marker = strstr(dan->dem.buf, " (*");
+            if (func_ptr_marker) {
+                // Function pointer: insert & inside the (*...) before the closing )
+                // "void (* const)(int)" -> "void (* const&)(int)"
+                // Find the closing ) of the pointer declaration
+                char* close_paren = func_ptr_marker + 2;  // after " ("
+                while (*close_paren && *close_paren != ')') close_paren++;
+                if (*close_paren == ')') {
+                    size_t prefix_len = close_paren - dan->dem.buf;
+                    size_t suffix_len = dan->dem.len - prefix_len;
+                    DemString new_dem = {0};
+                    dem_string_append_n(&new_dem, dan->dem.buf, prefix_len);
+                    dem_string_append(&new_dem, "&");
+                    dem_string_append_n(&new_dem, dan->dem.buf + prefix_len, suffix_len);
+                    dem_string_deinit(&dan->dem);
+                    dan->dem = new_dem;
+                } else {
+                    dem_string_append(&dan->dem, "&");
+                }
+            } else {
+                dem_string_append(&dan->dem, "&");
+            }
+            append_type(m, &dan->dem, false);
+        }
     );
-    MATCH (
-        READ ('O') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)) &&
-        AST_APPEND_STR ("&&") && AST_APPEND_TYPE
+    MATCH_AND_DO (
+        READ ('O') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)),
+        {
+            // Check if this is a function pointer type
+            char* func_ptr_marker = strstr(dan->dem.buf, " (*");
+            if (func_ptr_marker) {
+                // Function pointer: insert && inside the (*...) before the closing )
+                // "void (* const)(int)" -> "void (* const&&)(int)"
+                char* close_paren = func_ptr_marker + 2;  // after " ("
+                while (*close_paren && *close_paren != ')') close_paren++;
+                if (*close_paren == ')') {
+                    size_t prefix_len = close_paren - dan->dem.buf;
+                    size_t suffix_len = dan->dem.len - prefix_len;
+                    DemString new_dem = {0};
+                    dem_string_append_n(&new_dem, dan->dem.buf, prefix_len);
+                    dem_string_append(&new_dem, "&&");
+                    dem_string_append_n(&new_dem, dan->dem.buf + prefix_len, suffix_len);
+                    dem_string_deinit(&dan->dem);
+                    dan->dem = new_dem;
+                } else {
+                    dem_string_append(&dan->dem, "&&");
+                }
+            } else {
+                dem_string_append(&dan->dem, "&&");
+            }
+            append_type(m, &dan->dem, false);
+        }
     );
     // MATCH (RULE (template_template_param) && RULE (template_args));
     MATCH (
@@ -1371,14 +1471,19 @@ bool rule_nested_name (
     // Case 2b: template_prefix + template_args + unqualified_name + template_args + E 
     // (for template methods in template classes)
     // e.g., std::vector<int>::_M_allocate_and_copy<int*>
+    // Substitution order for Case 2b:
+    // 1. template_prefix parts (e.g., std::vector)
+    // 2. template_prefix + template_args (e.g., std::vector<int>)
+    // 3. After "::" + unqualified_name -> template prefix for method (e.g., std::vector<int>::_M_allocate_and_copy)
+    // 4. Template args of the method are added during template_args parsing
     MATCH_AND_DO (
         RULE_CALL_DEFER (AST (2), template_prefix) && RULE_CALL_DEFER (AST (3), template_args) &&
             AST_MERGE (AST (2)) && AST_MERGE (AST (3)) && AST_APPEND_TYPE &&
             RULE_CALL_DEFER (AST (4), unqualified_name) && 
+            // Add the template prefix (class::method without template args) to substitution table
+            (AST_APPEND_STR ("::"), AST_MERGE (AST (4)), AST_APPEND_TYPE, true) &&
             RULE_CALL_DEFER (AST (5), template_args) && READ ('E'),
         {
-            AST_APPEND_STR ("::");
-            AST_MERGE (AST (4));
             AST_MERGE (AST (5));
             // Mark as template function so encoding knows to parse return type
             dan->tag = CP_DEM_TYPE_KIND_template_prefix;
@@ -1809,11 +1914,36 @@ bool rule_prefix_tail (
         // Add :: before merging this component
         AST_APPEND_STR ("::");
         AST_MERGE (AST (0));
-        // Record the qualified name as a substitution (e.g., "QMetaObject::Connection")
-        AST_APPEND_TYPE;
+        
+        // Record the FULL qualified name as a substitution
+        // Since dan only contains "::component", we need to construct full path
+        // by prepending the last entry from detected_types
+        if (m->detected_types.length > 0) {
+            Name* last_type = vec_ptr_at (&m->detected_types, m->detected_types.length - 1);
+            if (last_type && last_type->name.buf) {
+                // Create full path: last_type + "::" + component
+                DemString full_path = {0};
+                dem_string_append (&full_path, last_type->name.buf);
+                dem_string_concat (&full_path, &dan->dem);  // dan->dem has "::component"
+                append_type (m, &full_path, false);
+                dem_string_deinit (&full_path);
+            }
+        }
+        
         // Optional prefix_suffix
         if (rule_prefix_suffix (AST (1), msi, m, graph, _my_node_id)) {
             AST_MERGE (AST (1));
+            // If we have template args, add the full template type too
+            if (m->detected_types.length > 0) {
+                Name* last_type = vec_ptr_at (&m->detected_types, m->detected_types.length - 1);
+                if (last_type && last_type->name.buf) {
+                    DemString full_path = {0};
+                    dem_string_append (&full_path, last_type->name.buf);
+                    dem_string_concat (&full_path, &AST(1)->dem);
+                    append_type (m, &full_path, false);
+                    dem_string_deinit (&full_path);
+                }
+            }
         }
         // Recursive prefix_tail
         if (first_of_rule_unqualified_name (CUR()) &&
