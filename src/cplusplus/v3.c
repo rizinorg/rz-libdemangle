@@ -1460,6 +1460,20 @@ DEFN_RULE (nv_offset, {
 });
 
 
+// Helper to append '>' with proper spacing for nested templates
+// Check if the last child contains template_args (meaning nested template), add space before '>'
+static bool append_template_close(DemAstNode* dan) {
+    if (dan->children && dan->children->length > 0) {
+        DemAstNode* last_child = VecF(DemAstNode, at)(dan->children, dan->children->length - 1);
+        // Check if the last child's demangled string ends with '>'
+        if (last_child && last_child->dem.len > 0 && 
+            last_child->dem.buf[last_child->dem.len - 1] == '>') {
+            dem_string_append_char(&dan->dem, ' ');
+        }
+    }
+    return dem_string_append_char(&dan->dem, '>');
+}
+
 DEFN_RULE (template_args, {
     bool is_const;
 
@@ -1483,7 +1497,7 @@ DEFN_RULE (template_args, {
 
     MATCH_AND_DO (
         OPTIONAL ((is_const = IS_CONST()) && UNSET_CONST()) && READ ('I') && AST_APPEND_CHR ('<') &&
-            RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && AST_APPEND_CHR ('>') && READ ('E'),
+            RULE_ATLEAST_ONCE_WITH_SEP (template_arg, ", ") && append_template_close(dan) && READ ('E'),
         {
             // uppity up up
             m->t_level--;
