@@ -662,13 +662,14 @@ DEFN_RULE (template_param, {
                 TRACE_RETURN_FAILURE();
             }
             sid = sid + m->template_idx_start;
-            if (m->template_params.length > sid &&
-                vec_ptr_at (&m->template_params, sid)->name.buf) {}
+            // Try to substitute template parameter from saved template args
+            // Even if substitution fails, we still matched the syntax - just output nothing
+            meta_substitute_tparam (m, sid, &dan->dem);
             TRACE_RETURN_SUCCESS;
         } else if (READ ('_')) {
             size_t sid = m->template_idx_start;
-            if (m->template_params.length > sid &&
-                vec_ptr_at (&m->template_params, sid)->name.buf) {}
+            // Try to substitute template parameter from saved template args
+            meta_substitute_tparam (m, sid, &dan->dem);
             TRACE_RETURN_SUCCESS;
         }
     }
@@ -1111,10 +1112,23 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
 
 
 DEFN_RULE (template_arg, {
-    MATCH (READ ('X') && RULE_DEFER (AST (0), expression) && AST_MERGE (AST (0)) && READ ('E'));
+    // After matching a template argument, save it for later T_ substitutions
+    MATCH_AND_DO (READ ('X') && RULE_DEFER (AST (0), expression) && AST_MERGE (AST (0)) && READ ('E'), {
+        if (m->t_level == 1) {
+            append_tparam (m, &dan->dem);
+        }
+    });
     MATCH (READ ('J') && RULE_MANY (template_arg) && READ ('E'));
-    MATCH (RULE_DEFER (AST (0), type) && AST_MERGE (AST (0)));
-    MATCH (RULE_DEFER (AST (0), expr_primary) && AST_MERGE (AST (0)));
+    MATCH_AND_DO (RULE_DEFER (AST (0), type) && AST_MERGE (AST (0)), {
+        if (m->t_level == 1) {
+            append_tparam (m, &dan->dem);
+        }
+    });
+    MATCH_AND_DO (RULE_DEFER (AST (0), expr_primary) && AST_MERGE (AST (0)), {
+        if (m->t_level == 1) {
+            append_tparam (m, &dan->dem);
+        }
+    });
 });
 
 
@@ -1179,10 +1193,13 @@ DEFN_RULE (substitution, {
     MATCH (READ_STR ("St") && AST_APPEND_STR ("std"));
     MATCH (READ_STR ("Sa") && AST_APPEND_STR ("std::allocator"));
     MATCH (READ_STR ("Sb") && AST_APPEND_STR ("std::basic_string"));
+    // For std::string (Ss), expand to full form when followed by ctor/dtor (C or D)
+    // This handles cases like _ZNSsC2ERKSs (std::basic_string constructor)
     MATCH (
         READ_STR ("Ss") &&
-        // AST_APPEND_STR ("std::basic_string<char, std::char_traits<char>, std::allocator<char>>")
-        AST_APPEND_STR ("std::string")
+        ((PEEK() == 'C' || PEEK() == 'D') ?
+            AST_APPEND_STR ("std::basic_string<char, std::char_traits<char>, std::allocator<char> >") :
+            AST_APPEND_STR ("std::string"))
     );
     MATCH (
         READ_STR ("Si") && AST_APPEND_STR ("std::istream")
@@ -1289,6 +1306,7 @@ bool rule_name (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
         AST_MERGE (AST (0));
         AST_MERGE (AST (1));
         AST_APPEND_TYPE;
+        dan->tag = CP_DEM_TYPE_KIND_template_prefix;
     });
 
     // For substitution + template_args, the substitution reference itself is already in the table
@@ -1296,9 +1314,14 @@ bool rule_name (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
         AST_MERGE (AST (0));
         AST_MERGE (AST (1));
         AST_APPEND_TYPE;
+        dan->tag = CP_DEM_TYPE_KIND_template_prefix;
     });
 
-    MATCH1 (nested_name);
+    // nested_name - propagate tag if it's a template function
+    MATCH_AND_DO (RULE_DEFER (AST (0), nested_name), {
+        AST_MERGE (AST (0));
+        dan->tag = AST(0)->tag;
+    });
     MATCH1 (unscoped_name);
     MATCH1 (local_name);
 
@@ -1342,6 +1365,23 @@ bool rule_nested_name (
         {
             AST_APPEND_STR ("::");
             AST_MERGE (AST (4));
+        }
+    );
+
+    // Case 2b: template_prefix + template_args + unqualified_name + template_args + E 
+    // (for template methods in template classes)
+    // e.g., std::vector<int>::_M_allocate_and_copy<int*>
+    MATCH_AND_DO (
+        RULE_CALL_DEFER (AST (2), template_prefix) && RULE_CALL_DEFER (AST (3), template_args) &&
+            AST_MERGE (AST (2)) && AST_MERGE (AST (3)) && AST_APPEND_TYPE &&
+            RULE_CALL_DEFER (AST (4), unqualified_name) && 
+            RULE_CALL_DEFER (AST (5), template_args) && READ ('E'),
+        {
+            AST_APPEND_STR ("::");
+            AST_MERGE (AST (4));
+            AST_MERGE (AST (5));
+            // Mark as template function so encoding knows to parse return type
+            dan->tag = CP_DEM_TYPE_KIND_template_prefix;
         }
     );
 
@@ -1393,7 +1433,17 @@ static bool append_last_class_name (DemAstNode* dan, Meta* m) {
             while (*tmpl && *tmpl != '<') {
                 tmpl++;
             }
-            dem_string_append_n (&dan->dem, last_sep, tmpl - last_sep);
+            // For std::basic_string<...> constructor/destructor, output "basic_string" not "string"
+            size_t name_len = tmpl - last_sep;
+            if (name_len == 6 && memcmp(last_sep, "string", 6) == 0) {
+                // Check if this is std::basic_string<...> by looking at the full name
+                const char* basic_str = "std::basic_string<char, std::char_traits<char>, std::allocator<char> >";
+                if (strncmp(name, basic_str, strlen(basic_str)) == 0) {
+                    dem_string_append(&dan->dem, "basic_string");
+                    return true;
+                }
+            }
+            dem_string_append_n (&dan->dem, last_sep, name_len);
             return true;
         }
     }
@@ -1480,18 +1530,14 @@ DEFN_RULE (template_args, {
     // we going down the rabbit hope
     m->t_level++;
 
-    // in case we reset the template types (m->template_params)
-    size_t template_idx_start = m->last_reset_idx;
-    size_t last_reset_idx     = m->template_params.length;
-
     // if we're here more than once at the topmost level (t->level = 0)
     // then this means we have something like A<..>::B<...>
     // were we're just starting to read B, and have already parsed and generate template for A
     // now B won't be using A's template type substitutions, so we increase the offset
     // from which we use the template substitutions.
     if (m->template_reset) {
-        m->template_idx_start = template_idx_start;
-        m->last_reset_idx     = last_reset_idx;
+        // Reset template_idx_start to current length - new template params start here
+        m->template_idx_start = m->template_params.length;
         m->template_reset     = false;
     }
 
@@ -1607,7 +1653,11 @@ bool rule_encoding (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, i
         // so to supress the noise of backtracking, we just make it optional here
         OPTIONAL (
             RULE_DEFER (AST (2), bare_function_type) && AST_APPEND_CHR ('(') &&
-            AST_MERGE (AST (2)) && AST_APPEND_CHR (')')
+            // Check if params is just "void" - for parameterless functions output empty ()
+            // In Itanium ABI, 'v' alone means no parameters
+            (AST (2)->dem.len == 4 && memcmp (AST (2)->dem.buf, "void", 4) == 0 ?
+                true : (AST_MERGE (AST (2)), true)) &&
+            AST_APPEND_CHR (')')
         ) &&
 
         // append const if it was detected to be a constant function
