@@ -166,6 +166,15 @@ typedef struct Meta {
     int template_idx_start;
     int last_reset_idx;
 
+    // Index of the prefix entry in detected_types that prefix_tail should append to
+    // This is set before entering prefix parsing and used by prefix_tail
+    ut64 prefix_base_idx;
+
+    // Current prefix string that prefix_tail should use when building full paths
+    // This is needed when the base is a special substitution like "std" which is not
+    // added to the substitution table
+    DemString current_prefix;
+
     // template level, detects the depth of RULE(template_args) expansion
     // if we expand above level 1 (starts at level 1), then we stop appending parameters to template
     // parameter list
@@ -210,6 +219,7 @@ bool   append_type (Meta* m, DemString* t, bool force_append);
 bool   append_tparam (Meta* m, DemString* t);
 bool   meta_substitute_type (Meta* m, ut64 id, DemString* dem);
 bool   meta_substitute_tparam (Meta* m, ut64 id, DemString* dem);
+st64   find_type_index (Meta* m, const char* type_str);
 
 ut32 count_name_parts (Name* n);
 bool is_builtin_type (const char* t);

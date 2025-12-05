@@ -21,6 +21,9 @@ static inline void meta_copy_scalars (Meta* dst, Meta* src) {
     dst->t_level               = src->t_level;
     dst->template_reset        = src->template_reset;
     dst->is_ctor_or_dtor_at_l0 = src->is_ctor_or_dtor_at_l0;
+    dst->prefix_base_idx       = src->prefix_base_idx;
+    // Note: current_prefix is intentionally NOT copied as a scalar
+    // It needs special handling - clone if needed
 }
 
 void meta_deinit (Meta* m) {
@@ -30,6 +33,7 @@ void meta_deinit (Meta* m) {
 
     VecF (Name, deinit) (&m->detected_types);
     VecF (Name, deinit) (&m->template_params);
+    dem_string_deinit (&m->current_prefix);
     memset (m, 0, sizeof (Meta));
 }
 
@@ -38,6 +42,11 @@ bool meta_copy (Meta* dst, Meta* src) {
         return false;
     }
     meta_copy_scalars (dst, src);
+    // Copy current_prefix (not included in scalars because it needs cloning)
+    dem_string_deinit (&dst->current_prefix);
+    if (src->current_prefix.buf && src->current_prefix.len > 0) {
+        dem_string_init_clone (&dst->current_prefix, &src->current_prefix);
+    }
     vec_foreach_ptr (&src->detected_types, n, {
         Name new_name = {0};
         dem_string_init_clone (&new_name.name, &n->name);
@@ -58,6 +67,10 @@ void meta_move (Meta* dst, Meta* src) {
         return;
     }
     meta_copy_scalars (dst, src);
+    // Move current_prefix
+    dem_string_deinit (&dst->current_prefix);
+    dst->current_prefix = src->current_prefix;
+    src->current_prefix = (DemString){0};
     VecF (Name, deinit) (&dst->detected_types);
     VecF (Name, deinit) (&dst->template_params);
     VecF (Name, move) (&dst->detected_types, &src->detected_types);
@@ -153,7 +166,17 @@ bool append_type (Meta* m, DemString* t, bool force_append) {
         return false;
     }
 
-    if (is_builtin_type (t->buf)) {
+    // DEBUG
+    if (getenv("DEMANGLE_TRACE")) {
+        fprintf(stderr, "[append_type] trying to add: '%s'\n", t->buf);
+    }
+
+    // Builtins are not substitutable per ABI, EXCEPT when force_append is true
+    // (for template params that substitute to builtins)
+    if (!force_append && is_builtin_type (t->buf)) {
+        if (getenv("DEMANGLE_TRACE")) {
+            fprintf(stderr, "[append_type] rejected (builtin): '%s'\n", t->buf);
+        }
         return true;
     }
 
@@ -163,14 +186,30 @@ bool append_type (Meta* m, DemString* t, bool force_append) {
         return true;
     }
 
-    // sometimes by mistake "std" is appended as type, but name manglers don't generate it to be a type
+    // Note: We used to filter out "std" here, but that's incorrect.
+    // While "std" alone is not a type, it CAN be a valid substitutable prefix
+    // when followed by more components like "std::vector".
+    // The ABI says special substitutions like St (std::) are not in the table,
+    // but "std" as a namespace path IS substitutable when building types like std::vector.
+    // Actually, per Itanium ABI, just "std" alone is NOT substitutable - only
+    // qualified names like "std::vector" are. But since we build incrementally,
+    // we may temporarily have "std" before adding "::vector". We should NOT add
+    // "std" alone to the table, but we need to track it for building full paths.
+    // 
+    // The real fix is to not call AST_APPEND_TYPE when the result would be just "std".
+    // For now, keep filtering "std" - the fix should be in the calling code.
     if (!strcmp (t->buf, "std")) {
         return true;
     }
 
-    // NOTE: In Itanium ABI, the same type can appear multiple times in the substitution table.
-    // Each occurrence gets a new substitution index. So we do NOT check for uniqueness here.
-    // The force_append parameter is kept for backwards compatibility but is not used for deduplication.
+    // If we're not forcefully appending values, then check for uniqueness of times
+    if (!force_append) {
+        vec_foreach_ptr (&m->detected_types, dt, {
+            if (!strcmp (dt->name.buf, t->buf)) {
+                return true;
+            }
+        });
+    }
 
     Name* new_name = VecF (Name, append) (&m->detected_types, NULL);
     dem_string_init_clone (&new_name->name, t);
@@ -201,6 +240,23 @@ bool append_tparam (Meta* m, DemString* t) {
     }
 
     return true;
+}
+
+/**
+ * Find the index of a type in the detected_types table.
+ * Returns the index if found, or -1 if not found.
+ */
+st64 find_type_index (Meta* m, const char* type_str) {
+    if (!m || !type_str) {
+        return -1;
+    }
+    for (ut64 i = 0; i < m->detected_types.length; i++) {
+        Name* dt = vec_ptr_at (&m->detected_types, i);
+        if (dt && dt->name.buf && !strcmp (dt->name.buf, type_str)) {
+            return (st64)i;
+        }
+    }
+    return -1;
 }
 
 /**

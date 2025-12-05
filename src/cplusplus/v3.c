@@ -1094,7 +1094,7 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
             // Check if this is a function type by looking for " (" pattern
             // Function types look like "ret (args)" 
             // Function pointers look like "ret (*)(args)" or "ret (**)(args)"
-            char* space_paren = strstr(dan->dem.buf, " (");
+            char* space_paren = dan->dem.buf ? strstr(dan->dem.buf, " (") : NULL;
             if (space_paren) {
                 // Check if it's already a function pointer: " (*)" or " (**)"
                 if (space_paren[2] == '*') {
@@ -1132,7 +1132,7 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
         READ ('R') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)),
         {
             // Check if this is a function pointer type
-            char* func_ptr_marker = strstr(dan->dem.buf, " (*");
+            char* func_ptr_marker = dan->dem.buf ? strstr(dan->dem.buf, " (*") : NULL;
             if (func_ptr_marker) {
                 // Function pointer: insert & inside the (*...) before the closing )
                 // "void (* const)(int)" -> "void (* const&)(int)"
@@ -1154,6 +1154,7 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
             } else {
                 dem_string_append(&dan->dem, "&");
             }
+            // Reference types ARE substitutable per Itanium ABI section 5.1.5
             append_type(m, &dan->dem, false);
         }
     );
@@ -1161,7 +1162,7 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
         READ ('O') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)),
         {
             // Check if this is a function pointer type
-            char* func_ptr_marker = strstr(dan->dem.buf, " (*");
+            char* func_ptr_marker = dan->dem.buf ? strstr(dan->dem.buf, " (*") : NULL;
             if (func_ptr_marker) {
                 // Function pointer: insert && inside the (*...) before the closing )
                 // "void (* const)(int)" -> "void (* const&&)(int)"
@@ -1182,13 +1183,24 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
             } else {
                 dem_string_append(&dan->dem, "&&");
             }
+            // Rvalue reference types ARE substitutable per Itanium ABI section 5.1.5
             append_type(m, &dan->dem, false);
         }
     );
     // MATCH (RULE (template_template_param) && RULE (template_args));
-    MATCH (
-        RULE_DEFER (AST (0), template_param) && AST_MERGE (AST (0)) &&
-        OPTIONAL (RULE_DEFER (AST (1), template_args) && AST_MERGE (AST (1)))
+    // Template param with optional template args - add to substitution if no template args follow
+    MATCH_AND_DO (
+        RULE_DEFER (AST (0), template_param) && AST_MERGE (AST (0)),
+        {
+            // Check if followed by template_args
+            if (PEEK() == 'I' && rule_template_args(AST(1), msi, m, graph, _my_node_id)) {
+                AST_MERGE(AST(1));
+            } else {
+                // Plain template param used as type - force add to substitution table
+                // T_ substitution creates a new substitution entry even if type already exists
+                FORCE_APPEND_TYPE(&dan->dem);
+            }
+        }
     );
     MATCH (
         RULE_DEFER (AST (0), substitution) && RULE_DEFER (AST (1), template_args) &&
@@ -1203,7 +1215,6 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
     MATCH (RULE_DEFER (AST (0), class_enum_type) && AST_MERGE (AST (0)) && AST_APPEND_TYPE);
     MATCH (RULE_DEFER (AST (0), array_type) && AST_MERGE (AST (0)));
     MATCH (RULE_DEFER (AST (0), pointer_to_member_type) && AST_MERGE (AST (0)));
-    MATCH (RULE_DEFER (AST (0), template_param) && AST_MERGE (AST (0)));
     MATCH (RULE_DEFER (AST (0), decltype) && AST_MERGE (AST (0)));
     MATCH (RULE_DEFER (AST (0), substitution) && AST_MERGE (AST (0)));
 
@@ -1401,11 +1412,14 @@ bool rule_name (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
 
     // For unscoped_name + template_args, we need to record:
     // 1. The template name (unscoped_name) BEFORE processing template_args
-    // 2. The complete template instantiation AFTER merging both
+    // 2. NOTE: The complete template instantiation is NOT added here because
+    //    function/variable template instantiations are not substitutable per ABI 5.1.4
+    //    Only type template instantiations are substitutable (handled in rule_type)
     MATCH_AND_DO (RULE_DEFER (AST (0), unscoped_name) && AST_APPEND_TYPE1 (&AST (0)->dem) && RULE_DEFER (AST (1), template_args), {
         AST_MERGE (AST (0));
         AST_MERGE (AST (1));
-        AST_APPEND_TYPE;
+        // Do NOT add the complete template instantiation to substitution table
+        // It will be added if used as a type in rule_type
         dan->tag = CP_DEM_TYPE_KIND_template_prefix;
     });
 
@@ -1413,7 +1427,7 @@ bool rule_name (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
     MATCH_AND_DO (RULE_DEFER (AST (0), substitution) && RULE_DEFER (AST (1), template_args), {
         AST_MERGE (AST (0));
         AST_MERGE (AST (1));
-        AST_APPEND_TYPE;
+        // Do NOT add the complete template instantiation to substitution table
         dan->tag = CP_DEM_TYPE_KIND_template_prefix;
     });
 
@@ -1444,12 +1458,15 @@ bool rule_nested_name (
     RULE_CALL_DEFER (AST (1), ref_qualifier);
 
     // Case 1: template_prefix + template_args + E (for simple template types like std::vector<int>)
+    // Also used for template functions like foo<int>
     MATCH_AND_DO (
         RULE_CALL_DEFER (AST (2), template_prefix) && RULE_CALL_DEFER (AST (3), template_args) &&
             READ ('E'),
         {
             AST_MERGE (AST (2));
             AST_MERGE (AST (3));
+            // Mark as template so encoding knows to parse return type for template functions
+            dan->tag = CP_DEM_TYPE_KIND_template_prefix;
         }
     );
 
@@ -1485,6 +1502,23 @@ bool rule_nested_name (
             RULE_CALL_DEFER (AST (5), template_args) && READ ('E'),
         {
             AST_MERGE (AST (5));
+            // Mark as template function so encoding knows to parse return type
+            dan->tag = CP_DEM_TYPE_KIND_template_prefix;
+        }
+    );
+
+    // Case 2c: prefix + unqualified_name + template_args + E
+    // (for template methods in non-template classes)
+    // e.g., A::foo<int>
+    MATCH_AND_DO (
+        RULE_CALL_DEFER (AST (2), prefix) && 
+            RULE_CALL_DEFER (AST (3), unqualified_name) &&
+            // Add the template prefix (class::method without template args) to substitution table
+            (AST_MERGE (AST (2)), AST (2)->dem.len > 0 ? AST_APPEND_STR ("::") : true, 
+             AST_MERGE (AST (3)), AST_APPEND_TYPE, true) &&
+            RULE_CALL_DEFER (AST (4), template_args) && READ ('E'),
+        {
+            AST_MERGE (AST (4));
             // Mark as template function so encoding knows to parse return type
             dan->tag = CP_DEM_TYPE_KIND_template_prefix;
         }
@@ -1814,9 +1848,32 @@ DEFN_RULE (expr_primary, {
         READ ('L') && AST_APPEND_STR ("(") && (PEEK() == 'P') && RULE (pointer_type) &&
         AST_APPEND_STR (")") && READ ('0') && AST_APPEND_CHR ('0') && READ ('E')
     );
-    // TODO: fixme
-    MATCH (
-        READ ('L') && RULE_DEFER (AST (0), type) && RULE_DEFER (AST (1), value_number) && READ ('E')
+    // Non-type template parameter: L<type><value>E
+    // For bool: Lb0E -> false, Lb1E -> true
+    // For other types: L<type><number>E -> (<type>)<number> or just <number>
+    MATCH_AND_DO (
+        READ ('L') && RULE_DEFER (AST (0), type) && RULE_DEFER (AST (1), value_number) && READ ('E'),
+        {
+            const char* type_str = AST(0)->dem.buf;
+            const char* value_str = AST(1)->dem.buf;
+            if (type_str && value_str) {
+                // Convert bool to true/false
+                if (strcmp(type_str, "bool") == 0) {
+                    if (strcmp(value_str, "0") == 0) {
+                        AST_APPEND_STR("false");
+                    } else {
+                        AST_APPEND_STR("true");
+                    }
+                } else {
+                    // For other types, just output the value
+                    // Optionally with suffix for unsigned types
+                    AST_MERGE(AST(1));
+                    if (strstr(type_str, "unsigned") != NULL || strcmp(type_str, "unsigned int") == 0) {
+                        AST_APPEND_STR("u");
+                    }
+                }
+            }
+        }
     );
 
     MATCH (READ ('L') && RULE (type) && RULE (value_float) && READ ('E'));
@@ -1873,19 +1930,42 @@ bool rule_prefix_start (
     RULE_HEAD (prefix_start);
 
     MATCH1 (decltype);
-    MATCH (
+    MATCH_AND_DO (
         (RULE_DEFER (AST (0), unqualified_name) || RULE_DEFER (AST (0), template_param) ||
          RULE_DEFER (AST (0), substitution)) &&
         (PEEK() == 'E' ?
              false :
              (AST_MERGE (AST (0)) &&
               // First record the unqualified_name (template name like QList)
-              AST_APPEND_TYPE &&
-              // Then optionally match and merge template_args
-              OPTIONAL (RULE_CALL_DEFER (AST (1), prefix_suffix) && AST_MERGE (AST (1)) &&
-                        // Record the complete template instantiation (QList<QOpenGLShader*>)
-                        AST_APPEND_TYPE)))
+              AST_APPEND_TYPE)),
+        {
+            // Find the actual index of the entry (handles deduplication)
+            st64 idx = find_type_index (m, dan->dem.buf);
+            if (idx >= 0) {
+                m->prefix_base_idx = (ut64)idx;
+            }
+            // Also save the current prefix string for use by prefix_tail
+            // This is needed when the prefix is a special substitution like "std"
+            // which is not added to the substitution table
+            dem_string_deinit (&m->current_prefix);
+            dem_string_init_clone (&m->current_prefix, &dan->dem);
+            if (getenv("DEMANGLE_TRACE")) {
+                fprintf(stderr, "[prefix_start] set current_prefix = '%s'\n", m->current_prefix.buf ? m->current_prefix.buf : "(null)");
+            }
+        }
     );
+    // Optionally match template args
+    if (PEEK() == 'I' && rule_prefix_suffix (AST (1), msi, m, graph, _my_node_id)) {
+        AST_MERGE (AST (1));
+        AST_APPEND_TYPE;
+        st64 idx = find_type_index (m, dan->dem.buf);
+        if (idx >= 0) {
+            m->prefix_base_idx = (ut64)idx;
+        }
+        // Update current_prefix to include template args
+        dem_string_deinit (&m->current_prefix);
+        dem_string_init_clone (&m->current_prefix, &dan->dem);
+    }
 
     RULE_FOOT (prefix_start);
 }
@@ -1905,44 +1985,143 @@ bool rule_prefix_tail (
     // Match unqualified_name and continue to next prefix_tail
     if (first_of_rule_unqualified_name (CUR()) &&
         rule_unqualified_name (AST (0), msi, m, graph, _my_node_id)) {
-        // Check if followed by 'E' or 'I' - if so, this unqualified_name belongs to nested_name or template_prefix
-        if (PEEK() == 'E' || PEEK() == 'I') {
+        // Check if followed by 'E' - if so, this unqualified_name belongs to nested_name termination
+        if (PEEK() == 'E') {
             // Restore position and fail - let the caller consume this
             CUR() = saved_pos;
             RULE_FOOT (prefix_tail);
         }
+        
+        // Check if followed by 'I' (template args)
+        // We need to peek ahead to see if after template args there's still more prefix components
+        // If after 'I...E' there's another unqualified_name, this is an intermediate template like A::B<int>::C
+        // If after 'I...E' there's 'E' (nested name end), this is the final template name for template_prefix
+        if (PEEK() == 'I') {
+            // Save current position
+            const char* before_template = CUR();
+            
+            // IMPORTANT: Add template PREFIX to substitution table BEFORE parsing template args
+            // Per Itanium ABI, S_ = std::vector (template prefix), S0_ = std::vector<int> (full)
+            // We need to merge the unqualified_name first to build the prefix
+            DemString saved_dem = dan->dem;
+            dan->dem = (DemString){0};
+            AST_APPEND_STR ("::");
+            AST_MERGE (AST (0));
+            // Now dan->dem has "::vector", build full prefix path using current_prefix
+            // current_prefix contains the parent prefix (e.g., "std")
+            if (getenv("DEMANGLE_TRACE")) {
+                fprintf(stderr, "[prefix_tail] current_prefix = '%s', dan->dem = '%s'\n", 
+                    m->current_prefix.buf ? m->current_prefix.buf : "(null)",
+                    dan->dem.buf ? dan->dem.buf : "(null)");
+            }
+            if (m->current_prefix.buf && m->current_prefix.len > 0) {
+                DemString prefix_path = {0};
+                dem_string_append (&prefix_path, m->current_prefix.buf);
+                dem_string_concat (&prefix_path, &dan->dem);  // e.g., "std::vector"
+                append_type (m, &prefix_path, false);
+                // Update current_prefix to be the new template prefix
+                dem_string_deinit (&m->current_prefix);
+                dem_string_init_clone (&m->current_prefix, &prefix_path);
+                // Also update prefix_base_idx
+                st64 idx = find_type_index (m, prefix_path.buf);
+                if (idx >= 0) {
+                    m->prefix_base_idx = (ut64)idx;
+                }
+                dem_string_deinit (&prefix_path);
+            }
+            // Prepend to saved_dem
+            dem_string_concat (&dan->dem, &saved_dem);
+            dem_string_deinit (&saved_dem);
+            
+            // Save current_prefix before parsing template args (nested parsing may overwrite it)
+            DemString saved_current_prefix = {0};
+            if (m->current_prefix.buf) {
+                dem_string_init_clone (&saved_current_prefix, &m->current_prefix);
+            }
+            
+            // Try to parse template args
+            if (rule_prefix_suffix (AST (1), msi, m, graph, _my_node_id)) {
+                // Restore current_prefix after parsing template args
+                dem_string_deinit (&m->current_prefix);
+                if (saved_current_prefix.buf) {
+                    m->current_prefix = saved_current_prefix;
+                    saved_current_prefix = (DemString){0};
+                }
+                
+                // Check what comes after template args
+                if (!first_of_rule_unqualified_name(CUR())) {
+                    // No more prefix components after template args
+                    // This is the final template - fail and let template_prefix handle it
+                    CUR() = saved_pos;
+                    // Restore dan->dem - need to remove what we added
+                    // This is tricky... we need to properly backtrack
+                    RULE_FOOT (prefix_tail);
+                }
+                // There are more components - this is intermediate like A::B<int>::C
+                // Continue processing - merge template args
+                AST_MERGE (AST (1));
+                
+                // Build and add the template instantiation (with args) to substitution table
+                if (m->current_prefix.buf && m->current_prefix.len > 0) {
+                    DemString full_path = {0};
+                    dem_string_append (&full_path, m->current_prefix.buf);
+                    dem_string_append (&full_path, AST(1)->dem.buf);  // Just the template args
+                    append_type (m, &full_path, false);
+                    // Update current_prefix to be the full template
+                    dem_string_deinit (&m->current_prefix);
+                    dem_string_init_clone (&m->current_prefix, &full_path);
+                    m->prefix_base_idx = m->detected_types.length - 1;
+                    dem_string_deinit (&full_path);
+                }
+                
+                // Recursive prefix_tail for remaining components
+                if (first_of_rule_unqualified_name (CUR()) &&
+                    rule_prefix_tail (AST (2), msi, m, graph, _my_node_id)) {
+                    AST_MERGE (AST (2));
+                }
+                TRACE_RETURN_SUCCESS;
+            } else {
+                // Failed to parse template args - restore and fail
+                dem_string_deinit (&saved_current_prefix);
+                CUR() = saved_pos;
+                RULE_FOOT (prefix_tail);
+            }
+        }
+        
         // Add :: before merging this component
         AST_APPEND_STR ("::");
         AST_MERGE (AST (0));
         
-        // Record the FULL qualified name as a substitution
-        // Since dan only contains "::component", we need to construct full path
-        // by prepending the last entry from detected_types
-        if (m->detected_types.length > 0) {
-            Name* last_type = vec_ptr_at (&m->detected_types, m->detected_types.length - 1);
-            if (last_type && last_type->name.buf) {
-                // Create full path: last_type + "::" + component
-                DemString full_path = {0};
-                dem_string_append (&full_path, last_type->name.buf);
-                dem_string_concat (&full_path, &dan->dem);  // dan->dem has "::component"
-                append_type (m, &full_path, false);
-                dem_string_deinit (&full_path);
+        // Build full path using current_prefix
+        if (m->current_prefix.buf && m->current_prefix.len > 0) {
+            DemString full_path = {0};
+            dem_string_append (&full_path, m->current_prefix.buf);
+            dem_string_concat (&full_path, &dan->dem);  // dan->dem has "::component"
+            append_type (m, &full_path, false);
+            // Update current_prefix and prefix_base_idx
+            dem_string_deinit (&m->current_prefix);
+            dem_string_init_clone (&m->current_prefix, &full_path);
+            st64 idx = find_type_index (m, full_path.buf);
+            if (idx >= 0) {
+                m->prefix_base_idx = (ut64)idx;
             }
+            dem_string_deinit (&full_path);
         }
         
-        // Optional prefix_suffix
+        // Optional prefix_suffix (template args)
         if (rule_prefix_suffix (AST (1), msi, m, graph, _my_node_id)) {
             AST_MERGE (AST (1));
-            // If we have template args, add the full template type too
-            if (m->detected_types.length > 0) {
-                Name* last_type = vec_ptr_at (&m->detected_types, m->detected_types.length - 1);
-                if (last_type && last_type->name.buf) {
-                    DemString full_path = {0};
-                    dem_string_append (&full_path, last_type->name.buf);
-                    dem_string_concat (&full_path, &AST(1)->dem);
-                    append_type (m, &full_path, false);
-                    dem_string_deinit (&full_path);
-                }
+            // Add the template instantiation using current_prefix
+            if (m->current_prefix.buf && m->current_prefix.len > 0) {
+                DemString full_path = {0};
+                dem_string_append (&full_path, m->current_prefix.buf);
+                dem_string_concat (&full_path, &AST(1)->dem);
+                append_type (m, &full_path, false);
+                // Update current_prefix
+                dem_string_deinit (&m->current_prefix);
+                dem_string_init_clone (&m->current_prefix, &full_path);
+                m->prefix_base_idx = m->detected_types.length - 1;
+                dem_string_deinit (&full_path);
             }
         }
         // Recursive prefix_tail
@@ -1960,7 +2139,16 @@ bool rule_prefix (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int
     RULE_HEAD (prefix);
 
     MATCH_AND_CONTINUE (RULE_CALL_DEFER (AST (0), prefix_start) && AST_MERGE (AST (0)));
-    OPTIONAL (RULE_CALL_DEFER (AST (1), prefix_tail) && AST_MERGE (AST (1)));
+    // Save prefix_base_idx immediately after prefix_start succeeds
+    // This is crucial because recursive template arg parsing may overwrite it
+    st64 saved_prefix_base_idx = m->prefix_base_idx;
+    // prefix_tail adds "::component" suffix(es) to dan->dem and updates substitution table
+    if (first_of_rule_unqualified_name(CUR())) {
+        m->prefix_base_idx = saved_prefix_base_idx;  // Restore before prefix_tail
+        if (RULE_CALL_DEFER (AST (1), prefix_tail)) {
+            AST_MERGE (AST (1));
+        }
+    }
     TRACE_RETURN_SUCCESS;
 
     RULE_FOOT (prefix);
