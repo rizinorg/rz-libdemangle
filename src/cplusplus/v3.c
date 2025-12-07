@@ -783,11 +783,13 @@ DEFN_RULE (function_type, {
         // A space before the arguments
         AST_APPEND_CHR (' ') &&
 
-        // arguments
-        AST_APPEND_STR ("(") && RULE_ATLEAST_ONCE_WITH_SEP (type, ", ") && AST_APPEND_STR (")") &&
+        // arguments - use bare_function_type which handles single void as empty params
+        AST_APPEND_STR ("(") && RULE (bare_function_type) && AST_APPEND_STR (")") &&
 
         OPTIONAL (RULE (ref_qualifier)) && READ ('E'),
         {
+            // Mark this as a function type so pointer/reference handling can detect it
+            dan->tag = CP_DEM_TYPE_KIND_function_type;
             // Add function type to substitution table
             append_type (m, &dan->dem, false);
         }
@@ -982,7 +984,14 @@ DEFN_RULE (class_enum_type, {
 });
 
 
-DEFN_RULE (bare_function_type, { MATCH (RULE_ATLEAST_ONCE_WITH_SEP (type, ", ")); });
+DEFN_RULE (bare_function_type, {
+    // If only parameter is void, output nothing (empty params)
+    // This is per Itanium ABI: "void" as the only parameter means no parameters
+    MATCH (
+        READ ('v') && true  // consume 'v' but output nothing
+    );
+    MATCH (RULE_ATLEAST_ONCE_WITH_SEP (type, ", "));
+});
 
 
 DEFN_RULE (mangled_name, {
@@ -1079,7 +1088,16 @@ bool rule_qualified_type (
 bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id) {
     RULE_HEAD (type);
 
-    MATCH (RULE_DEFER (AST (0), function_type) && AST_MERGE (AST (0)));
+    // For function_type, we need to preserve the child's tag so pointer/reference handling can detect it
+    MATCH_AND_DO (RULE_DEFER (AST (0), function_type), {
+        DemAstNode* child = AST(0);
+        dem_string_concat(&dan->dem, &child->dem);
+        dan->val.len += child->val.len;
+        dan->val.buf = dan->val.buf ? dan->val.buf : child->val.buf;
+        // Preserve the function_type tag from child
+        dan->tag = child->tag;
+        TRACE_RETURN_SUCCESS;
+    });
     MATCH (RULE_CALL_DEFER (AST (0), qualified_type) && AST_MERGE (AST (0)) && AST_APPEND_TYPE);
     MATCH (
         READ ('C') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0))
@@ -1089,14 +1107,21 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
     // Handle pointer types - special handling for function types
     // For PF...E, we need to produce "ret (*)(args)" and add both S_entries
     MATCH_AND_DO (
-        READ ('P') && RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)),
+        READ ('P') && RULE_CALL_DEFER (AST (0), type),
         {
-            // Check if this is a function type by looking for " (" pattern
-            // Function types look like "ret (args)" 
-            // Function pointers look like "ret (*)(args)" or "ret (**)(args)"
-            char* space_paren = dan->dem.buf ? strstr(dan->dem.buf, " (") : NULL;
-            if (space_paren) {
-                // Check if it's already a function pointer: " (*)" or " (**)"
+            // Check if this is a function type by checking child AST tag
+            DemAstNode* child = AST(0);
+            bool is_function_type = (child->tag == CP_DEM_TYPE_KIND_function_type);
+            // Merge the child AST
+            dem_string_concat(&dan->dem, &child->dem);
+            
+            if (is_function_type) {
+                // This is a function type - we need to insert * in the right place
+                // Function types look like "ret (args)" 
+                // Function pointers look like "ret (*)(args)" or "ret (**)(args)"
+                char* space_paren = dan->dem.buf ? strstr(dan->dem.buf, " (") : NULL;
+                if (space_paren) {
+                    // Check if it's already a function pointer: " (*)" or " (**)"
                 if (space_paren[2] == '*') {
                     // Already a function pointer like "ret (*)(args)" -> "ret (**)(args)"
                     // Insert "*" after " ("
@@ -1108,17 +1133,21 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
                     dem_string_append_n(&new_dem, dan->dem.buf + prefix_len, suffix_len);
                     dem_string_deinit(&dan->dem);
                     dan->dem = new_dem;
+                    } else {
+                        // Bare function type "ret (args)" -> "ret (*)(args)"
+                        // Insert "(*)" after " " (before "(args)")
+                        size_t prefix_len = (space_paren + 1) - dan->dem.buf;  // includes " "
+                        size_t suffix_len = dan->dem.len - prefix_len;
+                        DemString new_dem = {0};
+                        dem_string_append_n(&new_dem, dan->dem.buf, prefix_len);
+                        dem_string_append(&new_dem, "(*)");
+                        dem_string_append_n(&new_dem, dan->dem.buf + prefix_len, suffix_len);
+                        dem_string_deinit(&dan->dem);
+                        dan->dem = new_dem;
+                    }
                 } else {
-                    // Bare function type "ret (args)" -> "ret (*)(args)"
-                    // Insert "(*)" after " " (before "(args)")
-                    size_t prefix_len = (space_paren + 1) - dan->dem.buf;  // includes " "
-                    size_t suffix_len = dan->dem.len - prefix_len;
-                    DemString new_dem = {0};
-                    dem_string_append_n(&new_dem, dan->dem.buf, prefix_len);
-                    dem_string_append(&new_dem, "(*)");
-                    dem_string_append_n(&new_dem, dan->dem.buf + prefix_len, suffix_len);
-                    dem_string_deinit(&dan->dem);
-                    dan->dem = new_dem;
+                    // Fallback: just append "*" (shouldn't happen for function types)
+                    dem_string_append(&dan->dem, "*");
                 }
             } else {
                 // Regular pointer: just append "*"
