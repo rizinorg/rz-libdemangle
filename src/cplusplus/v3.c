@@ -1281,13 +1281,9 @@ bool rule_type (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int p
 
     // For function_type, we need to preserve the child's tag so pointer/reference handling can detect it
     MATCH_AND_DO (RULE_DEFER (AST (0), function_type), {
-        DemAstNode* child = AST (0);
-        dem_string_concat (&dan->dem, &child->dem);
-        dan->val.len += child->val.len;
-        dan->val.buf  = dan->val.buf ? dan->val.buf : child->val.buf;
+        AST_MERGE(AST(0));
         // Preserve the function_type tag from child
-        dan->tag = child->tag;
-        TRACE_RETURN_SUCCESS;
+        dan->tag = AST(0)->tag;
     });
     MATCH (RULE_CALL_DEFER (AST (0), qualified_type) && AST_MERGE (AST (0)) && AST_APPEND_TYPE);
     MATCH (
@@ -1450,7 +1446,7 @@ bool rule_template_arg (
         }
     );
     MATCH (READ ('J') && RULE_MANY (template_arg) && READ ('E'));
-    MATCH_AND_DO (RULE_DEFER (AST (0), type) && AST_MERGE (AST (0)), {
+    MATCH_AND_DO (RULE_CALL_DEFER (AST (0), type) && AST_MERGE (AST (0)), {
         if (m->t_level == 1) {
             append_tparam (m, &dan->dem);
         }
