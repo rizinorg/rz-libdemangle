@@ -166,11 +166,6 @@ bool append_type (Meta* m, DemString* t, bool force_append) {
         return false;
     }
 
-    // DEBUG
-    if (getenv("DEMANGLE_TRACE")) {
-        fprintf(stderr, "[append_type] trying to add: '%s'\n", t->buf);
-    }
-
     // Builtins are not substitutable per ABI, EXCEPT when force_append is true
     // (for template params that substitute to builtins)
     if (!force_append && is_builtin_type (t->buf)) {
@@ -209,6 +204,11 @@ bool append_type (Meta* m, DemString* t, bool force_append) {
                 return true;
             }
         });
+    }
+
+    // DEBUG
+    if (getenv("DEMANGLE_TRACE")) {
+        fprintf(stderr, "[append_type] trying to add: '%s'\n", t->buf);
     }
 
     Name* new_name = VecF (Name, append) (&m->detected_types, NULL);

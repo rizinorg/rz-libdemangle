@@ -1515,13 +1515,25 @@ bool rule_local_name (
     int         parent_node_id
 ) {
     RULE_HEAD (local_name);
-    MATCH (
-        READ ('Z') && RULE (encoding) && READ_STR ("Ed") && OPTIONAL (RULE (number)) &&
-        READ ('_') && AST_APPEND_STR ("::") && RULE (name)
+    MATCH_AND_DO (
+        READ ('Z') && RULE_DEFER (AST(0), encoding) && READ_STR ("Ed") && OPTIONAL (RULE_DEFER (AST(1),number)) &&
+        READ ('_') && RULE_DEFER (AST(2),name),
+        {
+            AST_MERGE (AST (0));
+            AST_MERGE (AST (1));
+            AST_APPEND_STR ("::");
+            AST_MERGE (AST (2));
+        }
     );
-    MATCH (
-        READ ('Z') && RULE (encoding) && READ ('E') && AST_APPEND_STR ("::") && RULE (name) &&
-        OPTIONAL (RULE (discriminator))
+    MATCH_AND_DO (
+        READ ('Z') && RULE_DEFER (AST(0), encoding) && READ ('E') && RULE_DEFER (AST(1),name) &&
+        OPTIONAL (RULE_DEFER (AST(2),discriminator)),
+        {
+            AST_MERGE (AST (0));
+            AST_APPEND_STR ("::");
+            AST_MERGE (AST (1));
+            AST_MERGE (AST (2));
+        }
     );
     MATCH (READ ('Z') && RULE (encoding) && READ_STR ("Es") && OPTIONAL (RULE (discriminator)));
     RULE_FOOT (local_name);
