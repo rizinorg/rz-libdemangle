@@ -51,7 +51,7 @@
  * \return target_read_pos on success.
  * \return CUR() otherwise.
  */
-#define SEEK_TO(target_read_pos) (msi->cur = IN_RANGE (target_read_pos) ? (target_read_pos) : CUR())
+#define SEEK_TO(target_read_pos) (msi->cur = IN_RANGE(target_read_pos) ? (target_read_pos) : CUR())
 
 /**
  * Peek one character from current read position in demangling context.
@@ -60,9 +60,9 @@
  * \return char on success.
  * \return 0 if no more characters left
  */
-#define PEEK() (IN_RANGE (CUR()) ? *msi->cur : 0)
+#define PEEK() (IN_RANGE(CUR()) ? *msi->cur : 0)
 
-#define PEEK_AT(p) (IN_RANGE (msi->cur + p) ? msi->cur[p] : 0)
+#define PEEK_AT(p) (IN_RANGE(msi->cur + p) ? msi->cur[p] : 0)
 
 /**
  * \b Read one character from current read position in demangling context
@@ -71,14 +71,14 @@
  * \return 1 on success.
  * \return 0 otherwise.
  */
-#define READ(ch)          (IN_RANGE (CUR()) ? ((*msi->cur == ch) ? (ADV(), 1) : 0) : 0)
-#define READ_OPTIONAL(ch) (READ (ch) || true)
-#define SKIP_CH(ch)                                                                                \
-    do {                                                                                           \
-        if (IN_RANGE (CUR()) && *msi->cur == ch) {                                                 \
-            ADV();                                                                                 \
-        }                                                                                          \
-    } while (0)
+#define READ(ch)          (IN_RANGE(CUR()) ? ((*msi->cur == ch) ? (ADV(), 1) : 0) : 0)
+#define READ_OPTIONAL(ch) (READ(ch) || true)
+#define SKIP_CH(ch) \
+	do { \
+		if (IN_RANGE(CUR()) && *msi->cur == ch) { \
+			ADV(); \
+		} \
+	} while (0)
 
 /**
  * \b Read multiple characters in a null-terminated character array,
@@ -88,11 +88,9 @@
  * \return 1 on success.
  * \return 0 otherwise.
  */
-#define READ_STR(s)                                                                                \
-    (IN_RANGE (CUR() + sizeof (s) - 1) ?                                                           \
-         (!strncmp (CUR(), s, sizeof (s) - 1) ? (ADV_BY (sizeof (s) - 1), 1) : 0) :                \
-         0)
-#define READ_STR_OPTIONAL(s) (READ_STR (s) || true)
+#define READ_STR(s) \
+	(IN_RANGE(CUR() + sizeof(s) - 1) ? (!strncmp(CUR(), s, sizeof(s) - 1) ? (ADV_BY(sizeof(s) - 1), 1) : 0) : 0)
+#define READ_STR_OPTIONAL(s) (READ_STR(s) || true)
 
 /**
  * \b Advance current read position by one character, if this next
@@ -101,7 +99,7 @@
  * \return updated read position on success.
  * \return NULL otherwise.
  */
-#define ADV() (IN_RANGE (CUR() + 1) ? msi->cur++ : NULL)
+#define ADV() (IN_RANGE(CUR() + 1) ? msi->cur++ : NULL)
 
 /**
  * \b Advance current read position by "n" characters, if this next
@@ -110,38 +108,38 @@
  * \return updated read position on success.
  * \return NULL otherwise.
  */
-#define ADV_BY(n) (IN_RANGE (CUR() + n) ? (msi->cur = msi->cur + (n)) : NULL)
+#define ADV_BY(n) (IN_RANGE(CUR() + n) ? (msi->cur = msi->cur + (n)) : NULL)
 
 /**
  * \b Save current read position in demangling context to restore it later.
  * This is used when we know that while matching a rule we might fail, and we'll
  * need to backtrack. For this we must remember the initial trial start pos.
  */
-#define SAVE_POS(I) const char* _____trial_start_pos_##I = CUR();
+#define SAVE_POS(I) const char *_____trial_start_pos_##I = CUR();
 
 /**
  * \b Restore saved position
  */
-#define RESTORE_POS(I)                                                                             \
-    do {                                                                                           \
-        SEEK_TO (_____trial_start_pos_##I);                                                        \
-    } while (0)
+#define RESTORE_POS(I) \
+	do { \
+		SEEK_TO(_____trial_start_pos_##I); \
+	} while (0)
 
 /**
  * Reads a number from current demangling position to provided "var" variable.
  * Automatically will adjust next read position if numbe read is successful, otherwise, will
  * set var to -1
  */
-#define READ_NUMBER(var)                                                                           \
-    do {                                                                                           \
-        char* end = NULL;                                                                          \
-        (var)     = strtoll (CUR(), &end, 10);                                                     \
-        if (!end) {                                                                                \
-            (var) = -1;                                                                            \
-            break;                                                                                 \
-        }                                                                                          \
-        SEEK_TO (end);                                                                             \
-    } while (0)
+#define READ_NUMBER(var) \
+	do { \
+		char *end = NULL; \
+		(var) = strtoll(CUR(), &end, 10); \
+		if (!end) { \
+			(var) = -1; \
+			break; \
+		} \
+		SEEK_TO(end); \
+	} while (0)
 
 #define IS_CTOR()  (m->is_ctor)
 #define IS_DTOR()  (m->is_dtor)
@@ -163,8 +161,8 @@
  * \return DemString containing demangled string generated by the called rule.
  * \return NULL if rule match fails for any reason.
  */
-#define RULE(x)      (first_of_rule_##x (CUR()) ? rule_##x (dan, msi, m, graph, _my_node_id) : false)
-#define RULE_CALL(x) rule_##x (dan, msi, m, graph, _my_node_id)
+#define RULE(x)      (first_of_rule_##x(CUR()) ? rule_##x(dan, msi, m, graph, _my_node_id) : false)
+#define RULE_CALL(x) rule_##x(dan, msi, m, graph, _my_node_id)
 
 /**
  * \b Defer the demangling to `var`.
@@ -183,17 +181,17 @@
  * \return DemString containing demangled string generated by the called rule.
  * \return NULL if rule match fails for any reason.
  */
-#define RULE_DEFER(var, x)                                                                         \
-    (first_of_rule_##x (CUR()) ? rule_##x ((var), msi, m, graph, _my_node_id) : false)
-#define RULE_CALL_DEFER(var, x) rule_##x ((var), msi, m, graph, _my_node_id)
-#define DEFER_VAR(var)                                                                             \
-    DemAstNode  tmp_defer_var_##var = {};                                                          \
-    DemAstNode* var                 = &tmp_defer_var_##var;                                        \
-    DemAstNode_init (var);
+#define RULE_DEFER(var, x) \
+	(first_of_rule_##x(CUR()) ? rule_##x((var), msi, m, graph, _my_node_id) : false)
+#define RULE_CALL_DEFER(var, x) rule_##x((var), msi, m, graph, _my_node_id)
+#define DEFER_VAR(var) \
+	DemAstNode tmp_defer_var_##var = {}; \
+	DemAstNode *var = &tmp_defer_var_##var; \
+	DemAstNode_init(var);
 
-#define MATCH1(R) MATCH (RULE_DEFER (AST (0), R) && AST_MERGE (AST (0)));
+#define MATCH1(R) MATCH(RULE_DEFER(AST(0), R) && AST_MERGE(AST(0)));
 
-#define APPEND_DEFER_VAR(var) DemAstNode_append (dan, (var))
+#define APPEND_DEFER_VAR(var) DemAstNode_append(dan, (var))
 
 /**
  * Always evaluate to true, even if rule does not match.
@@ -208,12 +206,12 @@
  * \return DemString containing demangled string generated by the called rule.
  * \return NULL if rule match fails for any reason.
  */
-#define RULE_ATLEAST_ONCE(x)                                                                       \
-    match_one_or_more_rules (first_of_rule_##x, rule_##x, NULL, dan, msi, m, graph, _my_node_id)
-#define RULE_ATLEAST_ONCE_WITH_SEP(x, sep)                                                         \
-    match_one_or_more_rules (first_of_rule_##x, rule_##x, sep, dan, msi, m, graph, _my_node_id)
-#define RULE_DEFER_ATLEAST_ONCE(var, x)                                                            \
-    match_one_or_more_rules (first_of_rule_##x, rule_##x, NULL, (var), msi, m, graph, _my_node_id)
+#define RULE_ATLEAST_ONCE(x) \
+	match_one_or_more_rules(first_of_rule_##x, rule_##x, NULL, dan, msi, m, graph, _my_node_id)
+#define RULE_ATLEAST_ONCE_WITH_SEP(x, sep) \
+	match_one_or_more_rules(first_of_rule_##x, rule_##x, sep, dan, msi, m, graph, _my_node_id)
+#define RULE_DEFER_ATLEAST_ONCE(var, x) \
+	match_one_or_more_rules(first_of_rule_##x, rule_##x, NULL, (var), msi, m, graph, _my_node_id)
 
 /**
  * \b Match given rule name any number of times.
@@ -223,59 +221,58 @@
  * \return DemString containing demangled string generated by the called rule.
  * \return NULL if rule match fails for any reason.
  */
-#define RULE_MANY(x)                                                                               \
-    match_zero_or_more_rules (first_of_rule_##x, rule_##x, NULL, dan, msi, m, graph, _my_node_id)
-#define RULE_MANY_WITH_SEP(x, sep)                                                                 \
-    match_zero_or_more_rules (first_of_rule_##x, rule_##x, sep, dan, msi, m, graph, _my_node_id)
-#define RULE_DEFER_MANY(var, x)                                                                    \
-    match_zero_or_more_rules (first_of_rule_##x, rule_##x, NULL, (var), msi, m, graph, _my_node_id)
+#define RULE_MANY(x) \
+	match_zero_or_more_rules(first_of_rule_##x, rule_##x, NULL, dan, msi, m, graph, _my_node_id)
+#define RULE_MANY_WITH_SEP(x, sep) \
+	match_zero_or_more_rules(first_of_rule_##x, rule_##x, sep, dan, msi, m, graph, _my_node_id)
+#define RULE_DEFER_MANY(var, x) \
+	match_zero_or_more_rules(first_of_rule_##x, rule_##x, NULL, (var), msi, m, graph, _my_node_id)
 
 /**
  * \b Declare a new rule so that it can be used with RULE(...) macro later on.
  *
  * \p x Rule name
  */
-#define DECL_RULE(x)                                                                               \
-    bool rule_##x (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id)
-#define DECL_RULE_STATIC(x)                                                                        \
-    static inline bool                                                                             \
-        rule_##x (DemAstNode* dan, StrIter* msi, Meta* m, TraceGraph* graph, int parent_node_id)
+#define DECL_RULE(x) \
+	bool rule_##x(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id)
+#define DECL_RULE_STATIC(x) \
+	static inline bool \
+	rule_##x(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id)
 
-#define trace_graph_set_result(G, N, R, S)                                                         \
-    trace_graph_set_result_impl (G, N, (size_t)(msi->cur - msi->beg), R, S)
+#define trace_graph_set_result(G, N, R, S) \
+	trace_graph_set_result_impl(G, N, (size_t)(msi->cur - msi->beg), R, S)
 
-#define RULE_HEAD(X)                                                                               \
-    if (!dan || !msi || !m || !IN_RANGE (CUR())) {                                                 \
-        return false;                                                                              \
-    }                                                                                              \
-    int _my_node_id = -1;                                                                          \
-    if (graph && graph->enabled) {                                                                 \
-        _my_node_id = trace_graph_add_node (                                                       \
-            graph,                                                                                 \
-            #X,                                                                                    \
-            (size_t)(msi->cur - msi->beg),                                                         \
-            msi->cur,                                                                              \
-            parent_node_id                                                                         \
-        );                                                                                         \
-    }                                                                                              \
-    dan->tag                    = CP_DEM_TYPE_KIND_##X;                                            \
-    dan->val.buf                = msi->cur;                                                        \
-    const char* _rule_start_pos = msi->cur;                                                        \
-    ((void)_rule_start_pos);
+#define RULE_HEAD(X) \
+	if (!dan || !msi || !m || !IN_RANGE(CUR())) { \
+		return false; \
+	} \
+	int _my_node_id = -1; \
+	if (graph && graph->enabled) { \
+		_my_node_id = trace_graph_add_node( \
+			graph, \
+			#X, \
+			(size_t)(msi->cur - msi->beg), \
+			msi->cur, \
+			parent_node_id); \
+	} \
+	dan->tag = CP_DEM_TYPE_KIND_##X; \
+	dan->val.buf = msi->cur; \
+	const char *_rule_start_pos = msi->cur; \
+	((void)_rule_start_pos);
 
-#define RULE_FOOT(_)                                                                               \
-    if (graph && graph->enabled && _my_node_id >= 0) {                                             \
-        trace_graph_set_result (graph, _my_node_id, NULL, 2); /* failed */                         \
-    }                                                                                              \
-    dan->val.len = msi->cur - dan->val.buf;                                                        \
-    return false;
+#define RULE_FOOT(_) \
+	if (graph && graph->enabled && _my_node_id >= 0) { \
+		trace_graph_set_result(graph, _my_node_id, NULL, 2); /* failed */ \
+	} \
+	dan->val.len = msi->cur - dan->val.buf; \
+	return false;
 
-#define RULE_IMPL(X, XS)                                                                           \
-    do {                                                                                           \
-        RULE_HEAD (X);                                                                             \
-        {XS};                                                                                      \
-        RULE_FOOT (X);                                                                             \
-    } while (0)
+#define RULE_IMPL(X, XS) \
+	do { \
+		RULE_HEAD(X); \
+		{ XS }; \
+		RULE_FOOT(X); \
+	} while (0)
 
 /**
  * \b Define a rule with name x and given rule body.
@@ -289,11 +286,10 @@
  * \return DemString* containing currently demangled string on success.
  * \return NULL otherwise.
  */
-#define DEFN_RULE(x, rule_body)                                                                    \
-    DECL_RULE (x) {                                                                                \
-        RULE_IMPL (x, rule_body);                                                                  \
-    }
-
+#define DEFN_RULE(x, rule_body) \
+	DECL_RULE(x) { \
+		RULE_IMPL(x, rule_body); \
+	}
 
 /**
  * \b Declare a rule alias x for rule y.
@@ -305,88 +301,86 @@
  * \p X Name of rule alias
  * \p Y Name of rule to create alias for.
  */
-#define DECL_RULE_ALIAS(X, Y)                                                                      \
-    DECL_RULE_STATIC (X) {                                                                         \
-        return rule_##Y (dan, msi, m, graph, parent_node_id);                                      \
-    }
+#define DECL_RULE_ALIAS(X, Y) \
+	DECL_RULE_STATIC(X) { \
+		return rule_##Y(dan, msi, m, graph, parent_node_id); \
+	}
 
 /* Macros for rules that use direct returns */
-#define TRACE_RETURN_SUCCESS                                                                       \
-    do { /*trace success*/                                                                         \
-        if (graph && graph->enabled && _my_node_id >= 0) {                                         \
-            DemString*  result   = &dan->dem;                                                      \
-            const char* _res_str = NULL;                                                           \
-            if (result && result->buf && result->len > 0) {                                        \
-                _res_str = result->buf;                                                            \
-            }                                                                                      \
-            trace_graph_set_result (graph, _my_node_id, _res_str, 1);                              \
-        }                                                                                          \
-        dan->val.len = msi->cur - dan->val.buf;                                                    \
-        return true;                                                                               \
-    } while (0)
+#define TRACE_RETURN_SUCCESS \
+	do { /*trace success*/ \
+		if (graph && graph->enabled && _my_node_id >= 0) { \
+			DemString *result = &dan->dem; \
+			const char *_res_str = NULL; \
+			if (result && result->buf && result->len > 0) { \
+				_res_str = result->buf; \
+			} \
+			trace_graph_set_result(graph, _my_node_id, _res_str, 1); \
+		} \
+		dan->val.len = msi->cur - dan->val.buf; \
+		return true; \
+	} while (0)
 
-#define TRACE_RETURN_FAILURE()                                                                     \
-    do { /*trace fail*/                                                                            \
-        if (graph && graph->enabled && _my_node_id >= 0) {                                         \
-            trace_graph_set_result (graph, _my_node_id, NULL, 2);                                  \
-        }                                                                                          \
-        return false;                                                                              \
-    } while (0)
+#define TRACE_RETURN_FAILURE() \
+	do { /*trace fail*/ \
+		if (graph && graph->enabled && _my_node_id >= 0) { \
+			trace_graph_set_result(graph, _my_node_id, NULL, 2); \
+		} \
+		return false; \
+	} while (0)
 
-#define MATCH_FAILED(I)                                                                            \
-    do { /*match fail*/                                                                            \
-        meta_deinit (&_tmp_meta);                                                                  \
-        m = _og_meta;                                                                              \
-        /* NOTE: Do NOT call DemAstNode_deinit(dan) here! */                                       \
-        /* dan->dem was already restored to _og_dem_len by MATCH_AND_DO */                         \
-        /* Calling deinit would clear content written by parent rules */                           \
-        RESTORE_POS (I);                                                                           \
-        break;                                                                                     \
-    } while (0)
+#define MATCH_FAILED(I) \
+	do { /*match fail*/ \
+		meta_deinit(&_tmp_meta); \
+		m = _og_meta; \
+		/* NOTE: Do NOT call DemAstNode_deinit(dan) here! */ \
+		/* dan->dem was already restored to _og_dem_len by MATCH_AND_DO */ \
+		/* Calling deinit would clear content written by parent rules */ \
+		RESTORE_POS(I); \
+		break; \
+	} while (0)
 
-
-#define context_save(N)                                                                            \
-    SAVE_POS (0);                                                                                  \
-    /* make a temporary string to prevent from altering real string */                             \
-    Meta  N##meta  = {0};                                                                          \
-    Meta* _og_meta = m;                                                                            \
-    m              = &N##meta;                                                                     \
-    meta_copy (&N##meta, _og_meta);                                                                \
-    size_t _og_dem_len      = dan->dem.len;                                                        \
-    size_t _og_children_len = dan->children ? VecDemAstNode_len (dan->children) : 0;
-#define rule_success(N)                                                                            \
-    if (graph && graph->enabled && _my_node_id >= 0) {                                             \
-        trace_graph_set_result (                                                                   \
-            graph,                                                                                 \
-            _my_node_id,                                                                           \
-            (dan->dem.buf && dan->dem.len > 0) ? dan->dem.buf : "success",                         \
-            1                                                                                      \
-        );                                                                                         \
-    }                                                                                              \
-    meta_move (_og_meta, &N##meta);                                                                \
-    m            = _og_meta;                                                                       \
-    dan->val.len = msi->cur - dan->val.buf;                                                        \
-    return true;
-#define context_restore(N)                                                                         \
-    if (graph && graph->enabled && _my_node_id >= 0) {                                             \
-        trace_graph_set_result (graph, _my_node_id, NULL, 3); /* backtracked */                    \
-    }                                                                                              \
-    dan->dem.len = _og_dem_len;                                                                    \
-    if (dan->dem.buf)                                                                              \
-        dan->dem.buf[_og_dem_len] = 0;                                                             \
-    if (dan->children) {                                                                           \
-        while (VecDemAstNode_len (dan->children) > _og_children_len) {                             \
-            DemAstNode* node = VecDemAstNode_pop (dan->children);                                  \
-            if (node) {                                                                            \
-                DemAstNode_deinit (node);                                                          \
-            }                                                                                      \
-        }                                                                                          \
-    }                                                                                              \
-    meta_deinit (&N##_meta);                                                                      \
-    m = _og_meta;                                                                                  \
-    DemAstNode_deinit (dan);                                                                       \
-    /* if rule matched, then concat tmp with original and switch back names */                     \
-    RESTORE_POS (I);
+#define context_save(N) \
+	SAVE_POS(0); \
+	/* make a temporary string to prevent from altering real string */ \
+	Meta N##meta = { 0 }; \
+	Meta *_og_meta = m; \
+	m = &N##meta; \
+	meta_copy(&N##meta, _og_meta); \
+	size_t _og_dem_len = dan->dem.len; \
+	size_t _og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0;
+#define rule_success(N) \
+	if (graph && graph->enabled && _my_node_id >= 0) { \
+		trace_graph_set_result( \
+			graph, \
+			_my_node_id, \
+			(dan->dem.buf && dan->dem.len > 0) ? dan->dem.buf : "success", \
+			1); \
+	} \
+	meta_move(_og_meta, &N##meta); \
+	m = _og_meta; \
+	dan->val.len = msi->cur - dan->val.buf; \
+	return true;
+#define context_restore(N) \
+	if (graph && graph->enabled && _my_node_id >= 0) { \
+		trace_graph_set_result(graph, _my_node_id, NULL, 3); /* backtracked */ \
+	} \
+	dan->dem.len = _og_dem_len; \
+	if (dan->dem.buf) \
+		dan->dem.buf[_og_dem_len] = 0; \
+	if (dan->children) { \
+		while (VecDemAstNode_len(dan->children) > _og_children_len) { \
+			DemAstNode *node = VecDemAstNode_pop(dan->children); \
+			if (node) { \
+				DemAstNode_deinit(node); \
+			} \
+		} \
+	} \
+	meta_deinit(&N##_meta); \
+	m = _og_meta; \
+	DemAstNode_deinit(dan); \
+	/* if rule matched, then concat tmp with original and switch back names */ \
+	RESTORE_POS(I);
 
 /**
  * \b Match for given rules in a recoverable manner. If rule matching fails,
@@ -412,107 +406,104 @@
  * \p rules  A sequence concatenation or alternation of RULEs and READs
  * \p body   What to do if rule matches.
  */
-#define MATCH_AND_DO(rules, body)                                                                  \
-    do {                                                                                           \
-        SAVE_POS (0);                                                                              \
-        /* make a temporary string to prevent from altering real string */                         \
-        Meta  _tmp_meta = {0};                                                                     \
-        Meta* _og_meta  = m;                                                                       \
-        m               = &_tmp_meta;                                                              \
-        meta_copy (&_tmp_meta, _og_meta);                                                          \
-        size_t _og_dem_len      = dan->dem.len;                                                    \
-        size_t _og_children_len = dan->children ? VecDemAstNode_len (dan->children) : 0;           \
-        if ((rules)) {                                                                             \
-            /* caller execute code */                                                              \
-            {body};                                                                                \
-            if (graph && graph->enabled && _my_node_id >= 0) {                                     \
-                trace_graph_set_result (                                                           \
-                    graph,                                                                         \
-                    _my_node_id,                                                                   \
-                    (dan->dem.buf && dan->dem.len > 0) ? dan->dem.buf : "success",                 \
-                    1                                                                              \
-                );                                                                                 \
-            }                                                                                      \
-            meta_move (_og_meta, &_tmp_meta);                                                      \
-            m            = _og_meta;                                                               \
-            dan->val.len = msi->cur - dan->val.buf;                                                \
-            return true;                                                                           \
-        } else {                                                                                   \
-            if (graph && graph->enabled && _my_node_id >= 0) {                                     \
-                trace_graph_set_result (graph, _my_node_id, NULL, 3); /* backtracked */            \
-            }                                                                                      \
-            dan->dem.len = _og_dem_len;                                                            \
-            if (dan->dem.buf)                                                                      \
-                dan->dem.buf[_og_dem_len] = 0;                                                     \
-            if (dan->children) {                                                                   \
-                while (VecDemAstNode_len (dan->children) > _og_children_len) {                     \
-                    DemAstNode* node = VecDemAstNode_pop (dan->children);                          \
-                    if (node) {                                                                    \
-                        DemAstNode_deinit (node);                                                  \
-                    }                                                                              \
-                }                                                                                  \
-            }                                                                                      \
-            MATCH_FAILED (0);                                                                      \
-        }                                                                                          \
-    } while (0)
+#define MATCH_AND_DO(rules, body) \
+	do { \
+		SAVE_POS(0); \
+		/* make a temporary string to prevent from altering real string */ \
+		Meta _tmp_meta = { 0 }; \
+		Meta *_og_meta = m; \
+		m = &_tmp_meta; \
+		meta_copy(&_tmp_meta, _og_meta); \
+		size_t _og_dem_len = dan->dem.len; \
+		size_t _og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0; \
+		if ((rules)) { \
+			/* caller execute code */ \
+			{ body }; \
+			if (graph && graph->enabled && _my_node_id >= 0) { \
+				trace_graph_set_result( \
+					graph, \
+					_my_node_id, \
+					(dan->dem.buf && dan->dem.len > 0) ? dan->dem.buf : "success", \
+					1); \
+			} \
+			meta_move(_og_meta, &_tmp_meta); \
+			m = _og_meta; \
+			dan->val.len = msi->cur - dan->val.buf; \
+			return true; \
+		} else { \
+			if (graph && graph->enabled && _my_node_id >= 0) { \
+				trace_graph_set_result(graph, _my_node_id, NULL, 3); /* backtracked */ \
+			} \
+			dan->dem.len = _og_dem_len; \
+			if (dan->dem.buf) \
+				dan->dem.buf[_og_dem_len] = 0; \
+			if (dan->children) { \
+				while (VecDemAstNode_len(dan->children) > _og_children_len) { \
+					DemAstNode *node = VecDemAstNode_pop(dan->children); \
+					if (node) { \
+						DemAstNode_deinit(node); \
+					} \
+				} \
+			} \
+			MATCH_FAILED(0); \
+		} \
+	} while (0)
 
-#define MATCH(rules) MATCH_AND_DO (rules, {})
+#define MATCH(rules) MATCH_AND_DO(rules, {})
 
-#define MATCH_AND_CONTINUE(rules)                                                                  \
-    do {                                                                                           \
-        SAVE_POS (0);                                                                              \
-        /* make a temporary string to prevent from altering real string */                         \
-        Meta  _tmp_meta = {0};                                                                     \
-        Meta* _og_meta  = m;                                                                       \
-        m               = &_tmp_meta;                                                              \
-        meta_copy (&_tmp_meta, _og_meta);                                                          \
-        size_t _og_dem_len      = dan->dem.len;                                                    \
-        size_t _og_children_len = dan->children ? VecDemAstNode_len (dan->children) : 0;           \
-        if ((rules)) {                                                                             \
-            meta_move (_og_meta, &_tmp_meta);                                                      \
-            /* if rule matched, then concat tmp with original and switch back names */             \
-            m = _og_meta;                                                                          \
-        } else {                                                                                   \
-            if (graph && graph->enabled && _my_node_id >= 0) {                                     \
-                trace_graph_set_result (graph, _my_node_id, NULL, 3); /* backtracked */            \
-            }                                                                                      \
-            dan->dem.len = _og_dem_len;                                                            \
-            if (dan->dem.buf)                                                                      \
-                dan->dem.buf[_og_dem_len] = 0;                                                     \
-            if (dan->children) {                                                                   \
-                while (VecDemAstNode_len (dan->children) > _og_children_len) {                     \
-                    DemAstNode* node = VecDemAstNode_pop (dan->children);                          \
-                    if (node) {                                                                    \
-                        DemAstNode_deinit (node);                                                  \
-                    }                                                                              \
-                }                                                                                  \
-            }                                                                                      \
-            MATCH_FAILED (0);                                                                      \
-        }                                                                                          \
-    } while (0)
+#define MATCH_AND_CONTINUE(rules) \
+	do { \
+		SAVE_POS(0); \
+		/* make a temporary string to prevent from altering real string */ \
+		Meta _tmp_meta = { 0 }; \
+		Meta *_og_meta = m; \
+		m = &_tmp_meta; \
+		meta_copy(&_tmp_meta, _og_meta); \
+		size_t _og_dem_len = dan->dem.len; \
+		size_t _og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0; \
+		if ((rules)) { \
+			meta_move(_og_meta, &_tmp_meta); \
+			/* if rule matched, then concat tmp with original and switch back names */ \
+			m = _og_meta; \
+		} else { \
+			if (graph && graph->enabled && _my_node_id >= 0) { \
+				trace_graph_set_result(graph, _my_node_id, NULL, 3); /* backtracked */ \
+			} \
+			dan->dem.len = _og_dem_len; \
+			if (dan->dem.buf) \
+				dan->dem.buf[_og_dem_len] = 0; \
+			if (dan->children) { \
+				while (VecDemAstNode_len(dan->children) > _og_children_len) { \
+					DemAstNode *node = VecDemAstNode_pop(dan->children); \
+					if (node) { \
+						DemAstNode_deinit(node); \
+					} \
+				} \
+			} \
+			MATCH_FAILED(0); \
+		} \
+	} while (0)
 
-#define AST_APPEND_STR(s)      dem_string_append (&dan->dem, s)
-#define AST_APPEND_STR_N(s, n) dem_string_append_n (&dan->dem, s, n);
-#define AST_APPEND_DEMSTR(D)   dem_string_append_prefix_n (&dan->dem, (D)->buf, (D)->len)
-#define AST_PREPEND_STR(s)     dem_string_append_prefix_n (&dan->dem, s, strlen (s))
-#define AST_PREPEND_DEMSTR(D)  dem_string_append_prefix_n (&dan->dem, (D)->buf, (D)->len)
-#define AST_APPEND_CHR(c)      dem_string_append_char (&dan->dem, c)
-#define AST_APPEND_TYPE        append_type (m, &dan->dem, false)
-#define AST_APPEND_TYPE1(T)    append_type (m, (T), false)
-#define AST_APPEND_NODE(X)     DemAstNode_append (dan, (X))
-#define AST(I)                 DemAstNode_children_at (dan, (I))
+#define AST_APPEND_STR(s)      dem_string_append(&dan->dem, s)
+#define AST_APPEND_STR_N(s, n) dem_string_append_n(&dan->dem, s, n);
+#define AST_APPEND_DEMSTR(D)   dem_string_append_prefix_n(&dan->dem, (D)->buf, (D)->len)
+#define AST_PREPEND_STR(s)     dem_string_append_prefix_n(&dan->dem, s, strlen(s))
+#define AST_PREPEND_DEMSTR(D)  dem_string_append_prefix_n(&dan->dem, (D)->buf, (D)->len)
+#define AST_APPEND_CHR(c)      dem_string_append_char(&dan->dem, c)
+#define AST_APPEND_TYPE        append_type(m, &dan->dem, false)
+#define AST_APPEND_TYPE1(T)    append_type(m, (T), false)
+#define AST_APPEND_NODE(X)     DemAstNode_append(dan, (X))
+#define AST(I)                 DemAstNode_children_at(dan, (I))
 
+#define APPEND_TYPE(tname)       append_type(m, (tname), false)
+#define FORCE_APPEND_TYPE(tname) append_type(m, (tname), true)
 
-#define APPEND_TYPE(tname)       append_type (m, (tname), false)
-#define FORCE_APPEND_TYPE(tname) append_type (m, (tname), true)
+#define APPEND_TPARAM(tname) OPTIONAL(m->t_level < 2 && append_tparam(m, (tname)))
 
-#define APPEND_TPARAM(tname) OPTIONAL (m->t_level < 2 && append_tparam (m, (tname)))
-
-#define AST_MERGE(X)                                                                               \
-    (dem_string_concat (&dan->dem, &(X)->dem),                                                     \
-     dan->val.len += (X)->val.len,                                                                 \
-     dan->val.buf  = dan->val.buf ? dan->val.buf : (X)->val.buf,                                   \
-     (X))
-
+#define AST_MERGE(X) \
+	(dem_string_concat(&dan->dem, &(X)->dem), \
+		dan->val.len += (X)->val.len, \
+		dan->val.buf = dan->val.buf ? dan->val.buf : (X)->val.buf, \
+		(X))
 
 #endif // V3_IMPL_MACROS_H

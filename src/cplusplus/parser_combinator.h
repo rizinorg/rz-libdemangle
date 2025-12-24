@@ -8,25 +8,23 @@
 #include "../demangler_util.h"
 #include "types.h"
 
-bool match_one_or_more_rules (
-    DemRuleFirst first,
-    DemRule      rule,
-    const char*  sep,
-    DemAstNode*  ast_node,
-    StrIter*     msi,
-    Meta*        m,
-    TraceGraph*  graph,
-    int          parent_node_id
-);
-bool match_zero_or_more_rules (
-    DemRuleFirst first,
-    DemRule      rule,
-    const char*  sep,
-    DemAstNode*  ast_node,
-    StrIter*     msi,
-    Meta*        m,
-    TraceGraph*  graph,
-    int          parent_node_id
-);
+bool match_one_or_more_rules(
+	DemRuleFirst first,
+	DemRule rule,
+	const char *sep,
+	DemAstNode *ast_node,
+	StrIter *msi,
+	Meta *m,
+	TraceGraph *graph,
+	int parent_node_id);
+bool match_zero_or_more_rules(
+	DemRuleFirst first,
+	DemRule rule,
+	const char *sep,
+	DemAstNode *ast_node,
+	StrIter *msi,
+	Meta *m,
+	TraceGraph *graph,
+	int parent_node_id);
 
-#endif //RZ_LIBDEMANGLE_PARSER_COMBINATOR_H
+#endif // RZ_LIBDEMANGLE_PARSER_COMBINATOR_H

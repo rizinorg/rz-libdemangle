@@ -16,23 +16,22 @@
  * \return dem If at least one rule match exists for given rule.
  * \return NULL otherwise.
  */
-bool match_one_or_more_rules (
-    DemRuleFirst first,
-    DemRule      rule,
-    const char*  sep,
-    DemAstNode*  ast_node,
-    StrIter*     msi,
-    Meta*        m,
-    TraceGraph*  graph,
-    int          parent_node_id
-) {
-    if (!match_zero_or_more_rules (first, rule, sep, ast_node, msi, m, graph, parent_node_id)) {
-        return false;
-    }
-    if (!ast_node->dem.buf) {
-        return false;
-    }
-    return true;
+bool match_one_or_more_rules(
+	DemRuleFirst first,
+	DemRule rule,
+	const char *sep,
+	DemAstNode *ast_node,
+	StrIter *msi,
+	Meta *m,
+	TraceGraph *graph,
+	int parent_node_id) {
+	if (!match_zero_or_more_rules(first, rule, sep, ast_node, msi, m, graph, parent_node_id)) {
+		return false;
+	}
+	if (!ast_node->dem.buf) {
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -48,44 +47,43 @@ bool match_one_or_more_rules (
  * \return dem If given arguments are non-null.
  * \return NULL otherwise.
  */
-bool match_zero_or_more_rules (
-    DemRuleFirst first,
-    DemRule      rule,
-    const char*  sep,
-    DemAstNode*  ast_node,
-    StrIter*     msi,
-    Meta*        m,
-    TraceGraph*  graph,
-    int          parent_node_id
-) {
-    if (!rule || !ast_node || !msi || !m) {
-        return false;
-    }
+bool match_zero_or_more_rules(
+	DemRuleFirst first,
+	DemRule rule,
+	const char *sep,
+	DemAstNode *ast_node,
+	StrIter *msi,
+	Meta *m,
+	TraceGraph *graph,
+	int parent_node_id) {
+	if (!rule || !ast_node || !msi || !m) {
+		return false;
+	}
 
-    size_t count = 0;
-    while (true) {
-        DemAstNode tmp = {0};
-        SAVE_POS (0);
-        if (first (CUR()) && rule (&tmp, msi, m, graph, parent_node_id)) {
-            DemAstNode_append (ast_node, &tmp);
-            if (sep) {
-                dem_string_append (&ast_node->dem, sep);
-            }
-            count++;
-        } else {
-            RESTORE_POS (0);
-            DemAstNode_deinit (&tmp);
-            break;
-        }
-    }
+	size_t count = 0;
+	while (true) {
+		DemAstNode tmp = { 0 };
+		SAVE_POS(0);
+		if (first(CUR()) && rule(&tmp, msi, m, graph, parent_node_id)) {
+			DemAstNode_append(ast_node, &tmp);
+			if (sep) {
+				dem_string_append(&ast_node->dem, sep);
+			}
+			count++;
+		} else {
+			RESTORE_POS(0);
+			DemAstNode_deinit(&tmp);
+			break;
+		}
+	}
 
-    /* remove last sep */
-    if (sep && ast_node->dem.buf && count > 0) {
-        for (int l = 0; l < strlen (sep); l++) {
-            ast_node->dem.buf[--ast_node->dem.len] = 0;
-        }
-    }
+	/* remove last sep */
+	if (sep && ast_node->dem.buf && count > 0) {
+		for (int l = 0; l < strlen(sep); l++) {
+			ast_node->dem.buf[--ast_node->dem.len] = 0;
+		}
+	}
 
-    /* we always match, even if nothing matches */
-    return true;
+	/* we always match, even if nothing matches */
+	return true;
 }
