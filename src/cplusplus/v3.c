@@ -77,14 +77,29 @@ bool rule_unresolved_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(unresolved_name);
-	MATCH(
-		READ_STR("srN") && RULE(unresolved_type) &&
-		RULE_ATLEAST_ONCE(unresolved_qualifier_level) && READ('E') && RULE(base_unresolved_name));
-	MATCH(
+	MATCH_AND_DO(
+		READ_STR("srN") && RULE_DEFER(AST(0), unresolved_type) &&
+			RULE_DEFER_ATLEAST_ONCE(AST(1), unresolved_qualifier_level) && READ('E') && RULE_DEFER(AST(2), base_unresolved_name),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+			AST_MERGE(AST(2));
+		});
+
+	MATCH_AND_DO(
 		OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && READ_STR("sr") &&
-		RULE_ATLEAST_ONCE(unresolved_qualifier_level) && READ('E') && RULE(base_unresolved_name));
-	MATCH(READ_STR("sr") && RULE(unresolved_type) && RULE(base_unresolved_name));
-	MATCH(OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && RULE(base_unresolved_name));
+			RULE_DEFER_ATLEAST_ONCE(AST(0), unresolved_qualifier_level) && READ('E') && RULE_DEFER(AST(1), base_unresolved_name),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
+	MATCH_AND_DO(READ_STR("sr") && RULE_DEFER(AST(0), unresolved_type) && RULE_DEFER(AST(1), base_unresolved_name), {
+		AST_MERGE(AST(0));
+		AST_MERGE(AST(1));
+	});
+	MATCH_AND_DO(OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && RULE_DEFER(AST(0), base_unresolved_name), {
+		AST_MERGE(AST(0));
+	});
 	RULE_FOOT(unresolved_name);
 }
 
@@ -118,7 +133,11 @@ bool rule_unresolved_type(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(unresolved_type);
-	MATCH(RULE(template_param) && OPTIONAL(RULE(template_args)));
+	MATCH_AND_DO(RULE_DEFER(AST(0), template_param) && OPTIONAL(RULE_DEFER(AST(1), template_args)),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
 	MATCH(RULE(decltype));
 	MATCH(RULE(substitution));
 	RULE_FOOT(unresolved_type);
@@ -161,8 +180,14 @@ bool rule_array_type(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(array_type);
-	MATCH(READ('A') && OPTIONAL(RULE(number)) && READ('_') && RULE(type));
-	MATCH(READ('A') && RULE(expression) && READ('_') && RULE(type));
+	MATCH_AND_DO(READ('A') && OPTIONAL(RULE_DEFER(AST(0), number)) && READ('_') && RULE_DEFER(AST(1), type), {
+		AST_MERGE(AST(0));
+		AST_MERGE(AST(1));
+	});
+	MATCH_AND_DO(READ('A') && RULE_DEFER(AST(0), expression) && READ('_') && RULE_DEFER(AST(1), type), {
+		AST_MERGE(AST(0));
+		AST_MERGE(AST(1));
+	});
 	RULE_FOOT(array_type);
 }
 
@@ -174,96 +199,158 @@ bool rule_expression(
 	int parent_node_id) {
 	RULE_HEAD(expression);
 	/* unary operators */
-	MATCH(
+	MATCH_AND_DO(
 		(READ_STR("gsnw") || READ_STR("nw")) && AST_APPEND_STR("new (") &&
-		RULE_MANY_WITH_SEP(expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
-		RULE(type) && READ('E'));
-	MATCH(
+			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
+			RULE_DEFER(AST(1), type) && READ('E'),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
+	MATCH_AND_DO(
 		(READ_STR("gsnw") || READ_STR("nw")) && AST_APPEND_STR("new (") &&
-		RULE_MANY_WITH_SEP(expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
-		RULE(type) && RULE(initializer));
-	MATCH(
+			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
+			RULE_DEFER(AST(1), type) && RULE_DEFER(AST(2), initializer),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+			AST_MERGE(AST(2));
+		});
+	MATCH_AND_DO(
 		(READ_STR("gsna") || READ_STR("na")) && AST_APPEND_STR("new[] (") &&
-		RULE_MANY_WITH_SEP(expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
-		RULE(type) && READ('E'));
-	MATCH(
+			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
+			RULE_DEFER(AST(1), type) && READ('E'),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
+	MATCH_AND_DO(
 		(READ_STR("gsna") || READ_STR("na")) && AST_APPEND_STR("new[] (") &&
-		RULE_MANY_WITH_SEP(expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
-		RULE(type) && RULE(initializer));
-	MATCH(
-		READ_STR("cv") && RULE(type) && READ('_') && AST_APPEND_STR("(") &&
-		RULE_MANY_WITH_SEP(expression, ", ") && AST_APPEND_STR(")") && READ('E'));
-
+			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
+			RULE_DEFER(AST(1), type) && RULE_DEFER(AST(2), initializer),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+			AST_MERGE(AST(2));
+		});
+	MATCH_AND_DO(
+		READ_STR("cv") && RULE_DEFER(AST(0), type) && READ('_') && AST_APPEND_STR("(") &&
+			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(1), expression, ", ") && AST_APPEND_STR(")") && READ('E'),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
 	/* binary operators */
-	MATCH(
-		READ_STR("qu") && RULE(expression) && AST_APPEND_STR("?") && RULE(expression) &&
-		AST_APPEND_STR(":") && RULE(expression));
-	MATCH(
-		READ_STR("cl") && RULE(expression) && AST_APPEND_STR("(") &&
-		RULE_MANY_WITH_SEP(expression, ", ") && AST_APPEND_STR(")") && READ('E'));
-	MATCH(
-		READ_STR("cp") && AST_APPEND_STR("(") && RULE(base_unresolved_name) &&
-		AST_APPEND_STR(")") && AST_APPEND_STR("(") && RULE_MANY_WITH_SEP(expression, ", ") &&
-		AST_APPEND_STR(")") && READ('E'));
-	MATCH(
-		READ_STR("tl") && RULE(type) && AST_APPEND_STR("{") &&
-		RULE_MANY_WITH_SEP(braced_expression, ", ") && AST_APPEND_STR("}") && READ('E'));
-	MATCH(
-		READ('u') && RULE(source_name) && RULE_MANY_WITH_SEP(template_arg, ", ") && READ('E'));
-	MATCH(READ_STR("pl") && RULE(expression) && AST_APPEND_STR("+") && RULE(expression));
-	MATCH(READ_STR("mi") && RULE(expression) && AST_APPEND_STR("-") && RULE(expression));
-	MATCH(READ_STR("ml") && RULE(expression) && AST_APPEND_STR("*") && RULE(expression));
-	MATCH(READ_STR("dv") && RULE(expression) && AST_APPEND_STR("/") && RULE(expression));
-	MATCH(READ_STR("rm") && RULE(expression) && AST_APPEND_STR("%") && RULE(expression));
-	MATCH(READ_STR("an") && RULE(expression) && AST_APPEND_STR("&") && RULE(expression));
-	MATCH(READ_STR("or") && RULE(expression) && AST_APPEND_STR("|") && RULE(expression));
-	MATCH(READ_STR("eo") && RULE(expression) && AST_APPEND_STR("^") && RULE(expression));
-	MATCH(READ_STR("aS") && RULE(expression) && AST_APPEND_STR("=") && RULE(expression));
-	MATCH(READ_STR("pL") && RULE(expression) && AST_APPEND_STR("+=") && RULE(expression));
-	MATCH(READ_STR("mI") && RULE(expression) && AST_APPEND_STR("-=") && RULE(expression));
-	MATCH(READ_STR("mL") && RULE(expression) && AST_APPEND_STR("*=") && RULE(expression));
-	MATCH(READ_STR("dV") && RULE(expression) && AST_APPEND_STR("/=") && RULE(expression));
-	MATCH(READ_STR("rM") && RULE(expression) && AST_APPEND_STR("%=") && RULE(expression));
-	MATCH(READ_STR("aN") && RULE(expression) && AST_APPEND_STR("&=") && RULE(expression));
-	MATCH(READ_STR("oR") && RULE(expression) && AST_APPEND_STR("|=") && RULE(expression));
-	MATCH(READ_STR("eO") && RULE(expression) && AST_APPEND_STR("^=") && RULE(expression));
-	MATCH(READ_STR("ls") && RULE(expression) && AST_APPEND_STR("<<") && RULE(expression));
-	MATCH(READ_STR("rs") && RULE(expression) && AST_APPEND_STR(">>") && RULE(expression));
-	MATCH(READ_STR("lS") && RULE(expression) && AST_APPEND_STR("<<=") && RULE(expression));
-	MATCH(READ_STR("rS") && RULE(expression) && AST_APPEND_STR(">>=") && RULE(expression));
-	MATCH(READ_STR("eq") && RULE(expression) && AST_APPEND_STR("==") && RULE(expression));
-	MATCH(READ_STR("ne") && RULE(expression) && AST_APPEND_STR("!=") && RULE(expression));
-	MATCH(READ_STR("lt") && RULE(expression) && AST_APPEND_STR("<") && RULE(expression));
-	MATCH(READ_STR("gt") && RULE(expression) && AST_APPEND_STR(">") && RULE(expression));
-	MATCH(READ_STR("le") && RULE(expression) && AST_APPEND_STR("<=") && RULE(expression));
+	MATCH_AND_DO(
+		READ_STR("qu") && RULE_DEFER(AST(0), expression) && AST_APPEND_STR("?") && RULE_DEFER(AST(1), expression) &&
+			AST_APPEND_STR(":") && RULE_DEFER(AST(2), expression),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+			AST_MERGE(AST(2));
+		});
+	MATCH_AND_DO(
+		READ_STR("cl") && RULE_DEFER(AST(0), expression) && AST_APPEND_STR("(") &&
+			RULE_DEFER_MANY_WITH_SEP(AST(1), expression, ", ") && AST_APPEND_STR(")") && READ('E'),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
+	MATCH_AND_DO(
+		READ_STR("cp") && AST_APPEND_STR("(") && RULE_DEFER(AST(0), base_unresolved_name) &&
+			AST_APPEND_STR(")") && AST_APPEND_STR("(") && RULE_DEFER_MANY_WITH_SEP(AST(1), expression, ", ") &&
+			AST_APPEND_STR(")") && READ('E'),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
+	MATCH_AND_DO(
+		READ_STR("tl") && RULE_DEFER(AST(0), type) && AST_APPEND_STR("{") &&
+			RULE_DEFER_MANY_WITH_SEP(AST(1), braced_expression, ", ") && AST_APPEND_STR("}") && READ('E'),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
+	MATCH_AND_DO(
+		READ('u') && RULE_DEFER(AST(0), source_name) && RULE_DEFER_MANY_WITH_SEP(AST(1), template_arg, ", ") && READ('E'), {
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
+#define EXPRESSION_BINARY_OP(OP_STR, OP_CODE) \
+	MATCH_AND_DO( \
+		READ_STR(OP_CODE) && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression), \
+		{ \
+			AST_MERGE(AST(0)); \
+			AST_APPEND_STR(OP_STR); \
+			AST_MERGE(AST(1)); \
+		});
+
+	EXPRESSION_BINARY_OP("+", "pl")
+	EXPRESSION_BINARY_OP("-", "mi")
+	EXPRESSION_BINARY_OP("*", "ml")
+	EXPRESSION_BINARY_OP("/", "dv")
+	EXPRESSION_BINARY_OP("%", "rm")
+	EXPRESSION_BINARY_OP("&", "an")
+	EXPRESSION_BINARY_OP("|", "or")
+	EXPRESSION_BINARY_OP("^", "eo")
+	EXPRESSION_BINARY_OP("=", "aS")
+	EXPRESSION_BINARY_OP("+=", "pL")
+	EXPRESSION_BINARY_OP("-=", "mI")
+	EXPRESSION_BINARY_OP("*=", "mL")
+	EXPRESSION_BINARY_OP("/=", "dV")
+	EXPRESSION_BINARY_OP("%=", "rM")
+	EXPRESSION_BINARY_OP("&=", "aN")
+	EXPRESSION_BINARY_OP("|=", "oR")
+	EXPRESSION_BINARY_OP("^=", "eO")
+	EXPRESSION_BINARY_OP("<<", "ls")
+	EXPRESSION_BINARY_OP(">>", "rs")
+	EXPRESSION_BINARY_OP("<<=", "lS")
+	EXPRESSION_BINARY_OP(">>=", "rS")
+	EXPRESSION_BINARY_OP("==", "eq")
+	EXPRESSION_BINARY_OP("!=", "ne")
+	EXPRESSION_BINARY_OP("<", "lt")
+	EXPRESSION_BINARY_OP(">", "gt")
+	EXPRESSION_BINARY_OP("<=", "le")
 	/* ternary operator */
-	MATCH(READ_STR("ge") && RULE(expression) && AST_APPEND_STR(">=") && RULE(expression));
+	EXPRESSION_BINARY_OP(">=", "ge")
 
 	/* type casting */
 	/* will generate " (type)" */
-	MATCH(READ_STR("ss") && RULE(expression) && AST_APPEND_STR("<=>") && RULE(expression));
+	EXPRESSION_BINARY_OP("<=>", "ss")
 
 	/* prefix operators */
-	MATCH(READ_STR("nt") && RULE(expression) && AST_APPEND_STR("!") && RULE(expression));
-	MATCH(READ_STR("aa") && RULE(expression) && AST_APPEND_STR("&&") && RULE(expression));
+	EXPRESSION_BINARY_OP("!", "nt");
+	EXPRESSION_BINARY_OP("&&", "aa");
 
 	/* expression (expr-list), call */
-	MATCH(READ_STR("oo") && RULE(expression) && AST_APPEND_STR("||") && RULE(expression));
+	EXPRESSION_BINARY_OP("||", "oo");
 
 	/* (name) (expr-list), call that would use argument-dependent lookup but for the parentheses*/
-	MATCH(
-		READ_STR("cv") && AST_APPEND_STR("(") && RULE(type) && AST_APPEND_STR(")") &&
-		RULE(expression));
+	MATCH_AND_DO(
+		READ_STR("cv") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_STR("(");
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(")");
+			AST_MERGE(AST(1));
+		});
 
 	/* type (expression), conversion with one argument */
-	MATCH(
-		READ_STR("cv") && RULE(type) && AST_APPEND_STR("(") && RULE(expression) &&
-		AST_APPEND_STR(")"));
-
+	MATCH_AND_DO(
+		READ_STR("cv") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression), {
+			AST_MERGE(AST(0));
+			AST_APPEND_STR("(");
+			AST_MERGE(AST(1));
+			AST_APPEND_STR(")");
+		});
 	/* type (expr-list), conversion with other than one argument */
-	MATCH(
-		READ_STR("il") && AST_APPEND_STR("{") && RULE_MANY_WITH_SEP(braced_expression, ", ") &&
-		AST_APPEND_STR("}") && READ('E'));
+	MATCH_AND_DO(
+		READ_STR("il") && RULE_DEFER_MANY_WITH_SEP(AST(0), braced_expression, ", ") && READ('E'),
+		{
+			AST_APPEND_STR("{");
+			AST_MERGE(AST(0));
+			AST_APPEND_STR("}");
+		});
 
 	/* type {expr-list}, conversion with braced-init-list argument */
 	MATCH(
@@ -274,240 +361,654 @@ bool rule_expression(
 		(READ_STR("gsda") || READ_STR("da")) && AST_APPEND_STR("delete[] ") && RULE(expression));
 
 	/* new (expr-list) type */
-	MATCH(
-		READ_STR("dc") && AST_APPEND_STR("dynamic_cast<") && RULE(type) &&
-		AST_APPEND_STR("> (") && RULE(expression) && AST_APPEND_STR(")"));
+	MATCH_AND_DO(
+		READ_STR("dc") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_STR("dynamic_cast<");
+			AST_MERGE(AST(0));
+			AST_APPEND_STR("> (");
+			AST_MERGE(AST(1));
+			AST_APPEND_STR(")");
+		});
 
 	/* new (expr-list) type (init) */
-	MATCH(
-		READ_STR("sc") && AST_APPEND_STR("static_cast<") && RULE(type) &&
-		AST_APPEND_STR("> (") && RULE(expression) && AST_APPEND_STR(")"));
+	MATCH_AND_DO(
+		READ_STR("sc") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_STR("static_cast<");
+			AST_MERGE(AST(0));
+			AST_APPEND_STR("> (");
+			AST_MERGE(AST(1));
+			AST_APPEND_STR(")");
+		});
 
 	/* new[] (expr-list) type */
-	MATCH(
-		READ_STR("cc") && AST_APPEND_STR("const_cast<") && RULE(type) &&
-		AST_APPEND_STR("> (") && RULE(expression) && AST_APPEND_STR(")"));
+	MATCH_AND_DO(
+		READ_STR("cc") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_STR("const_cast<");
+			AST_MERGE(AST(0));
+			AST_APPEND_STR("> (");
+			AST_MERGE(AST(1));
+			AST_APPEND_STR(")");
+		});
 
 	/* new[] (expr-list) type (init) */
-	MATCH(
-		READ_STR("rc") && AST_APPEND_STR("reinterpret_cast<") && RULE(type) &&
-		AST_APPEND_STR("> (") && RULE(expression) && AST_APPEND_STR(")"));
+	MATCH_AND_DO(
+		READ_STR("rc") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_STR("reinterpret_cast<");
+			AST_MERGE(AST(0));
+			AST_APPEND_STR("> (");
+			AST_MERGE(AST(1));
+			AST_APPEND_STR(")");
+		});
 
 	/* delete expression */
-	MATCH(READ_STR("dt") && RULE(expression) && AST_APPEND_CHR('.') && RULE(unresolved_name));
+	MATCH_AND_DO(
+		READ_STR("dt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), unresolved_name),
+		{
+			AST_MERGE(AST(0));
+			AST_APPEND_CHR('.');
+			AST_MERGE(AST(1));
+		});
 
 	/* delete [] expression */
-	MATCH(READ_STR("pt") && RULE(expression) && AST_APPEND_STR("->") && RULE(unresolved_name));
+	MATCH_AND_DO(
+		READ_STR("pt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), unresolved_name),
+		{
+			AST_MERGE(AST(0));
+			AST_APPEND_STR("->");
+			AST_MERGE(AST(1));
+		});
 
 	// dc <type> <expression>                               # dynamic_cast<type> (expression)
-	MATCH(READ_STR("ds") && RULE(expression) && AST_APPEND_STR(".*") && RULE(expression));
+	MATCH_AND_DO(
+		READ_STR("ds") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(".*");
+			AST_MERGE(AST(1));
+		});
 	// sc <type> <expression>                               # static_cast<type> (expression)
 	MATCH(
 		READ_STR("sP") && AST_APPEND_STR("sizeof...(") && RULE_MANY(template_arg) &&
 		AST_APPEND_CHR(')') && READ('E'));
 	// cc <type> <expression>                               # const_cast<type> (expression)
-	MATCH(
-		READ_STR("fLpl") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" + ... + ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLpl") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" + ... + ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 	// rc <type> <expression>                               # reinterpret_cast<type> (expression)
-	MATCH(
-		READ_STR("fLmi") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" - ... - ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLmi") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" - ... - ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 
 	// ti <type>                                            # typeid (type)
-	MATCH(
-		READ_STR("fLml") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" * ... * ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLml") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" * ... * ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 	// te <expression>                                      # typeid (expression)
-	MATCH(
-		READ_STR("fLdv") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" / ... / ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLdv") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" / ... / ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 	// st <type>                                            # sizeof (type)
-	MATCH(
-		READ_STR("fLrm") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" % ... % ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLrm") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" % ... % ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 	// sz <expression>                                      # sizeof (expression)
-	MATCH(
-		READ_STR("fLan") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" & ... & ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLan") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" & ... & ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 	// at <type>                                            # alignof (type)
-	MATCH(
-		READ_STR("fLor") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" | ... | ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLor") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" | ... | ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 	// az <expression>                                      # alignof (expression)
-	MATCH(
-		READ_STR("fLeo") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" ^ ... ^ ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLeo") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" ^ ... ^ ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 	// nx <expression>                                      # noexcept (expression)
-	MATCH(
-		READ_STR("fLaS") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" = ... = ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLaS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" = ... = ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 
-	MATCH(
-		READ_STR("fLpL") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" += ... += ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLmI") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" -= ... -= ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLpL") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" += ... += ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLmI") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" -= ... -= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 
-	MATCH(
-		READ_STR("fLmL") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" *= ... *= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLdV") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" /= ... /= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLrM") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" %= ... %= ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLmL") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" *= ... *= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLdV") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" /= ... /= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLrM") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" %= ... %= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 
-	MATCH(
-		READ_STR("fLaN") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" &= ... &= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLoR") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" |= ... |= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLeO") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" ^= ... ^= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLls") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" << ... << ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLaN") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" &= ... &= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLoR") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" |= ... |= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLeO") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" ^= ... ^= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLls") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" << ... << ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 
 	/* unary left fold */
-	MATCH(
-		READ_STR("fLrs") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" >> ... >> ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLlS") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" <<= ... <<= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLrS") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" >>= ... >>= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLeq") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" == ... == ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLne") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" != ... != ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLlt") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" < ... < ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLgt") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" > ... > ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLle") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" <= ... <= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLge") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" >= ... >= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLss") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" <=> ... <=> ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLnt") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" ! ... ! ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLaa") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" && ... && ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fLoo") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" || ... || ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRpl") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" + ... + ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRmi") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" - ... - ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRml") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" * ... * ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRdv") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" / ... / ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRrm") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" % ... % ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRan") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" & ... & ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRor") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" | ... | ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fReo") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" ^ ... ^ ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRaS") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" = ... = ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRpL") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" += ... += ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRmI") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" -= ... -= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRmL") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" *= ... *= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRdV") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" /= ... /= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRrM") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" %= ... %= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRaN") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" &= ... &= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRoR") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" |= ... |= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fReO") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" ^= ... ^= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRls") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" << ... << ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fLrs") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" >> ... >> ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLlS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" <<= ... <<= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLrS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" >>= ... >>= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLeq") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" == ... == ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLne") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" != ... != ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLlt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" < ... < ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLgt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" > ... > ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLle") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" <= ... <= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLge") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" >= ... >= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLss") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" <=> ... <=> ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLnt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" ! ... ! ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLaa") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" && ... && ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fLoo") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" || ... || ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRpl") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" + ... + ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRmi") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" - ... - ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRml") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" * ... * ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRdv") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" / ... / ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRrm") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" % ... % ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRan") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" & ... & ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRor") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" | ... | ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fReo") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" ^ ... ^ ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRaS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" = ... = ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRpL") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" += ... += ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRmI") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" -= ... -= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRmL") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" *= ... *= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRdV") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" /= ... /= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRrM") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" %= ... %= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRaN") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" &= ... &= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRoR") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" |= ... |= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fReO") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" ^= ... ^= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRls") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" << ... << ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 
 	/* unary fold right */
-	MATCH(
-		READ_STR("fRrs") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" >> ... >> ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRlS") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" <<= ... <<= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRrS") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" >>= ... >>= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fReq") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" == ... == ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRne") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" != ... != ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRlt") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" < ... < ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRgt") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" > ... > ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRle") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" <= ... <= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRge") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" >= ... >= ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRss") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" <=> ... <=> ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRnt") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" ! ... ! ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRaa") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" && ... && ") && RULE(expression) && AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("fRoo") && AST_APPEND_CHR('(') && RULE(expression) &&
-		AST_APPEND_STR(" || ... || ") && RULE(expression) && AST_APPEND_CHR(')'));
+	MATCH_AND_DO(
+		READ_STR("fRrs") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" >> ... >> ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRlS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" <<= ... <<= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRrS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" >>= ... >>= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fReq") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" == ... == ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRne") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" != ... != ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRlt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" < ... < ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRgt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" > ... > ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRle") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" <= ... <= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRge") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" >= ... >= ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRss") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" <=> ... <=> ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRnt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" ! ... ! ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRaa") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" && ... && ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
+	MATCH_AND_DO(
+		READ_STR("fRoo") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		{
+			AST_APPEND_CHR('(');
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(" || ... || ");
+			AST_MERGE(AST(1));
+			AST_APPEND_CHR(')');
+		});
 	MATCH(READ_STR("ps") && AST_APPEND_CHR('+') && RULE(expression));
 	MATCH(READ_STR("ng") && AST_APPEND_CHR('-') && RULE(expression));
 	MATCH(READ_STR("ad") && AST_APPEND_CHR('&') && RULE(expression));
@@ -624,7 +1125,12 @@ bool rule_simple_id(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(simple_id);
-	MATCH(RULE(source_name) && OPTIONAL(RULE(template_args)));
+	MATCH_AND_DO(
+		RULE_DEFER(AST(0), source_name) && OPTIONAL(RULE_DEFER(AST(1), template_args)),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
 	RULE_FOOT(simple_id);
 }
 
@@ -763,11 +1269,26 @@ bool rule_special_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(special_name);
-	MATCH(READ_STR("Tc") && RULE(call_offset) && RULE(call_offset) && RULE(encoding));
-	MATCH(
-		READ_STR("GR") && AST_APPEND_STR("reference temporary for ") && RULE(name) &&
-		RULE(seq_id) && READ('_'));
-	MATCH(READ('T') && RULE(call_offset) && RULE(encoding));
+	MATCH_AND_DO(
+		READ_STR("Tc") && RULE_DEFER(AST(0), call_offset) && RULE_DEFER(AST(1), call_offset) && RULE_DEFER(AST(2), encoding),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+			AST_MERGE(AST(2));
+		});
+	MATCH_AND_DO(
+		READ_STR("GR") && RULE_DEFER(AST(0), name) && RULE_DEFER(AST(1), seq_id) && READ('_'),
+		{
+			AST_APPEND_STR("reference temporary for ");
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
+	MATCH_AND_DO(
+		READ('T') && RULE_DEFER(AST(0), call_offset) && RULE_DEFER(AST(1), encoding),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
 	MATCH(
 		READ_STR("GR") && AST_APPEND_STR("reference temporary for ") && RULE(name) && READ('_'));
 	MATCH(READ_STR("TV") && AST_APPEND_STR("vtable for ") && RULE(type));
@@ -914,7 +1435,12 @@ bool rule_extended_qualifier(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(extended_qualifier);
-	MATCH(READ('U') && RULE(source_name) && RULE(template_args));
+	MATCH_AND_DO(
+		READ('U') && RULE_DEFER(AST(0), source_name) && RULE_DEFER(AST(1), template_args),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
 	MATCH(READ('U') && RULE(source_name));
 	RULE_FOOT(extended_qualifier);
 }
@@ -1298,7 +1824,12 @@ bool rule_base_unresolved_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(base_unresolved_name);
-	MATCH(READ_STR("on") && RULE(operator_name) && RULE(template_args));
+	MATCH_AND_DO(
+		READ_STR("on") && RULE_DEFER(AST(0), operator_name) && RULE_DEFER(AST(1), template_args),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
 	MATCH(READ_STR("on") && RULE(operator_name));
 	MATCH(READ_STR("dn") && RULE(destructor_name));
 	MATCH(RULE(simple_id));
@@ -1359,7 +1890,12 @@ bool rule_local_name(
 			AST_MERGE(AST(1));
 			AST_MERGE(AST(2));
 		});
-	MATCH(READ('Z') && RULE(encoding) && READ_STR("Es") && OPTIONAL(RULE(discriminator)));
+	MATCH_AND_DO(
+		READ('Z') && RULE_DEFER(AST(0), encoding) && READ_STR("Es") && OPTIONAL(RULE_DEFER(AST(1), discriminator)),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
 	RULE_FOOT(local_name);
 }
 
@@ -1409,7 +1945,12 @@ bool rule_operator_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(operator_name);
-	MATCH(READ('v') && RULE(digit) && RULE(source_name));
+	MATCH_AND_DO(
+		READ('v') && RULE_DEFER(AST(0), digit) && RULE_DEFER(AST(1), source_name),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
 	MATCH(READ_STR("cv") && AST_APPEND_STR("operator (") && RULE(type) && AST_APPEND_STR(")"));
 	MATCH(READ_STR("nw") && AST_APPEND_STR("operator new"));
 	MATCH(READ_STR("na") && AST_APPEND_STR("operator new[]"));
@@ -1884,7 +2425,12 @@ bool rule_pointer_to_member_type(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(pointer_to_member_type);
-	MATCH(READ('M') && RULE(type) && RULE(type));
+	MATCH_AND_DO(
+		READ('M') && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), type),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
 	RULE_FOOT(pointer_to_member_type);
 }
 
@@ -2018,7 +2564,12 @@ bool rule_expr_primary(
 			}
 		});
 
-	MATCH(READ('L') && RULE(type) && RULE(value_float) && READ('E'));
+	MATCH_AND_DO(
+		READ('L') && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), value_float) && READ('E'),
+		{
+			AST_MERGE(AST(0));
+			AST_MERGE(AST(1));
+		});
 
 	MATCH(READ('L') && RULE(string_type) && READ('E'));
 	MATCH(READ_STR("L_Z") && RULE(encoding) && READ('E'));

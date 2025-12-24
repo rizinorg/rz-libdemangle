@@ -212,6 +212,8 @@
 	match_one_or_more_rules(first_of_rule_##x, rule_##x, sep, dan, msi, m, graph, _my_node_id)
 #define RULE_DEFER_ATLEAST_ONCE(var, x) \
 	match_one_or_more_rules(first_of_rule_##x, rule_##x, NULL, (var), msi, m, graph, _my_node_id)
+#define RULE_DEFER_ATLEAST_ONCE_WITH_SEP(var, x, sep) \
+	match_one_or_more_rules(first_of_rule_##x, rule_##x, sep, (var), msi, m, graph, _my_node_id)
 
 /**
  * \b Match given rule name any number of times.
@@ -227,6 +229,8 @@
 	match_zero_or_more_rules(first_of_rule_##x, rule_##x, sep, dan, msi, m, graph, _my_node_id)
 #define RULE_DEFER_MANY(var, x) \
 	match_zero_or_more_rules(first_of_rule_##x, rule_##x, NULL, (var), msi, m, graph, _my_node_id)
+#define RULE_DEFER_MANY_WITH_SEP(var, x, sep) \
+	match_zero_or_more_rules(first_of_rule_##x, rule_##x, sep, (var), msi, m, graph, _my_node_id)
 
 /**
  * \b Declare a new rule so that it can be used with RULE(...) macro later on.
