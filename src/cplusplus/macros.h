@@ -310,6 +310,19 @@
 		return rule_##Y(dan, msi, m, graph, parent_node_id); \
 	}
 
+#define AST_FLATTEN(X) \
+	do { \
+		if ((X)->children && VecDemAstNode_len((X)->children) == 1) { \
+			DemAstNode *only_child = AST(0); \
+			if (only_child && strcmp((X)->dem.buf, only_child->dem.buf) == 0 && only_child->val.buf == (X)->val.buf && only_child->val.len == (X)->val.len) { \
+				DemAstNode node = *only_child; \
+				memset(only_child, 0, sizeof(DemAstNode)); \
+				DemAstNode_deinit(dan); \
+				*dan = node; \
+			} \
+		} \
+	} while (0)
+
 /* Macros for rules that use direct returns */
 #define TRACE_RETURN_SUCCESS \
 	do { /*trace success*/ \
@@ -322,6 +335,7 @@
 			trace_graph_set_result(graph, _my_node_id, _res_str, 1); \
 		} \
 		dan->val.len = msi->cur - dan->val.buf; \
+		AST_FLATTEN(dan); \
 		return true; \
 	} while (0)
 
@@ -433,6 +447,7 @@
 			meta_move(_og_meta, &_tmp_meta); \
 			m = _og_meta; \
 			dan->val.len = msi->cur - dan->val.buf; \
+			AST_FLATTEN(dan); \
 			return true; \
 		} else { \
 			if (graph && graph->enabled && _my_node_id >= 0) { \
@@ -498,7 +513,7 @@
 #define AST_APPEND_TYPE1(T)    append_type(m, (T), false)
 #define AST_APPEND_NODE(X)     DemAstNode_append(dan, (X))
 #define AST(I)                 DemAstNode_children_at(dan, (I))
-#define AST_(X, I)                 DemAstNode_children_at((X), (I))
+#define AST_(X, I)             DemAstNode_children_at((X), (I))
 
 #define APPEND_TYPE(tname)       append_type(m, (tname), false)
 #define FORCE_APPEND_TYPE(tname) append_type(m, (tname), true)
@@ -510,5 +525,17 @@
 		dan->val.len += (X)->val.len, \
 		dan->val.buf = dan->val.buf ? dan->val.buf : (X)->val.buf, \
 		(X))
+
+#define AST_MERGE_OPT(X) \
+	(DemAstNode_non_empty(X) ? dem_string_concat(&dan->dem, &(X)->dem), \
+		dan->val.len += (X)->val.len, \
+		dan->val.buf = dan->val.buf ? dan->val.buf : (X)->val.buf, \
+		(X) : 0)
+
+#define DEM_UNREACHABLE \
+	do { \
+		fprintf(stderr, "Reached unreachable code at %s:%d", __FILE__, __LINE__); \
+		abort(); \
+	} while (0)
 
 #endif // V3_IMPL_MACROS_H

@@ -81,3 +81,10 @@ DemAstNode *DemAstNode_children_at(DemAstNode *xs, size_t idx) {
 	}
 	return VecF(DemAstNode, at)(xs->children, idx);
 }
+
+bool DemAstNode_is_empty(DemAstNode *x) {
+	if (!x) {
+		return true;
+	}
+	return (x->dem.len == 0 && x->val.len == 0);
+}

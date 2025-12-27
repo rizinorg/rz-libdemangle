@@ -139,6 +139,8 @@ bool DemAstNode_init(DemAstNode *dan);
 void DemAstNode_deinit(DemAstNode *dan);
 DemAstNode *DemAstNode_append(DemAstNode *xs, DemAstNode *x);
 DemAstNode *DemAstNode_children_at(DemAstNode *xs, size_t idx);
+bool DemAstNode_is_empty(DemAstNode *x);
+#define DemAstNode_non_empty(X) (!DemAstNode_is_empty(X))
 
 VecIMPL(DemAstNode, DemAstNode_deinit);
 
