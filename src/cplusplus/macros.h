@@ -498,6 +498,7 @@
 #define AST_APPEND_TYPE1(T)    append_type(m, (T), false)
 #define AST_APPEND_NODE(X)     DemAstNode_append(dan, (X))
 #define AST(I)                 DemAstNode_children_at(dan, (I))
+#define AST_(X, I)                 DemAstNode_children_at((X), (I))
 
 #define APPEND_TYPE(tname)       append_type(m, (tname), false)
 #define FORCE_APPEND_TYPE(tname) append_type(m, (tname), true)

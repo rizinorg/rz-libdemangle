@@ -1649,7 +1649,10 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		// Preserve the function_type tag from child
 		dan->tag = AST(0)->tag;
 	});
-	MATCH(RULE_CALL_DEFER(AST(0), qualified_type) && AST_MERGE(AST(0)) && AST_APPEND_TYPE);
+	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), qualified_type), {
+		AST_MERGE(AST(0));
+		AST_APPEND_TYPE;
+	});
 	MATCH(
 		READ('C') && RULE_CALL_DEFER(AST(0), type) && AST_MERGE(AST(0))); // complex pair (C99)
 	MATCH(READ('G') && RULE_CALL_DEFER(AST(0), type) && AST_MERGE(AST(0))); // imaginary (C99)
@@ -1906,12 +1909,8 @@ bool rule_substitution(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(substitution);
-	// HACK(brightprogrammer): This is not in original grammar, but this works!
-	// Because having a "7__cxx11" just after a substitution "St" does not make sense to original grammar
-	// Placing it here is also important, the order matters!
 	MATCH(READ('S') && RULE(seq_id) && READ('_'));
 
-	MATCH(READ_STR("St7__cxx11") && AST_APPEND_STR("std::__cxx11"));
 	MATCH(READ_STR("St") && AST_APPEND_STR("std"));
 	MATCH(READ_STR("Sa") && AST_APPEND_STR("std::allocator"));
 	MATCH(READ_STR("Sb") && AST_APPEND_STR("std::basic_string"));
@@ -2624,10 +2623,13 @@ bool rule_prefix_start(
 	MATCH_AND_DO(
 		(RULE_DEFER(AST(0), unqualified_name) || RULE_DEFER(AST(0), template_param) ||
 			RULE_DEFER(AST(0), substitution)) &&
-			(PEEK() == 'E' ? false : (AST_MERGE(AST(0)) &&
-							 // First record the unqualified_name (template name like QList)
-							 AST_APPEND_TYPE)),
+			PEEK() != 'E',
 		{
+			AST_MERGE(AST(0));
+			// First record the unqualified_name (template name like QList)
+			if (AST(0)->tag != CP_DEM_TYPE_KIND_substitution) {
+				AST_APPEND_TYPE;
+			}
 			// Find the actual index of the entry (handles deduplication)
 			st64 idx = find_type_index(m, dan->dem.buf);
 			if (idx >= 0) {
