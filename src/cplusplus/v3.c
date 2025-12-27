@@ -15,6 +15,8 @@
 #include "macros.h"
 #include "parser_combinator.h"
 #include "types.h"
+#include "vec.h"
+#include <stdio.h>
 
 bool rule_vendor_specific_suffix(
 	DemAstNode *dan,
@@ -1311,28 +1313,48 @@ bool rule_function_type(
 	// P prefix is handled in the type rule, which properly inserts * for function pointers
 
 	MATCH_AND_DO(
-		OPTIONAL(RULE(cv_qualifiers)) && OPTIONAL(RULE(exception_spec)) &&
+		OPTIONAL(RULE_DEFER(AST(0), cv_qualifiers)) && OPTIONAL(RULE_DEFER(AST(1), exception_spec)) &&
 			OPTIONAL(READ_STR("Dx")) && READ('F') && OPTIONAL(READ('Y')) &&
 
 			// Return type. If return type is builtin type, then it's not substitutable
 			// If return type is a type, then it's substitutable, so add using APPEND_TYPE
-			((RULE_DEFER(AST(0), builtin_type) || ((RULE_DEFER(AST(0), type)))) &&
-				AST_MERGE(AST(0))) &&
-
-			// A space before the arguments
-			AST_APPEND_CHR(' ') &&
-
-			// arguments - use bare_function_type which handles single void as empty params
-			AST_APPEND_STR("(") && RULE(bare_function_type) && AST_APPEND_STR(")") &&
-
-			OPTIONAL(RULE(ref_qualifier)) && READ('E'),
+			RULE_DEFER(AST(2), type) &&
+			RULE_DEFER(AST(3), bare_function_type) &&
+			OPTIONAL(RULE_DEFER(AST(4), ref_qualifier)) && READ('E'),
 		{
-			// Mark this as a function type so pointer/reference handling can detect it
-			dan->tag = CP_DEM_TYPE_KIND_function_type;
-			// Add function type to substitution table
+			AST_MERGE(AST(2)); // return type
+			AST_APPEND_STR(" (");
+			AST_MERGE(AST(3)); // bare-function-type
+			AST_APPEND_STR(")");
+			AST_MERGE_OPT(AST(4)); // ref-qualifier
+			AST_MERGE_OPT(AST(0)); // cv-qualifiers
+			AST_MERGE_OPT(AST(1)); // exception spec
 			append_type(m, &dan->dem, false);
 		});
 	RULE_FOOT(function_type);
+}
+
+static void handle_func_pointer(DemAstNode *dan) {
+	if (VecF(DemAstNode, len)(dan->children) == 2 && AST(1)->tag == CP_DEM_TYPE_KIND_function_type) {
+		DemAstNode *ftype = AST(1);
+		// return type
+		if (DemAstNode_non_empty(AST_(ftype, 2))) {
+			DemAstNode_append(dan, AST_(ftype, 2));
+		}
+		AST_APPEND_STR(" (");
+		DemAstNode_append(dan, AST(0));
+		AST_APPEND_STR("*)");
+
+		AST_APPEND_STR(" (");
+		AST_MERGE(AST_(ftype, 3)); // bare-function-type
+		AST_APPEND_STR(")");
+
+		AST_MERGE_OPT(AST_(ftype, 4)); // ref-qualifier
+		AST_MERGE_OPT(AST_(ftype, 0)); // cv-qualifiers
+		AST_MERGE_OPT(AST_(ftype, 1)); // exception spec
+	} else {
+		DEM_UNREACHABLE;
+	}
 }
 
 bool rule_function_param(
@@ -1646,8 +1668,6 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	// For function_type, we need to preserve the child's tag so pointer/reference handling can detect it
 	MATCH_AND_DO(RULE_DEFER(AST(0), function_type), {
 		AST_MERGE(AST(0));
-		// Preserve the function_type tag from child
-		dan->tag = AST(0)->tag;
 	});
 	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), qualified_type), {
 		AST_MERGE(AST(0));
@@ -1667,6 +1687,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		dem_string_concat(&dan->dem, &child->dem);
 
 		if (is_function_type) {
+			handle_func_pointer(dan);
 			// This is a function type - we need to insert * in the right place
 			// Function types look like "ret (args)"
 			// Function pointers look like "ret (*)(args)" or "ret (**)(args)"
@@ -2427,8 +2448,12 @@ bool rule_pointer_to_member_type(
 	MATCH_AND_DO(
 		READ('M') && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), type),
 		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
+			if (AST(1) && (AST(1)->tag == CP_DEM_TYPE_KIND_function_type)) {
+				handle_func_pointer(dan);
+			} else {
+				AST_MERGE(AST(0));
+				AST_MERGE(AST(1));
+			}
 		});
 	RULE_FOOT(pointer_to_member_type);
 }

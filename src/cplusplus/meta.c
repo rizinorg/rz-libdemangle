@@ -206,16 +206,16 @@ bool append_type(Meta *m, DemString *t, bool force_append) {
 		});
 	}
 
-	// DEBUG
-	if (getenv("DEMANGLE_TRACE")) {
-		fprintf(stderr, "[append_type] trying to add: '%s'\n", t->buf);
-	}
-
 	Name *new_name = VecF(Name, append)(&m->detected_types, NULL);
 	dem_string_init_clone(&new_name->name, t);
 	if (!count_name_parts(new_name)) {
 		m->detected_types.length--;
 		return false;
+	}
+
+	// DEBUG
+	if (getenv("DEMANGLE_TRACE")) {
+		fprintf(stderr, "[append_type] trying to add: '%s'\n", t->buf);
 	}
 
 	return true;
