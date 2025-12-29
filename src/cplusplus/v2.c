@@ -18,7 +18,7 @@
 // For name mangling scheme for GNU v3 ABI, see
 //   https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling-structure
 
-static const char *cpdem_get_demangled(CpDem *dem);
+static char *cpdem_get_demangled(CpDem *dem);
 static CpDem *cpdem_public_name(CpDem *dem);
 
 /* if base name comes with qualifiers then it's a class */
@@ -219,7 +219,7 @@ char *cpdem_get_demangled(CpDem *dem) {
 		dem_string_concat(&demangled, &dem->suffix);
 	}
 
-	const char *res = dem_str_ndup(demangled.buf, demangled.len);
+	char *res = dem_str_ndup(demangled.buf, demangled.len);
 	dem_string_deinit(&demangled);
 
 	return res;

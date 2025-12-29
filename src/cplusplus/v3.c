@@ -1335,7 +1335,7 @@ bool rule_function_type(
 			AST_MERGE_OPT(AST(4)); // ref-qualifier
 			AST_MERGE_OPT(AST(0)); // cv-qualifiers
 			AST_MERGE_OPT(AST(1)); // exception spec
-			append_type(m, &dan->dem, false);
+			append_type(m, dan, false);
 		});
 	RULE_FOOT(function_type);
 }
@@ -1696,7 +1696,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			handle_func_pointer(dan, "*");
 		} else if (strstr(AST(0)->dem.buf, "(*")) {
 			handle_func_pointer(dan, "&");
-		}else {
+		} else {
 			// Regular pointer: just append "*"
 			dem_string_concat(&dan->dem, &AST(0)->dem);
 			dem_string_append(&dan->dem, "*");
@@ -2611,13 +2611,13 @@ bool rule_prefix_start(
 			// Also save the current prefix string for use by prefix_tail
 			// This is needed when the prefix is a special substitution like "std"
 			// which is not added to the substitution table
-			dem_string_deinit(&m->current_prefix);
-			dem_string_init_clone(&m->current_prefix, &dan->dem);
+			DemAstNode_deinit(&m->current_prefix);
+			DemAstNode_init_clone(&m->current_prefix, dan);
 			if (getenv("DEMANGLE_TRACE")) {
 				fprintf(
 					stderr,
 					"[prefix_start] set current_prefix = '%s'\n",
-					m->current_prefix.buf ? m->current_prefix.buf : "(null)");
+					m->current_prefix.dem.buf ? m->current_prefix.dem.buf : "(null)");
 			}
 		});
 	// Optionally match template args
@@ -2629,8 +2629,8 @@ bool rule_prefix_start(
 			m->prefix_base_idx = (ut64)idx;
 		}
 		// Update current_prefix to include template args
-		dem_string_deinit(&m->current_prefix);
-		dem_string_init_clone(&m->current_prefix, &dan->dem);
+		DemAstNode_deinit(&m->current_prefix);
+		DemAstNode_init_clone(&m->current_prefix, dan);
 	}
 
 	RULE_FOOT(prefix_start);
@@ -2644,161 +2644,64 @@ bool rule_prefix_tail(
 	int parent_node_id) {
 	RULE_HEAD(prefix_tail);
 
-	// Save position for potential backtrack
-	const char *saved_pos = CUR();
+	while (first_of_rule_unqualified_name(CUR())) {
+		const char *component_start = CUR();
 
-	// Match unqualified_name and continue to next prefix_tail
-	if (first_of_rule_unqualified_name(CUR()) &&
-		rule_unqualified_name(AST(0), msi, m, graph, _my_node_id)) {
-		// Check if followed by 'E' - if so, this unqualified_name belongs to nested_name termination
+		DemAstNode comp = { 0 };
+		DemAstNode_init(&comp);
+		if (!rule_unqualified_name(&comp, msi, m, graph, _my_node_id)) {
+			DemAstNode_deinit(&comp);
+			break;
+		}
+
+		/* If the caller is waiting for this unqualified_name followed by 'E',
+		 * backtrack and let the caller consume it. */
 		if (PEEK() == 'E') {
-			// Restore position and fail - let the caller consume this
-			CUR() = saved_pos;
-			RULE_FOOT(prefix_tail);
+			CUR() = component_start;
+			DemAstNode_deinit(&comp);
+			break;
 		}
 
-		// Check if followed by 'I' (template args)
-		// We need to peek ahead to see if after template args there's still more prefix components
-		// If after 'I...E' there's another unqualified_name, this is an intermediate template like A::B<int>::C
-		// If after 'I...E' there's 'E' (nested name end), this is the final template name for template_prefix
-		if (PEEK() == 'I') {
-			// Save current position
-			const char *before_template = CUR();
+		DemAstNode suffix = { 0 };
+		DemAstNode_init(&suffix);
+		bool has_suffix = rule_prefix_suffix(&suffix, msi, m, graph, _my_node_id);
 
-			// IMPORTANT: Add template PREFIX to substitution table BEFORE parsing template args
-			// Per Itanium ABI, S_ = std::vector (template prefix), S0_ = std::vector<int> (full)
-			// We need to merge the unqualified_name first to build the prefix
-			DemString saved_dem = dan->dem;
-			dan->dem = (DemString){ 0 };
-			AST_APPEND_STR("::");
-			AST_MERGE(AST(0));
-			// Now dan->dem has "::vector", build full prefix path using current_prefix
-			// current_prefix contains the parent prefix (e.g., "std")
-			if (getenv("DEMANGLE_TRACE")) {
-				fprintf(
-					stderr,
-					"[prefix_tail] current_prefix = '%s', dan->dem = '%s'\n",
-					m->current_prefix.buf ? m->current_prefix.buf : "(null)",
-					dan->dem.buf ? dan->dem.buf : "(null)");
-			}
-			if (m->current_prefix.buf && m->current_prefix.len > 0) {
-				DemString prefix_path = { 0 };
-				dem_string_append(&prefix_path, m->current_prefix.buf);
-				dem_string_concat(&prefix_path, &dan->dem); // e.g., "std::vector"
-				append_type(m, &prefix_path, false);
-				// Update current_prefix to be the new template prefix
-				dem_string_deinit(&m->current_prefix);
-				dem_string_init_clone(&m->current_prefix, &prefix_path);
-				// Also update prefix_base_idx
-				st64 idx = find_type_index(m, prefix_path.buf);
-				if (idx >= 0) {
-					m->prefix_base_idx = (ut64)idx;
-				}
-				dem_string_deinit(&prefix_path);
-			}
-			// Prepend to saved_dem
-			dem_string_concat(&dan->dem, &saved_dem);
-			dem_string_deinit(&saved_dem);
-
-			// Save current_prefix before parsing template args (nested parsing may overwrite it)
-			DemString saved_current_prefix = { 0 };
-			if (m->current_prefix.buf) {
-				dem_string_init_clone(&saved_current_prefix, &m->current_prefix);
-			}
-
-			// Try to parse template args
-			if (rule_prefix_suffix(AST(1), msi, m, graph, _my_node_id)) {
-				// Restore current_prefix after parsing template args
-				dem_string_deinit(&m->current_prefix);
-				if (saved_current_prefix.buf) {
-					m->current_prefix = saved_current_prefix;
-					saved_current_prefix = (DemString){ 0 };
-				}
-
-				// Check what comes after template args
-				if (!first_of_rule_unqualified_name(CUR())) {
-					// No more prefix components after template args
-					// This is the final template - fail and let template_prefix handle it
-					CUR() = saved_pos;
-					// Restore dan->dem - need to remove what we added
-					// This is tricky... we need to properly backtrack
-					RULE_FOOT(prefix_tail);
-				}
-				// There are more components - this is intermediate like A::B<int>::C
-				// Continue processing - merge template args
-				AST_MERGE(AST(1));
-
-				// Build and add the template instantiation (with args) to substitution table
-				if (m->current_prefix.buf && m->current_prefix.len > 0) {
-					DemString full_path = { 0 };
-					dem_string_append(&full_path, m->current_prefix.buf);
-					dem_string_append(&full_path, AST(1)->dem.buf); // Just the template args
-					append_type(m, &full_path, false);
-					// Update current_prefix to be the full template
-					dem_string_deinit(&m->current_prefix);
-					dem_string_init_clone(&m->current_prefix, &full_path);
-					m->prefix_base_idx = m->detected_types.length - 1;
-					dem_string_deinit(&full_path);
-				}
-
-				// Recursive prefix_tail for remaining components
-				if (first_of_rule_unqualified_name(CUR()) &&
-					rule_prefix_tail(AST(2), msi, m, graph, _my_node_id)) {
-					AST_MERGE(AST(2));
-				}
-				TRACE_RETURN_SUCCESS;
-			} else {
-				// Failed to parse template args - restore and fail
-				dem_string_deinit(&saved_current_prefix);
-				CUR() = saved_pos;
-				RULE_FOOT(prefix_tail);
-			}
+		/* Build fully qualified prefix = current_prefix :: comp [suffix] */
+		DemString qualified = { 0 };
+		dem_string_init(&qualified);
+		if (dem_string_non_empty(&m->current_prefix.dem)) {
+			dem_string_append(&qualified, m->current_prefix.dem.buf);
+			dem_string_append(&qualified, "::");
+		}
+		dem_string_concat(&qualified, &comp.dem);
+		if (has_suffix) {
+			dem_string_concat(&qualified, &suffix.dem);
 		}
 
-		// Add :: before merging this component
-		AST_APPEND_STR("::");
-		AST_MERGE(AST(0));
-
-		// Build full path using current_prefix
-		if (m->current_prefix.buf && m->current_prefix.len > 0) {
-			DemString full_path = { 0 };
-			dem_string_append(&full_path, m->current_prefix.buf);
-			dem_string_concat(&full_path, &dan->dem); // dan->dem has "::component"
-			append_type(m, &full_path, false);
-			// Update current_prefix and prefix_base_idx
-			dem_string_deinit(&m->current_prefix);
-			dem_string_init_clone(&m->current_prefix, &full_path);
-			st64 idx = find_type_index(m, full_path.buf);
-			if (idx >= 0) {
-				m->prefix_base_idx = (ut64)idx;
-			}
-			dem_string_deinit(&full_path);
+		/* Emit into output dem */
+		if (dan->dem.len > 0) {
+			dem_string_append(&dan->dem, "::");
+		}
+		dem_string_concat(&dan->dem, &comp.dem);
+		if (has_suffix) {
+			dem_string_concat(&dan->dem, &suffix.dem);
 		}
 
-		// Optional prefix_suffix (template args)
-		if (rule_prefix_suffix(AST(1), msi, m, graph, _my_node_id)) {
-			AST_MERGE(AST(1));
-			// Add the template instantiation using current_prefix
-			if (m->current_prefix.buf && m->current_prefix.len > 0) {
-				DemString full_path = { 0 };
-				dem_string_append(&full_path, m->current_prefix.buf);
-				dem_string_concat(&full_path, &AST(1)->dem);
-				append_type(m, &full_path, false);
-				// Update current_prefix
-				dem_string_deinit(&m->current_prefix);
-				dem_string_init_clone(&m->current_prefix, &full_path);
-				m->prefix_base_idx = m->detected_types.length - 1;
-				dem_string_deinit(&full_path);
-			}
-		}
-		// Recursive prefix_tail
-		if (first_of_rule_unqualified_name(CUR()) &&
-			rule_prefix_tail(AST(2), msi, m, graph, _my_node_id)) {
-			AST_MERGE(AST(2));
-		}
-		TRACE_RETURN_SUCCESS;
+		/* Update substitution table and current_prefix snapshot */
+		DemAstNode qualified_node = { 0 };
+		DemAstNode_init(&qualified_node);
+		dem_string_init_clone(&qualified_node.dem, &qualified);
+		append_type(m, &qualified_node, false);
+
+		DemAstNode_deinit(&m->current_prefix);
+		m->current_prefix = qualified_node; /* move */
+
+		dem_string_deinit(&qualified);
+		DemAstNode_deinit(&comp);
+		DemAstNode_deinit(&suffix);
 	}
 
+	TRACE_RETURN_SUCCESS;
 	RULE_FOOT(prefix_tail);
 }
 

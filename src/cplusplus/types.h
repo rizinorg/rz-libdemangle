@@ -225,7 +225,7 @@ bool meta_substitute_type(Meta *m, ut64 id, DemString *dem);
 bool meta_substitute_tparam(Meta *m, ut64 id, DemString *dem);
 st64 find_type_index(Meta *m, const char *type_str);
 
-ut32 count_name_parts(const DemString *x)
+ut32 count_name_parts(const DemString *x);
 bool is_builtin_type(const char *t);
 
 #endif // V3_IMPL_TYPES_H

@@ -136,6 +136,10 @@ if get_option('enable_tests') and not meson.is_subproject()
     if get_option('b_sanitize').contains('undefined')
         test_dependencies += cc.find_library('ubsan')
     endif
+    # Tests that need longer timeout due to large number of test cases
+    # (especially when running with sanitizers like ASAN)
+    slow_tests = ['cxx_base']
+
     foreach test : tests
         exe = executable(
             'test_@0@'.format(test),
@@ -147,7 +151,11 @@ if get_option('enable_tests') and not meson.is_subproject()
             install_rpath : '',
             implicit_include_directories : false,
         )
-        test(test, exe)
+        if test in slow_tests
+            test(test, exe, timeout : 120)
+        else
+            test(test, exe)
+        endif
     endforeach
 
     foreach test : unit_tests

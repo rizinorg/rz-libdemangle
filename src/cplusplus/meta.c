@@ -15,7 +15,6 @@ static inline void meta_copy_scalars(Meta *dst, Meta *src) {
 	dst->is_const = src->is_const;
 	dst->is_ctor = src->is_ctor;
 	dst->is_dtor = src->is_dtor;
-	dst->is_const = src->is_const;
 	dst->trace = src->trace;
 	dst->template_idx_start = src->template_idx_start;
 	dst->last_reset_idx = src->last_reset_idx;
@@ -32,9 +31,9 @@ void meta_deinit(Meta *m) {
 		return;
 	}
 
-	VecF(Name, deinit)(&m->detected_types);
+	VecF(DemAstNode, deinit)(&m->detected_types);
 	VecF(Name, deinit)(&m->template_params);
-	dem_string_deinit(&m->current_prefix);
+	DemAstNode_deinit(&m->current_prefix);
 	memset(m, 0, sizeof(Meta));
 }
 
@@ -42,24 +41,36 @@ bool meta_copy(Meta *dst, Meta *src) {
 	if (!(src && dst && src != dst)) {
 		return false;
 	}
+
 	meta_copy_scalars(dst, src);
-	// Copy current_prefix (not included in scalars because it needs cloning)
-	dem_string_deinit(&dst->current_prefix);
-	if (src->current_prefix.buf && src->current_prefix.len > 0) {
-		dem_string_init_clone(&dst->current_prefix, &src->current_prefix);
+
+	/* Reset destination dynamic members before cloning */
+	VecF(DemAstNode, deinit)(&dst->detected_types);
+	VecF(Name, deinit)(&dst->template_params);
+	DemAstNode_deinit(&dst->current_prefix);
+
+	vec_init(&dst->detected_types);
+	vec_init(&dst->template_params);
+
+	if (!DemAstNode_is_empty(&src->current_prefix)) {
+		DemAstNode_init_clone(&dst->current_prefix, &src->current_prefix);
+	} else {
+		DemAstNode_init(&dst->current_prefix);
 	}
+
 	vec_foreach_ptr(&src->detected_types, n, {
-		Name new_name = { 0 };
-		dem_string_init_clone(&new_name.name, &n->name);
-		new_name.num_parts = n->num_parts;
-		VecF(Name, append)(&dst->detected_types, &new_name);
+		DemAstNode cloned = { 0 };
+		DemAstNode_init_clone(&cloned, n);
+		VecF(DemAstNode, append)(&dst->detected_types, &cloned);
 	});
+
 	vec_foreach_ptr(&src->template_params, n, {
 		Name new_name = { 0 };
 		dem_string_init_clone(&new_name.name, &n->name);
 		new_name.num_parts = n->num_parts;
 		VecF(Name, append)(&dst->template_params, &new_name);
 	});
+
 	return true;
 }
 
@@ -68,14 +79,16 @@ void meta_move(Meta *dst, Meta *src) {
 		return;
 	}
 	meta_copy_scalars(dst, src);
-	// Move current_prefix
-	dem_string_deinit(&dst->current_prefix);
+
+	DemAstNode_deinit(&dst->current_prefix);
 	dst->current_prefix = src->current_prefix;
-	src->current_prefix = (DemString){ 0 };
-	VecF(Name, deinit)(&dst->detected_types);
+	src->current_prefix = (DemAstNode){ 0 };
+
+	VecF(DemAstNode, deinit)(&dst->detected_types);
 	VecF(Name, deinit)(&dst->template_params);
-	VecF(Name, move)(&dst->detected_types, &src->detected_types);
+	VecF(DemAstNode, move)(&dst->detected_types, &src->detected_types);
 	VecF(Name, move)(&dst->template_params, &src->template_params);
+
 	memset(src, 0, sizeof(Meta));
 }
 
@@ -159,7 +172,7 @@ bool is_builtin_type(const char *t) {
  * rules.
  */
 bool append_type(Meta *m, const DemAstNode *x, bool force_append) {
-	if (!m || !x || !dem_string_empty(&x->dem)) {
+	if (!m || !x || dem_string_empty(&x->dem)) {
 		return false;
 	}
 
@@ -205,7 +218,7 @@ bool append_type(Meta *m, const DemAstNode *x, bool force_append) {
 		});
 	}
 
-	DemAstNode *new_node = VecF(DemAstNode, append)(&m->detected_types, x);
+	DemAstNode *new_node = VecF(DemAstNode, append)(&m->detected_types, NULL);
 	DemAstNode_copy(new_node, x);
 	if (!count_name_parts(&new_node->dem)) {
 		m->detected_types.length--;
@@ -231,12 +244,12 @@ bool append_tparam(Meta *m, DemString *t) {
 	UNUSED(vec_reserve(&m->template_params, m->template_params.length + 1));
 	m->template_params.length += 1;
 
-	Name *new_name = vec_end(&m->template_params);
-	dem_string_init_clone(&new_name->name, t);
-	if (!count_name_parts(new_name)) {
-		m->template_params.length--;
-		return false;
-	}
+    Name *new_name = vec_end(&m->template_params);
+    dem_string_init_clone(&new_name->name, t);
+    if (!count_name_parts(&new_name->name)) {
+        m->template_params.length--;
+        return false;
+    }
 
 	return true;
 }
@@ -250,8 +263,8 @@ st64 find_type_index(Meta *m, const char *type_str) {
 		return -1;
 	}
 	for (ut64 i = 0; i < m->detected_types.length; i++) {
-		Name *dt = vec_ptr_at(&m->detected_types, i);
-		if (dt && dt->name.buf && !strcmp(dt->name.buf, type_str)) {
+		DemAstNode *dt = vec_ptr_at(&m->detected_types, i);
+		if (dt && dt->dem.buf && !strcmp(dt->dem.buf, type_str)) {
 			return (st64)i;
 		}
 	}
@@ -264,9 +277,9 @@ st64 find_type_index(Meta *m, const char *type_str) {
  */
 bool meta_substitute_type(Meta *m, ut64 id, DemString *dem) {
 	if (m->detected_types.length > id) {
-		Name *type_name = vec_ptr_at(&m->detected_types, id);
-		if (type_name && type_name->name.buf) {
-			dem_string_append(dem, type_name->name.buf);
+		DemAstNode *type_node = vec_ptr_at(&m->detected_types, id);
+		if (type_node && type_node->dem.buf) {
+			dem_string_append(dem, type_node->dem.buf);
 			return true;
 		}
 	}

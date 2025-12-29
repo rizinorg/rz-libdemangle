@@ -318,7 +318,7 @@ void trace_graph_output_dot(TraceGraph *graph, const char *filename, Meta *meta)
 
 		// Add each detected type
 		for (size_t i = 0; i < meta->detected_types.length; i++) {
-			Name *type = vec_ptr_at(&meta->detected_types, i);
+			DemAstNode *type_node = vec_ptr_at(&meta->detected_types, i);
 			const char *sub_notation;
 
 			if (i == 0) {
@@ -333,13 +333,13 @@ void trace_graph_output_dot(TraceGraph *graph, const char *filename, Meta *meta)
 
 			// Escape HTML characters in the type name
 			char *escaped_name = NULL;
-			if (type->name.buf && type->name.len > 0) {
-				size_t escaped_len = type->name.len * 6 + 1; // worst case: all chars become &xxxx;
+			if (type_node && type_node->dem.buf && type_node->dem.len > 0) {
+				size_t escaped_len = type_node->dem.len * 6 + 1; // worst case: all chars become &xxxx;
 				escaped_name = calloc(escaped_len, sizeof(char));
 				if (escaped_name) {
-					const char *src = type->name.buf;
+					const char *src = type_node->dem.buf;
 					char *dst = escaped_name;
-					for (size_t j = 0; j < type->name.len && src[j]; j++) {
+					for (size_t j = 0; j < type_node->dem.len && src[j]; j++) {
 						switch (src[j]) {
 						case '<':
 							strcpy(dst, "&lt;");
@@ -374,7 +374,7 @@ void trace_graph_output_dot(TraceGraph *graph, const char *filename, Meta *meta)
 				f,
 				"          <TD><FONT FACE=\"Courier\">%s</FONT></TD>\n",
 				escaped_name ? escaped_name : "(empty)");
-			fprintf(f, "          <TD>%u</TD>\n", type->num_parts);
+			fprintf(f, "          <TD>%u</TD>\n", count_name_parts(&type_node->dem));
 			fprintf(f, "        </TR>\n");
 
 			if (escaped_name) {
