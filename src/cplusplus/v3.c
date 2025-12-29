@@ -17,6 +17,7 @@
 #include "types.h"
 #include "vec.h"
 #include <stdio.h>
+#include <string.h>
 
 bool rule_vendor_specific_suffix(
 	DemAstNode *dan,
@@ -1948,7 +1949,7 @@ bool rule_substitution(
 	MATCH(
 		READ_STR("Ss") &&
 		((PEEK() == 'C' || PEEK() == 'D') ? AST_APPEND_STR(
-							    "std::basic_string<char, std::char_traits<char>, std::allocator<char> >")
+							    "std::basic_string<char, std::char_traits<char>, std::allocator<char>>")
 						  : AST_APPEND_STR("std::string")));
 	MATCH(
 		READ_STR("Si") && AST_APPEND_STR("std::istream")
@@ -2236,7 +2237,7 @@ static bool append_last_class_name(DemAstNode *dan, Meta *m) {
 			if (name_len == 6 && memcmp(last_sep, "string", 6) == 0) {
 				// Check if this is std::basic_string<...> by looking at the full name
 				const char *basic_str =
-					"std::basic_string<char, std::char_traits<char>, std::allocator<char> >";
+					"std::basic_string<char, std::char_traits<char>, std::allocator<char>>";
 				if (strncmp(name, basic_str, strlen(basic_str)) == 0) {
 					dem_string_append(&dan->dem, "basic_string");
 					return true;
@@ -2328,16 +2329,7 @@ bool rule_nv_offset(
 }
 
 // Helper to append '>' with proper spacing for nested templates
-// Check if the last child contains template_args (meaning nested template), add space before '>'
 static bool append_template_close(DemAstNode *dan) {
-	if (dan->children && dan->children->length > 0) {
-		DemAstNode *last_child = VecF(DemAstNode, at)(dan->children, dan->children->length - 1);
-		// Check if the last child's demangled string ends with '>'
-		if (last_child && last_child->dem.len > 0 &&
-			last_child->dem.buf[last_child->dem.len - 1] == '>') {
-			dem_string_append_char(&dan->dem, ' ');
-		}
-	}
 	return dem_string_append_char(&dan->dem, '>');
 }
 
@@ -2434,15 +2426,23 @@ bool rule_unnamed_type_name(
 			TRACE_RETURN_SUCCESS;
 		}
 	} else if (READ_STR("Ul")) {
-		MATCH(
-			AST_APPEND_STR("{lambda(") && RULE_ATLEAST_ONCE_WITH_SEP(type, ", ") && READ('E') &&
-			AST_APPEND_CHR(')') &&
-			OPTIONAL(
-				RULE_DEFER(AST(0), non_neg_number) && AST_APPEND_CHR('#') && AST_MERGE(AST(0))) &&
-			AST_APPEND_CHR('}') && AST_APPEND_TYPE);
+		MATCH_AND_DO(
+			RULE_DEFER_MANY_WITH_SEP(AST(0), type, ", ") && READ('E') &&
+				OPTIONAL(
+					RULE_DEFER(AST(1), non_neg_number)),
+			{
+				AST_APPEND_STR("'lambda'(");
+				if (DemAstNode_non_empty(AST(0)) && strcmp(AST(0)->dem.buf, "void") != 0) {
+					AST_MERGE(AST(0));
+				}
+				AST_APPEND_CHR(')');
+				if (DemAstNode_non_empty(AST(1)) && strcmp(AST(1)->dem.buf, "1") != 0) {
+					AST_APPEND_CHR('#');
+					AST_MERGE(AST(1));
+				}
+			});
 	}
 
-	TRACE_RETURN_FAILURE();
 	RULE_FOOT(unnamed_type_name);
 }
 
