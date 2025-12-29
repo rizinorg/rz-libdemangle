@@ -132,7 +132,7 @@ char *cp_demangle_v2(const char *mangled, CpDemOptions opts) {
 		return NULL;
 	}
 
-	const char *res = NULL;
+	char *res = NULL;
 	if (!(res = cpdem_get_demangled(&dem))) {
 		cpdem_fini(&dem);
 		return NULL;
@@ -153,7 +153,7 @@ static CpDem *cpdem_template_class(CpDem *dem, DemString *tclass_name);
 static CpDem *cpdem_custom_type_name(CpDem *dem, DemString *name);
 static CpDem *cpdem_template_function_keep_parsing(CpDem *dem);
 
-const char *cpdem_get_demangled(CpDem *dem) {
+char *cpdem_get_demangled(CpDem *dem) {
 	if (!dem) {
 		return NULL;
 	}

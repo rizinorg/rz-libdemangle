@@ -133,6 +133,7 @@ typedef struct DemAstNode_t {
 	CpDemTypeKind tag;
 } DemAstNode;
 
+DemAstNode* DemAstNode_new();
 DemAstNode *DemAstNode_ctor(DemString *dem, DemStringView *val, CpDemTypeKind tag);
 void DemAstNode_dtor(DemAstNode *dan);
 bool DemAstNode_init(DemAstNode *dan);
@@ -140,6 +141,8 @@ void DemAstNode_deinit(DemAstNode *dan);
 DemAstNode *DemAstNode_append(DemAstNode *xs, DemAstNode *x);
 DemAstNode *DemAstNode_children_at(DemAstNode *xs, size_t idx);
 bool DemAstNode_is_empty(DemAstNode *x);
+void DemAstNode_copy(DemAstNode *dst, const DemAstNode *src);
+void DemAstNode_init_clone(DemAstNode *dst, const DemAstNode *src);
 #define DemAstNode_non_empty(X) (!DemAstNode_is_empty(X))
 
 VecIMPL(DemAstNode, DemAstNode_deinit);
@@ -154,7 +157,7 @@ void name_deinit(Name *x);
 VecIMPL(Name, name_deinit);
 
 typedef struct Meta {
-	VecT(Name) detected_types;
+	VecT(DemAstNode) detected_types;
 	VecT(Name) template_params;
 	bool is_ctor;
 	bool is_dtor;
@@ -175,7 +178,7 @@ typedef struct Meta {
 	// Current prefix string that prefix_tail should use when building full paths
 	// This is needed when the base is a special substitution like "std" which is not
 	// added to the substitution table
-	DemString current_prefix;
+	DemAstNode current_prefix;
 
 	// template level, detects the depth of RULE(template_args) expansion
 	// if we expand above level 1 (starts at level 1), then we stop appending parameters to template
@@ -216,13 +219,13 @@ void meta_deinit(Meta *m);
 
 // Helper functions
 size_t parse_sequence_id(StrIter *msi, Meta *m);
-bool append_type(Meta *m, DemString *t, bool force_append);
+bool append_type(Meta *m, const DemAstNode *x, bool force_append);
 bool append_tparam(Meta *m, DemString *t);
 bool meta_substitute_type(Meta *m, ut64 id, DemString *dem);
 bool meta_substitute_tparam(Meta *m, ut64 id, DemString *dem);
 st64 find_type_index(Meta *m, const char *type_str);
 
-ut32 count_name_parts(Name *n);
+ut32 count_name_parts(const DemString *x)
 bool is_builtin_type(const char *t);
 
 #endif // V3_IMPL_TYPES_H

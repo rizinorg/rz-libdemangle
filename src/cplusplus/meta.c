@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "types.h"
+#include "vec.h"
 
 static inline void meta_copy_scalars(Meta *dst, Meta *src) {
 	if (dst == src) {
@@ -157,14 +158,12 @@ bool is_builtin_type(const char *t) {
  * This vector is then used to refer back to a detected type in substitution
  * rules.
  */
-bool append_type(Meta *m, DemString *t, bool force_append) {
-	if (!m || !t || !t->len) {
+bool append_type(Meta *m, const DemAstNode *x, bool force_append) {
+	if (!m || !x || !dem_string_empty(&x->dem)) {
 		return false;
 	}
 
-	if (!t->buf) {
-		return false;
-	}
+	const DemString *t = &x->dem;
 
 	// Builtins are not substitutable per ABI, EXCEPT when force_append is true
 	// (for template params that substitute to builtins)
@@ -200,15 +199,15 @@ bool append_type(Meta *m, DemString *t, bool force_append) {
 	// If we're not forcefully appending values, then check for uniqueness of times
 	if (!force_append) {
 		vec_foreach_ptr(&m->detected_types, dt, {
-			if (!strcmp(dt->name.buf, t->buf)) {
+			if (!strcmp(dt->dem.buf, t->buf)) {
 				return true;
 			}
 		});
 	}
 
-	Name *new_name = VecF(Name, append)(&m->detected_types, NULL);
-	dem_string_init_clone(&new_name->name, t);
-	if (!count_name_parts(new_name)) {
+	DemAstNode *new_node = VecF(DemAstNode, append)(&m->detected_types, x);
+	DemAstNode_copy(new_node, x);
+	if (!count_name_parts(&new_node->dem)) {
 		m->detected_types.length--;
 		return false;
 	}
@@ -287,11 +286,11 @@ bool meta_substitute_tparam(Meta *m, ut64 id, DemString *dem) {
 
 // counts the number of :: in a name and adds 1 to it
 // but ignores :: inside template arguments (between < and >)
-ut32 count_name_parts(Name *n) {
+ut32 count_name_parts(const DemString *x) {
 	// count number of parts
-	const char *it = n->name.buf;
-	const char *end = it + n->name.len;
-	n->num_parts = 1;
+	const char *it = x->buf;
+	const char *end = it + x->len;
+	ut32 num_parts = 1;
 	int template_depth = 0;
 
 	while (it < end) {
@@ -302,19 +301,17 @@ ut32 count_name_parts(Name *n) {
 		} else if (template_depth == 0 && it[0] == ':' && it[1] == ':') {
 			// Only count :: when we're not inside template arguments
 			if (it[2]) {
-				n->num_parts++;
+				num_parts++;
 				it += 2; // advance past the "::" to avoid infinite loop
 				continue;
 			} else {
 				// this case is possible and must be ignored with an error
-				dem_string_deinit(&n->name);
-				n->num_parts = 0;
 				return 0;
 			}
 		}
 		it++;
 	}
-	return n->num_parts;
+	return num_parts;
 }
 
 void name_deinit(Name *x) {

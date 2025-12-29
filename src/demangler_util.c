@@ -213,7 +213,7 @@ DemString *dem_string_init(DemString *ds) {
  * \return dst on success.
  * \return NULL otherwise.
  */
-DemString *dem_string_init_clone(DemString *dst, DemString *src) {
+DemString *dem_string_init_clone(DemString *dst, const DemString *src) {
 	if (!dst || !src) {
 		return NULL;
 	}
@@ -343,6 +343,11 @@ bool dem_string_equals(DemString *ds, DemString *other){
 		return false;
 	}
 	return strncmp(ds->buf, other->buf, ds->len) == 0;
+}
+
+bool dem_string_empty(const DemString *ds){
+	dem_return_val_if_fail(ds, true);
+	return ds->len == 0 || !ds->buf || ds->buf[0] == 0;
 }
 
 bool dem_string_appendf(DemString *ds, const char *fmt, ...) {

@@ -510,7 +510,7 @@
 #define AST_PREPEND_STR(s)       dem_string_append_prefix_n(&dan->dem, s, strlen(s))
 #define AST_PREPEND_DEMSTR(D)    dem_string_append_prefix_n(&dan->dem, (D)->buf, (D)->len)
 #define AST_APPEND_CHR(c)        dem_string_append_char(&dan->dem, c)
-#define AST_APPEND_TYPE          append_type(m, &dan->dem, false)
+#define AST_APPEND_TYPE          append_type(m, dan, false)
 #define AST_APPEND_TYPE1(T)      append_type(m, (T), false)
 #define AST_APPEND_NODE(X)       DemAstNode_append(dan, (X))
 #define AST(I)                   DemAstNode_children_at(dan, (I))

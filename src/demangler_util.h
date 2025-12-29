@@ -80,7 +80,7 @@ void dem_string_deinit(DemString *ds);
 DemString *dem_string_new();
 DemString *dem_string_new_with_capacity(size_t cap);
 DemString *dem_string_init(DemString *ds);
-DemString *dem_string_init_clone(DemString *dst, DemString *src);
+DemString *dem_string_init_clone(DemString *dst, const DemString *src);
 char *dem_string_drain(DemString *ds);
 bool dem_string_append(DemString *ds, const char *string);
 bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size);
@@ -89,6 +89,8 @@ bool dem_string_appendf(DemString *ds, const char *fmt, ...);
 bool dem_string_append_char(DemString *ds, const char ch);
 bool dem_string_concat(DemString *dst, DemString *src);
 bool dem_string_equals(DemString *ds, DemString *other);
+bool dem_string_empty(const DemString *ds);
+#define dem_string_non_empty(d)         (!dem_string_empty(d))
 #define dem_string_buffer(d)            (d->buf)
 #define dem_string_length(d)            (d->len)
 #define dem_string_appends(d, s)        dem_string_append_n(d, s, strlen(s))

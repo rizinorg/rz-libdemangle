@@ -3,6 +3,18 @@
 
 #include "types.h"
 
+DemAstNode* DemAstNode_new() {
+	DemAstNode *dan = (DemAstNode *)malloc(sizeof(DemAstNode));
+	if (!dan) {
+		return NULL;
+	}
+	if (!DemAstNode_init(dan)) {
+		free(dan);
+		return NULL;
+	}
+	return dan;
+}
+
 DemAstNode *DemAstNode_ctor(DemString *dem, DemStringView *val, CpDemTypeKind tag) {
 	if (!(dem && val)) {
 		return NULL;
@@ -89,4 +101,21 @@ bool DemAstNode_is_empty(DemAstNode *x) {
 		return true;
 	}
 	return (x->dem.len == 0 && x->val.len == 0);
+}
+
+void DemAstNode_copy(DemAstNode *dst, const DemAstNode *src) {
+	if (!(dst && src)) {
+		return;
+	}
+	dem_string_init_clone(&dst->dem, &src->dem);
+	dst->val = src->val;
+	dst->tag = src->tag;
+}
+
+void DemAstNode_init_clone(DemAstNode *dst, const DemAstNode *src) {
+	if (!(dst && src)) {
+		return;
+	}
+	DemAstNode_init(dst);
+	DemAstNode_copy(dst, src);
 }
