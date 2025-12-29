@@ -1342,22 +1342,25 @@ bool rule_function_type(
 
 static void handle_func_pointer(DemAstNode *dan) {
 	if (VecF(DemAstNode, len)(dan->children) == 2 && AST(1)->tag == CP_DEM_TYPE_KIND_function_type) {
-		DemAstNode *ftype = AST(1);
+		// NOTE: We cannot cache AST(1) as a pointer because DemAstNode_append
+		// may trigger realloc of dan->children, invalidating any cached pointers.
+		// We must re-fetch AST(1) after any append operation.
+
 		// return type
-		if (DemAstNode_non_empty(AST_(ftype, 2))) {
-			DemAstNode_append(dan, AST_(ftype, 2));
+		if (DemAstNode_non_empty(AST_(AST(1), 2))) {
+			DemAstNode_append(dan, AST_(AST(1), 2));
 		}
 		AST_APPEND_STR(" (");
 		DemAstNode_append(dan, AST(0));
 		AST_APPEND_STR("*)");
 
 		AST_APPEND_STR(" (");
-		AST_MERGE(AST_(ftype, 3)); // bare-function-type
+		AST_MERGE(AST_(AST(1), 3)); // bare-function-type
 		AST_APPEND_STR(")");
 
-		AST_MERGE_OPT(AST_(ftype, 4)); // ref-qualifier
-		AST_MERGE_OPT(AST_(ftype, 0)); // cv-qualifiers
-		AST_MERGE_OPT(AST_(ftype, 1)); // exception spec
+		AST_MERGE_OPT(AST_(AST(1), 4)); // ref-qualifier
+		AST_MERGE_OPT(AST_(AST(1), 0)); // cv-qualifiers
+		AST_MERGE_OPT(AST_(AST(1), 1)); // exception spec
 	} else {
 		DEM_UNREACHABLE;
 	}
@@ -2956,8 +2959,7 @@ char *demangle_rule(const char *mangled, DemRule rule, CpDemOptions opts) {
 	}
 
 	trace_graph_cleanup(graph);
-	VecName_deinit(&meta.detected_types);
-	VecName_deinit(&meta.template_params);
+	meta_deinit(&meta);
 	DemAstNode_dtor(dan);
 
 	return result;
