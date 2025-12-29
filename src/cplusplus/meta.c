@@ -318,7 +318,8 @@ ut32 count_name_parts(Name *n) {
 }
 
 void name_deinit(Name *x) {
-	if (!x)
+	if (!x) {
 		return;
+	}
 	dem_string_deinit(&x->name);
 }

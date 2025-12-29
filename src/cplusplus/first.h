@@ -18,8 +18,9 @@ typedef struct {
 
 // Helper function to check if string starts with any entry in a first set
 static inline bool first_set_matches(const char *input, const first_set_entry_t *first_set) {
-	if (!input || !first_set)
+	if (!input || !first_set) {
 		return false;
+	}
 
 	for (int i = 0; first_set[i].str != NULL; i++) {
 		if (strncmp(input, first_set[i].str, first_set[i].len) == 0) {

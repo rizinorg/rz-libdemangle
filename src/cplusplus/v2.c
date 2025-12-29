@@ -99,6 +99,7 @@ static const struct {
 	{ .from = "_vd_", .to = "operator delete[]", .len = 4 },
 	{ .from = "_vn_", .to = "operator new[]", .len = 4 },
 };
+
 #define OPERATOR_MAP_SIZE (sizeof(operators_map) / sizeof(operators_map[0]))
 
 /**

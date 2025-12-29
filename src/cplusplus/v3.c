@@ -28,6 +28,7 @@ bool rule_vendor_specific_suffix(
 	TRACE_RETURN_FAILURE();
 	RULE_FOOT(vendor_specific_suffix);
 }
+
 bool rule_digit(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(digit);
 	if (IS_DIGIT(PEEK())) {
@@ -39,11 +40,13 @@ bool rule_digit(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int p
 	TRACE_RETURN_FAILURE();
 	RULE_FOOT(digit);
 }
+
 bool rule_number(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(number);
 	MATCH(OPTIONAL(READ('n')) && RULE_ATLEAST_ONCE(digit));
 	RULE_FOOT(number);
 }
+
 bool rule_v_offset(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(v_offset);
 	// ignore the number
@@ -116,6 +119,7 @@ bool rule_unscoped_name(
 	MATCH(RULE(unqualified_name));
 	RULE_FOOT(unscoped_name);
 }
+
 bool rule_unscoped_template_name(
 	DemAstNode *dan,
 	StrIter *msi,
@@ -144,6 +148,7 @@ bool rule_unresolved_type(
 	MATCH(RULE(substitution));
 	RULE_FOOT(unresolved_type);
 }
+
 bool rule_unresolved_qualifier_level(
 	DemAstNode *dan,
 	StrIter *msi,
@@ -1638,8 +1643,9 @@ bool rule_qualified_type(
 			// "void (*)(int)" + "const" -> "void (* const)(int)"
 			// Find the closing ) after (*
 			char *stars_end = func_ptr_marker + 2; // after " ("
-			while (*stars_end == '*')
+			while (*stars_end == '*') {
 				stars_end++;
+			}
 			// Insert qualifiers between * and )
 			size_t prefix_len = stars_end - AST(1)->dem.buf;
 			size_t suffix_len = AST(1)->dem.len - prefix_len;
@@ -1736,8 +1742,9 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			// "void (* const)(int)" -> "void (* const&)(int)"
 			// Find the closing ) of the pointer declaration
 			char *close_paren = func_ptr_marker + 2; // after " ("
-			while (*close_paren && *close_paren != ')')
+			while (*close_paren && *close_paren != ')') {
 				close_paren++;
+			}
 			if (*close_paren == ')') {
 				size_t prefix_len = close_paren - dan->dem.buf;
 				size_t suffix_len = dan->dem.len - prefix_len;
@@ -1763,8 +1770,9 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			// Function pointer: insert && inside the (*...) before the closing )
 			// "void (* const)(int)" -> "void (* const&&)(int)"
 			char *close_paren = func_ptr_marker + 2; // after " ("
-			while (*close_paren && *close_paren != ')')
+			while (*close_paren && *close_paren != ')') {
 				close_paren++;
+			}
 			if (*close_paren == ')') {
 				size_t prefix_len = close_paren - dan->dem.buf;
 				size_t suffix_len = dan->dem.len - prefix_len;

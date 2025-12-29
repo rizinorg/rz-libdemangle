@@ -24,15 +24,17 @@ void DemAstNode_dtor(DemAstNode *dan) {
 }
 
 bool DemAstNode_init(DemAstNode *dan) {
-	if (!(dan))
+	if (!(dan)) {
 		return false;
+	}
 	memset(dan, 0, sizeof(DemAstNode));
 	return true;
 }
 
 void DemAstNode_deinit(DemAstNode *dan) {
-	if (!dan)
+	if (!dan) {
 		return;
+	}
 	VecDemAstNode_dtor(dan->children);
 	dem_string_deinit(&dan->dem);
 	memset(dan, 0, sizeof(DemAstNode));

@@ -148,6 +148,7 @@ void trace_graph_set_result_impl(
 		}
 	}
 }
+
 void trace_graph_output_dot(TraceGraph *graph, const char *filename, Meta *meta) {
 	if (!graph || !filename) {
 		return;
