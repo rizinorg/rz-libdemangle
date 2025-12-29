@@ -1701,7 +1701,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			dem_string_concat(&dan->dem, &AST(0)->dem);
 			dem_string_append(&dan->dem, "*");
 		}
-		append_type(m, &dan->dem, false);
+		append_type(m, dan, false);
 	});
 
 	MATCH_AND_DO(READ('R') && RULE_CALL_DEFER(AST(0), type), {
@@ -1717,7 +1717,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			dem_string_append(&dan->dem, "&");
 		}
 		// Reference types ARE substitutable per Itanium ABI section 5.1.5
-		append_type(m, &dan->dem, false);
+		append_type(m, dan, false);
 	});
 	MATCH_AND_DO(READ('O') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function pointer type
@@ -1730,7 +1730,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			dem_string_append(&dan->dem, "&&");
 		}
 		// Rvalue reference types ARE substitutable per Itanium ABI section 5.1.5
-		append_type(m, &dan->dem, false);
+		append_type(m, dan, false);
 	});
 	// MATCH (RULE (template_template_param) && RULE (template_args));
 	// Template param with optional template args - add to substitution if no template args follow
@@ -1741,7 +1741,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		} else {
 			// Plain template param used as type - force add to substitution table
 			// T_ substitution creates a new substitution entry even if type already exists
-			FORCE_APPEND_TYPE(&dan->dem);
+			FORCE_APPEND_TYPE(dan);
 		}
 	});
 	MATCH(
@@ -2012,28 +2012,23 @@ bool rule_name(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	//    function/variable template instantiations are not substitutable per ABI 5.1.4
 	//    Only type template instantiations are substitutable (handled in rule_type)
 	MATCH_AND_DO(
-		RULE_DEFER(AST(0), unscoped_name) && AST_APPEND_TYPE1(&AST(0)->dem) &&
+		RULE_DEFER(AST(0), unscoped_name) &&
 			RULE_DEFER(AST(1), template_args),
 		{
 			AST_MERGE(AST(0));
 			AST_MERGE(AST(1));
-			// Do NOT add the complete template instantiation to substitution table
-			// It will be added if used as a type in rule_type
-			dan->tag = CP_DEM_TYPE_KIND_template_prefix;
+			AST_APPEND_TYPE1(AST(0));
 		});
 
 	// For substitution + template_args, the substitution reference itself is already in the table
 	MATCH_AND_DO(RULE_DEFER(AST(0), substitution) && RULE_DEFER(AST(1), template_args), {
 		AST_MERGE(AST(0));
 		AST_MERGE(AST(1));
-		// Do NOT add the complete template instantiation to substitution table
-		dan->tag = CP_DEM_TYPE_KIND_template_prefix;
 	});
 
 	// nested_name - propagate tag if it's a template function
 	MATCH_AND_DO(RULE_DEFER(AST(0), nested_name), {
 		AST_MERGE(AST(0));
-		dan->tag = AST(0)->tag;
 	});
 	MATCH1(unscoped_name);
 	MATCH1(local_name);
@@ -2148,10 +2143,10 @@ bool rule_template_template_param(
 // Helper to append the last detected class name for ctor/dtor
 static bool append_last_class_name(DemAstNode *dan, Meta *m) {
 	if (m->detected_types.length > 0) {
-		Name *last_type = vec_ptr_at(&m->detected_types, m->detected_types.length - 1);
-		if (last_type && last_type->name.buf) {
+		DemAstNode *last_type = vec_ptr_at(&m->detected_types, m->detected_types.length - 1);
+		if (last_type && last_type->dem.buf) {
 			// Find the last :: that is NOT inside template arguments <...>
-			const char *name = last_type->name.buf;
+			const char *name = last_type->dem.buf;
 			const char *last_sep = name;
 			const char *p = name;
 			int depth = 0; // Track template argument nesting depth
