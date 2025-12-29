@@ -310,11 +310,12 @@
 		return rule_##Y(dan, msi, m, graph, parent_node_id); \
 	}
 
+
 #define AST_FLATTEN(X) \
 	do { \
 		if ((X)->children && VecDemAstNode_len((X)->children) == 1) { \
 			DemAstNode *only_child = AST(0); \
-			if (only_child && strcmp((X)->dem.buf, only_child->dem.buf) == 0 && only_child->val.buf == (X)->val.buf && only_child->val.len == (X)->val.len) { \
+			if (only_child && dem_string_equals(&(X)->dem, &only_child->dem) && only_child->val.buf == (X)->val.buf && only_child->val.len == (X)->val.len) { \
 				DemAstNode node = *only_child; \
 				memset(only_child, 0, sizeof(DemAstNode)); \
 				DemAstNode_deinit(dan); \
@@ -534,7 +535,7 @@
 
 #define DEM_UNREACHABLE \
 	do { \
-		fprintf(stderr, "Reached unreachable code at %s:%d", __FILE__, __LINE__); \
+		fprintf(stderr, "Reached unreachable code at %s:%d\n", __FILE__, __LINE__); \
 		abort(); \
 	} while (0)
 

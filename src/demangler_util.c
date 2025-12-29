@@ -129,6 +129,16 @@ char *dem_str_append(char *ptr, const char *string) {
 	return ptr;
 }
 
+bool dem_str_equals(char *str, const char *other){
+	if (!str && !other) {
+		return true;
+	}
+	if (!str || !other) {
+		return false;
+	}
+	return strcmp(str, other) == 0;
+}
+
 void dem_string_free(DemString *ds) {
 	if (!ds) {
 		return;
@@ -319,6 +329,20 @@ bool dem_string_concat(DemString *dst, DemString *src) {
 	dst->len += src->len;
 	dst->buf[dst->len] = 0;
 	return true;
+}
+
+bool dem_string_equals(DemString *ds, DemString *other){
+	dem_return_val_if_fail(ds && other, false);
+	if(!ds->buf && !other->buf) {
+		return true;
+	}
+	if(!ds->buf || !other->buf) {
+		return false;
+	}
+	if (ds->len != other->len) {
+		return false;
+	}
+	return strncmp(ds->buf, other->buf, ds->len) == 0;
 }
 
 bool dem_string_appendf(DemString *ds, const char *fmt, ...) {

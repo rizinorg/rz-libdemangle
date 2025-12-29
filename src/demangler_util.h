@@ -67,6 +67,7 @@ char *dem_str_newf(const char *fmt, ...);
 char *dem_str_append(char *ptr, const char *string);
 void dem_str_replace_char(char *string, size_t size, char ch, char rp);
 char *dem_str_replace(char *str, const char *key, const char *val, int g);
+bool dem_str_equals(char *str, const char *other);
 
 typedef struct {
 	char *buf;
@@ -87,6 +88,7 @@ bool dem_string_append_n(DemString *ds, const char *string, size_t size);
 bool dem_string_appendf(DemString *ds, const char *fmt, ...);
 bool dem_string_append_char(DemString *ds, const char ch);
 bool dem_string_concat(DemString *dst, DemString *src);
+bool dem_string_equals(DemString *ds, DemString *other);
 #define dem_string_buffer(d)            (d->buf)
 #define dem_string_length(d)            (d->len)
 #define dem_string_appends(d, s)        dem_string_append_n(d, s, strlen(s))

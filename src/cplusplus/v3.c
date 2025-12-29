@@ -1694,7 +1694,6 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		dem_string_concat(&dan->dem, &child->dem);
 
 		if (is_function_type) {
-			handle_func_pointer(dan);
 			// This is a function type - we need to insert * in the right place
 			// Function types look like "ret (args)"
 			// Function pointers look like "ret (*)(args)" or "ret (**)(args)"
