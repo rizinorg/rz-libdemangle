@@ -310,7 +310,6 @@
 		return rule_##Y(dan, msi, m, graph, parent_node_id); \
 	}
 
-
 #define AST_FLATTEN(X) \
 	do { \
 		if ((X)->children && VecDemAstNode_len((X)->children) == 1) { \
@@ -504,17 +503,18 @@
 		} \
 	} while (0)
 
-#define AST_APPEND_STR(s)      dem_string_append(&dan->dem, s)
-#define AST_APPEND_STR_N(s, n) dem_string_append_n(&dan->dem, s, n);
-#define AST_APPEND_DEMSTR(D)   dem_string_append_prefix_n(&dan->dem, (D)->buf, (D)->len)
-#define AST_PREPEND_STR(s)     dem_string_append_prefix_n(&dan->dem, s, strlen(s))
-#define AST_PREPEND_DEMSTR(D)  dem_string_append_prefix_n(&dan->dem, (D)->buf, (D)->len)
-#define AST_APPEND_CHR(c)      dem_string_append_char(&dan->dem, c)
-#define AST_APPEND_TYPE        append_type(m, &dan->dem, false)
-#define AST_APPEND_TYPE1(T)    append_type(m, (T), false)
-#define AST_APPEND_NODE(X)     DemAstNode_append(dan, (X))
-#define AST(I)                 DemAstNode_children_at(dan, (I))
-#define AST_(X, I)             DemAstNode_children_at((X), (I))
+#define AST_APPEND_STR(s)        dem_string_append(&dan->dem, s)
+#define AST_APPEND_STR_N(s, n)   dem_string_append_n(&dan->dem, s, n);
+#define AST_APPEND_DEMSTR(D)     dem_string_append_n(&dan->dem, (D)->buf, (D)->len)
+#define AST_APPEND_DEMSTR_OPT(D) ((D) && (D)->buf && (D)->len > 0 && dem_string_append_n(&dan->dem, (D)->buf, (D)->len))
+#define AST_PREPEND_STR(s)       dem_string_append_prefix_n(&dan->dem, s, strlen(s))
+#define AST_PREPEND_DEMSTR(D)    dem_string_append_prefix_n(&dan->dem, (D)->buf, (D)->len)
+#define AST_APPEND_CHR(c)        dem_string_append_char(&dan->dem, c)
+#define AST_APPEND_TYPE          append_type(m, &dan->dem, false)
+#define AST_APPEND_TYPE1(T)      append_type(m, (T), false)
+#define AST_APPEND_NODE(X)       DemAstNode_append(dan, (X))
+#define AST(I)                   DemAstNode_children_at(dan, (I))
+#define AST_(X, I)               DemAstNode_children_at((X), (I))
 
 #define APPEND_TYPE(tname)       append_type(m, (tname), false)
 #define FORCE_APPEND_TYPE(tname) append_type(m, (tname), true)

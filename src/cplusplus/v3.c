@@ -1342,25 +1342,34 @@ bool rule_function_type(
 
 static void handle_func_pointer(DemAstNode *dan) {
 	if (VecF(DemAstNode, len)(dan->children) == 2 && AST(1)->tag == CP_DEM_TYPE_KIND_function_type) {
-		// NOTE: We cannot cache AST(1) as a pointer because DemAstNode_append
-		// may trigger realloc of dan->children, invalidating any cached pointers.
-		// We must re-fetch AST(1) after any append operation.
-
-		// return type
-		if (DemAstNode_non_empty(AST_(AST(1), 2))) {
-			DemAstNode_append(dan, AST_(AST(1), 2));
-		}
+		DemAstNode *func_node = AST(1);
+		AST_APPEND_DEMSTR(&AST_(func_node, 2)->dem); // return type
 		AST_APPEND_STR(" (");
-		DemAstNode_append(dan, AST(0));
-		AST_APPEND_STR("*)");
+		AST_APPEND_DEMSTR(&AST(0)->dem);
+		AST_APPEND_STR("::*)");
 
-		AST_APPEND_STR(" (");
-		AST_MERGE(AST_(AST(1), 3)); // bare-function-type
+		AST_APPEND_STR("(");
+		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 3)->dem); // bare-function-type
 		AST_APPEND_STR(")");
 
-		AST_MERGE_OPT(AST_(AST(1), 4)); // ref-qualifier
-		AST_MERGE_OPT(AST_(AST(1), 0)); // cv-qualifiers
-		AST_MERGE_OPT(AST_(AST(1), 1)); // exception spec
+		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 4)->dem); // ref-qualifier
+		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 0)->dem); // cv-qualifiers
+		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 1)->dem); // exception spec
+	} else if (VecF(DemAstNode, len)(dan->children) == 1 && AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
+		DemAstNode *func_node = AST(0);
+		// This is a function type - we need to insert * in the right place
+		// Function types look like "ret (args)"
+		// Function pointers look like "ret (*)(args)" or "ret (**)(args)"
+		AST_APPEND_DEMSTR(&AST_(func_node, 2)->dem); // return type
+		AST_APPEND_STR(" (*)");
+
+		AST_APPEND_STR("(");
+		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 3)->dem); // bare-function-type
+		AST_APPEND_STR(")");
+
+		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 4)->dem); // ref-qualifier
+		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 0)->dem); // cv-qualifiers
+		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 1)->dem); // exception spec
 	} else {
 		DEM_UNREACHABLE;
 	}
@@ -1692,46 +1701,12 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	MATCH_AND_DO(READ('P') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function type by checking child AST tag
 		DemAstNode *child = AST(0);
-		bool is_function_type = (child->tag == CP_DEM_TYPE_KIND_function_type);
-		// Merge the child AST
-		dem_string_concat(&dan->dem, &child->dem);
 
-		if (is_function_type) {
-			// This is a function type - we need to insert * in the right place
-			// Function types look like "ret (args)"
-			// Function pointers look like "ret (*)(args)" or "ret (**)(args)"
-			char *space_paren = dan->dem.buf ? strstr(dan->dem.buf, " (") : NULL;
-			if (space_paren) {
-				// Check if it's already a function pointer: " (*)" or " (**)"
-				if (space_paren[2] == '*') {
-					// Already a function pointer like "ret (*)(args)" -> "ret (**)(args)"
-					// Insert "*" after " ("
-					size_t prefix_len = (space_paren + 2) - dan->dem.buf; // includes " ("
-					size_t suffix_len = dan->dem.len - prefix_len;
-					DemString new_dem = { 0 };
-					dem_string_append_n(&new_dem, dan->dem.buf, prefix_len);
-					dem_string_append(&new_dem, "*");
-					dem_string_append_n(&new_dem, dan->dem.buf + prefix_len, suffix_len);
-					dem_string_deinit(&dan->dem);
-					dan->dem = new_dem;
-				} else {
-					// Bare function type "ret (args)" -> "ret (*)(args)"
-					// Insert "(*)" after " " (before "(args)")
-					size_t prefix_len = (space_paren + 1) - dan->dem.buf; // includes " "
-					size_t suffix_len = dan->dem.len - prefix_len;
-					DemString new_dem = { 0 };
-					dem_string_append_n(&new_dem, dan->dem.buf, prefix_len);
-					dem_string_append(&new_dem, "(*)");
-					dem_string_append_n(&new_dem, dan->dem.buf + prefix_len, suffix_len);
-					dem_string_deinit(&dan->dem);
-					dan->dem = new_dem;
-				}
-			} else {
-				// Fallback: just append "*" (shouldn't happen for function types)
-				dem_string_append(&dan->dem, "*");
-			}
+		if (child->tag == CP_DEM_TYPE_KIND_function_type) {
+			handle_func_pointer(dan);
 		} else {
 			// Regular pointer: just append "*"
+			dem_string_concat(&dan->dem, &child->dem);
 			dem_string_append(&dan->dem, "*");
 		}
 		append_type(m, &dan->dem, false);
