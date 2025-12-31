@@ -1361,8 +1361,25 @@ static void handle_pointer_to_func(DemAstNode *dan) {
 }
 
 static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
-	if (VecF(DemAstNode, len)(dan->children) == 1 && AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
-		DemAstNode *func_node = AST(0);
+	DemAstNode *func_node = NULL;
+	if (VecF(DemAstNode, len)(dan->children) == 1) {
+		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
+			func_node = AST(0);
+		} else if (AST(0)->tag == CP_DEM_TYPE_KIND_type &&
+			   VecF(DemAstNode, len)(AST(0)->children) == 1 &&
+			   AST_(AST(0), 0)->tag == CP_DEM_TYPE_KIND_function_type) {
+			func_node = AST_(AST(0), 0);
+		}
+	} else if (VecF(DemAstNode, len)(dan->children) == 2) {
+		// Case for qualified_type where AST(1) is the pointer/func type
+		if (AST(1)->tag == CP_DEM_TYPE_KIND_type &&
+		    VecF(DemAstNode, len)(AST(1)->children) == 1 &&
+		    AST_(AST(1), 0)->tag == CP_DEM_TYPE_KIND_function_type) {
+			func_node = AST_(AST(1), 0);
+		}
+	}
+
+	if (func_node) {
 		AST_APPEND_DEMSTR(&AST_(func_node, 2)->dem); // return type
 		AST_APPEND_STR(" (");
 		AST_APPEND_STR(postfix);
@@ -1654,10 +1671,30 @@ bool rule_qualified_type(
 
 	if (rule_qualifiers(AST(0), msi, m, graph, _my_node_id) &&
 		rule_type(AST(1), msi, m, graph, _my_node_id)) {
-		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
+		
+		DemAstNode *type_node = AST(1);
+		bool is_func_ptr = false;
+		char ptr_char = 0;
+
+		if (type_node->tag == CP_DEM_TYPE_KIND_type &&
+		    VecF(DemAstNode, len)(type_node->children) == 1 &&
+		    AST_(type_node, 0)->tag == CP_DEM_TYPE_KIND_function_type) {
+			if (strstr(type_node->dem.buf, "(*)")) {
+				ptr_char = '*';
+			} else if (strstr(type_node->dem.buf, "(&)")) {
+				ptr_char = '&';
+			}
+			if (ptr_char) {
+				is_func_ptr = true;
+			}
+		}
+
+		if (is_func_ptr) {
 			// Function pointer: insert qualifiers inside the (*)
 			// "void (*)(int)" + "const" -> "void (* const)(int)"
-			handle_func_pointer(dan, " const");
+			char postfix[256];
+			snprintf(postfix, sizeof(postfix), "%c %s", ptr_char, AST(0)->dem.buf);
+			handle_func_pointer(dan, postfix);
 		} else {
 			// Regular type: Output type first, then qualifiers (e.g., "QString const" not "constQString")
 			AST_MERGE(AST(1));
