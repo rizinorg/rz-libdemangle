@@ -2117,15 +2117,17 @@ bool rule_nested_name(
 	// Substitution order for Case 2b:
 	// 1. template_prefix parts (e.g., std::vector)
 	// 2. template_prefix + template_args (e.g., std::vector<int>)
-	// 3. After "::" + unqualified_name -> template prefix for method (e.g., std::vector<int>::_M_allocate_and_copy)
-	// 4. Template args of the method are added during template_args parsing
+	// 3. Template args of the method are added during template_args parsing
+	// 4. After "::" + unqualified_name -> template prefix for method (e.g., std::vector<int>::_M_allocate_and_copy)
 	MATCH_AND_DO(
 		RULE_CALL_DEFER(AST(2), template_prefix) && RULE_CALL_DEFER(AST(3), template_args) &&
 			AST_MERGE(AST(2)) && AST_MERGE(AST(3)) && AST_APPEND_TYPE &&
 			RULE_CALL_DEFER(AST(4), unqualified_name) &&
 			// Add the template prefix (class::method without template args) to substitution table
-			(AST_APPEND_STR("::"), AST_MERGE(AST(4)), AST_APPEND_TYPE, true) &&
-			RULE_CALL_DEFER(AST(5), template_args) && READ('E'),
+			(AST_APPEND_STR("::"), AST_MERGE(AST(4)), true) &&
+			RULE_CALL_DEFER(AST(5), template_args) &&
+			(AST_APPEND_TYPE, true) &&
+			READ('E'),
 		{
 			AST_MERGE(AST(5));
 			// Mark as template function so encoding knows to parse return type
@@ -2698,6 +2700,13 @@ bool rule_prefix_tail(
 		DemAstNode_init(&suffix);
 		bool has_suffix = rule_prefix_suffix(&suffix, msi, m, graph, _my_node_id);
 
+		if (PEEK() == 'E') {
+			CUR() = component_start;
+			DemAstNode_deinit(&comp);
+			DemAstNode_deinit(&suffix);
+			break;
+		}
+
 		/* Build fully qualified prefix = current_prefix :: comp [suffix] */
 		DemString qualified = { 0 };
 		dem_string_init(&qualified);
@@ -2748,7 +2757,10 @@ bool rule_prefix(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int 
 	if (first_of_rule_unqualified_name(CUR())) {
 		m->prefix_base_idx = saved_prefix_base_idx; // Restore before prefix_tail
 		if (RULE_CALL_DEFER(AST(1), prefix_tail)) {
-			AST_MERGE(AST(1));
+			if (DemAstNode_non_empty(AST(1))) {
+				AST_APPEND_STR("::");
+				AST_MERGE(AST(1));
+			}
 		}
 	}
 	TRACE_RETURN_SUCCESS;
