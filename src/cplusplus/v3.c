@@ -1618,8 +1618,11 @@ bool rule_mangled_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(mangled_name);
-	MATCH(
-		READ_STR("_Z") && RULE(encoding) && OPTIONAL(READ('.') && RULE(vendor_specific_suffix)));
+	MATCH_AND_DO(
+		READ_STR("_Z") && RULE_DEFER(AST(0), encoding) && OPTIONAL(READ('.') && RULE_DEFER(AST(1), vendor_specific_suffix)), {
+			AST_MERGE(AST(0));
+			AST_MERGE_OPT(AST(1));
+		});
 	RULE_FOOT(mangled_name);
 }
 
@@ -2451,8 +2454,8 @@ bool rule_ref_qualifier(
 	RULE_FOOT(ref_qualifier);
 }
 
-bool is_template(DemAstNode *n) {
-	return n->tag == CP_DEM_TYPE_KIND_template_prefix;
+bool is_template(DemAstNode *dan) {
+	return AST(0)->tag == CP_DEM_TYPE_KIND_template_prefix || (VecF(DemAstNode, tail)(dan->children)->tag == CP_DEM_TYPE_KIND_template_args);
 }
 
 bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
