@@ -2050,11 +2050,13 @@ bool rule_name(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	//    Only type template instantiations are substitutable (handled in rule_type)
 	MATCH_AND_DO(
 		RULE_DEFER(AST(0), unscoped_name) &&
+			// If followed by template args, add the template name to substitution table NOW
+			// This ensures correct ordering (template name comes before template args)
+			(PEEK() == 'I' ? (AST_APPEND_TYPE1(AST(0)), true) : true) &&
 			RULE_DEFER(AST(1), template_args),
 		{
 			AST_MERGE(AST(0));
 			AST_MERGE(AST(1));
-			AST_APPEND_TYPE1(AST(0));
 		});
 
 	// For substitution + template_args, the substitution reference itself is already in the table
@@ -2681,10 +2683,23 @@ bool rule_prefix_tail(
 	while (first_of_rule_unqualified_name(CUR())) {
 		const char *component_start = CUR();
 
+		/* Save Meta state to backtrack side effects (like adding types in template args)
+		 * if we hit the 'E' check and backtrack */
+		Meta iteration_meta = { 0 };
+		Meta *iteration_og_meta = m;
+		m = &iteration_meta;
+		if (!meta_copy(&iteration_meta, iteration_og_meta)) {
+			// Memory failure or something bad
+			m = iteration_og_meta;
+			return false;
+		}
+
 		DemAstNode comp = { 0 };
 		DemAstNode_init(&comp);
 		if (!rule_unqualified_name(&comp, msi, m, graph, _my_node_id)) {
 			DemAstNode_deinit(&comp);
+			meta_deinit(&iteration_meta);
+			m = iteration_og_meta;
 			break;
 		}
 
@@ -2693,8 +2708,14 @@ bool rule_prefix_tail(
 		if (PEEK() == 'E') {
 			CUR() = component_start;
 			DemAstNode_deinit(&comp);
+			meta_deinit(&iteration_meta);
+			m = iteration_og_meta;
 			break;
 		}
+
+		/* Save current_prefix because rule_prefix_suffix -> template_args might clobber it */
+		DemAstNode saved_prefix = { 0 };
+		DemAstNode_init_clone(&saved_prefix, &m->current_prefix);
 
 		DemAstNode suffix = { 0 };
 		DemAstNode_init(&suffix);
@@ -2704,14 +2725,21 @@ bool rule_prefix_tail(
 			CUR() = component_start;
 			DemAstNode_deinit(&comp);
 			DemAstNode_deinit(&suffix);
+			DemAstNode_deinit(&saved_prefix);
+			meta_deinit(&iteration_meta);
+			m = iteration_og_meta;
 			break;
 		}
+
+		/* Commit Meta changes */
+		meta_move(iteration_og_meta, &iteration_meta);
+		m = iteration_og_meta;
 
 		/* Build fully qualified prefix = current_prefix :: comp [suffix] */
 		DemString qualified = { 0 };
 		dem_string_init(&qualified);
-		if (dem_string_non_empty(&m->current_prefix.dem)) {
-			dem_string_append(&qualified, m->current_prefix.dem.buf);
+		if (dem_string_non_empty(&saved_prefix.dem)) {
+			dem_string_append(&qualified, saved_prefix.dem.buf);
 			dem_string_append(&qualified, "::");
 		}
 		dem_string_concat(&qualified, &comp.dem);
@@ -2738,6 +2766,7 @@ bool rule_prefix_tail(
 		m->current_prefix = qualified_node; /* move */
 
 		dem_string_deinit(&qualified);
+		DemAstNode_deinit(&saved_prefix);
 		DemAstNode_deinit(&comp);
 		DemAstNode_deinit(&suffix);
 	}
