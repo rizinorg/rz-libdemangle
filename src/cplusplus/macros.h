@@ -515,6 +515,8 @@
 #define AST_APPEND_NODE(X)       DemAstNode_append(dan, (X))
 #define AST(I)                   DemAstNode_children_at(dan, (I))
 #define AST_(X, I)               DemAstNode_children_at((X), (I))
+#define AST_MATCH2(I0, TAG0, I1, TAG1) \
+	(VecF(DemAstNode, len)(dan->children) > (I0) && AST(I0)->tag == TAG0 && VecF(DemAstNode, len)(AST(I0)->children) > (I1) && AST_(AST(I0), I1)->tag == TAG1)
 
 #define APPEND_TYPE(tname)       append_type(m, (tname), false)
 #define FORCE_APPEND_TYPE(tname) append_type(m, (tname), true)

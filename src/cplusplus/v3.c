@@ -11,6 +11,7 @@
 #include "v3.h"
 
 #include "demangle.h"
+#include "demangler_util.h"
 #include "first.h"
 #include "macros.h"
 #include "parser_combinator.h"
@@ -1366,15 +1367,15 @@ static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
 		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
 			func_node = AST(0);
 		} else if (AST(0)->tag == CP_DEM_TYPE_KIND_type &&
-			   VecF(DemAstNode, len)(AST(0)->children) == 1 &&
-			   AST_(AST(0), 0)->tag == CP_DEM_TYPE_KIND_function_type) {
+			VecF(DemAstNode, len)(AST(0)->children) == 1 &&
+			AST_(AST(0), 0)->tag == CP_DEM_TYPE_KIND_function_type) {
 			func_node = AST_(AST(0), 0);
 		}
 	} else if (VecF(DemAstNode, len)(dan->children) == 2) {
 		// Case for qualified_type where AST(1) is the pointer/func type
 		if (AST(1)->tag == CP_DEM_TYPE_KIND_type &&
-		    VecF(DemAstNode, len)(AST(1)->children) == 1 &&
-		    AST_(AST(1), 0)->tag == CP_DEM_TYPE_KIND_function_type) {
+			VecF(DemAstNode, len)(AST(1)->children) == 1 &&
+			AST_(AST(1), 0)->tag == CP_DEM_TYPE_KIND_function_type) {
 			func_node = AST_(AST(1), 0);
 		}
 	}
@@ -1671,14 +1672,14 @@ bool rule_qualified_type(
 
 	if (rule_qualifiers(AST(0), msi, m, graph, _my_node_id) &&
 		rule_type(AST(1), msi, m, graph, _my_node_id)) {
-		
+
 		DemAstNode *type_node = AST(1);
 		bool is_func_ptr = false;
 		char ptr_char = 0;
 
 		if (type_node->tag == CP_DEM_TYPE_KIND_type &&
-		    VecF(DemAstNode, len)(type_node->children) == 1 &&
-		    AST_(type_node, 0)->tag == CP_DEM_TYPE_KIND_function_type) {
+			VecF(DemAstNode, len)(type_node->children) == 1 &&
+			AST_(type_node, 0)->tag == CP_DEM_TYPE_KIND_function_type) {
 			if (strstr(type_node->dem.buf, "(*)")) {
 				ptr_char = '*';
 			} else if (strstr(type_node->dem.buf, "(&)")) {
@@ -1741,7 +1742,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 
 	MATCH_AND_DO(READ('R') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function pointer type
-		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
+		if (AST_MATCH2(0, CP_DEM_TYPE_KIND_type, 0, CP_DEM_TYPE_KIND_function_type)) {
 			// Function pointer: insert & inside the (*...) before the closing )
 			// "void (* const)(int)" -> "void (* const&)(int)"
 			handle_func_pointer(dan, "&");
@@ -1754,7 +1755,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	});
 	MATCH_AND_DO(READ('O') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function pointer type
-		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
+		if (AST_MATCH2(0, CP_DEM_TYPE_KIND_type, 0, CP_DEM_TYPE_KIND_function_type)) {
 			// Function pointer: insert && inside the (*...) before the closing )
 			// "void (* const)(int)" -> "void (* const&&)(int)"
 			handle_func_pointer(dan, "&&");
@@ -2459,33 +2460,42 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 
 	bool is_const_fn = false;
 
-	MATCH(
+	MATCH_AND_DO(
 		// determine if this function has const or const& at the end
 		OPTIONAL(
 			is_const_fn = (PEEK_AT(0) == 'N' && PEEK_AT(1) == 'K') || (PEEK_AT(0) == 'K')) &&
+			// get function name (can be template or non-template)
+			RULE_DEFER(AST(0), name) &&
 
-		// get function name (can be template or non-template)
-		RULE_DEFER(AST(0), name) && AST_MERGE(AST(0)) &&
+			// determine whether this is a template function alongside normal demangling
+			// template functions specify a return type
+			// If this is a template function then get return type first
+			OPTIONAL(
+				is_template(AST(0)) && RULE_DEFER(AST(1), type)) &&
 
-		// determine whether this is a template function alongside normal demangling
-		// template functions specify a return type
-		// If this is a template function then get return type first
-		OPTIONAL(
-			is_template(AST(0)) && RULE_DEFER(AST(1), type) && AST_PREPEND_STR(" ") &&
-			AST_PREPEND_DEMSTR(&AST(1)->dem)) &&
-
-		// get function params
-		// set it as optional, because there's a rule which just matches for name,
-		// so to supress the noise of backtracking, we just make it optional here
-		OPTIONAL(
-			RULE_DEFER(AST(2), bare_function_type) && AST_APPEND_CHR('(') &&
-			// Check if params is just "void" - for parameterless functions output empty ()
-			// In Itanium ABI, 'v' alone means no parameters
-			(AST(2)->dem.len == 4 && memcmp(AST(2)->dem.buf, "void", 4) == 0 ? true : (AST_MERGE(AST(2)), true)) &&
-			AST_APPEND_CHR(')')) &&
-
-		// append const if it was detected to be a constant function
-		OPTIONAL(is_const_fn && AST_APPEND_STR(" const")));
+			// get function params
+			// set it as optional, because there's a rule which just matches for name,
+			// so to supress the noise of backtracking, we just make it optional here
+			OPTIONAL(
+				RULE_DEFER(AST(2), bare_function_type)),
+		{
+			if (DemAstNode_non_empty(AST(1))) {
+				AST_MERGE(AST(1));
+				AST_APPEND_STR(" ");
+			}
+			AST_MERGE(AST(0));
+			if (DemAstNode_non_empty(AST(2))) {
+				AST_APPEND_STR("(");
+				if (!dem_str_equals(AST(2)->dem.buf, "void")) {
+					AST_MERGE(AST(2));
+				}
+				AST_APPEND_STR(")");
+			}
+			// append const if it was detected to be a constant function
+			if (is_const_fn) {
+				AST_APPEND_STR(" const");
+			}
+		});
 
 	// MATCH (RULE (name));
 
