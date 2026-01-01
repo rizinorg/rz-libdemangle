@@ -1731,8 +1731,6 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		// Check if this is a function type by checking child AST tag
 		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
 			handle_func_pointer(dan, "*");
-		} else if (strstr(AST(0)->dem.buf, "(*")) {
-			handle_func_pointer(dan, "&");
 		} else {
 			// Regular pointer: just append "*"
 			dem_string_concat(&dan->dem, &AST(0)->dem);
@@ -1746,8 +1744,6 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
 			// Function pointer: insert & inside the (*...) before the closing )
 			// "void (* const)(int)" -> "void (* const&)(int)"
-
-		} else if (strstr(AST(0)->dem.buf, "(*")) {
 			handle_func_pointer(dan, "&");
 		} else {
 			AST_MERGE(AST(0));
@@ -2717,6 +2713,23 @@ bool rule_prefix_tail(
 		DemAstNode saved_prefix = { 0 };
 		DemAstNode_init_clone(&saved_prefix, &m->current_prefix);
 
+		/* Build fully qualified prefix = current_prefix :: comp [suffix] */
+		DemString qualified = { 0 };
+		dem_string_init(&qualified);
+		if (dem_string_non_empty(&saved_prefix.dem)) {
+			dem_string_append(&qualified, saved_prefix.dem.buf);
+			dem_string_append(&qualified, "::");
+		}
+		dem_string_concat(&qualified, &comp.dem);
+
+		/* Add the template name (speculatively) to the substitution table
+		 * BEFORE parsing template args. This ensures correct order. */
+		DemAstNode temp_node = { 0 };
+		DemAstNode_init(&temp_node);
+		dem_string_init_clone(&temp_node.dem, &qualified);
+		append_type(m, &temp_node, false);
+		DemAstNode_deinit(&temp_node);
+
 		DemAstNode suffix = { 0 };
 		DemAstNode_init(&suffix);
 		bool has_suffix = rule_prefix_suffix(&suffix, msi, m, graph, _my_node_id);
@@ -2726,6 +2739,7 @@ bool rule_prefix_tail(
 			DemAstNode_deinit(&comp);
 			DemAstNode_deinit(&suffix);
 			DemAstNode_deinit(&saved_prefix);
+			dem_string_deinit(&qualified);
 			meta_deinit(&iteration_meta);
 			m = iteration_og_meta;
 			break;
@@ -2735,14 +2749,6 @@ bool rule_prefix_tail(
 		meta_move(iteration_og_meta, &iteration_meta);
 		m = iteration_og_meta;
 
-		/* Build fully qualified prefix = current_prefix :: comp [suffix] */
-		DemString qualified = { 0 };
-		dem_string_init(&qualified);
-		if (dem_string_non_empty(&saved_prefix.dem)) {
-			dem_string_append(&qualified, saved_prefix.dem.buf);
-			dem_string_append(&qualified, "::");
-		}
-		dem_string_concat(&qualified, &comp.dem);
 		if (has_suffix) {
 			dem_string_concat(&qualified, &suffix.dem);
 		}
