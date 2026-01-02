@@ -126,14 +126,21 @@ typedef struct {
 
 struct Vec_t(DemAstNode);
 
+enum {
+	POINTER_TYPE,
+	REFERENCE_TYPE,
+	RVALUE_REFERENCE_TYPE,
+};
+
 typedef struct DemAstNode_t {
 	struct Vec_t(DemAstNode) * children;
 	DemString dem;
 	DemStringView val;
 	CpDemTypeKind tag;
+	ut32 subtag;
 } DemAstNode;
 
-DemAstNode* DemAstNode_new();
+DemAstNode *DemAstNode_new();
 DemAstNode *DemAstNode_ctor(DemString *dem, DemStringView *val, CpDemTypeKind tag);
 void DemAstNode_dtor(DemAstNode *dan);
 bool DemAstNode_init(DemAstNode *dan);
@@ -221,7 +228,7 @@ void meta_deinit(Meta *m);
 size_t parse_sequence_id(StrIter *msi, Meta *m);
 bool append_type(Meta *m, const DemAstNode *x, bool force_append);
 bool append_tparam(Meta *m, DemString *t);
-bool meta_substitute_type(Meta *m, ut64 id, DemString *dem);
+bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan);
 bool meta_substitute_tparam(Meta *m, ut64 id, DemString *dem);
 st64 find_type_index(Meta *m, const char *type_str);
 

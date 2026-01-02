@@ -244,12 +244,12 @@ bool append_tparam(Meta *m, DemString *t) {
 	UNUSED(vec_reserve(&m->template_params, m->template_params.length + 1));
 	m->template_params.length += 1;
 
-    Name *new_name = vec_end(&m->template_params);
-    dem_string_init_clone(&new_name->name, t);
-    if (!count_name_parts(&new_name->name)) {
-        m->template_params.length--;
-        return false;
-    }
+	Name *new_name = vec_end(&m->template_params);
+	dem_string_init_clone(&new_name->name, t);
+	if (!count_name_parts(&new_name->name)) {
+		m->template_params.length--;
+		return false;
+	}
 
 	return true;
 }
@@ -275,11 +275,13 @@ st64 find_type_index(Meta *m, const char *type_str) {
  * Refer back to a previous type from detected types and then add that
  * type to the currently demangled string
  */
-bool meta_substitute_type(Meta *m, ut64 id, DemString *dem) {
+bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan) {
 	if (m->detected_types.length > id) {
 		DemAstNode *type_node = vec_ptr_at(&m->detected_types, id);
 		if (type_node && type_node->dem.buf) {
-			dem_string_append(dem, type_node->dem.buf);
+			DemAstNode x = { 0 };
+			DemAstNode_init_clone(&x, type_node);
+			DemAstNode_append(dan, &x);
 			return true;
 		}
 	}

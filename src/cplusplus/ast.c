@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Billow <billow.fun@gmail.com>
 // SPDX-License-Identifier: LGPL-3.0-only
 
+#include "cplusplus/vec.h"
 #include "types.h"
 
 DemAstNode* DemAstNode_new() {
@@ -110,6 +111,14 @@ void DemAstNode_copy(DemAstNode *dst, const DemAstNode *src) {
 	dem_string_init_clone(&dst->dem, &src->dem);
 	dst->val = src->val;
 	dst->tag = src->tag;
+	if (src->children) {
+		dst->children = VecF(DemAstNode, ctor)();
+		vec_foreach_ptr(src->children, n, {
+			DemAstNode cloned = { 0 };
+			DemAstNode_init_clone(&cloned, n);
+			VecF(DemAstNode, append)(dst->children, &cloned);
+		});
+	}
 }
 
 void DemAstNode_init_clone(DemAstNode *dst, const DemAstNode *src) {

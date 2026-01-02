@@ -17,6 +17,7 @@
 #include "parser_combinator.h"
 #include "types.h"
 #include "vec.h"
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -1361,7 +1362,7 @@ static void handle_pointer_to_func(DemAstNode *dan) {
 	}
 }
 
-static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
+static DemAstNode *extract_func_type_node(DemAstNode *dan) {
 	DemAstNode *func_node = NULL;
 	if (VecF(DemAstNode, len)(dan->children) == 1) {
 		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
@@ -1370,6 +1371,8 @@ static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
 			VecF(DemAstNode, len)(AST(0)->children) == 1 &&
 			AST_(AST(0), 0)->tag == CP_DEM_TYPE_KIND_function_type) {
 			func_node = AST_(AST(0), 0);
+		} else if (AST_MATCH2(0, CP_DEM_TYPE_KIND_substitution, 0, CP_DEM_TYPE_KIND_seq_id)) {
+			func_node = AST_(AST_(AST_(dan, 0), 0), 0);
 		}
 	} else if (VecF(DemAstNode, len)(dan->children) == 2) {
 		// Case for qualified_type where AST(1) is the pointer/func type
@@ -1379,10 +1382,28 @@ static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
 			func_node = AST_(AST(1), 0);
 		}
 	}
+	return func_node;
+}
+
+static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
+	DemAstNode *func_node = extract_func_type_node(dan);
+	char name[256] = { 0 };
+	char *p = NULL;
+	if ((p = strstr(func_node->dem.buf, "(*"))) {
+		size_t name_len = strchr(p, ')') - (p + 1);
+		strncpy(name, p + 1, name_len < sizeof(name) - 1 ? name_len : sizeof(name) - 1);
+	}
+
+	if (func_node->tag == CP_DEM_TYPE_KIND_type && AST_(func_node, 0)->tag == CP_DEM_TYPE_KIND_function_type) {
+		func_node = AST_(func_node, 0);
+	}
 
 	if (func_node) {
 		AST_APPEND_DEMSTR(&AST_(func_node, 2)->dem); // return type
 		AST_APPEND_STR(" (");
+		if (*name) {
+			AST_APPEND_STR(name);
+		}
 		AST_APPEND_STR(postfix);
 		AST_APPEND_STR(")");
 
@@ -1394,6 +1415,7 @@ static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
 		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 0)->dem); // cv-qualifiers
 		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 1)->dem); // exception spec
 	} else {
+		return;
 		DEM_UNREACHABLE;
 	}
 }
@@ -1537,51 +1559,6 @@ bool rule_abi_tags(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 	RULE_FOOT(abi_tags);
 }
 
-/**
- * \b Parse sequence ID from mangled string iterator.
- *
- * Parses a sequence ID following the Itanium ABI specification:
- * - Empty (just '_'): returns 0
- * - Base-36 digits followed by '_': returns parsed value + 1
- *
- * \p msi   Mangled string iterator positioned at the sequence ID
- * \p m     Meta context (used for tracing if enabled)
- *
- * \return Parsed sequence ID (1 for empty, 2+ for base-36 values) on success
- * \return 0 on failure (invalid format)
- */
-size_t parse_sequence_id(StrIter *msi, Meta *m) {
-	if (!msi || !m) {
-		return 0;
-	}
-
-	size_t sid = 1; // Start at 1 for empty sequence
-	bool parsed_seq_id = false;
-
-	if (IS_DIGIT(PEEK()) || IS_UPPER(PEEK())) {
-		char *base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
-		char *pos = NULL;
-		size_t pow = 1;
-		sid = 2; // Start at 2 for base-36 sequences (1 + parsed value)
-		while ((pos = strchr(base, PEEK()))) {
-			size_t based_val = (size_t)(pos - base);
-			sid += based_val * pow;
-			pow *= 36;
-			ADV();
-		}
-		parsed_seq_id = true;
-	} else if (PEEK() == '_') {
-		sid = 1; // Empty sequence maps to 1
-		parsed_seq_id = true;
-	}
-
-	if (!parsed_seq_id || !READ('_')) {
-		return 0;
-	}
-
-	return sid;
-}
-
 bool rule_class_enum_type(
 	DemAstNode *dan,
 	StrIter *msi,
@@ -1676,29 +1653,10 @@ bool rule_qualified_type(
 	if (rule_qualifiers(AST(0), msi, m, graph, _my_node_id) &&
 		rule_type(AST(1), msi, m, graph, _my_node_id)) {
 
-		DemAstNode *type_node = AST(1);
-		bool is_func_ptr = false;
-		char ptr_char = 0;
-
-		if (type_node->tag == CP_DEM_TYPE_KIND_type &&
-			VecF(DemAstNode, len)(type_node->children) == 1 &&
-			AST_(type_node, 0)->tag == CP_DEM_TYPE_KIND_function_type) {
-			if (strstr(type_node->dem.buf, "(*)")) {
-				ptr_char = '*';
-			} else if (strstr(type_node->dem.buf, "(&)")) {
-				ptr_char = '&';
-			}
-			if (ptr_char) {
-				is_func_ptr = true;
-			}
-		}
-
-		if (is_func_ptr) {
+		if (AST_MATCH2(1, CP_DEM_TYPE_KIND_type, 0, CP_DEM_TYPE_KIND_function_type)) {
 			// Function pointer: insert qualifiers inside the (*)
 			// "void (*)(int)" + "const" -> "void (* const)(int)"
-			char postfix[256];
-			snprintf(postfix, sizeof(postfix), "%c %s", ptr_char, AST(0)->dem.buf);
-			handle_func_pointer(dan, postfix);
+			handle_func_pointer(dan, AST(0)->dem.buf);
 		} else {
 			// Regular type: Output type first, then qualifiers (e.g., "QString const" not "constQString")
 			AST_MERGE(AST(1));
@@ -1717,7 +1675,6 @@ bool rule_qualified_type(
 bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(type);
 
-	// For function_type, we need to preserve the child's tag so pointer/reference handling can detect it
 	MATCH_AND_DO(RULE_DEFER(AST(0), function_type), {
 		AST_MERGE(AST(0));
 	});
@@ -1733,14 +1690,24 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	// For PF...E, we need to produce "ret (*)(args)" and add both S_entries
 	MATCH_AND_DO(READ('P') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function type by checking child AST tag
-		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
+		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type || AST_MATCH2(0, CP_DEM_TYPE_KIND_type, 0, CP_DEM_TYPE_KIND_function_type)) {
 			handle_func_pointer(dan, "*");
+		}
+		if (AST_MATCH2(0, CP_DEM_TYPE_KIND_substitution, 0, CP_DEM_TYPE_KIND_seq_id)) {
+			DemAstNode *sub_node = AST_(AST_(AST(0), 0), 0);
+			if (sub_node->tag == CP_DEM_TYPE_KIND_function_type || (sub_node->tag == CP_DEM_TYPE_KIND_type && AST_(sub_node, 0)->tag == CP_DEM_TYPE_KIND_function_type)) {
+				handle_func_pointer(dan, "*");
+			} else {
+				dem_string_concat(&dan->dem, &AST(0)->dem);
+				dem_string_append(&dan->dem, "*");
+			}
 		} else {
 			// Regular pointer: just append "*"
 			dem_string_concat(&dan->dem, &AST(0)->dem);
 			dem_string_append(&dan->dem, "*");
 		}
 		append_type(m, dan, false);
+		dan->subtag = POINTER_TYPE;
 	});
 
 	MATCH_AND_DO(READ('R') && RULE_CALL_DEFER(AST(0), type), {
@@ -1755,6 +1722,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		}
 		// Reference types ARE substitutable per Itanium ABI section 5.1.5
 		append_type(m, dan, false);
+		dan->subtag = REFERENCE_TYPE;
 	});
 	MATCH_AND_DO(READ('O') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function pointer type
@@ -1768,6 +1736,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		}
 		// Rvalue reference types ARE substitutable per Itanium ABI section 5.1.5
 		append_type(m, dan, false);
+		dan->subtag = RVALUE_REFERENCE_TYPE;
 	});
 	// MATCH (RULE (template_template_param) && RULE (template_args));
 	// Template param with optional template args - add to substitution if no template args follow
@@ -1867,10 +1836,10 @@ bool rule_seq_id(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int 
 	if (IS_DIGIT(PEEK()) || IS_UPPER(PEEK())) {
 		ut64 sid = 0;
 		msi->cur += base36_to_int(msi->cur, &sid);
-		return meta_substitute_type(m, sid + 1, &dan->dem);
+		return meta_substitute_type(m, sid + 1, dan);
 	}
 	if (PEEK() == '_') {
-		return meta_substitute_type(m, 0, &dan->dem);
+		return meta_substitute_type(m, 0, dan);
 	}
 	RULE_FOOT(seq_id);
 }
@@ -1916,7 +1885,7 @@ bool rule_substitution(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(substitution);
-	MATCH(READ('S') && RULE(seq_id) && READ('_'));
+	MATCH(READ('S') && RULE_DEFER(AST(0), seq_id) && READ('_'));
 
 	MATCH(READ_STR("St") && AST_APPEND_STR("std"));
 	MATCH(READ_STR("Sa") && AST_APPEND_STR("std::allocator"));
