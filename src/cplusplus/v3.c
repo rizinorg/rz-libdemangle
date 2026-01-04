@@ -1373,6 +1373,9 @@ static DemAstNode *extract_func_type_node(DemAstNode *dan) {
 			func_node = AST_(AST(0), 0);
 		} else if (AST_MATCH2(0, CP_DEM_TYPE_KIND_substitution, 0, CP_DEM_TYPE_KIND_seq_id)) {
 			func_node = AST_(AST_(AST_(dan, 0), 0), 0);
+			if (!(func_node->tag == CP_DEM_TYPE_KIND_type && VecF(DemAstNode, len)(func_node->children) == 1 && AST_(func_node, 0)->tag == CP_DEM_TYPE_KIND_function_type)) {
+				return NULL;
+			}
 		}
 	} else if (VecF(DemAstNode, len)(dan->children) == 2) {
 		// Case for qualified_type where AST(1) is the pointer/func type
@@ -1387,6 +1390,10 @@ static DemAstNode *extract_func_type_node(DemAstNode *dan) {
 
 static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
 	DemAstNode *func_node = extract_func_type_node(dan);
+	if (!func_node) {
+		DEM_UNREACHABLE;
+	}
+
 	char name[256] = { 0 };
 	char *p = NULL;
 	if ((p = strstr(func_node->dem.buf, "(*"))) {
@@ -1398,25 +1405,21 @@ static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
 		func_node = AST_(func_node, 0);
 	}
 
-	if (func_node) {
-		AST_APPEND_DEMSTR(&AST_(func_node, 2)->dem); // return type
-		AST_APPEND_STR(" (");
-		if (*name) {
-			AST_APPEND_STR(name);
-		}
-		AST_APPEND_STR(postfix);
-		AST_APPEND_STR(")");
-
-		AST_APPEND_STR("(");
-		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 3)->dem); // bare-function-type
-		AST_APPEND_STR(")");
-
-		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 4)->dem); // ref-qualifier
-		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 0)->dem); // cv-qualifiers
-		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 1)->dem); // exception spec
-	} else {
-		DEM_UNREACHABLE;
+	AST_APPEND_DEMSTR(&AST_(func_node, 2)->dem); // return type
+	AST_APPEND_STR(" (");
+	if (*name) {
+		AST_APPEND_STR(name);
 	}
+	AST_APPEND_STR(postfix);
+	AST_APPEND_STR(")");
+
+	AST_APPEND_STR("(");
+	AST_APPEND_DEMSTR_OPT(&AST_(func_node, 3)->dem); // bare-function-type
+	AST_APPEND_STR(")");
+
+	AST_APPEND_DEMSTR_OPT(&AST_(func_node, 4)->dem); // ref-qualifier
+	AST_APPEND_DEMSTR_OPT(&AST_(func_node, 0)->dem); // cv-qualifiers
+	AST_APPEND_DEMSTR_OPT(&AST_(func_node, 1)->dem); // exception spec
 }
 
 bool rule_function_param(
@@ -1875,7 +1878,7 @@ bool rule_substitution(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(substitution);
-	MATCH_AND_DO(READ('S') && RULE_DEFER(AST(0), seq_id) && READ('_'),{
+	MATCH_AND_DO(READ('S') && RULE_DEFER(AST(0), seq_id) && READ('_'), {
 		AST_MERGE(AST(0));
 	});
 
