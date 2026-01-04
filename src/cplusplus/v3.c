@@ -1415,7 +1415,6 @@ static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
 		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 0)->dem); // cv-qualifiers
 		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 1)->dem); // exception spec
 	} else {
-		return;
 		DEM_UNREACHABLE;
 	}
 }
@@ -1690,17 +1689,8 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	// For PF...E, we need to produce "ret (*)(args)" and add both S_entries
 	MATCH_AND_DO(READ('P') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function type by checking child AST tag
-		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type || AST_MATCH2(0, CP_DEM_TYPE_KIND_type, 0, CP_DEM_TYPE_KIND_function_type)) {
+		if (extract_func_type_node(dan)) {
 			handle_func_pointer(dan, "*");
-		}
-		if (AST_MATCH2(0, CP_DEM_TYPE_KIND_substitution, 0, CP_DEM_TYPE_KIND_seq_id)) {
-			DemAstNode *sub_node = AST_(AST_(AST(0), 0), 0);
-			if (sub_node->tag == CP_DEM_TYPE_KIND_function_type || (sub_node->tag == CP_DEM_TYPE_KIND_type && AST_(sub_node, 0)->tag == CP_DEM_TYPE_KIND_function_type)) {
-				handle_func_pointer(dan, "*");
-			} else {
-				dem_string_concat(&dan->dem, &AST(0)->dem);
-				dem_string_append(&dan->dem, "*");
-			}
 		} else {
 			// Regular pointer: just append "*"
 			dem_string_concat(&dan->dem, &AST(0)->dem);
