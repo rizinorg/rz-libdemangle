@@ -4,7 +4,7 @@
 #include "cplusplus/vec.h"
 #include "types.h"
 
-DemAstNode* DemAstNode_new() {
+DemAstNode *DemAstNode_new() {
 	DemAstNode *dan = (DemAstNode *)malloc(sizeof(DemAstNode));
 	if (!dan) {
 		return NULL;

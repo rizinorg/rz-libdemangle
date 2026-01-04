@@ -296,7 +296,7 @@
 		self->length = new_size; \
 		return true; \
 	} \
-	static inline T *VecF(T, append)(Vec##T * self, const T * x) { \
+	static inline T *VecF(T, append)(Vec##T * self, const T *x) { \
 		if (!self) { \
 			return NULL; \
 		} \

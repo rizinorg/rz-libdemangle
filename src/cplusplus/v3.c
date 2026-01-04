@@ -1875,7 +1875,9 @@ bool rule_substitution(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(substitution);
-	MATCH(READ('S') && RULE_DEFER(AST(0), seq_id) && READ('_'));
+	MATCH_AND_DO(READ('S') && RULE_DEFER(AST(0), seq_id) && READ('_'),{
+		AST_MERGE(AST(0));
+	});
 
 	MATCH(READ_STR("St") && AST_APPEND_STR("std"));
 	MATCH(READ_STR("Sa") && AST_APPEND_STR("std::allocator"));
@@ -2065,9 +2067,11 @@ bool rule_nested_name(
 	// in the substitution table.
 	MATCH_AND_DO(
 		RULE_CALL_DEFER(AST(2), template_prefix) && RULE_CALL_DEFER(AST(3), template_args) &&
-			AST_MERGE(AST(2)) && AST_MERGE(AST(3)) && AST_APPEND_TYPE &&
 			RULE_CALL_DEFER(AST(4), unqualified_name) && READ('E'),
 		{
+			AST_MERGE(AST(2));
+			AST_MERGE(AST(3));
+			AST_APPEND_TYPE;
 			AST_APPEND_STR("::");
 			AST_MERGE(AST(4));
 		});
@@ -2082,17 +2086,17 @@ bool rule_nested_name(
 	// 4. After "::" + unqualified_name -> template prefix for method (e.g., std::vector<int>::_M_allocate_and_copy)
 	MATCH_AND_DO(
 		RULE_CALL_DEFER(AST(2), template_prefix) && RULE_CALL_DEFER(AST(3), template_args) &&
-			AST_MERGE(AST(2)) && AST_MERGE(AST(3)) && AST_APPEND_TYPE &&
 			RULE_CALL_DEFER(AST(4), unqualified_name) &&
-			// Add the template prefix (class::method without template args) to substitution table
-			(AST_APPEND_STR("::"), AST_MERGE(AST(4)), true) &&
 			RULE_CALL_DEFER(AST(5), template_args) &&
-			(AST_APPEND_TYPE, true) &&
 			READ('E'),
 		{
+			AST_MERGE(AST(2));
+			AST_MERGE(AST(3));
+			AST_APPEND_TYPE;
+			AST_APPEND_STR("::");
+			AST_MERGE(AST(4));
 			AST_MERGE(AST(5));
-			// Mark as template function so encoding knows to parse return type
-			dan->tag = CP_DEM_TYPE_KIND_template_prefix;
+			AST_APPEND_TYPE;
 		});
 
 	// Case 2c: prefix + unqualified_name + template_args + E
@@ -2100,17 +2104,15 @@ bool rule_nested_name(
 	// e.g., A::foo<int>
 	MATCH_AND_DO(
 		RULE_CALL_DEFER(AST(2), prefix) && RULE_CALL_DEFER(AST(3), unqualified_name) &&
-			// Add the template prefix (class::method without template args) to substitution table
-			(AST_MERGE(AST(2)),
-				AST(2)->dem.len > 0 ? AST_APPEND_STR("::") : true,
-				AST_MERGE(AST(3)),
-				AST_APPEND_TYPE,
-				true) &&
 			RULE_CALL_DEFER(AST(4), template_args) && READ('E'),
 		{
+			if (DemAstNode_non_empty(AST(2))) {
+				AST_MERGE(AST(2));
+				AST_APPEND_STR("::");
+			}
+			AST_MERGE(AST(3));
+			AST_APPEND_TYPE;
 			AST_MERGE(AST(4));
-			// Mark as template function so encoding knows to parse return type
-			dan->tag = CP_DEM_TYPE_KIND_template_prefix;
 		});
 
 	// Case 3: prefix + unqualified_name + E
@@ -2118,8 +2120,8 @@ bool rule_nested_name(
 		RULE_CALL_DEFER(AST(2), prefix) && RULE_CALL_DEFER(AST(3), unqualified_name) &&
 			READ('E'),
 		{
-			AST_MERGE(AST(2));
-			if (AST(2)->dem.len > 0) {
+			if (DemAstNode_non_empty(AST(2))) {
+				AST_MERGE(AST(2));
 				AST_APPEND_STR("::");
 			}
 			AST_MERGE(AST(3));
@@ -2414,7 +2416,10 @@ bool rule_ref_qualifier(
 }
 
 bool is_template(DemAstNode *dan) {
-	return AST(0)->tag == CP_DEM_TYPE_KIND_template_prefix || (VecF(DemAstNode, tail)(dan->children)->tag == CP_DEM_TYPE_KIND_template_args);
+	if (!dan) {
+		return false;
+	}
+	return dan->tag == CP_DEM_TYPE_KIND_template_prefix || (VecF(DemAstNode, len)(dan->children) > 0 && VecF(DemAstNode, tail)(dan->children)->tag == CP_DEM_TYPE_KIND_template_args);
 }
 
 bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
@@ -2756,21 +2761,14 @@ bool rule_prefix_tail(
 bool rule_prefix(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(prefix);
 
-	MATCH_AND_CONTINUE(RULE_CALL_DEFER(AST(0), prefix_start) && AST_MERGE(AST(0)));
-	// Save prefix_base_idx immediately after prefix_start succeeds
-	// This is crucial because recursive template arg parsing may overwrite it
-	st64 saved_prefix_base_idx = m->prefix_base_idx;
-	// prefix_tail adds "::component" suffix(es) to dan->dem and updates substitution table
-	if (first_of_rule_unqualified_name(CUR())) {
-		m->prefix_base_idx = saved_prefix_base_idx; // Restore before prefix_tail
-		if (RULE_CALL_DEFER(AST(1), prefix_tail)) {
+	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), prefix_start) && OPTIONAL(RULE_CALL_DEFER(AST(1), prefix_tail)),
+		{
+			AST_MERGE(AST(0));
 			if (DemAstNode_non_empty(AST(1))) {
 				AST_APPEND_STR("::");
 				AST_MERGE(AST(1));
 			}
-		}
-	}
-	TRACE_RETURN_SUCCESS;
+		});
 
 	RULE_FOOT(prefix);
 }
