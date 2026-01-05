@@ -510,16 +510,15 @@
 #define AST_PREPEND_STR(s)       dem_string_append_prefix_n(&dan->dem, s, strlen(s))
 #define AST_PREPEND_DEMSTR(D)    dem_string_append_prefix_n(&dan->dem, (D)->buf, (D)->len)
 #define AST_APPEND_CHR(c)        dem_string_append_char(&dan->dem, c)
-#define AST_APPEND_TYPE          append_type(m, dan, false)
-#define AST_APPEND_TYPE1(T)      append_type(m, (T), false)
+#define AST_APPEND_TYPE          append_type(m, dan)
+#define AST_APPEND_TYPE1(T)      append_type(m, (T))
 #define AST_APPEND_NODE(X)       DemAstNode_append(dan, (X))
 #define AST(I)                   DemAstNode_children_at(dan, (I))
 #define AST_(X, I)               DemAstNode_children_at((X), (I))
 #define AST_MATCH2(I0, TAG0, I1, TAG1) \
 	(VecF(DemAstNode, len)(dan->children) > (I0) && AST(I0)->tag == TAG0 && VecF(DemAstNode, len)(AST(I0)->children) > (I1) && AST_(AST(I0), I1)->tag == TAG1)
 
-#define APPEND_TYPE(tname)       append_type(m, (tname), false)
-#define FORCE_APPEND_TYPE(tname) append_type(m, (tname), true)
+#define APPEND_TYPE(tname)       append_type(m, (tname))
 
 #define APPEND_TPARAM(tname) OPTIONAL(m->t_level < 2 && append_tparam(m, (tname)))
 

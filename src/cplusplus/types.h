@@ -194,8 +194,6 @@ typedef struct Meta {
 	// parameter list
 	int t_level;
 	bool template_reset;
-
-	bool is_ctor_or_dtor_at_l0;
 } Meta;
 
 struct TraceGraph;
@@ -228,7 +226,7 @@ void meta_deinit(Meta *m);
 
 // Helper functions
 size_t parse_sequence_id(StrIter *msi, Meta *m);
-bool append_type(Meta *m, const DemAstNode *x, bool force_append);
+bool append_type(Meta *m, const DemAstNode *x);
 bool append_tparam(Meta *m, DemString *t);
 bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan);
 bool meta_substitute_tparam(Meta *m, ut64 id, DemString *dem);

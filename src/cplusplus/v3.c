@@ -146,9 +146,12 @@ bool rule_unresolved_type(
 		{
 			AST_MERGE(AST(0));
 			AST_MERGE(AST(1));
+			AST_APPEND_TYPE;
 		});
-	MATCH(RULE(decltype));
-	MATCH(RULE(substitution));
+	MATCH_AND_DO(RULE_DEFER(AST(0), decltype), {
+		AST_APPEND_TYPE;
+	});
+	MATCH1(substitution);
 	RULE_FOOT(unresolved_type);
 }
 
@@ -1337,7 +1340,7 @@ bool rule_function_type(
 			AST_MERGE_OPT(AST(4)); // ref-qualifier
 			AST_MERGE_OPT(AST(0)); // cv-qualifiers
 			AST_MERGE_OPT(AST(1)); // exception spec
-			append_type(m, dan, false);
+			AST_APPEND_TYPE;
 		});
 	RULE_FOOT(function_type);
 }
@@ -1723,7 +1726,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			dem_string_concat(&dan->dem, &AST(0)->dem);
 			dem_string_append(&dan->dem, "*");
 		}
-		append_type(m, dan, false);
+		AST_APPEND_TYPE;
 	});
 
 	MATCH_AND_DO(READ('R') && RULE_CALL_DEFER(AST(0), type), {
@@ -1741,7 +1744,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			dem_string_append(&dan->dem, "&");
 		}
 		// Reference types ARE substitutable per Itanium ABI section 5.1.5
-		append_type(m, dan, false);
+		AST_APPEND_TYPE;
 	});
 	MATCH_AND_DO(READ('O') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function pointer type
@@ -1758,18 +1761,18 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			dem_string_append(&dan->dem, "&&");
 		}
 		// Rvalue reference types ARE substitutable per Itanium ABI section 5.1.5
-		append_type(m, dan, false);
+		AST_APPEND_TYPE;
 	});
 	// MATCH (RULE (template_template_param) && RULE (template_args));
 	// Template param with optional template args - add to substitution if no template args follow
 	MATCH_AND_DO(RULE_DEFER(AST(0), template_param) && AST_MERGE(AST(0)), {
 		// Check if followed by template_args
 		if (PEEK() == 'I' && rule_template_args(AST(1), msi, m, graph, _my_node_id)) {
+			AST_APPEND_TYPE;
 			AST_MERGE(AST(1));
+			AST_APPEND_TYPE;
 		} else {
-			// Plain template param used as type - force add to substitution table
-			// T_ substitution creates a new substitution entry even if type already exists
-			FORCE_APPEND_TYPE(dan);
+			AST_APPEND_TYPE;
 		}
 	});
 	MATCH(
@@ -1787,35 +1790,6 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	MATCH(RULE_DEFER(AST(0), substitution) && AST_MERGE(AST(0)));
 
 	RULE_FOOT(type);
-}
-
-bool rule_template_arg(
-	DemAstNode *dan,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id) {
-	RULE_HEAD(template_arg);
-	// After matching a template argument, save it for later T_ substitutions
-	MATCH_AND_DO(
-		READ('X') && RULE_DEFER(AST(0), expression) && AST_MERGE(AST(0)) && READ('E'),
-		{
-			if (m->t_level == 1) {
-				append_tparam(m, &dan->dem);
-			}
-		});
-	MATCH(READ('J') && RULE_MANY(template_arg) && READ('E'));
-	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), type) && AST_MERGE(AST(0)), {
-		if (m->t_level == 1) {
-			append_tparam(m, &dan->dem);
-		}
-	});
-	MATCH_AND_DO(RULE_DEFER(AST(0), expr_primary) && AST_MERGE(AST(0)), {
-		if (m->t_level == 1) {
-			append_tparam(m, &dan->dem);
-		}
-	});
-	RULE_FOOT(template_arg);
 }
 
 bool rule_base_unresolved_name(
@@ -2045,7 +2019,7 @@ bool rule_name(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		RULE_DEFER(AST(0), unscoped_name) &&
 			// If followed by template args, add the template name to substitution table NOW
 			// This ensures correct ordering (template name comes before template args)
-			(PEEK() == 'I' ? (AST_APPEND_TYPE1(AST(0)), true) : true) &&
+			(PEEK() == 'I' ? AST_APPEND_TYPE1(AST(0)) : true) &&
 			RULE_DEFER(AST(1), template_args),
 		{
 			AST_MERGE(AST(0));
@@ -2059,9 +2033,7 @@ bool rule_name(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	});
 
 	// nested_name - propagate tag if it's a template function
-	MATCH_AND_DO(RULE_DEFER(AST(0), nested_name), {
-		AST_MERGE(AST(0));
-	});
+	MATCH1(nested_name);
 	MATCH1(unscoped_name);
 	MATCH1(local_name);
 
@@ -2075,6 +2047,9 @@ bool rule_nested_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(nested_name);
+	if (PEEK() != 'N') {
+		TRACE_RETURN_FAILURE();
+	}
 
 	MATCH_AND_CONTINUE(READ('N'));
 	RULE_CALL_DEFER(AST(0), cv_qualifiers);
@@ -2088,8 +2063,6 @@ bool rule_nested_name(
 		{
 			AST_MERGE(AST(2));
 			AST_MERGE(AST(3));
-			// Mark as template so encoding knows to parse return type for template functions
-			dan->tag = CP_DEM_TYPE_KIND_template_prefix;
 		});
 
 	// Case 2: template_prefix + template_args + unqualified_name + E (for methods in template classes)
@@ -2297,9 +2270,36 @@ bool rule_nv_offset(
 	RULE_FOOT(nv_offset);
 }
 
-// Helper to append '>' with proper spacing for nested templates
-static bool append_template_close(DemAstNode *dan) {
-	return dem_string_append_char(&dan->dem, '>');
+bool rule_template_arg(
+	DemAstNode *dan,
+	StrIter *msi,
+	Meta *m,
+	TraceGraph *graph,
+	int parent_node_id) {
+	RULE_HEAD(template_arg);
+	// After matching a template argument, save it for later T_ substitutions
+	MATCH_AND_DO(
+		READ('X') && RULE_DEFER(AST(0), expression) && READ('E'),
+		{
+			AST_MERGE(AST(0));
+			if (m->t_level == 1) {
+				append_tparam(m, &dan->dem);
+			}
+		});
+	MATCH(READ('J') && RULE_MANY(template_arg) && READ('E'));
+	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), type), {
+		AST_MERGE(AST(0));
+		if (m->t_level == 1) {
+			append_tparam(m, &dan->dem);
+		}
+	});
+	MATCH_AND_DO(RULE_DEFER(AST(0), expr_primary), {
+		AST_MERGE(AST(0));
+		if (m->t_level == 1) {
+			append_tparam(m, &dan->dem);
+		}
+	});
+	RULE_FOOT(template_arg);
 }
 
 bool rule_template_args(
@@ -2309,7 +2309,9 @@ bool rule_template_args(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(template_args);
-	bool is_const = false;
+	if (PEEK() != 'I') {
+		TRACE_RETURN_FAILURE();
+	}
 
 	// we going down the rabbit hope
 	m->t_level++;
@@ -2326,21 +2328,18 @@ bool rule_template_args(
 	}
 
 	MATCH_AND_DO(
-		OPTIONAL((is_const = IS_CONST()) && UNSET_CONST()) && READ('I') && AST_APPEND_CHR('<') &&
-			RULE_ATLEAST_ONCE_WITH_SEP(template_arg, ", ") && append_template_close(dan) &&
-			READ('E'),
+		READ('I') && RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), template_arg, ", ") && READ('E'),
 		{
 			// uppity up up
 			m->t_level--;
-
 			// number of <templates> at level 0
 			if (!m->t_level) {
 				m->template_reset = true;
 			}
 
-			if (is_const) {
-				SET_CONST();
-			}
+			AST_APPEND_CHR('<');
+			AST_MERGE(AST(0));
+			AST_APPEND_CHR('>');
 		});
 
 	m->t_level--;
@@ -2736,7 +2735,7 @@ bool rule_prefix_tail(
 		DemAstNode temp_node = { 0 };
 		DemAstNode_init(&temp_node);
 		dem_string_init_clone(&temp_node.dem, &qualified);
-		append_type(m, &temp_node, false);
+		AST_APPEND_TYPE1(&temp_node);
 		DemAstNode_deinit(&temp_node);
 
 		DemAstNode suffix = { 0 };
@@ -2775,7 +2774,7 @@ bool rule_prefix_tail(
 		DemAstNode qualified_node = { 0 };
 		DemAstNode_init(&qualified_node);
 		dem_string_init_clone(&qualified_node.dem, &qualified);
-		append_type(m, &qualified_node, false);
+		AST_APPEND_TYPE1(&qualified_node);
 
 		DemAstNode_deinit(&m->current_prefix);
 		m->current_prefix = qualified_node; /* move */
@@ -2849,8 +2848,10 @@ char *demangle_rule(const char *mangled, DemRule rule, CpDemOptions opts) {
 	// Enable tracing via environment variable or compile-time flag
 #ifdef ENABLE_GRAPHVIZ_TRACE
 	graph->enabled = true;
+	m->trace = true;
 #else
-	graph->enabled = (getenv("DEMANGLE_TRACE") != NULL);
+	m->trace = (getenv("DEMANGLE_TRACE") != NULL);
+	graph->enabled = m->trace;
 #endif
 
 	if (graph->enabled) {

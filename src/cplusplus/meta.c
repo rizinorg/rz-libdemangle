@@ -20,7 +20,6 @@ static inline void meta_copy_scalars(Meta *dst, Meta *src) {
 	dst->last_reset_idx = src->last_reset_idx;
 	dst->t_level = src->t_level;
 	dst->template_reset = src->template_reset;
-	dst->is_ctor_or_dtor_at_l0 = src->is_ctor_or_dtor_at_l0;
 	dst->prefix_base_idx = src->prefix_base_idx;
 	// Note: current_prefix is intentionally NOT copied as a scalar
 	// It needs special handling - clone if needed
@@ -171,64 +170,20 @@ bool is_builtin_type(const char *t) {
  * This vector is then used to refer back to a detected type in substitution
  * rules.
  */
-bool append_type(Meta *m, const DemAstNode *x, bool force_append) {
+bool append_type(Meta *m, const DemAstNode *x) {
 	if (!m || !x || dem_string_empty(&x->dem)) {
 		return false;
 	}
 
 	const DemString *t = &x->dem;
 
-	// Builtins are not substitutable per ABI, EXCEPT when force_append is true
-	// (for template params that substitute to builtins)
-	if (!force_append && is_builtin_type(t->buf)) {
-		if (getenv("DEMANGLE_TRACE")) {
-			fprintf(stderr, "[append_type] rejected (builtin): '%s'\n", t->buf);
-		}
-		return true;
-	}
-
-	// A hack to ingore constant values getting forcefully added from RULE(template_param)
-	// because templates sometimes get values like "true", "false", "4u", etc...
-	if (IS_DIGIT(t->buf[0]) || !strcmp(t->buf, "true") || !strcmp(t->buf, "false")) {
-		return true;
-	}
-
-	// Note: We used to filter out "std" here, but that's incorrect.
-	// While "std" alone is not a type, it CAN be a valid substitutable prefix
-	// when followed by more components like "std::vector".
-	// The ABI says special substitutions like St (std::) are not in the table,
-	// but "std" as a namespace path IS substitutable when building types like std::vector.
-	// Actually, per Itanium ABI, just "std" alone is NOT substitutable - only
-	// qualified names like "std::vector" are. But since we build incrementally,
-	// we may temporarily have "std" before adding "::vector". We should NOT add
-	// "std" alone to the table, but we need to track it for building full paths.
-	//
-	// The real fix is to not call AST_APPEND_TYPE when the result would be just "std".
-	// For now, keep filtering "std" - the fix should be in the calling code.
-	if (!strcmp(t->buf, "std")) {
-		return true;
-	}
-
-	// If we're not forcefully appending values, then check for uniqueness of times
-	if (!force_append) {
-		vec_foreach_ptr(&m->detected_types, dt, {
-			if (!strcmp(dt->dem.buf, t->buf)) {
-				return true;
-			}
-		});
-	}
-
-	DemAstNode *new_node = VecF(DemAstNode, append)(&m->detected_types, NULL);
-	DemAstNode_copy(new_node, x);
-	if (!count_name_parts(&new_node->dem)) {
-		m->detected_types.length--;
-		return false;
-	}
-
 	// DEBUG
 	if (getenv("DEMANGLE_TRACE")) {
 		fprintf(stderr, "[append_type] trying to add: '%s'\n", t->buf);
 	}
+
+	DemAstNode *new_node = VecF(DemAstNode, append)(&m->detected_types, NULL);
+	DemAstNode_copy(new_node, x);
 
 	return true;
 }
@@ -282,6 +237,11 @@ bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan) {
 			DemAstNode x = { 0 };
 			DemAstNode_init_clone(&x, type_node);
 			DemAstNode_append(dan, &x);
+
+			if (m->trace) {
+				fprintf(stderr, "[substitute_type] %ld -> '%s'\n", id, type_node->dem.buf);
+			}
+
 			return true;
 		}
 	}
