@@ -1362,20 +1362,62 @@ static void handle_pointer_to_func(DemAstNode *dan) {
 	}
 }
 
-static DemAstNode *extract_func_type_node(DemAstNode *dan) {
+static DemAstNode *extract_from_subs(DemAstNode *dan) {
+	if (dan->tag == CP_DEM_TYPE_KIND_substitution && AST(0)->tag == CP_DEM_TYPE_KIND_seq_id) {
+		return AST_(AST(0), 0);
+	}
+	return NULL;
+}
+
+static DemAstNode *extract_func_type_node(DemAstNode *dan, DemString *func_name) {
 	DemAstNode *func_node = NULL;
-	if (VecF(DemAstNode, len)(dan->children) == 1) {
-		if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
-			func_node = AST(0);
-		} else if (AST(0)->tag == CP_DEM_TYPE_KIND_type &&
-			VecF(DemAstNode, len)(AST(0)->children) == 1 &&
-			AST_(AST(0), 0)->tag == CP_DEM_TYPE_KIND_function_type) {
-			func_node = AST_(AST(0), 0);
-		} else if (AST_MATCH2(0, CP_DEM_TYPE_KIND_substitution, 0, CP_DEM_TYPE_KIND_seq_id)) {
-			func_node = AST_(AST_(AST_(dan, 0), 0), 0);
-			if (!(func_node->tag == CP_DEM_TYPE_KIND_type && VecF(DemAstNode, len)(func_node->children) == 1 && AST_(func_node, 0)->tag == CP_DEM_TYPE_KIND_function_type)) {
+	if (dan->tag == CP_DEM_TYPE_KIND_function_type) {
+		return dan;
+	}
+
+	if (func_name) {
+		char *p = NULL;
+		if ((p = strstr(dan->dem.buf, "(*"))) {
+			size_t name_len = strchr(p, ')') - (p + 1);
+			dem_string_append_n(func_name, p + 1, name_len);
+		}
+	}
+
+	if (AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
+		func_node = AST(0);
+	} else if (dan->tag == CP_DEM_TYPE_KIND_type) {
+		DemAstNode *node = dan;
+		if (VecF(DemAstNode, len)(node->children) == 1 && AST_(node, 0)->tag == CP_DEM_TYPE_KIND_function_type) {
+			return AST_(node, 0);
+		}
+
+		if (VecF(DemAstNode, len)(node->children) == 2) {
+			if (AST_(node, 1)->tag == CP_DEM_TYPE_KIND_type) {
+				node = AST_(node, 1);
+			} else if (AST_(node, 1)->tag == CP_DEM_TYPE_KIND_substitution) {
+				node = extract_from_subs(AST_(node, 1));
+				if (node->tag != CP_DEM_TYPE_KIND_type) {
+					return NULL;
+				}
+			}
+		}
+
+		while (node->tag == CP_DEM_TYPE_KIND_type) {
+			if (!(node->subtag == POINTER_TYPE || node->subtag == REFERENCE_TYPE || node->subtag == RVALUE_REFERENCE_TYPE || node->subtag == QUALIFIED_TYPE)) {
 				return NULL;
 			}
+			if (node->tag == QUALIFIED_TYPE) {
+				node = AST_(node, 1);
+			} else {
+				node = AST_(node, 0);
+			}
+			if (node->tag == CP_DEM_TYPE_KIND_function_type) {
+				return node;
+			}
+		}
+	} else if ((func_node = extract_from_subs(dan))) {
+		if (!(func_node->tag == CP_DEM_TYPE_KIND_type && VecF(DemAstNode, len)(func_node->children) == 1 && AST_(func_node, 0)->tag == CP_DEM_TYPE_KIND_function_type)) {
+			return NULL;
 		}
 	} else if (VecF(DemAstNode, len)(dan->children) == 2) {
 		// Case for qualified_type where AST(1) is the pointer/func type
@@ -1385,20 +1427,13 @@ static DemAstNode *extract_func_type_node(DemAstNode *dan) {
 			func_node = AST_(AST(1), 0);
 		}
 	}
+
 	return func_node;
 }
 
-static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
-	DemAstNode *func_node = extract_func_type_node(dan);
+static void handle_func_pointer(DemAstNode *dan, DemAstNode *func_node, DemString *func_name, const char *postfix) {
 	if (!func_node) {
 		DEM_UNREACHABLE;
-	}
-
-	char name[256] = { 0 };
-	char *p = NULL;
-	if ((p = strstr(func_node->dem.buf, "(*"))) {
-		size_t name_len = strchr(p, ')') - (p + 1);
-		strncpy(name, p + 1, name_len < sizeof(name) - 1 ? name_len : sizeof(name) - 1);
 	}
 
 	if (func_node->tag == CP_DEM_TYPE_KIND_type && AST_(func_node, 0)->tag == CP_DEM_TYPE_KIND_function_type) {
@@ -1407,8 +1442,11 @@ static void handle_func_pointer(DemAstNode *dan, const char *postfix) {
 
 	AST_APPEND_DEMSTR(&AST_(func_node, 2)->dem); // return type
 	AST_APPEND_STR(" (");
-	if (*name) {
-		AST_APPEND_STR(name);
+	if (dem_string_non_empty(func_name)) {
+		AST_APPEND_DEMSTR(func_name);
+	}
+	if (*postfix != '*' && *postfix != '&') {
+		AST_APPEND_CHR(' ');
 	}
 	AST_APPEND_STR(postfix);
 	AST_APPEND_STR(")");
@@ -1644,44 +1682,26 @@ bool rule_qualifiers(
 	RULE_FOOT(qualifiers);
 }
 
-bool rule_qualified_type(
-	DemAstNode *dan,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id) {
-	RULE_HEAD(qualified_type);
-
-	if (rule_qualifiers(AST(0), msi, m, graph, _my_node_id) &&
-		rule_type(AST(1), msi, m, graph, _my_node_id)) {
-
-		if (AST_MATCH2(1, CP_DEM_TYPE_KIND_type, 0, CP_DEM_TYPE_KIND_function_type)) {
-			// Function pointer: insert qualifiers inside the (*)
-			// "void (*)(int)" + "const" -> "void (* const)(int)"
-			handle_func_pointer(dan, AST(0)->dem.buf);
-		} else {
-			// Regular type: Output type first, then qualifiers (e.g., "QString const" not "constQString")
-			AST_MERGE(AST(1));
-			if (AST(0)->dem.len > 0) {
-				AST_APPEND_STR(" ");
-				AST_MERGE(AST(0));
-			}
-		}
-		TRACE_RETURN_SUCCESS;
-	}
-	TRACE_RETURN_FAILURE();
-
-	RULE_FOOT(qualified_type);
-}
-
 bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(type);
 
 	MATCH_AND_DO(RULE_DEFER(AST(0), function_type), {
 		AST_MERGE(AST(0));
 	});
-	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), qualified_type), {
-		AST_MERGE(AST(0));
+	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), qualifiers) && RULE_CALL_DEFER(AST(1), type), {
+		dan->subtag = QUALIFIED_TYPE;
+		DemAstNode *func_node = NULL;
+		DemString func_name = { 0 };
+		if ((func_node = extract_func_type_node(AST(1), &func_name))) {
+			handle_func_pointer(dan, func_node, &func_name, AST(0)->dem.buf);
+			dem_string_deinit(&func_name);
+		} else {
+			AST_MERGE(AST(1));
+			if (AST(0)->dem.len > 0) {
+				AST_APPEND_STR(" ");
+				AST_MERGE(AST(0));
+			}
+		}
 		AST_APPEND_TYPE;
 	});
 	MATCH(
@@ -1692,44 +1712,53 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	// For PF...E, we need to produce "ret (*)(args)" and add both S_entries
 	MATCH_AND_DO(READ('P') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function type by checking child AST tag
-		if (extract_func_type_node(dan)) {
-			handle_func_pointer(dan, "*");
+		dan->subtag = POINTER_TYPE;
+		DemAstNode *func_node = NULL;
+		DemString func_name = { 0 };
+		if ((func_node = extract_func_type_node(AST(0), &func_name))) {
+			handle_func_pointer(dan, func_node, &func_name, "*");
+			dem_string_deinit(&func_name);
 		} else {
 			// Regular pointer: just append "*"
 			dem_string_concat(&dan->dem, &AST(0)->dem);
 			dem_string_append(&dan->dem, "*");
 		}
 		append_type(m, dan, false);
-		dan->subtag = POINTER_TYPE;
 	});
 
 	MATCH_AND_DO(READ('R') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function pointer type
-		if (AST_MATCH2(0, CP_DEM_TYPE_KIND_type, 0, CP_DEM_TYPE_KIND_function_type)) {
+		dan->subtag = REFERENCE_TYPE;
+		DemAstNode *func_node = NULL;
+		DemString func_name = { 0 };
+		if ((func_node = extract_func_type_node(AST(0), &func_name))) {
 			// Function pointer: insert & inside the (*...) before the closing )
 			// "void (* const)(int)" -> "void (* const&)(int)"
-			handle_func_pointer(dan, "&");
+			handle_func_pointer(dan, func_node, &func_name, "&");
+			dem_string_deinit(&func_name);
 		} else {
 			AST_MERGE(AST(0));
 			dem_string_append(&dan->dem, "&");
 		}
 		// Reference types ARE substitutable per Itanium ABI section 5.1.5
 		append_type(m, dan, false);
-		dan->subtag = REFERENCE_TYPE;
 	});
 	MATCH_AND_DO(READ('O') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function pointer type
-		if (AST_MATCH2(0, CP_DEM_TYPE_KIND_type, 0, CP_DEM_TYPE_KIND_function_type)) {
+		dan->subtag = RVALUE_REFERENCE_TYPE;
+		DemAstNode *func_node = NULL;
+		DemString func_name = { 0 };
+		if ((func_node = extract_func_type_node(AST(0), &func_name))) {
 			// Function pointer: insert && inside the (*...) before the closing )
 			// "void (* const)(int)" -> "void (* const&&)(int)"
-			handle_func_pointer(dan, "&&");
+			handle_func_pointer(dan, func_node, &func_name, "&&");
+			dem_string_deinit(&func_name);
 		} else {
 			AST_MERGE(AST(0));
 			dem_string_append(&dan->dem, "&&");
 		}
 		// Rvalue reference types ARE substitutable per Itanium ABI section 5.1.5
 		append_type(m, dan, false);
-		dan->subtag = RVALUE_REFERENCE_TYPE;
 	});
 	// MATCH (RULE (template_template_param) && RULE (template_args));
 	// Template param with optional template args - add to substitution if no template args follow
