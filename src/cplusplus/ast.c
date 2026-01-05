@@ -111,6 +111,7 @@ void DemAstNode_copy(DemAstNode *dst, const DemAstNode *src) {
 	dem_string_init_clone(&dst->dem, &src->dem);
 	dst->val = src->val;
 	dst->tag = src->tag;
+	dst->subtag = src->subtag;
 	if (src->children) {
 		dst->children = VecF(DemAstNode, ctor)();
 		vec_foreach_ptr(src->children, n, {

@@ -127,9 +127,11 @@ typedef struct {
 struct Vec_t(DemAstNode);
 
 enum {
+	INVALID_TYPE,
 	POINTER_TYPE,
 	REFERENCE_TYPE,
 	RVALUE_REFERENCE_TYPE,
+	QUALIFIED_TYPE
 };
 
 typedef struct DemAstNode_t {
