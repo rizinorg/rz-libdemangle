@@ -16,19 +16,27 @@ DemAstNode *DemAstNode_new() {
 	return dan;
 }
 
-DemAstNode *DemAstNode_ctor(DemString *dem, DemStringView *val, CpDemTypeKind tag) {
-	if (!(dem && val)) {
+DemAstNode *DemAstNode_ctor_inplace(DemAstNode *dan, CpDemTypeKind tag, const char *dem, const char *val_begin, size_t val_len) {
+	if (!(dan && dem && val_begin)) {
+		return NULL;
+	}
+	dem_string_init(&dan->dem);
+	dem_string_append(&dan->dem, dem);
+	dan->val = (DemStringView){ .buf = val_begin, .len = val_len };
+	dan->tag = tag;
+	dan->children = NULL;
+	return dan;
+}
+
+DemAstNode *DemAstNode_ctor(CpDemTypeKind tag, const char *dem, const char *val_begin, size_t val_len) {
+	if (!(dem && val_begin)) {
 		return NULL;
 	}
 	DemAstNode *dan = (DemAstNode *)malloc(sizeof(DemAstNode));
 	if (!dan) {
 		return NULL;
 	}
-	dan->dem = *dem;
-	dan->val = *val;
-	dan->tag = tag;
-	dan->children = NULL;
-	return dan;
+	return DemAstNode_ctor_inplace(dan, tag, dem, val_begin, val_len);
 }
 
 void DemAstNode_dtor(DemAstNode *dan) {

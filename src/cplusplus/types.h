@@ -143,7 +143,8 @@ typedef struct DemAstNode_t {
 } DemAstNode;
 
 DemAstNode *DemAstNode_new();
-DemAstNode *DemAstNode_ctor(DemString *dem, DemStringView *val, CpDemTypeKind tag);
+DemAstNode *DemAstNode_ctor_inplace(DemAstNode *dan, CpDemTypeKind tag, const char *dem, const char *val_begin, size_t val_len);
+DemAstNode *DemAstNode_ctor(CpDemTypeKind tag, const char* dem, const char* val_begin, size_t val_len);
 void DemAstNode_dtor(DemAstNode *dan);
 bool DemAstNode_init(DemAstNode *dan);
 void DemAstNode_deinit(DemAstNode *dan);
