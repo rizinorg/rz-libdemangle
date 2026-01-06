@@ -144,7 +144,7 @@ typedef struct DemAstNode_t {
 
 DemAstNode *DemAstNode_new();
 DemAstNode *DemAstNode_ctor_inplace(DemAstNode *dan, CpDemTypeKind tag, const char *dem, const char *val_begin, size_t val_len);
-DemAstNode *DemAstNode_ctor(CpDemTypeKind tag, const char* dem, const char* val_begin, size_t val_len);
+DemAstNode *DemAstNode_ctor(CpDemTypeKind tag, const char *dem, const char *val_begin, size_t val_len);
 void DemAstNode_dtor(DemAstNode *dan);
 bool DemAstNode_init(DemAstNode *dan);
 void DemAstNode_deinit(DemAstNode *dan);
@@ -157,44 +157,19 @@ void DemAstNode_init_clone(DemAstNode *dst, const DemAstNode *src);
 
 VecIMPL(DemAstNode, DemAstNode_deinit);
 
-typedef struct Name {
-	DemString name;
-	ut32 num_parts; // if part count greater than 1 then a nested name
-} Name;
+typedef VecT(DemAstNode) NodeList;
+void NodeList_copy(NodeList *dst, const NodeList *src);
+NodeList* NodeList_pop_trailing(NodeList *self,ut64 from);
 
-void name_deinit(Name *x);
-
-VecIMPL(Name, name_deinit);
+VecIMPL(NodeList, VecF(DemAstNode, deinit));
 
 typedef struct Meta {
-	VecT(DemAstNode) detected_types;
-	VecT(Name) template_params;
+	NodeList detected_types;
+	NodeList names;
+	VecT(NodeList) template_params;
 	bool is_ctor;
 	bool is_dtor;
-	bool is_const;
 	bool trace; // Debug tracing flag (now just for compatibility)
-
-	// detected templates are reset everytime a new template argument list starts at the same level
-	// instead of taking care of that, we just rebase from where we start our substitution
-	// this way we just keep adding templates and incrementing this idx_start on every reset
-	// so a T_ (index = 0) can actually refer to index = 5
-	int template_idx_start;
-	int last_reset_idx;
-
-	// Index of the prefix entry in detected_types that prefix_tail should append to
-	// This is set before entering prefix parsing and used by prefix_tail
-	ut64 prefix_base_idx;
-
-	// Current prefix string that prefix_tail should use when building full paths
-	// This is needed when the base is a special substitution like "std" which is not
-	// added to the substitution table
-	DemAstNode current_prefix;
-
-	// template level, detects the depth of RULE(template_args) expansion
-	// if we expand above level 1 (starts at level 1), then we stop appending parameters to template
-	// parameter list
-	int t_level;
-	bool template_reset;
 } Meta;
 
 struct TraceGraph;
@@ -228,9 +203,8 @@ void meta_deinit(Meta *m);
 // Helper functions
 size_t parse_sequence_id(StrIter *msi, Meta *m);
 bool append_type(Meta *m, const DemAstNode *x);
-bool append_tparam(Meta *m, DemString *t);
 bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan);
-bool meta_substitute_tparam(Meta *m, ut64 id, DemString *dem);
+bool meta_substitute_tparam(Meta *m, DemAstNode *dan, ut64 level, ut64 index);
 st64 find_type_index(Meta *m, const char *type_str);
 
 ut32 count_name_parts(const DemString *x);

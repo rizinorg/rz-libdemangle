@@ -1147,6 +1147,48 @@ bool rule_simple_id(
 	RULE_FOOT(simple_id);
 }
 
+static ut64 base36_to_int(const char *buf, ut64 *px) {
+	static const char *base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
+	char *pos = NULL;
+	ut64 pow = 1;
+	ut64 x = 0;
+	ut64 sz = 0;
+	while ((pos = strchr(base, buf[sz]))) {
+		st64 based_val = pos - base;
+		x += based_val * pow;
+		pow *= 36;
+		sz++;
+	}
+	*px = x;
+	return sz;
+}
+
+bool rule_seq_id(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
+	RULE_HEAD(seq_id);
+	if (IS_DIGIT(PEEK()) || IS_UPPER(PEEK())) {
+		ut64 sid = 0;
+		msi->cur += base36_to_int(msi->cur, &sid);
+		return meta_substitute_type(m, sid + 1, dan);
+	}
+	if (PEEK() == '_') {
+		return meta_substitute_type(m, 0, dan);
+	}
+	RULE_FOOT(seq_id);
+}
+
+bool parse_non_neg_number(
+	StrIter *msi, ut64 *out) {
+	*out = 0;
+	if (PEEK() < '0' || PEEK() > '9') {
+		return false;
+	}
+	while (PEEK() >= '0' && PEEK() <= '9') {
+		*out *= 10;
+		*out += (ut64)(CONSUME() - '0');
+	}
+	return true;
+}
+
 bool rule_template_param(
 	DemAstNode *dan,
 	StrIter *msi,
@@ -1154,37 +1196,30 @@ bool rule_template_param(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(template_param);
-	SAVE_POS(0);
-	if (READ('T')) {
-		if (IS_DIGIT(PEEK()) || IS_UPPER(PEEK())) {
-			char *base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
-			char *pos = NULL;
-			ut64 pow = 1;
-			ut64 sid = 1;
-			while ((pos = strchr(base, PEEK()))) {
-				st64 based_val = pos - base;
-				sid += based_val * pow;
-				pow *= 36;
-				ADV();
-			}
-			if (!READ('_')) {
-				RESTORE_POS(0);
-				TRACE_RETURN_FAILURE();
-			}
-			sid = sid + m->template_idx_start;
-			// Try to substitute template parameter from saved template args
-			// Even if substitution fails, we still matched the syntax - just output nothing
-			meta_substitute_tparam(m, sid, &dan->dem);
-			TRACE_RETURN_SUCCESS;
-		} else if (READ('_')) {
-			size_t sid = m->template_idx_start;
-			// Try to substitute template parameter from saved template args
-			meta_substitute_tparam(m, sid, &dan->dem);
-			TRACE_RETURN_SUCCESS;
-		}
+	if (!(READ('T'))) {
+		TRACE_RETURN_FAILURE();
 	}
-	RESTORE_POS(0);
-	TRACE_RETURN_FAILURE();
+
+	ut64 level = 0;
+	if (READ('L')) {
+		if (!(parse_non_neg_number(msi, &level) && READ('_'))) {
+			TRACE_RETURN_FAILURE();
+		}
+		level++;
+	}
+
+	ut64 index = 0;
+	if (!READ('_')) {
+		if (!(parse_non_neg_number(msi, &index) && READ('_'))) {
+			TRACE_RETURN_FAILURE();
+		}
+		index++;
+	}
+
+	if (!meta_substitute_tparam(m, dan, level, index)) {
+		TRACE_RETURN_FAILURE();
+	}
+	TRACE_RETURN_SUCCESS;
 	RULE_FOOT(template_param);
 }
 
@@ -1379,7 +1414,7 @@ static DemAstNode *extract_func_type_node(DemAstNode *dan, DemString *func_name)
 		return dan;
 	}
 
-	if (func_name) {
+	if (func_name && dem_string_non_empty(func_name)) {
 		char *p = NULL;
 		if ((p = strstr(dan->dem.buf, "(*"))) {
 			size_t name_len = strchr(p, ')') - (p + 1);
@@ -1654,7 +1689,7 @@ bool rule_cv_qualifiers(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(cv_qualifiers);
-	MATCH(READ('K') && AST_APPEND_STR("const") && SET_CONST());
+	MATCH(READ('K') && AST_APPEND_STR("const"));
 	MATCH(READ('V') && AST_APPEND_STR("volatile"));
 	MATCH(READ('r') && AST_APPEND_STR("restrict"));
 	RULE_FOOT(cv_qualifiers);
@@ -1689,9 +1724,7 @@ bool rule_qualifiers(
 bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(type);
 
-	MATCH_AND_DO(RULE_DEFER(AST(0), function_type), {
-		AST_MERGE(AST(0));
-	});
+	MATCH1(function_type);
 	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), qualifiers) && RULE_CALL_DEFER(AST(1), type), {
 		dan->subtag = QUALIFIED_TYPE;
 		DemAstNode *func_node = NULL;
@@ -1765,17 +1798,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		AST_APPEND_TYPE;
 	});
 	// MATCH (RULE (template_template_param) && RULE (template_args));
-	// Template param with optional template args - add to substitution if no template args follow
-	MATCH_AND_DO(RULE_DEFER(AST(0), template_param) && AST_MERGE(AST(0)), {
-		// Check if followed by template_args
-		if (PEEK() == 'I' && rule_template_args(AST(1), msi, m, graph, _my_node_id)) {
-			AST_APPEND_TYPE;
-			AST_MERGE(AST(1));
-			AST_APPEND_TYPE;
-		} else {
-			AST_APPEND_TYPE;
-		}
-	});
+
 	MATCH(
 		RULE_DEFER(AST(0), substitution) && RULE_DEFER(AST(1), template_args) &&
 		AST_MERGE(AST(0)) && AST_MERGE(AST(1)) && AST_APPEND_TYPE);
@@ -1784,12 +1807,45 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		READ_STR("Dp") && RULE_CALL_DEFER(AST(0), type) && AST_MERGE(AST(0))); // pack expansion (C++11)
 
 	// Extended qualifiers with CV qualifiers
-	MATCH(RULE_DEFER(AST(0), class_enum_type) && AST_MERGE(AST(0)) && AST_APPEND_TYPE);
 	MATCH(RULE_DEFER(AST(0), array_type) && AST_MERGE(AST(0)));
 	MATCH(RULE_DEFER(AST(0), pointer_to_member_type) && AST_MERGE(AST(0)));
 	MATCH(RULE_DEFER(AST(0), decltype) && AST_MERGE(AST(0)));
 	MATCH(RULE_DEFER(AST(0), substitution) && AST_MERGE(AST(0)));
 
+	switch (PEEK()) {
+	case 'T': {
+		if (strchr("sue", PEEK_AT(1)) != NULL) {
+			if (!RULE_CALL_DEFER(AST(0), class_enum_type)) {
+				TRACE_RETURN_FAILURE();
+			}
+			AST_MERGE(AST(0));
+			break;
+		}
+		if (!RULE_CALL_DEFER(AST(0), template_param)) {
+			TRACE_RETURN_FAILURE();
+		}
+		AST_MERGE(AST(0));
+		if (PEEK() == 'I') {
+			AST_APPEND_TYPE;
+			DemAstNode node_template_args = { 0 };
+			if (!rule_template_args(RULE_ARGS(&node_template_args))) {
+				TRACE_RETURN_FAILURE();
+			}
+			AST_APPEND_NODE(&node_template_args);
+		}
+		break;
+	}
+	default:
+		if (!RULE_CALL(class_enum_type)) {
+			TRACE_RETURN_FAILURE();
+		}
+		break;
+	}
+
+	if (DemAstNode_non_empty(dan)) {
+		AST_APPEND_TYPE;
+		TRACE_RETURN_SUCCESS;
+	}
 	RULE_FOOT(type);
 }
 
@@ -1810,35 +1866,6 @@ bool rule_base_unresolved_name(
 	MATCH(READ_STR("dn") && RULE(destructor_name));
 	MATCH(RULE(simple_id));
 	RULE_FOOT(base_unresolved_name);
-}
-
-static ut64 base36_to_int(const char *buf, ut64 *px) {
-	static const char *base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
-	char *pos = NULL;
-	ut64 pow = 1;
-	ut64 x = 0;
-	ut64 sz = 0;
-	while ((pos = strchr(base, buf[sz]))) {
-		st64 based_val = pos - base;
-		x += based_val * pow;
-		pow *= 36;
-		sz++;
-	}
-	*px = x;
-	return sz;
-}
-
-bool rule_seq_id(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
-	RULE_HEAD(seq_id);
-	if (IS_DIGIT(PEEK()) || IS_UPPER(PEEK())) {
-		ut64 sid = 0;
-		msi->cur += base36_to_int(msi->cur, &sid);
-		return meta_substitute_type(m, sid + 1, dan);
-	}
-	if (PEEK() == '_') {
-		return meta_substitute_type(m, 0, dan);
-	}
-	RULE_FOOT(seq_id);
 }
 
 bool rule_local_name(
@@ -2276,6 +2303,10 @@ bool rule_nv_offset(
 	RULE_FOOT(nv_offset);
 }
 
+bool is_template_param_decl(StrIter *msi) {
+	return PEEK() == 'T' && strchr("yptnk", PEEK_AT(1)) != NULL;
+}
+
 bool rule_template_arg(
 	DemAstNode *dan,
 	StrIter *msi,
@@ -2283,28 +2314,52 @@ bool rule_template_arg(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(template_arg);
-	// After matching a template argument, save it for later T_ substitutions
-	MATCH_AND_DO(
-		READ('X') && RULE_DEFER(AST(0), expression) && READ('E'),
-		{
-			AST_MERGE(AST(0));
-			if (m->t_level == 1) {
-				append_tparam(m, &dan->dem);
+
+	switch (PEEK()) {
+	case 'X': {
+		ADV();
+		DemAstNode arg = { 0 };
+		if (rule_expression(RULE_ARGS(&arg)) && READ('E')) {
+			AST_APPEND_NODE(&arg);
+			TRACE_RETURN_SUCCESS;
+		}
+		TRACE_RETURN_FAILURE();
+	}
+	case 'J': {
+		const char *start_pos = CUR();
+		ADV();
+		ut64 args_begin = VecF(DemAstNode, len)(&m->names);
+		while (!READ('E')) {
+			DemAstNode node_arg = { 0 };
+			if (rule_template_arg(RULE_ARGS(&node_arg))) {
+				VecF(DemAstNode, append)(&m->names, &node_arg);
+			} else {
+				TRACE_RETURN_FAILURE();
 			}
-		});
-	MATCH(READ('J') && RULE_MANY(template_arg) && READ('E'));
-	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), type), {
-		AST_MERGE(AST(0));
-		if (m->t_level == 1) {
-			append_tparam(m, &dan->dem);
 		}
-	});
-	MATCH_AND_DO(RULE_DEFER(AST(0), expr_primary), {
-		AST_MERGE(AST(0));
-		if (m->t_level == 1) {
-			append_tparam(m, &dan->dem);
+		NodeList *args_list = NodeList_pop_trailing(&m->names, args_begin);
+		DemAstNode node_args = { 0 };
+		DemAstNode_ctor_inplace(&node_args, CP_DEM_TYPE_KIND_template_args, "<", start_pos, 1);
+		for (ut64 i = 0; i < args_list->length; i++) {
+			DemAstNode_append(&node_args, vec_ptr_at(args_list, i));
 		}
-	});
+		dem_string_append(&node_args.dem, ">");
+		AST_APPEND_NODE(&node_args);
+	}
+	case 'L': {
+		MATCH1(expr_primary);
+		DEM_UNREACHABLE;
+	}
+	case 'T': {
+		if (!is_template_param_decl(msi)) {
+			return RULE_CALL(type);
+		}
+		DEM_UNREACHABLE;
+	}
+	default:
+		return RULE_CALL(type);
+	}
+
 	RULE_FOOT(template_arg);
 }
 
@@ -2315,69 +2370,19 @@ bool rule_template_args(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(template_args);
-	if (PEEK() != 'I') {
+	if (!READ('I')) {
 		TRACE_RETURN_FAILURE();
 	}
 
-	// we going down the rabbit hope
-	m->t_level++;
-
-	// if we're here more than once at the topmost level (t->level = 0)
-	// then this means we have something like A<..>::B<...>
-	// were we're just starting to read B, and have already parsed and generate template for A
-	// now B won't be using A's template type substitutions, so we increase the offset
-	// from which we use the template substitutions.
-	if (m->template_reset) {
-		// Reset template_idx_start to current length - new template params start here
-		m->template_idx_start = m->template_params.length;
-		m->template_reset = false;
-	}
-
 	MATCH_AND_DO(
-		READ('I') && RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), template_arg, ", ") && READ('E'),
+		RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), template_arg, ", ") && READ('E'),
 		{
-			// uppity up up
-			m->t_level--;
-			// number of <templates> at level 0
-			if (!m->t_level) {
-				m->template_reset = true;
-			}
-
 			AST_APPEND_CHR('<');
 			AST_MERGE(AST(0));
 			AST_APPEND_CHR('>');
 		});
 
-	m->t_level--;
 	RULE_FOOT(template_args);
-}
-
-bool first_of_rule_non_neg_number(const char *i) {
-	return (i[0] == '_') || strchr("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", *i);
-}
-
-bool rule_non_neg_number(
-	DemAstNode *dan,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id) {
-	RULE_HEAD(non_neg_number);
-	if (READ('_')) {
-		dem_string_append_char(&dan->dem, '1');
-		TRACE_RETURN_SUCCESS;
-	}
-
-	char *e = NULL;
-	ut32 num = strtoul(CUR(), &e, 10) + 2;
-	if (!e) {
-		TRACE_RETURN_FAILURE();
-	}
-	dem_string_appendf(&dan->dem, "%u", num);
-	msi->cur = e;
-
-	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(non_neg_number);
 }
 
 bool rule_unnamed_type_name(
@@ -2400,19 +2405,17 @@ bool rule_unnamed_type_name(
 			TRACE_RETURN_SUCCESS;
 		}
 	} else if (READ_STR("Ul")) {
+		ut64 number = 0;
 		MATCH_AND_DO(
-			RULE_DEFER_MANY_WITH_SEP(AST(0), type, ", ") && READ('E') &&
-				OPTIONAL(
-					RULE_DEFER(AST(1), non_neg_number)),
+			RULE_DEFER_MANY_WITH_SEP(AST(0), type, ", ") && READ('E') && OPTIONAL(parse_non_neg_number(msi, &number)) && READ('_'),
 			{
 				AST_APPEND_STR("'lambda'(");
 				if (DemAstNode_non_empty(AST(0)) && strcmp(AST(0)->dem.buf, "void") != 0) {
 					AST_MERGE(AST(0));
 				}
 				AST_APPEND_CHR(')');
-				if (DemAstNode_non_empty(AST(1)) && strcmp(AST(1)->dem.buf, "1") != 0) {
-					AST_APPEND_CHR('#');
-					AST_MERGE(AST(1));
+				if (number > 0) {
+					dem_string_appendf(&dan->dem, "#%llu", number);
 				}
 			});
 	}

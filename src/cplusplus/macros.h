@@ -99,7 +99,8 @@
  * \return updated read position on success.
  * \return NULL otherwise.
  */
-#define ADV() (IN_RANGE(CUR() + 1) ? msi->cur++ : NULL)
+#define ADV()     (IN_RANGE(CUR() + 1) ? msi->cur++ : NULL)
+#define CONSUME() (IN_RANGE(CUR() + 1) ? ++msi->cur : NULL)
 
 /**
  * \b Advance current read position by "n" characters, if this next
@@ -141,17 +142,14 @@
 		SEEK_TO(end); \
 	} while (0)
 
-#define IS_CTOR()  (m->is_ctor)
-#define IS_DTOR()  (m->is_dtor)
-#define IS_CONST() (m->is_const)
+#define IS_CTOR() (m->is_ctor)
+#define IS_DTOR() (m->is_dtor)
 
-#define SET_CTOR()  (m->is_dtor = false, (m->is_ctor = true))
-#define SET_DTOR()  (m->is_ctor = false, (m->is_dtor = true))
-#define SET_CONST() (m->is_const = true)
+#define SET_CTOR() (m->is_dtor = false, (m->is_ctor = true))
+#define SET_DTOR() (m->is_ctor = false, (m->is_dtor = true))
 
-#define UNSET_CTOR()  (m->is_dtor = false, m->is_ctor = false, true)
-#define UNSET_DTOR()  (m->is_ctor = false, m->is_dtor = false, true)
-#define UNSET_CONST() (m->is_const = false, true)
+#define UNSET_CTOR() (m->is_dtor = false, m->is_ctor = false, true)
+#define UNSET_DTOR() (m->is_ctor = false, m->is_dtor = false, true)
 
 /**
  * \b Call a rule.
@@ -520,8 +518,6 @@
 	(VecF(DemAstNode, len)(dan->children) > (I0) && AST(I0)->tag == TAG0 && VecF(DemAstNode, len)(AST(I0)->children) > (I1) && AST_(AST(I0), I1)->tag == TAG1)
 
 #define APPEND_TYPE(tname) append_type(m, (tname))
-
-#define APPEND_TPARAM(tname) OPTIONAL(m->t_level < 2 && append_tparam(m, (tname)))
 
 #define AST_MERGE(X) \
 	(dem_string_concat(&dan->dem, &(X)->dem), \
