@@ -1310,6 +1310,7 @@ bool rule_special_name(
 	MATCH(READ_STR("TS") && AST_APPEND_STR("typeinfo name for ") && RULE(type));
 	MATCH(READ_STR("GV") && AST_APPEND_STR("guard variable for ") && RULE(name));
 	MATCH(READ_STR("GTt") && RULE(encoding));
+	// TODO: GI <module-name> v
 	RULE_FOOT(special_name);
 }
 
@@ -2047,90 +2048,95 @@ bool rule_nested_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(nested_name);
-	if (PEEK() != 'N') {
+	if (!READ('N')) {
 		TRACE_RETURN_FAILURE();
 	}
 
-	MATCH_AND_CONTINUE(READ('N'));
 	RULE_CALL_DEFER(AST(0), cv_qualifiers);
 	RULE_CALL_DEFER(AST(1), ref_qualifier);
 
-	// Case 1: template_prefix + template_args + E (for simple template types like std::vector<int>)
-	// Also used for template functions like foo<int>
-	MATCH_AND_DO(
-		RULE_CALL_DEFER(AST(2), template_prefix) && RULE_CALL_DEFER(AST(3), template_args) &&
-			READ('E'),
-		{
-			AST_MERGE(AST(2));
-			AST_MERGE(AST(3));
-		});
-
-	// Case 2: template_prefix + template_args + unqualified_name + E (for methods in template classes)
-	// e.g., std::vector<int>::erase or std::vector<int>::~vector
-	// IMPORTANT: We must merge template_prefix + template_args and call AST_APPEND_TYPE
-	// BEFORE parsing unqualified_name, so that dtor_name can find the correct class name
-	// in the substitution table.
-	MATCH_AND_DO(
-		RULE_CALL_DEFER(AST(2), template_prefix) && RULE_CALL_DEFER(AST(3), template_args) &&
-			RULE_CALL_DEFER(AST(4), unqualified_name) && READ('E'),
-		{
-			AST_MERGE(AST(2));
-			AST_MERGE(AST(3));
-			AST_APPEND_TYPE;
-			AST_APPEND_STR("::");
-			AST_MERGE(AST(4));
-		});
-
-	// Case 2b: template_prefix + template_args + unqualified_name + template_args + E
-	// (for template methods in template classes)
-	// e.g., std::vector<int>::_M_allocate_and_copy<int*>
-	// Substitution order for Case 2b:
-	// 1. template_prefix parts (e.g., std::vector)
-	// 2. template_prefix + template_args (e.g., std::vector<int>)
-	// 3. Template args of the method are added during template_args parsing
-	// 4. After "::" + unqualified_name -> template prefix for method (e.g., std::vector<int>::_M_allocate_and_copy)
-	MATCH_AND_DO(
-		RULE_CALL_DEFER(AST(2), template_prefix) && RULE_CALL_DEFER(AST(3), template_args) &&
-			RULE_CALL_DEFER(AST(4), unqualified_name) &&
-			RULE_CALL_DEFER(AST(5), template_args) &&
-			READ('E'),
-		{
-			AST_MERGE(AST(2));
-			AST_MERGE(AST(3));
-			AST_APPEND_TYPE;
-			AST_APPEND_STR("::");
-			AST_MERGE(AST(4));
-			AST_MERGE(AST(5));
-			AST_APPEND_TYPE;
-		});
-
-	// Case 2c: prefix + unqualified_name + template_args + E
-	// (for template methods in non-template classes)
-	// e.g., A::foo<int>
-	MATCH_AND_DO(
-		RULE_CALL_DEFER(AST(2), prefix) && RULE_CALL_DEFER(AST(3), unqualified_name) &&
-			RULE_CALL_DEFER(AST(4), template_args) && READ('E'),
-		{
-			if (DemAstNode_non_empty(AST(2))) {
-				AST_MERGE(AST(2));
-				AST_APPEND_STR("::");
+	DemAstNode *ast_node = NULL;
+	while (!READ('E')) {
+		if (PEEK() == 'T') {
+			if (ast_node != NULL) {
+				TRACE_RETURN_FAILURE();
 			}
-			AST_MERGE(AST(3));
-			AST_APPEND_TYPE;
-			AST_MERGE(AST(4));
-		});
-
-	// Case 3: prefix + unqualified_name + E
-	MATCH_AND_DO(
-		RULE_CALL_DEFER(AST(2), prefix) && RULE_CALL_DEFER(AST(3), unqualified_name) &&
-			READ('E'),
-		{
-			if (DemAstNode_non_empty(AST(2))) {
-				AST_MERGE(AST(2));
-				AST_APPEND_STR("::");
+			DemAstNode node_template_param = { 0 };
+			if (rule_template_param(RULE_ARGS(&node_template_param))) {
+				ast_node = VecF(DemAstNode, append)(dan->children, &node_template_param);
+				AST_MERGE(ast_node);
 			}
-			AST_MERGE(AST(3));
-		});
+		} else if (PEEK() == 'I') {
+			if (ast_node == NULL) {
+				TRACE_RETURN_FAILURE();
+			}
+			DemAstNode node_template_args = { 0 };
+			if (rule_template_args(RULE_ARGS(&node_template_args))) {
+				VecF(DemAstNode, append)(dan->children, &node_template_args);
+				if (ast_node && VecDemAstNode_len(ast_node->children) > 0 && VecDemAstNode_tail(ast_node->children)->tag == CP_DEM_TYPE_KIND_template_args) {
+					TRACE_RETURN_FAILURE();
+				}
+				AST_MERGE(&node_template_args);
+			} else {
+				TRACE_RETURN_FAILURE();
+			}
+			ast_node = dan;
+		} else if (PEEK() == 'D' && (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T')) {
+			if (ast_node != NULL) {
+				TRACE_RETURN_FAILURE();
+			}
+			DemAstNode node_decltype = { 0 };
+			if (rule_decltype(RULE_ARGS(&node_decltype))) {
+				ast_node = VecF(DemAstNode, append)(dan->children, &node_decltype);
+				AST_MERGE(&node_decltype);
+			}
+		} else {
+			if (PEEK() == 'S') {
+				DemAstNode *subst = NULL;
+				if (PEEK_AT(1) == 't') {
+					subst = VecF(DemAstNode, append)(dan->children, NULL);
+					DemAstNode_ctor_inplace(subst, CP_DEM_TYPE_KIND_name, "std", CUR(), 2);
+					ADV_BY(2);
+					AST_MERGE(subst);
+				} else {
+					DemAstNode node_substitution = { 0 };
+					if (rule_substitution(RULE_ARGS(&node_substitution))) {
+						subst = VecF(DemAstNode, append)(dan->children, &node_substitution);
+						AST_MERGE(subst);
+					}
+				}
+				if (!subst) {
+					TRACE_RETURN_FAILURE();
+				}
+				if (ast_node != NULL) {
+					TRACE_RETURN_FAILURE();
+				} else {
+					ast_node = subst;
+					continue;
+				}
+			}
+
+			DemAstNode node_unqualified_name = { 0 };
+			if (rule_unqualified_name(RULE_ARGS(&node_unqualified_name))) {
+				ast_node = VecF(DemAstNode, append)(dan->children, &node_unqualified_name);
+				AST_APPEND_STR("::");
+				AST_MERGE(ast_node);
+			}
+		}
+
+		if (ast_node == NULL) {
+			TRACE_RETURN_FAILURE();
+		}
+		AST_APPEND_TYPE;
+
+		READ('M');
+	}
+
+	if (ast_node == NULL || VecF(DemAstNode, empty)(&m->detected_types)) {
+		TRACE_RETURN_FAILURE();
+	}
+	VecF(DemAstNode, pop)(&m->detected_types);
+	TRACE_RETURN_SUCCESS;
 
 	RULE_FOOT(nested_name);
 }
@@ -2497,7 +2503,7 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 
 	// MATCH (RULE (name));
 
-	MATCH(RULE(special_name));
+	MATCH1(special_name);
 
 	RULE_FOOT(encoding);
 }
@@ -2588,244 +2594,6 @@ bool rule_expr_primary(
 	MATCH(READ_STR("LDnE") && AST_APPEND_STR("decltype(nullptr)0"));
 	MATCH(READ_STR("LDn0E") && AST_APPEND_STR("(decltype(nullptr))0"));
 	RULE_FOOT(expr_primary);
-}
-
-/**
- * prefix
- * = prefix-start, [prefix-tail];
- *
- * prefix-start
- * = decltype
- * | unqualified-name, [prefix-suffix]
- * | template-param, [prefix-suffix]
- * | substitution, [prefix-suffix];
- *
- * prefix-tail
- * = unqualified-name, [prefix-suffix], [prefix-tail];
- *
- * prefix-suffix
- * = [template-args], ["M"];
- *
- */
-bool rule_prefix_suffix(
-	DemAstNode *dan,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id) {
-	RULE_HEAD(prefix_suffix);
-
-	MATCH(
-		RULE_DEFER(AST(0), template_args) && AST_MERGE(AST(0)) && READ('M') &&
-		(dan->tag = CP_DEM_TYPE_KIND_closure_prefix, true));
-	MATCH(RULE_DEFER(AST(0), template_args) && AST_MERGE(AST(0)));
-	MATCH(READ('M') && (dan->tag = CP_DEM_TYPE_KIND_closure_prefix, true));
-
-	RULE_FOOT(prefix_suffix);
-}
-
-bool rule_prefix_start(
-	DemAstNode *dan,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id) {
-	RULE_HEAD(prefix_start);
-
-	MATCH1(decltype);
-	MATCH_AND_DO(
-		(RULE_DEFER(AST(0), unqualified_name) || RULE_DEFER(AST(0), template_param) ||
-			RULE_DEFER(AST(0), substitution)) &&
-			PEEK() != 'E',
-		{
-			AST_MERGE(AST(0));
-			// First record the unqualified_name (template name like QList)
-			if (AST(0)->tag != CP_DEM_TYPE_KIND_substitution) {
-				AST_APPEND_TYPE;
-			}
-			// Find the actual index of the entry (handles deduplication)
-			st64 idx = find_type_index(m, dan->dem.buf);
-			if (idx >= 0) {
-				m->prefix_base_idx = (ut64)idx;
-			}
-			// Also save the current prefix string for use by prefix_tail
-			// This is needed when the prefix is a special substitution like "std"
-			// which is not added to the substitution table
-			DemAstNode_deinit(&m->current_prefix);
-			DemAstNode_init_clone(&m->current_prefix, dan);
-			if (getenv("DEMANGLE_TRACE")) {
-				fprintf(
-					stderr,
-					"[prefix_start] set current_prefix = '%s'\n",
-					m->current_prefix.dem.buf ? m->current_prefix.dem.buf : "(null)");
-			}
-		});
-	// Optionally match template args
-	if (PEEK() == 'I' && rule_prefix_suffix(AST(1), msi, m, graph, _my_node_id)) {
-		AST_MERGE(AST(1));
-		AST_APPEND_TYPE;
-		st64 idx = find_type_index(m, dan->dem.buf);
-		if (idx >= 0) {
-			m->prefix_base_idx = (ut64)idx;
-		}
-		// Update current_prefix to include template args
-		DemAstNode_deinit(&m->current_prefix);
-		DemAstNode_init_clone(&m->current_prefix, dan);
-	}
-
-	RULE_FOOT(prefix_start);
-}
-
-bool rule_prefix_tail(
-	DemAstNode *dan,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id) {
-	RULE_HEAD(prefix_tail);
-
-	while (first_of_rule_unqualified_name(CUR())) {
-		const char *component_start = CUR();
-
-		/* Save Meta state to backtrack side effects (like adding types in template args)
-		 * if we hit the 'E' check and backtrack */
-		Meta iteration_meta = { 0 };
-		Meta *iteration_og_meta = m;
-		m = &iteration_meta;
-		if (!meta_copy(&iteration_meta, iteration_og_meta)) {
-			// Memory failure or something bad
-			m = iteration_og_meta;
-			return false;
-		}
-
-		DemAstNode comp = { 0 };
-		DemAstNode_init(&comp);
-		if (!rule_unqualified_name(&comp, msi, m, graph, _my_node_id)) {
-			DemAstNode_deinit(&comp);
-			meta_deinit(&iteration_meta);
-			m = iteration_og_meta;
-			break;
-		}
-
-		/* If the caller is waiting for this unqualified_name followed by 'E',
-		 * backtrack and let the caller consume it. */
-		if (PEEK() == 'E') {
-			CUR() = component_start;
-			DemAstNode_deinit(&comp);
-			meta_deinit(&iteration_meta);
-			m = iteration_og_meta;
-			break;
-		}
-
-		/* Save current_prefix because rule_prefix_suffix -> template_args might clobber it */
-		DemAstNode saved_prefix = { 0 };
-		DemAstNode_init_clone(&saved_prefix, &m->current_prefix);
-
-		/* Build fully qualified prefix = current_prefix :: comp [suffix] */
-		DemString qualified = { 0 };
-		dem_string_init(&qualified);
-		if (dem_string_non_empty(&saved_prefix.dem)) {
-			dem_string_append(&qualified, saved_prefix.dem.buf);
-			dem_string_append(&qualified, "::");
-		}
-		dem_string_concat(&qualified, &comp.dem);
-
-		/* Add the template name (speculatively) to the substitution table
-		 * BEFORE parsing template args. This ensures correct order. */
-		DemAstNode temp_node = { 0 };
-		DemAstNode_init(&temp_node);
-		dem_string_init_clone(&temp_node.dem, &qualified);
-		AST_APPEND_TYPE1(&temp_node);
-		DemAstNode_deinit(&temp_node);
-
-		DemAstNode suffix = { 0 };
-		DemAstNode_init(&suffix);
-		bool has_suffix = rule_prefix_suffix(&suffix, msi, m, graph, _my_node_id);
-
-		if (PEEK() == 'E') {
-			CUR() = component_start;
-			DemAstNode_deinit(&comp);
-			DemAstNode_deinit(&suffix);
-			DemAstNode_deinit(&saved_prefix);
-			dem_string_deinit(&qualified);
-			meta_deinit(&iteration_meta);
-			m = iteration_og_meta;
-			break;
-		}
-
-		/* Commit Meta changes */
-		meta_move(iteration_og_meta, &iteration_meta);
-		m = iteration_og_meta;
-
-		if (has_suffix) {
-			dem_string_concat(&qualified, &suffix.dem);
-		}
-
-		/* Emit into output dem */
-		if (dan->dem.len > 0) {
-			dem_string_append(&dan->dem, "::");
-		}
-		dem_string_concat(&dan->dem, &comp.dem);
-		if (has_suffix) {
-			dem_string_concat(&dan->dem, &suffix.dem);
-		}
-
-		/* Update substitution table and current_prefix snapshot */
-		DemAstNode qualified_node = { 0 };
-		DemAstNode_init(&qualified_node);
-		dem_string_init_clone(&qualified_node.dem, &qualified);
-		AST_APPEND_TYPE1(&qualified_node);
-
-		DemAstNode_deinit(&m->current_prefix);
-		m->current_prefix = qualified_node; /* move */
-
-		dem_string_deinit(&qualified);
-		DemAstNode_deinit(&saved_prefix);
-		DemAstNode_deinit(&comp);
-		DemAstNode_deinit(&suffix);
-	}
-
-	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(prefix_tail);
-}
-
-bool rule_prefix(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
-	RULE_HEAD(prefix);
-
-	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), prefix_start) && OPTIONAL(RULE_CALL_DEFER(AST(1), prefix_tail)),
-		{
-			AST_MERGE(AST(0));
-			if (DemAstNode_non_empty(AST(1))) {
-				AST_APPEND_STR("::");
-				AST_MERGE(AST(1));
-			}
-		});
-
-	RULE_FOOT(prefix);
-}
-
-bool rule_template_prefix(
-	DemAstNode *dan,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id) {
-	RULE_HEAD(template_prefix);
-
-	// Match unqualified_name only if followed by 'I' (template_args)
-	MATCH(
-		RULE_DEFER(AST(0), unqualified_name) && PEEK() == 'I' && AST_MERGE(AST(0)) &&
-		AST_APPEND_TYPE);
-	// Match prefix + unqualified_name followed by 'I'
-	MATCH(
-		RULE_CALL_DEFER(AST(0), prefix) && RULE_DEFER(AST(1), unqualified_name) &&
-		PEEK() == 'I' && AST_MERGE(AST(0)) && AST_APPEND_STR("::") && AST_MERGE(AST(1)) &&
-		AST_APPEND_TYPE);
-
-	MATCH1(template_param);
-	MATCH1(substitution);
-
-	RULE_FOOT(template_prefix);
 }
 
 char *demangle_rule(const char *mangled, DemRule rule, CpDemOptions opts) {
