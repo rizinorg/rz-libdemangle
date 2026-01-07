@@ -1614,9 +1614,8 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		}
 		AST_APPEND_TYPE;
 	});
-	MATCH(
-		READ('C') && RULE_CALL_DEFER(AST(0), type) && AST_MERGE(AST(0))); // complex pair (C99)
-	MATCH(READ('G') && RULE_CALL_DEFER(AST(0), type) && AST_MERGE(AST(0))); // imaginary (C99)
+	MATCH(READ('C') && RULE_X(0, type)); // complex pair (C99)
+	MATCH(READ('G') && RULE_X(0, type)); // imaginary (C99)
 
 	// Handle pointer types - special handling for function types
 	// For PF...E, we need to produce "ret (*)(args)" and add both S_entries
@@ -1726,12 +1725,7 @@ bool rule_base_unresolved_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(base_unresolved_name);
-	MATCH_AND_DO(
-		READ_STR("on") && RULE_DEFER(AST(0), operator_name) && RULE_DEFER(AST(1), template_args),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
+	MATCH(READ_STR("on") && RULE_X(0, operator_name) && RULE_X(1, template_args));
 	MATCH(READ_STR("on") && RULE_X(0, operator_name));
 	MATCH(READ_STR("dn") && RULE_X(0, destructor_name));
 	MATCH(RULE_X(0, simple_id));
@@ -1763,12 +1757,7 @@ bool rule_local_name(
 			AST_MERGE(AST(1));
 			AST_MERGE(AST(2));
 		});
-	MATCH_AND_DO(
-		READ('Z') && RULE_DEFER(AST(0), encoding) && READ_STR("Es") && OPTIONAL(RULE_DEFER(AST(1), discriminator)),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
+	MATCH(READ('Z') && RULE_X(0, encoding) && READ_STR("Es") && OPTIONAL(RULE_X(1, discriminator)));
 	RULE_FOOT(local_name);
 }
 
@@ -1779,9 +1768,7 @@ bool rule_substitution(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(substitution);
-	MATCH_AND_DO(READ('S') && RULE_DEFER(AST(0), seq_id) && READ('_'), {
-		AST_MERGE(AST(0));
-	});
+	MATCH(READ('S') && RULE_X(0, seq_id) && READ('_'));
 
 	MATCH(READ_STR("St") && AST_APPEND_STR("std"));
 	MATCH(READ_STR("Sa") && AST_APPEND_STR("std::allocator"));
@@ -1816,12 +1803,7 @@ bool rule_operator_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(operator_name);
-	MATCH_AND_DO(
-		READ('v') && RULE_DEFER(AST(0), digit) && RULE_DEFER(AST(1), source_name),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
+	MATCH(READ('v') && RULE_X(0, digit) && RULE_X(1, source_name));
 	MATCH(READ_STR("cv") && AST_APPEND_STR("operator (") && RULE_X(0, type) && AST_APPEND_STR(")"));
 	MATCH(READ_STR("nw") && AST_APPEND_STR("operator new"));
 	MATCH(READ_STR("na") && AST_APPEND_STR("operator new[]"));
@@ -1912,22 +1894,14 @@ bool rule_name(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	// 2. NOTE: The complete template instantiation is NOT added here because
 	//    function/variable template instantiations are not substitutable per ABI 5.1.4
 	//    Only type template instantiations are substitutable (handled in rule_type)
-	MATCH_AND_DO(
-		RULE_DEFER(AST(0), unscoped_name) &&
-			// If followed by template args, add the template name to substitution table NOW
-			// This ensures correct ordering (template name comes before template args)
-			(PEEK() == 'I' ? AST_APPEND_TYPE1(AST(0)) : true) &&
-			RULE_DEFER(AST(1), template_args),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
+	MATCH(RULE_X(0, unscoped_name) &&
+		// If followed by template args, add the template name to substitution table NOW
+		// This ensures correct ordering (template name comes before template args)
+		(PEEK() == 'I' ? AST_APPEND_TYPE1(AST(0)) : true) &&
+		RULE_X(1, template_args));
 
 	// For substitution + template_args, the substitution reference itself is already in the table
-	MATCH_AND_DO(RULE_DEFER(AST(0), substitution) && RULE_DEFER(AST(1), template_args), {
-		AST_MERGE(AST(0));
-		AST_MERGE(AST(1));
-	});
+	MATCH(RULE_X(0, substitution) && RULE_X(1, template_args));
 
 	// nested_name - propagate tag if it's a template function
 	MATCH1(nested_name);
@@ -2258,6 +2232,10 @@ bool rule_template_args(
 		VecDemAstNode_resize(&m->outer_template_params, 0);
 	}
 
+	if (PEEK() != 'E') {
+		AST_APPEND_STR("<");
+	}
+
 	while (!READ('E')) {
 		DemAstNode node_arg = { 0 };
 		if (!rule_template_arg(RULE_ARGS(&node_arg))) {
@@ -2268,11 +2246,15 @@ bool rule_template_args(
 			DemAstNode_copy(&node_arg_cloned, &node_arg);
 			VecF(DemAstNode, append)(&m->outer_template_params, &node_arg_cloned);
 		}
+		if (VecF(DemAstNode, len)(dan->children) > 0) {
+			AST_APPEND_STR(", ");
+		}
 		AST_APPEND_NODE(&node_arg);
 		if (READ('Q')) {
 			DEM_UNREACHABLE;
 		}
 	}
+	AST_APPEND_STR(">");
 	TRACE_RETURN_SUCCESS;
 	RULE_FOOT(template_args);
 }
