@@ -2352,15 +2352,22 @@ bool rule_template_arg(
 	}
 	case 'T': {
 		if (!is_template_param_decl(msi)) {
-			return RULE_CALL(type);
+			return RULE_CALL_DEFER(AST(0), type);
 		}
 		DEM_UNREACHABLE;
 	}
 	default:
-		return RULE_CALL(type);
+		return RULE_CALL_DEFER(AST(0), type);
 	}
 
 	RULE_FOOT(template_arg);
+}
+
+bool is_tag_templates(DemAstNode *dan) {
+	if (!(dan && dan->parent && dan->parent->parent)) {
+		return false;
+	}
+	return dan->parent->tag == CP_DEM_TYPE_KIND_name && dan->parent->parent->tag == CP_DEM_TYPE_KIND_encoding;
 }
 
 bool rule_template_args(
@@ -2374,14 +2381,30 @@ bool rule_template_args(
 		TRACE_RETURN_FAILURE();
 	}
 
-	MATCH_AND_DO(
-		RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), template_arg, ", ") && READ('E'),
-		{
-			AST_APPEND_CHR('<');
-			AST_MERGE(AST(0));
-			AST_APPEND_CHR('>');
-		});
+	const bool tag_templates = is_tag_templates(dan) || (dan->parent && dan->parent->tag == CP_DEM_TYPE_KIND_nested_name && is_tag_templates(dan->parent));
 
+	if (tag_templates) {
+		VecNodeList_clear(&m->template_params);
+		VecNodeList_append(&m->template_params, &m->outer_template_params);
+		VecDemAstNode_clear(&m->outer_template_params);
+	}
+
+	while (!READ('E')) {
+		DemAstNode node_arg = { 0 };
+		if (!rule_template_arg(RULE_ARGS(&node_arg))) {
+			TRACE_RETURN_FAILURE();
+		}
+		AST_APPEND_NODE(&node_arg);
+		if (tag_templates) {
+			DemAstNode node_arg_cloned = { 0 };
+			DemAstNode_copy(&node_arg_cloned, &node_arg);
+			VecF(DemAstNode, append)(&m->outer_template_params, &node_arg_cloned);
+		}
+		if (READ('Q')) {
+			DEM_UNREACHABLE;
+		}
+	}
+	TRACE_RETURN_SUCCESS;
 	RULE_FOOT(template_args);
 }
 
