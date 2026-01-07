@@ -45,7 +45,7 @@ void DemAstNode_dtor(DemAstNode *dan) {
 }
 
 bool DemAstNode_init(DemAstNode *dan) {
-	if (!(dan)) {
+	if (!dan) {
 		return false;
 	}
 	memset(dan, 0, sizeof(DemAstNode));
@@ -79,6 +79,7 @@ DemAstNode *DemAstNode_append(DemAstNode *xs, DemAstNode *x) {
 		return NULL;
 	}
 
+	x->parent = xs;
 	dem_string_concat(&xs->dem, &x->dem);
 	xs->val.len += x->val.len;
 	xs->val.buf = xs->val.buf == NULL ? x->val.buf : xs->val.buf;
@@ -102,7 +103,9 @@ DemAstNode *DemAstNode_children_at(DemAstNode *xs, size_t idx) {
 	if (VecF(DemAstNode, len)(xs->children) <= idx) {
 		VecF(DemAstNode, resize)(xs->children, idx + 1);
 	}
-	return VecF(DemAstNode, at)(xs->children, idx);
+	DemAstNode *x = VecF(DemAstNode, at)(xs->children, idx);
+	x->parent = xs;
+	return x;
 }
 
 bool DemAstNode_is_empty(DemAstNode *x) {
@@ -120,14 +123,12 @@ void DemAstNode_copy(DemAstNode *dst, const DemAstNode *src) {
 	dst->val = src->val;
 	dst->tag = src->tag;
 	dst->subtag = src->subtag;
-	if (src->children) {
-		dst->children = VecF(DemAstNode, ctor)();
-		vec_foreach_ptr(src->children, n, {
-			DemAstNode cloned = { 0 };
-			DemAstNode_init_clone(&cloned, n);
-			VecF(DemAstNode, append)(dst->children, &cloned);
-		});
+	dst->parent = src->parent;
+	if (!src->children) {
+		return;
 	}
+	dst->children = VecF(DemAstNode, ctor)();
+	NodeList_copy(dst->children, src->children);
 }
 
 void DemAstNode_init_clone(DemAstNode *dst, const DemAstNode *src) {

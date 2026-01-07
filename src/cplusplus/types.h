@@ -135,6 +135,7 @@ enum {
 };
 
 typedef struct DemAstNode_t {
+	struct DemAstNode_t *parent;
 	struct Vec_t(DemAstNode) * children;
 	DemString dem;
 	DemStringView val;

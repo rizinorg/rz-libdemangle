@@ -350,6 +350,12 @@
 		*self = *xs; \
 		memset(xs, 0, sizeof(VecT(T))); \
 		return self; \
+	} \
+	static inline void VecF(T, clear)(Vec##T * self) { \
+		if (!self) { \
+			return; \
+		} \
+		VecF(T, deinit)(self); \
 	}
 
 #endif // CPDEM_VEC_H
