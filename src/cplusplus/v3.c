@@ -1066,35 +1066,6 @@ bool rule_simple_id(
 	RULE_FOOT(simple_id);
 }
 
-static ut64 base36_to_int(const char *buf, ut64 *px) {
-	static const char *base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
-	char *pos = NULL;
-	ut64 pow = 1;
-	ut64 x = 0;
-	ut64 sz = 0;
-	while ((pos = strchr(base, buf[sz]))) {
-		st64 based_val = pos - base;
-		x += based_val * pow;
-		pow *= 36;
-		sz++;
-	}
-	*px = x;
-	return sz;
-}
-
-bool rule_seq_id(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
-	RULE_HEAD(seq_id);
-	if (IS_DIGIT(PEEK()) || IS_UPPER(PEEK())) {
-		ut64 sid = 0;
-		msi->cur += base36_to_int(msi->cur, &sid);
-		return meta_substitute_type(m, sid + 1, dan);
-	}
-	if (PEEK() == '_') {
-		return meta_substitute_type(m, 0, dan);
-	}
-	RULE_FOOT(seq_id);
-}
-
 bool parse_non_neg_number(
 	StrIter *msi, ut64 *out) {
 	*out = 0;
@@ -1103,7 +1074,7 @@ bool parse_non_neg_number(
 	}
 	while (PEEK() >= '0' && PEEK() <= '9') {
 		*out *= 10;
-		*out += (ut64)(CONSUME() - '0');
+		*out += (ut64)(*CONSUME() - '0');
 	}
 	return true;
 }
@@ -1539,9 +1510,7 @@ bool rule_bare_function_type(
 	RULE_HEAD(bare_function_type);
 	// If only parameter is void, output nothing (empty params)
 	// This is per Itanium ABI: "void" as the only parameter means no parameters
-	MATCH(
-		READ('v') && true // consume 'v' but output nothing
-	);
+	MATCH(READ('v') && true); // consume 'v' but output nothing);
 	MATCH(RULE_ATLEAST_ONCE_WITH_SEP(type, ", "));
 	RULE_FOOT(bare_function_type);
 }
@@ -1597,7 +1566,6 @@ bool rule_qualifiers(
 bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(type);
 
-	MATCH1(function_type);
 	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), qualifiers) && RULE_CALL_DEFER(AST(1), type), {
 		dan->subtag = QUALIFIED_TYPE;
 		DemAstNode *func_node = NULL;
@@ -1669,17 +1637,13 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		// Rvalue reference types ARE substitutable per Itanium ABI section 5.1.5
 		AST_APPEND_TYPE;
 	});
-	// MATCH (RULE (template_template_param) && RULE (template_args));
-
-	MATCH(RULE_X(0, substitution) && RULE_X(1, template_args) && AST_APPEND_TYPE);
-	MATCH1(builtin_type);
 	MATCH(READ_STR("Dp") && RULE_X(0, type)); // pack expansion (C++11)
 
-	// Extended qualifiers with CV qualifiers
+	MATCH1(builtin_type);
 	MATCH1(array_type);
 	MATCH1(pointer_to_member_type);
 	MATCH1(decltype);
-	MATCH1(substitution);
+	MATCH1(function_type);
 
 	switch (PEEK()) {
 	case 'T': {
@@ -1701,6 +1665,16 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 				TRACE_RETURN_FAILURE();
 			}
 			AST_APPEND_NODE(&node_template_args);
+		}
+		break;
+	}
+	case 'S': {
+		if (!rule_substitution(RULE_ARGS(AST(0)))) {
+			TRACE_RETURN_FAILURE();
+		}
+		AST_MERGE(AST(0));
+		if (!(RULE_X(1, template_args))) {
+			TRACE_RETURN_SUCCESS;
 		}
 		break;
 	}
@@ -1761,6 +1735,35 @@ bool rule_local_name(
 	RULE_FOOT(local_name);
 }
 
+static ut64 base36_to_int(const char *buf, ut64 *px) {
+	static const char *base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
+	char *pos = NULL;
+	ut64 pow = 1;
+	ut64 x = 0;
+	ut64 sz = 0;
+	while ((pos = strchr(base, buf[sz]))) {
+		st64 based_val = pos - base;
+		x += based_val * pow;
+		pow *= 36;
+		sz++;
+	}
+	*px = x;
+	return sz;
+}
+
+bool rule_seq_id(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
+	RULE_HEAD(seq_id);
+	if (IS_DIGIT(PEEK()) || IS_UPPER(PEEK())) {
+		ut64 sid = 0;
+		msi->cur += base36_to_int(msi->cur, &sid);
+		return meta_substitute_type(m, sid + 1, dan);
+	}
+	if (PEEK() == '_') {
+		return meta_substitute_type(m, 0, dan);
+	}
+	RULE_FOOT(seq_id);
+}
+
 bool rule_substitution(
 	DemAstNode *dan,
 	StrIter *msi,
@@ -1768,6 +1771,9 @@ bool rule_substitution(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(substitution);
+	if (PEEK() != 'S') {
+		TRACE_RETURN_FAILURE();
+	}
 	MATCH(READ('S') && RULE_X(0, seq_id) && READ('_'));
 
 	MATCH(READ_STR("St") && AST_APPEND_STR("std"));
@@ -1775,22 +1781,15 @@ bool rule_substitution(
 	MATCH(READ_STR("Sb") && AST_APPEND_STR("std::basic_string"));
 	// For std::string (Ss), expand to full form when followed by ctor/dtor (C or D)
 	// This handles cases like _ZNSsC2ERKSs (std::basic_string constructor)
-	MATCH(
-		READ_STR("Ss") &&
-		((PEEK() == 'C' || PEEK() == 'D') ? AST_APPEND_STR(
-							    "std::basic_string<char, std::char_traits<char>, std::allocator<char>>")
-						  : AST_APPEND_STR("std::string")));
-	MATCH(
-		READ_STR("Si") && AST_APPEND_STR("std::istream")
+	MATCH(READ_STR("Ss") && ((PEEK() == 'C' || PEEK() == 'D') ? AST_APPEND_STR("std::basic_string<char, std::char_traits<char>, std::allocator<char>>") : AST_APPEND_STR("std::string")));
+	MATCH(READ_STR("Si") && AST_APPEND_STR("std::istream")
 		// AST_APPEND_STR ("std::basic_istream<char, std::char_traits<char>>")
 	);
-	MATCH(
-		READ_STR("So") && AST_APPEND_STR("std::ostream")
+	MATCH(READ_STR("So") && AST_APPEND_STR("std::ostream")
 		// AST_APPEND_STR ("std::basic_ostream<char, std::char_traits<char>>")
 	);
 
-	MATCH(
-		READ_STR("Sd") && AST_APPEND_STR("std::iostream")
+	MATCH(READ_STR("Sd") && AST_APPEND_STR("std::iostream")
 		// AST_APPEND_STR ("std::basic_iostream<char, std::char_traits<char>>")
 	);
 	RULE_FOOT(substitution);
@@ -1971,8 +1970,7 @@ bool rule_nested_name(
 				} else {
 					DemAstNode node_substitution = { 0 };
 					if (rule_substitution(RULE_ARGS(&node_substitution))) {
-						subst = VecF(DemAstNode, append)(dan->children, &node_substitution);
-						AST_MERGE(subst);
+						subst = DemAstNode_append(dan, &node_substitution);
 					}
 				}
 				if (!subst) {
@@ -2195,7 +2193,10 @@ bool rule_template_arg(
 	}
 	case 'T': {
 		if (!is_template_param_decl(msi)) {
-			MATCH1(type);
+			if (!rule_type(RULE_ARGS(AST(0)))) {
+				TRACE_RETURN_FAILURE();
+			}
+			TRACE_RETURN_SUCCESS;
 		}
 		DEM_UNREACHABLE;
 	}
@@ -2227,9 +2228,9 @@ bool rule_template_args(
 	const bool tag_templates = is_tag_templates(dan) || (dan->parent && dan->parent->tag == CP_DEM_TYPE_KIND_nested_name && is_tag_templates(dan->parent));
 
 	if (tag_templates) {
-		VecNodeList_clear(&m->template_params);
-		VecNodeList_append(&m->template_params, &m->outer_template_params);
-		VecDemAstNode_resize(&m->outer_template_params, 0);
+		VecPNodeList_clear(&m->template_params);
+		VecPNodeList_append(&m->template_params, &m->outer_template_params);
+		VecDemAstNode_clear(m->outer_template_params);
 	}
 
 	if (PEEK() != 'E') {
@@ -2244,7 +2245,7 @@ bool rule_template_args(
 		if (tag_templates) {
 			DemAstNode node_arg_cloned = { 0 };
 			DemAstNode_copy(&node_arg_cloned, &node_arg);
-			VecF(DemAstNode, append)(&m->outer_template_params, &node_arg_cloned);
+			VecF(DemAstNode, append)(m->outer_template_params, &node_arg_cloned);
 		}
 		if (VecF(DemAstNode, len)(dan->children) > 0) {
 			AST_APPEND_STR(", ");
@@ -2472,6 +2473,7 @@ char *demangle_rule(const char *mangled, DemRule rule, CpDemOptions opts) {
 	DemAstNode *dan = calloc(sizeof(DemAstNode), 1);
 
 	Meta meta = { 0 };
+	meta_init(&meta);
 	Meta *m = &meta;
 
 	// Initialize trace graph

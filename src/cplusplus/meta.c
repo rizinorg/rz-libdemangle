@@ -58,6 +58,19 @@ static void meta_copy_scalars(Meta *dst, Meta *src) {
 	dst->trace = src->trace;
 }
 
+void meta_init(Meta *m) {
+	if (!m) {
+		return;
+	}
+
+	memset(m, 0, sizeof(Meta));
+	m->outer_template_params = VecF(DemAstNode, ctor)();
+
+	vec_init(&m->detected_types);
+	vec_init(&m->names);
+	vec_init(&m->template_params);
+}
+
 void meta_deinit(Meta *m) {
 	if (!m) {
 		return;
@@ -65,8 +78,8 @@ void meta_deinit(Meta *m) {
 
 	VecF(DemAstNode, deinit)(&m->detected_types);
 	VecF(DemAstNode, deinit)(&m->names);
-	VecF(DemAstNode, deinit)(&m->outer_template_params);
-	VecF(NodeList, deinit)(&m->template_params);
+	VecF(DemAstNode, deinit)(m->outer_template_params);
+	VecF(PNodeList, deinit)(&m->template_params);
 	memset(m, 0, sizeof(Meta));
 }
 
@@ -75,25 +88,14 @@ bool meta_copy(Meta *dst, Meta *src) {
 		return false;
 	}
 
+	meta_deinit(dst);
+	meta_init(dst);
 	meta_copy_scalars(dst, src);
-
-	/* Reset destination dynamic members before cloning */
-	VecF(DemAstNode, deinit)(&dst->detected_types);
-	VecF(NodeList, deinit)(&dst->template_params);
-
-	vec_init(&dst->detected_types);
-	vec_init(&dst->names);
-	vec_init(&dst->outer_template_params);
-	vec_init(&dst->template_params);
 
 	NodeList_copy(&dst->detected_types, &src->detected_types);
 	NodeList_copy(&dst->names, &src->names);
-	NodeList_copy(&dst->outer_template_params, &src->outer_template_params);
-
-	vec_foreach_ptr(&src->template_params, n, {
-		NodeList *dst_list = VecF(NodeList, append)(&dst->template_params, NULL);
-		NodeList_copy(dst_list, n);
-	});
+	NodeList_copy(dst->outer_template_params, src->outer_template_params);
+	VecF(PNodeList, copy)(&dst->template_params, &src->template_params);
 
 	return true;
 }
@@ -102,17 +104,15 @@ void meta_move(Meta *dst, Meta *src) {
 	if (!(dst && src && dst != src)) {
 		return;
 	}
-	meta_copy_scalars(dst, src);
 
-	VecF(DemAstNode, deinit)(&dst->detected_types);
-	VecF(DemAstNode, deinit)(&dst->names);
-	VecF(DemAstNode, deinit)(&dst->outer_template_params);
-	VecF(NodeList, deinit)(&dst->template_params);
+	meta_deinit(dst);
+	meta_init(dst);
+	meta_copy_scalars(dst, src);
 
 	VecF(DemAstNode, move)(&dst->detected_types, &src->detected_types);
 	VecF(DemAstNode, move)(&dst->names, &src->names);
-	VecF(DemAstNode, move)(&dst->names, &src->outer_template_params);
-	VecF(NodeList, move)(&dst->template_params, &src->template_params);
+	VecF(DemAstNode, move)(dst->outer_template_params, src->outer_template_params);
+	VecF(PNodeList, copy)(&dst->template_params, &src->template_params);
 
 	memset(src, 0, sizeof(Meta));
 }
@@ -240,7 +240,7 @@ bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan) {
 		return false;
 	}
 	DemAstNode *type_node = vec_ptr_at(&m->detected_types, id);
-	if (DemAstNode_is_empty(type_node)) {
+	if (!type_node || DemAstNode_is_empty(type_node)) {
 		return false;
 	}
 
@@ -257,10 +257,11 @@ bool meta_substitute_tparam(Meta *m, DemAstNode *dan, ut64 level, ut64 index) {
 	if (level >= m->template_params.length) {
 		return false;
 	}
-	NodeList *tparams_at_level = vec_ptr_at(&m->template_params, level);
-	if (!(tparams_at_level && index < tparams_at_level->length)) {
+	NodeList **pptparams_at_level = vec_ptr_at(&m->template_params, level);
+	if (!(pptparams_at_level && *pptparams_at_level && index < (*pptparams_at_level)->length)) {
 		return false;
 	}
+	NodeList *tparams_at_level = *pptparams_at_level;
 	DemAstNode *tparam_node = vec_ptr_at(tparams_at_level, index);
 	if (!tparam_node || DemAstNode_is_empty(tparam_node)) {
 		return false;

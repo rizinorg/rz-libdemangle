@@ -342,6 +342,26 @@
 		self->length = new_len; \
 		return self; \
 	} \
+	static inline Vec##T *VecF(T, copy)(Vec##T * self, Vec##T * xs) { \
+		if (!self || !xs) { \
+			return NULL; \
+		} \
+		if (self == xs) { \
+			return self; \
+		} \
+		if (self->data == xs->data) { \
+			self->length = xs->length; \
+			return self; \
+		} \
+		VecF(T, resize)(self, xs->length); \
+		if (xs->length > 0) { \
+			memcpy( \
+				self->data, \
+				xs->data, \
+				xs->length * sizeof(T)); \
+		} \
+		return self; \
+	} \
 	static inline Vec##T *VecF(T, move)(Vec##T * self, Vec##T * xs) { \
 		if (!self || !xs || self == xs) { \
 			return NULL; \

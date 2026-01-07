@@ -162,13 +162,17 @@ typedef VecT(DemAstNode) NodeList;
 void NodeList_copy(NodeList *dst, const NodeList *src);
 NodeList *NodeList_pop_trailing(NodeList *self, ut64 from);
 
-VecIMPL(NodeList, VecF(DemAstNode, deinit));
+static inline void PNodeList_free(void *self) {
+}
+
+typedef NodeList *PNodeList;
+VecIMPL(PNodeList, PNodeList_free);
 
 typedef struct Meta {
 	NodeList detected_types;
 	NodeList names;
-	NodeList outer_template_params;
-	VecT(NodeList) template_params;
+	PNodeList outer_template_params;
+	VecT(PNodeList) template_params;
 	bool is_ctor;
 	bool is_dtor;
 	bool trace; // Debug tracing flag (now just for compatibility)
@@ -200,6 +204,7 @@ typedef bool (*DemRuleFirst)(const char *input);
 // Meta helper functions
 bool meta_copy(Meta *dst, Meta *src);
 void meta_move(Meta *dst, Meta *src);
+void meta_init(Meta *m);
 void meta_deinit(Meta *m);
 
 // Helper functions

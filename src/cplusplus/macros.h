@@ -100,7 +100,7 @@
  * \return NULL otherwise.
  */
 #define ADV()     (IN_RANGE(CUR() + 1) ? msi->cur++ : NULL)
-#define CONSUME() (IN_RANGE(CUR() + 1) ? ++msi->cur : NULL)
+#define CONSUME() (IN_RANGE(CUR() + 1) ? msi->cur++ : NULL)
 
 /**
  * \b Advance current read position by "n" characters, if this next
@@ -350,8 +350,6 @@
 
 #define MATCH_FAILED(I) \
 	do { /*match fail*/ \
-		meta_deinit(&_tmp_meta); \
-		m = _og_meta; \
 		/* NOTE: Do NOT call DemAstNode_deinit(dan) here! */ \
 		/* dan->dem was already restored to _og_dem_len by MATCH_AND_DO */ \
 		/* Calling deinit would clear content written by parent rules */ \
@@ -428,13 +426,6 @@
 #define MATCH_AND_DO(rules, body) \
 	do { \
 		SAVE_POS(0); \
-		/* make a temporary string to prevent from altering real string */ \
-		Meta _tmp_meta = { 0 }; \
-		Meta *_og_meta = m; \
-		m = &_tmp_meta; \
-		meta_copy(&_tmp_meta, _og_meta); \
-		size_t _og_dem_len = dan->dem.len; \
-		size_t _og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0; \
 		if ((rules)) { \
 			/* caller execute code */ \
 			{ body }; \
@@ -445,8 +436,6 @@
 					(dan->dem.buf && dan->dem.len > 0) ? dan->dem.buf : "success", \
 					1); \
 			} \
-			meta_move(_og_meta, &_tmp_meta); \
-			m = _og_meta; \
 			dan->val.len = msi->cur - dan->val.buf; \
 			AST_FLATTEN(dan); \
 			return true; \
@@ -454,55 +443,11 @@
 			if (graph && graph->enabled && _my_node_id >= 0) { \
 				trace_graph_set_result(graph, _my_node_id, NULL, 3); /* backtracked */ \
 			} \
-			dan->dem.len = _og_dem_len; \
-			if (dan->dem.buf) \
-				dan->dem.buf[_og_dem_len] = 0; \
-			if (dan->children) { \
-				while (VecDemAstNode_len(dan->children) > _og_children_len) { \
-					DemAstNode *node = VecDemAstNode_pop(dan->children); \
-					if (node) { \
-						DemAstNode_deinit(node); \
-					} \
-				} \
-			} \
 			MATCH_FAILED(0); \
 		} \
 	} while (0)
 
 #define MATCH(rules) MATCH_AND_DO(rules, {})
-
-#define MATCH_AND_CONTINUE(rules) \
-	do { \
-		SAVE_POS(0); \
-		/* make a temporary string to prevent from altering real string */ \
-		Meta _tmp_meta = { 0 }; \
-		Meta *_og_meta = m; \
-		m = &_tmp_meta; \
-		meta_copy(&_tmp_meta, _og_meta); \
-		size_t _og_dem_len = dan->dem.len; \
-		size_t _og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0; \
-		if ((rules)) { \
-			meta_move(_og_meta, &_tmp_meta); \
-			/* if rule matched, then concat tmp with original and switch back names */ \
-			m = _og_meta; \
-		} else { \
-			if (graph && graph->enabled && _my_node_id >= 0) { \
-				trace_graph_set_result(graph, _my_node_id, NULL, 3); /* backtracked */ \
-			} \
-			dan->dem.len = _og_dem_len; \
-			if (dan->dem.buf) \
-				dan->dem.buf[_og_dem_len] = 0; \
-			if (dan->children) { \
-				while (VecDemAstNode_len(dan->children) > _og_children_len) { \
-					DemAstNode *node = VecDemAstNode_pop(dan->children); \
-					if (node) { \
-						DemAstNode_deinit(node); \
-					} \
-				} \
-			} \
-			MATCH_FAILED(0); \
-		} \
-	} while (0)
 
 #define AST_APPEND_STR(s)        dem_string_append(&dan->dem, s)
 #define AST_APPEND_STR_N(s, n)   dem_string_append_n(&dan->dem, s, n);
