@@ -78,7 +78,7 @@ void meta_deinit(Meta *m) {
 
 	VecF(DemAstNode, deinit)(&m->detected_types);
 	VecF(DemAstNode, deinit)(&m->names);
-	VecF(DemAstNode, deinit)(m->outer_template_params);
+	VecF(DemAstNode, dtor)(m->outer_template_params);
 	VecF(PNodeList, deinit)(&m->template_params);
 	memset(m, 0, sizeof(Meta));
 }

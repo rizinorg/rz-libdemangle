@@ -1312,7 +1312,7 @@ static DemAstNode *extract_func_type_node(DemAstNode *dan, DemString *func_name)
 				node = AST_(node, 1);
 			} else if (AST_(node, 1)->tag == CP_DEM_TYPE_KIND_substitution) {
 				node = extract_from_subs(AST_(node, 1));
-				if (node->tag != CP_DEM_TYPE_KIND_type) {
+				if (!node || node->tag != CP_DEM_TYPE_KIND_type) {
 					return NULL;
 				}
 			}
@@ -1941,11 +1941,10 @@ bool rule_nested_name(
 			}
 			DemAstNode node_template_args = { 0 };
 			if (rule_template_args(RULE_ARGS(&node_template_args))) {
-				VecF(DemAstNode, append)(dan->children, &node_template_args);
 				if (ast_node && VecDemAstNode_len(ast_node->children) > 0 && VecDemAstNode_tail(ast_node->children)->tag == CP_DEM_TYPE_KIND_template_args) {
 					TRACE_RETURN_FAILURE();
 				}
-				AST_MERGE(&node_template_args);
+				DemAstNode_append(dan, &node_template_args);
 			} else {
 				TRACE_RETURN_FAILURE();
 			}
@@ -1956,8 +1955,7 @@ bool rule_nested_name(
 			}
 			DemAstNode node_decltype = { 0 };
 			if (rule_decltype(RULE_ARGS(&node_decltype))) {
-				ast_node = VecF(DemAstNode, append)(dan->children, &node_decltype);
-				AST_MERGE(&node_decltype);
+				ast_node = DemAstNode_append(dan, &node_decltype);
 			}
 		} else {
 			if (PEEK() == 'S') {
@@ -2188,20 +2186,30 @@ bool rule_template_arg(
 		AST_APPEND_NODE(&node_args);
 	}
 	case 'L': {
-		MATCH1(expr_primary);
-		DEM_UNREACHABLE;
+		if (!rule_expr_primary(RULE_ARGS(AST(0)))) {
+			TRACE_RETURN_FAILURE();
+		}
+		AST_MERGE(AST(0));
+		TRACE_RETURN_SUCCESS;
+		break;
 	}
 	case 'T': {
 		if (!is_template_param_decl(msi)) {
 			if (!rule_type(RULE_ARGS(AST(0)))) {
 				TRACE_RETURN_FAILURE();
 			}
+			AST_MERGE(AST(0));
 			TRACE_RETURN_SUCCESS;
 		}
 		DEM_UNREACHABLE;
 	}
 	default:
-		MATCH1(type);
+		if (!rule_type(RULE_ARGS(AST(0)))) {
+			TRACE_RETURN_FAILURE();
+		}
+		AST_MERGE(AST(0));
+		TRACE_RETURN_SUCCESS;
+		break;
 	}
 
 	RULE_FOOT(template_arg);
