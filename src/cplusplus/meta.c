@@ -64,6 +64,8 @@ void meta_deinit(Meta *m) {
 	}
 
 	VecF(DemAstNode, deinit)(&m->detected_types);
+	VecF(DemAstNode, deinit)(&m->names);
+	VecF(DemAstNode, deinit)(&m->outer_template_params);
 	VecF(NodeList, deinit)(&m->template_params);
 	memset(m, 0, sizeof(Meta));
 }
@@ -81,10 +83,12 @@ bool meta_copy(Meta *dst, Meta *src) {
 
 	vec_init(&dst->detected_types);
 	vec_init(&dst->names);
+	vec_init(&dst->outer_template_params);
 	vec_init(&dst->template_params);
 
 	NodeList_copy(&dst->detected_types, &src->detected_types);
 	NodeList_copy(&dst->names, &src->names);
+	NodeList_copy(&dst->outer_template_params, &src->outer_template_params);
 
 	vec_foreach_ptr(&src->template_params, n, {
 		NodeList *dst_list = VecF(NodeList, append)(&dst->template_params, NULL);
@@ -102,10 +106,12 @@ void meta_move(Meta *dst, Meta *src) {
 
 	VecF(DemAstNode, deinit)(&dst->detected_types);
 	VecF(DemAstNode, deinit)(&dst->names);
+	VecF(DemAstNode, deinit)(&dst->outer_template_params);
 	VecF(NodeList, deinit)(&dst->template_params);
 
 	VecF(DemAstNode, move)(&dst->detected_types, &src->detected_types);
 	VecF(DemAstNode, move)(&dst->names, &src->names);
+	VecF(DemAstNode, move)(&dst->names, &src->outer_template_params);
 	VecF(NodeList, move)(&dst->template_params, &src->template_params);
 
 	memset(src, 0, sizeof(Meta));

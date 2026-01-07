@@ -160,13 +160,14 @@ VecIMPL(DemAstNode, DemAstNode_deinit);
 
 typedef VecT(DemAstNode) NodeList;
 void NodeList_copy(NodeList *dst, const NodeList *src);
-NodeList* NodeList_pop_trailing(NodeList *self,ut64 from);
+NodeList *NodeList_pop_trailing(NodeList *self, ut64 from);
 
 VecIMPL(NodeList, VecF(DemAstNode, deinit));
 
 typedef struct Meta {
 	NodeList detected_types;
 	NodeList names;
+	NodeList outer_template_params;
 	VecT(NodeList) template_params;
 	bool is_ctor;
 	bool is_dtor;
