@@ -66,9 +66,7 @@ bool rule_unqualified_name(
 	RULE_HEAD(unqualified_name);
 
 	MATCH(READ_STR("DC") && RULE_ATLEAST_ONCE(source_name) && READ('E'));
-	MATCH(
-		RULE_DEFER(AST(0), operator_name) && AST_MERGE(AST(0)) &&
-		OPTIONAL(RULE_DEFER(AST(1), abi_tags) && AST_MERGE(AST(1))));
+	MATCH(RULE_X(0, operator_name) && OPTIONAL(RULE_X(1, abi_tags)));
 	MATCH(READ_STR("12_GLOBAL__N_1") && AST_APPEND_STR("(anonymous namespace)"));
 	MATCH1(ctor_dtor_name);
 	MATCH1(source_name);
@@ -85,29 +83,12 @@ bool rule_unresolved_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(unresolved_name);
-	MATCH_AND_DO(
-		READ_STR("srN") && RULE_DEFER(AST(0), unresolved_type) &&
-			RULE_DEFER_ATLEAST_ONCE(AST(1), unresolved_qualifier_level) && READ('E') && RULE_DEFER(AST(2), base_unresolved_name),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-			AST_MERGE(AST(2));
-		});
-
-	MATCH_AND_DO(
-		OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && READ_STR("sr") &&
-			RULE_DEFER_ATLEAST_ONCE(AST(0), unresolved_qualifier_level) && READ('E') && RULE_DEFER(AST(1), base_unresolved_name),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
-	MATCH_AND_DO(READ_STR("sr") && RULE_DEFER(AST(0), unresolved_type) && RULE_DEFER(AST(1), base_unresolved_name), {
-		AST_MERGE(AST(0));
-		AST_MERGE(AST(1));
-	});
-	MATCH_AND_DO(OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && RULE_DEFER(AST(0), base_unresolved_name), {
-		AST_MERGE(AST(0));
-	});
+	MATCH(READ_STR("srN") && RULE_X(0, unresolved_type) &&
+		RULE_DEFER_ATLEAST_ONCE(AST(1), unresolved_qualifier_level) && AST_MERGE(AST(1)) && READ('E') && RULE_X(2, base_unresolved_name));
+	MATCH(OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && READ_STR("sr") &&
+		RULE_DEFER_ATLEAST_ONCE(AST(0), unresolved_qualifier_level) && AST_MERGE(AST(0)) && READ('E') && RULE_X(1, base_unresolved_name));
+	MATCH(READ_STR("sr") && RULE_X(0, unresolved_type) && RULE_X(1, base_unresolved_name));
+	MATCH(OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && RULE_X(0, base_unresolved_name));
 	RULE_FOOT(unresolved_name);
 }
 
@@ -118,8 +99,8 @@ bool rule_unscoped_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(unscoped_name);
-	MATCH(READ_STR("St") && AST_APPEND_STR("std::") && RULE(unqualified_name));
-	MATCH(RULE(unqualified_name));
+	MATCH(READ_STR("St") && AST_APPEND_STR("std::") && RULE_X(0, unqualified_name));
+	MATCH1(unqualified_name);
 	RULE_FOOT(unscoped_name);
 }
 
@@ -130,8 +111,8 @@ bool rule_unscoped_template_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(unscoped_template_name);
-	MATCH(RULE(unscoped_name));
-	MATCH(RULE(substitution));
+	MATCH1(unscoped_name);
+	MATCH1(substitution);
 	RULE_FOOT(unscoped_template_name);
 }
 
@@ -142,15 +123,8 @@ bool rule_unresolved_type(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(unresolved_type);
-	MATCH_AND_DO(RULE_DEFER(AST(0), template_param) && OPTIONAL(RULE_DEFER(AST(1), template_args)),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-			AST_APPEND_TYPE;
-		});
-	MATCH_AND_DO(RULE_DEFER(AST(0), decltype), {
-		AST_APPEND_TYPE;
-	});
+	MATCH(RULE_X(0, template_param) && OPTIONAL(RULE_X(1, template_args)) && AST_APPEND_TYPE);
+	MATCH(RULE_X(0, decltype) && AST_APPEND_TYPE);
 	MATCH1(substitution);
 	RULE_FOOT(unresolved_type);
 }
@@ -162,14 +136,14 @@ bool rule_unresolved_qualifier_level(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(unresolved_qualifier_level);
-	MATCH(RULE(simple_id));
+	MATCH1(simple_id);
 	RULE_FOOT(unresolved_qualifier_level);
 }
 
 bool rule_decltype(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(decltype);
-	MATCH(READ_STR("Dt") && RULE(expression) && READ('E'));
-	MATCH(READ_STR("DT") && RULE(expression) && READ('E'));
+	MATCH(READ_STR("Dt") && RULE_X(0, expression) && READ('E'));
+	MATCH(READ_STR("DT") && RULE_X(0, expression) && READ('E'));
 	RULE_FOOT(decltype);
 }
 
@@ -180,8 +154,8 @@ bool rule_exception_spec(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(exception_spec);
-	MATCH(READ_STR("DO") && RULE(expression) && READ('E'));
-	MATCH(READ_STR("Dw") && RULE_ATLEAST_ONCE(type) && READ('E'));
+	MATCH(READ_STR("DO") && RULE_X(0, expression) && READ('E'));
+	MATCH(READ_STR("Dw") && RULE_X(0, type) && READ('E'));
 	MATCH(READ_STR("Do"));
 	RULE_FOOT(exception_spec);
 }
@@ -193,14 +167,8 @@ bool rule_array_type(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(array_type);
-	MATCH_AND_DO(READ('A') && OPTIONAL(RULE_DEFER(AST(0), number)) && READ('_') && RULE_DEFER(AST(1), type), {
-		AST_MERGE(AST(0));
-		AST_MERGE(AST(1));
-	});
-	MATCH_AND_DO(READ('A') && RULE_DEFER(AST(0), expression) && READ('_') && RULE_DEFER(AST(1), type), {
-		AST_MERGE(AST(0));
-		AST_MERGE(AST(1));
-	});
+	MATCH(READ('A') && OPTIONAL(RULE_X(0, number)) && READ('_') && RULE_X(1, type));
+	MATCH(READ('A') && RULE_X(0, expression) && READ('_') && RULE_X(1, type));
 	RULE_FOOT(array_type);
 }
 
@@ -212,83 +180,50 @@ bool rule_expression(
 	int parent_node_id) {
 	RULE_HEAD(expression);
 	/* unary operators */
-	MATCH_AND_DO(
+	MATCH(
 		(READ_STR("gsnw") || READ_STR("nw")) && AST_APPEND_STR("new (") &&
-			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
-			RULE_DEFER(AST(1), type) && READ('E'),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
-	MATCH_AND_DO(
+		RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") &&
+		AST_MERGE(AST(0)) && AST_APPEND_STR(") ") && READ('_') &&
+		RULE_X(1, type) && READ('E'));
+	MATCH(
 		(READ_STR("gsnw") || READ_STR("nw")) && AST_APPEND_STR("new (") &&
-			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
-			RULE_DEFER(AST(1), type) && RULE_DEFER(AST(2), initializer),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-			AST_MERGE(AST(2));
-		});
-	MATCH_AND_DO(
+		RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") &&
+		AST_MERGE(AST(0)) && AST_APPEND_STR(") ") && READ('_') &&
+		RULE_X(1, type) && RULE_X(2, initializer));
+	MATCH(
 		(READ_STR("gsna") || READ_STR("na")) && AST_APPEND_STR("new[] (") &&
-			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
-			RULE_DEFER(AST(1), type) && READ('E'),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
-	MATCH_AND_DO(
+		RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") &&
+		AST_MERGE(AST(0)) && AST_APPEND_STR(") ") && READ('_') &&
+		RULE_X(1, type) && READ('E'));
+	MATCH(
 		(READ_STR("gsna") || READ_STR("na")) && AST_APPEND_STR("new[] (") &&
-			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") && AST_APPEND_STR(") ") && READ('_') &&
-			RULE_DEFER(AST(1), type) && RULE_DEFER(AST(2), initializer),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-			AST_MERGE(AST(2));
-		});
-	MATCH_AND_DO(
-		READ_STR("cv") && RULE_DEFER(AST(0), type) && READ('_') && AST_APPEND_STR("(") &&
-			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(1), expression, ", ") && AST_APPEND_STR(")") && READ('E'),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
+		RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") &&
+		AST_MERGE(AST(0)) && AST_APPEND_STR(") ") && READ('_') &&
+		RULE_X(1, type) && RULE_X(2, initializer));
+	MATCH(
+		READ_STR("cv") && RULE_X(0, type) && READ('_') && AST_APPEND_STR("(") &&
+		RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(1), expression, ", ") &&
+		AST_MERGE(AST(1)) && AST_APPEND_STR(")") && READ('E'));
 	/* binary operators */
-	MATCH_AND_DO(
-		READ_STR("qu") && RULE_DEFER(AST(0), expression) && AST_APPEND_STR("?") && RULE_DEFER(AST(1), expression) &&
-			AST_APPEND_STR(":") && RULE_DEFER(AST(2), expression),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-			AST_MERGE(AST(2));
-		});
-	MATCH_AND_DO(
-		READ_STR("cl") && RULE_DEFER(AST(0), expression) && AST_APPEND_STR("(") &&
-			RULE_DEFER_MANY_WITH_SEP(AST(1), expression, ", ") && AST_APPEND_STR(")") && READ('E'),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
-	MATCH_AND_DO(
-		READ_STR("cp") && AST_APPEND_STR("(") && RULE_DEFER(AST(0), base_unresolved_name) &&
-			AST_APPEND_STR(")") && AST_APPEND_STR("(") && RULE_DEFER_MANY_WITH_SEP(AST(1), expression, ", ") &&
-			AST_APPEND_STR(")") && READ('E'),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
-	MATCH_AND_DO(
-		READ_STR("tl") && RULE_DEFER(AST(0), type) && AST_APPEND_STR("{") &&
-			RULE_DEFER_MANY_WITH_SEP(AST(1), braced_expression, ", ") && AST_APPEND_STR("}") && READ('E'),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
-	MATCH_AND_DO(
-		READ('u') && RULE_DEFER(AST(0), source_name) && RULE_DEFER_MANY_WITH_SEP(AST(1), template_arg, ", ") && READ('E'), {
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
+	MATCH(
+		READ_STR("qu") && RULE_X(0, expression) && AST_APPEND_STR("?") && RULE_X(1, expression) &&
+		AST_APPEND_STR(":") && RULE_X(2, expression));
+	MATCH(
+		READ_STR("cl") && RULE_X(0, expression) && AST_APPEND_STR("(") &&
+		RULE_DEFER_MANY_WITH_SEP(AST(1), expression, ", ") &&
+		AST_MERGE(AST(1)) && AST_APPEND_STR(")") && READ('E'));
+	MATCH(
+		READ_STR("cp") && AST_APPEND_STR("(") && RULE_X(0, base_unresolved_name) &&
+		AST_APPEND_STR(")") && AST_APPEND_STR("(") && RULE_DEFER_MANY_WITH_SEP(AST(1), expression, ", ") &&
+		AST_MERGE(AST(1)) &&
+		AST_APPEND_STR(")") && READ('E'));
+	MATCH(
+		READ_STR("tl") && RULE_X(0, type) && AST_APPEND_STR("{") &&
+		RULE_DEFER_MANY_WITH_SEP(AST(1), braced_expression, ", ") &&
+		AST_MERGE(AST(1)) && AST_APPEND_STR("}") && READ('E'));
+	MATCH(
+		READ('u') && RULE_X(0, source_name) && RULE_DEFER_MANY_WITH_SEP(AST(1), template_arg, ", ") &&
+		AST_MERGE(AST(1)) && READ('E'));
 #define EXPRESSION_BINARY_OP(OP_STR, OP_CODE) \
 	MATCH_AND_DO( \
 		READ_STR(OP_CODE) && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression), \
@@ -366,12 +301,10 @@ bool rule_expression(
 		});
 
 	/* type {expr-list}, conversion with braced-init-list argument */
-	MATCH(
-		(READ_STR("gsdl") || READ_STR("dl")) && AST_APPEND_STR("delete ") && RULE(expression));
+	MATCH((READ_STR("gsdl") || READ_STR("dl")) && AST_APPEND_STR("delete ") && RULE_X(0, expression));
 
 	/* {expr-list}, braced-init-list in any other context */
-	MATCH(
-		(READ_STR("gsda") || READ_STR("da")) && AST_APPEND_STR("delete[] ") && RULE(expression));
+	MATCH((READ_STR("gsda") || READ_STR("da")) && AST_APPEND_STR("delete[] ") && RULE_X(0, expression));
 
 	/* new (expr-list) type */
 	MATCH_AND_DO(
@@ -1022,112 +955,103 @@ bool rule_expression(
 			AST_MERGE(AST(1));
 			AST_APPEND_CHR(')');
 		});
-	MATCH(READ_STR("ps") && AST_APPEND_CHR('+') && RULE(expression));
-	MATCH(READ_STR("ng") && AST_APPEND_CHR('-') && RULE(expression));
-	MATCH(READ_STR("ad") && AST_APPEND_CHR('&') && RULE(expression));
-	MATCH(READ_STR("de") && AST_APPEND_CHR('*') && RULE(expression));
-	MATCH(READ_STR("co") && AST_APPEND_STR("~") && RULE(expression));
-	MATCH(READ_STR("pp_") && AST_APPEND_STR("++") && RULE(expression));
-	MATCH(READ_STR("mm_") && AST_APPEND_STR("--") && RULE(expression));
-	MATCH(READ_STR("ti") && AST_APPEND_STR("typeid(") && RULE(type) && AST_APPEND_STR(")"));
-	MATCH(
-		READ_STR("te") && AST_APPEND_STR("typeid(") && RULE(expression) && AST_APPEND_STR(")"));
-	MATCH(READ_STR("st") && AST_APPEND_STR("sizeof(") && RULE(type) && AST_APPEND_STR(")"));
-	MATCH(
-		READ_STR("sz") && AST_APPEND_STR("sizeof(") && RULE(expression) && AST_APPEND_STR(")"));
-	MATCH(READ_STR("at") && AST_APPEND_STR("alignof(") && RULE(type) && AST_APPEND_STR(")"));
-	MATCH(
-		READ_STR("az") && AST_APPEND_STR("alignof(") && RULE(expression) && AST_APPEND_STR(")"));
-	MATCH(
-		READ_STR("nx") && AST_APPEND_STR("noexcept(") && RULE(expression) && AST_APPEND_STR(")"));
-	MATCH(
-		READ_STR("frss") && AST_APPEND_CHR('(') && RULE(expression) && AST_APPEND_STR(" <=>..."));
-	MATCH(
-		READ_STR("sZ") && AST_APPEND_STR("sizeof...(") && RULE(template_param) &&
-		AST_APPEND_CHR(')'));
-	MATCH(
-		READ_STR("sZ") && AST_APPEND_STR("sizeof...(") && RULE(function_param) &&
-		AST_APPEND_CHR(')'));
-	MATCH(READ_STR("sp") && RULE(expression) && AST_APPEND_STR("..."));
+	MATCH(READ_STR("ps") && AST_APPEND_CHR('+') && RULE_X(0, expression));
+	MATCH(READ_STR("ng") && AST_APPEND_CHR('-') && RULE_X(0, expression));
+	MATCH(READ_STR("ad") && AST_APPEND_CHR('&') && RULE_X(0, expression));
+	MATCH(READ_STR("de") && AST_APPEND_CHR('*') && RULE_X(0, expression));
+	MATCH(READ_STR("co") && AST_APPEND_STR("~") && RULE_X(0, expression));
+	MATCH(READ_STR("pp_") && AST_APPEND_STR("++") && RULE_X(0, expression));
+	MATCH(READ_STR("mm_") && AST_APPEND_STR("--") && RULE_X(0, expression));
+	MATCH(READ_STR("ti") && AST_APPEND_STR("typeid(") && RULE_X(0, type) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("te") && AST_APPEND_STR("typeid(") && RULE_X(0, expression) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("st") && AST_APPEND_STR("sizeof(") && RULE_X(0, type) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("sz") && AST_APPEND_STR("sizeof(") && RULE_X(0, expression) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("at") && AST_APPEND_STR("alignof(") && RULE_X(0, type) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("az") && AST_APPEND_STR("alignof(") && RULE_X(0, expression) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("nx") && AST_APPEND_STR("noexcept(") && RULE_X(0, expression) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("frss") && AST_APPEND_CHR('(') && RULE_X(0, expression) && AST_APPEND_STR(" <=>..."));
+	MATCH(READ_STR("sZ") && AST_APPEND_STR("sizeof...(") && RULE_X(0, template_param) && AST_APPEND_CHR(')'));
+	MATCH(READ_STR("sZ") && AST_APPEND_STR("sizeof...(") && RULE_X(0, function_param) && AST_APPEND_CHR(')'));
+	MATCH(READ_STR("sp") && RULE_X(0, expression) && AST_APPEND_STR("..."));
 
 	/* binary left fold */
 	// clang-format off
-    MATCH (READ_STR ("flpl") && AST_APPEND_STR ("(... +") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flmi") && AST_APPEND_STR ("(... -") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flml") && AST_APPEND_STR ("(... *") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("fldv") && AST_APPEND_STR ("(... /") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flrm") && AST_APPEND_STR ("(... %") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flan") && AST_APPEND_STR ("(... &") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flor") && AST_APPEND_STR ("(... |") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("fleo") && AST_APPEND_STR ("(... ^") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flaS") && AST_APPEND_STR ("(... =") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flpL") && AST_APPEND_STR ("(... +=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flmI") && AST_APPEND_STR ("(... -=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flmL") && AST_APPEND_STR ("(... *=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("fldV") && AST_APPEND_STR ("(... /=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flrM") && AST_APPEND_STR ("(... %=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flaN") && AST_APPEND_STR ("(... &=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("floR") && AST_APPEND_STR ("(... |=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("fleO") && AST_APPEND_STR ("(... ^=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flls") && AST_APPEND_STR ("(... <<") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flrs") && AST_APPEND_STR ("(... >>") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("fllS") && AST_APPEND_STR ("(... <<=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flrS") && AST_APPEND_STR ("(... >>=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("fleq") && AST_APPEND_STR ("(... ==") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flne") && AST_APPEND_STR ("(... !=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("fllt") && AST_APPEND_STR ("(... <") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flgt") && AST_APPEND_STR ("(... >") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flle") && AST_APPEND_STR ("(... <=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flge") && AST_APPEND_STR ("(... >=") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flss") && AST_APPEND_STR ("(... <=>") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flnt") && AST_APPEND_STR ("(... !") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("flaa") && AST_APPEND_STR ("(... &&") && RULE (expression) && AST_APPEND_CHR (')'));
-    MATCH (READ_STR ("floo") && AST_APPEND_STR ("(... ||") && RULE (expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flpl") && AST_APPEND_STR ("(... +") && RULE_X (0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flmi") && AST_APPEND_STR ("(... -") && RULE_X (0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flml") && AST_APPEND_STR ("(... *") && RULE_X (0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fldv") && AST_APPEND_STR ("(... /") && RULE_X (0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flrm") && AST_APPEND_STR ("(... %") && RULE_X (0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flan") && AST_APPEND_STR ("(... &") && RULE_X (0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flor") && AST_APPEND_STR ("(... |") && RULE_X (0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fleo") && AST_APPEND_STR ("(... ^") && RULE_X (0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flaS") && AST_APPEND_STR ("(... =") && RULE_X (0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flpL") && AST_APPEND_STR ("(... +=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flmI") && AST_APPEND_STR ("(... -=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flmL") && AST_APPEND_STR ("(... *=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fldV") && AST_APPEND_STR ("(... /=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flrM") && AST_APPEND_STR ("(... %=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flaN") && AST_APPEND_STR ("(... &=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("floR") && AST_APPEND_STR ("(... |=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fleO") && AST_APPEND_STR ("(... ^=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flls") && AST_APPEND_STR ("(... <<") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flrs") && AST_APPEND_STR ("(... >>") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fllS") && AST_APPEND_STR ("(... <<=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flrS") && AST_APPEND_STR ("(... >>=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fleq") && AST_APPEND_STR ("(... ==") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flne") && AST_APPEND_STR ("(... !=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("fllt") && AST_APPEND_STR ("(... <") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flgt") && AST_APPEND_STR ("(... >") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flle") && AST_APPEND_STR ("(... <=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flge") && AST_APPEND_STR ("(... >=") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flss") && AST_APPEND_STR ("(... <=>") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flnt") && AST_APPEND_STR ("(... !") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("flaa") && AST_APPEND_STR ("(... &&") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
+    MATCH (READ_STR ("floo") && AST_APPEND_STR ("(... ||") && RULE_X(0,expression) && AST_APPEND_CHR (')'));
 
     /* binary fold right */
-    MATCH (READ_STR ("frpl") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" + ...)"));
-    MATCH (READ_STR ("frmi") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" - ...)"));
-    MATCH (READ_STR ("frml") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" * ...)"));
-    MATCH (READ_STR ("frdv") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" / ...)"));
-    MATCH (READ_STR ("frrm") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" % ...)"));
-    MATCH (READ_STR ("fran") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" & ...)"));
-    MATCH (READ_STR ("fror") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" | ...)"));
-    MATCH (READ_STR ("freo") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" ^ ...)"));
-    MATCH (READ_STR ("fraS") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" = ...)"));
-    MATCH (READ_STR ("frpL") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" += ...)"));
-    MATCH (READ_STR ("frmI") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" -= ...)"));
-    MATCH (READ_STR ("frmL") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" *= ...)"));
-    MATCH (READ_STR ("frdV") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" /= ...)"));
-    MATCH (READ_STR ("frrM") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" %= ...)"));
-    MATCH (READ_STR ("fraN") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" &= ...)"));
-    MATCH (READ_STR ("froR") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" |= ...)"));
-    MATCH (READ_STR ("freO") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" ^= ...)"));
-    MATCH (READ_STR ("frls") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" << ...)"));
-    MATCH (READ_STR ("frrs") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" >> ...)"));
-    MATCH (READ_STR ("frlS") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" <<= ...)"));
-    MATCH (READ_STR ("frrS") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" >>= ...)"));
-    MATCH (READ_STR ("freq") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" == ...)"));
-    MATCH (READ_STR ("frne") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" != ...)"));
-    MATCH (READ_STR ("frlt") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" < ...)"));
-    MATCH (READ_STR ("frgt") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" > ...)"));
-    MATCH (READ_STR ("frle") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" <= ...)"));
-    MATCH (READ_STR ("frge") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" >= ...)"));
-    MATCH (READ_STR ("frnt") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" ! ...)"));
-    MATCH (READ_STR ("fraa") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" && ...)"));
-    MATCH (READ_STR ("froo") && AST_APPEND_CHR ('(') && RULE (expression) && AST_APPEND_STR (" || ...)"));
-    MATCH (READ_STR ("tw") && AST_APPEND_STR ("throw ") && RULE (expression));
+    MATCH (READ_STR ("frpl") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" + ...)"));
+    MATCH (READ_STR ("frmi") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" - ...)"));
+    MATCH (READ_STR ("frml") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" * ...)"));
+    MATCH (READ_STR ("frdv") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" / ...)"));
+    MATCH (READ_STR ("frrm") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" % ...)"));
+    MATCH (READ_STR ("fran") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" & ...)"));
+    MATCH (READ_STR ("fror") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" | ...)"));
+    MATCH (READ_STR ("freo") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" ^ ...)"));
+    MATCH (READ_STR ("fraS") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" = ...)"));
+    MATCH (READ_STR ("frpL") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" += ...)"));
+    MATCH (READ_STR ("frmI") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" -= ...)"));
+    MATCH (READ_STR ("frmL") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" *= ...)"));
+    MATCH (READ_STR ("frdV") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" /= ...)"));
+    MATCH (READ_STR ("frrM") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" %= ...)"));
+    MATCH (READ_STR ("fraN") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" &= ...)"));
+    MATCH (READ_STR ("froR") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" |= ...)"));
+    MATCH (READ_STR ("freO") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" ^= ...)"));
+    MATCH (READ_STR ("frls") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" << ...)"));
+    MATCH (READ_STR ("frrs") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" >> ...)"));
+    MATCH (READ_STR ("frlS") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" <<= ...)"));
+    MATCH (READ_STR ("frrS") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" >>= ...)"));
+    MATCH (READ_STR ("freq") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" == ...)"));
+    MATCH (READ_STR ("frne") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" != ...)"));
+    MATCH (READ_STR ("frlt") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" < ...)"));
+    MATCH (READ_STR ("frgt") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" > ...)"));
+    MATCH (READ_STR ("frle") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" <= ...)"));
+    MATCH (READ_STR ("frge") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" >= ...)"));
+    MATCH (READ_STR ("frnt") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" ! ...)"));
+    MATCH (READ_STR ("fraa") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" && ...)"));
+    MATCH (READ_STR ("froo") && AST_APPEND_CHR ('(') && RULE_X (0,expression) && AST_APPEND_STR (" || ...)"));
+    MATCH (READ_STR ("tw") && AST_APPEND_STR ("throw ") && RULE_X(0,expression));
 	// clang-format on
 
 	// tw <expression>                                      # throw expression
-	MATCH(RULE(template_param));
+	MATCH1(template_param);
 	// tr                                                   # throw with no operand (rethrow)
-	MATCH(RULE(function_param));
+	MATCH1(function_param);
 
 	// u <source-name> <template-arg>* E                    # vendor extended expression
 	MATCH(READ_STR("tr") && AST_APPEND_STR("throw"));
 
-	MATCH(RULE(unresolved_name));
-	MATCH(RULE(expr_primary));
+	MATCH1(unresolved_name);
+	MATCH1(expr_primary);
 	RULE_FOOT(expression);
 }
 
@@ -1138,12 +1062,7 @@ bool rule_simple_id(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(simple_id);
-	MATCH_AND_DO(
-		RULE_DEFER(AST(0), source_name) && OPTIONAL(RULE_DEFER(AST(1), template_args)),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
+	MATCH(RULE_X(0, source_name) && OPTIONAL(RULE_X(1, template_args)));
 	RULE_FOOT(simple_id);
 }
 
@@ -1270,7 +1189,7 @@ bool rule_initializer(
 bool rule_abi_tag(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(abi_tag);
 	// will generate " \"<source_name>\","
-	MATCH(READ('B') && AST_APPEND_STR(" \"") && RULE(source_name) && AST_APPEND_STR("\","));
+	MATCH(READ('B') && AST_APPEND_STR(" \"") && RULE_X(0, source_name) && AST_APPEND_STR("\","));
 	RULE_FOOT(abi_tag);
 }
 
@@ -1281,9 +1200,8 @@ bool rule_call_offset(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(call_offset);
-	MATCH(
-		READ('h') && AST_APPEND_STR("non-virtual thunk to ") && RULE(nv_offset) && READ('_'));
-	MATCH(READ('v') && AST_APPEND_STR("virtual thunk to ") && RULE(v_offset) && READ('_'));
+	MATCH(READ('h') && AST_APPEND_STR("non-virtual thunk to ") && RULE_X(0, nv_offset) && READ('_'));
+	MATCH(READ('v') && AST_APPEND_STR("virtual thunk to ") && RULE_X(0, v_offset) && READ('_'));
 	RULE_FOOT(call_offset);
 }
 
@@ -1317,13 +1235,7 @@ bool rule_special_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(special_name);
-	MATCH_AND_DO(
-		READ_STR("Tc") && RULE_DEFER(AST(0), call_offset) && RULE_DEFER(AST(1), call_offset) && RULE_DEFER(AST(2), encoding),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-			AST_MERGE(AST(2));
-		});
+	MATCH(READ_STR("Tc") && RULE_X(0, call_offset) && RULE_X(1, call_offset) && RULE_X(2, encoding));
 	MATCH_AND_DO(
 		READ_STR("GR") && RULE_DEFER(AST(0), name) && RULE_DEFER(AST(1), seq_id) && READ('_'),
 		{
@@ -1331,20 +1243,14 @@ bool rule_special_name(
 			AST_MERGE(AST(0));
 			AST_MERGE(AST(1));
 		});
-	MATCH_AND_DO(
-		READ('T') && RULE_DEFER(AST(0), call_offset) && RULE_DEFER(AST(1), encoding),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
-	MATCH(
-		READ_STR("GR") && AST_APPEND_STR("reference temporary for ") && RULE(name) && READ('_'));
-	MATCH(READ_STR("TV") && AST_APPEND_STR("vtable for ") && RULE(type));
-	MATCH(READ_STR("TT") && AST_APPEND_STR("VTT structure for ") && RULE(type));
-	MATCH(READ_STR("TI") && AST_APPEND_STR("typeinfo for ") && RULE(type));
-	MATCH(READ_STR("TS") && AST_APPEND_STR("typeinfo name for ") && RULE(type));
-	MATCH(READ_STR("GV") && AST_APPEND_STR("guard variable for ") && RULE(name));
-	MATCH(READ_STR("GTt") && RULE(encoding));
+	MATCH(READ('T') && RULE_X(0, call_offset) && RULE_X(1, encoding));
+	MATCH(READ_STR("GR") && AST_APPEND_STR("reference temporary for ") && RULE_X(0, name) && READ('_'));
+	MATCH(READ_STR("TV") && AST_APPEND_STR("vtable for ") && RULE_X(0, type));
+	MATCH(READ_STR("TT") && AST_APPEND_STR("VTT structure for ") && RULE_X(0, type));
+	MATCH(READ_STR("TI") && AST_APPEND_STR("typeinfo for ") && RULE_X(0, type));
+	MATCH(READ_STR("TS") && AST_APPEND_STR("typeinfo name for ") && RULE_X(0, type));
+	MATCH(READ_STR("GV") && AST_APPEND_STR("guard variable for ") && RULE_X(0, name));
+	MATCH(READ_STR("GTt") && RULE_X(0, encoding));
 	// TODO: GI <module-name> v
 	RULE_FOOT(special_name);
 }
@@ -1506,17 +1412,14 @@ bool rule_function_param(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(function_param);
-	MATCH(
-		READ_STR("fL") && RULE(non_negative_number) && READ('p') &&
-		RULE(top_level_cv_qualifiers) && AST_APPEND_CHR(' ') && RULE(non_negative_number) &&
+	MATCH(READ_STR("fL") && RULE_X(0, non_negative_number) && READ('p') &&
+		RULE_X(1, top_level_cv_qualifiers) && AST_APPEND_CHR(' ') && RULE_X(2, non_negative_number) &&
 		READ('_'));
-	MATCH(
-		READ_STR("fL") && RULE(non_negative_number) && READ('p') &&
-		RULE(top_level_cv_qualifiers) && AST_APPEND_CHR(' ') && READ('_'));
-	MATCH(
-		READ_STR("fp") && RULE(top_level_cv_qualifiers) && AST_APPEND_CHR(' ') &&
-		RULE(non_negative_number) && READ('_'));
-	MATCH(READ_STR("fp") && RULE(top_level_cv_qualifiers) && AST_APPEND_CHR(' ') && READ('_'));
+	MATCH(READ_STR("fL") && RULE_X(0, non_negative_number) && READ('p') &&
+		RULE_X(1, top_level_cv_qualifiers) && AST_APPEND_CHR(' ') && READ('_'));
+	MATCH(READ_STR("fp") && RULE_X(0, top_level_cv_qualifiers) && AST_APPEND_CHR(' ') &&
+		RULE_X(1, non_negative_number) && READ('_'));
+	MATCH(READ_STR("fp") && RULE_X(0, top_level_cv_qualifiers) && AST_APPEND_CHR(' ') && READ('_'));
 	MATCH(READ_STR("fPT"));
 	RULE_FOOT(function_param);
 }
@@ -1528,31 +1431,14 @@ bool rule_builtin_type(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(builtin_type);
-	MATCH(
-		READ_STR("DF") && AST_APPEND_STR("_Float") && RULE_DEFER(AST(0), number) &&
-		READ('_') && AST_MERGE(AST(0)));
-	MATCH(
-		READ_STR("DF") && AST_APPEND_STR("_Float") && RULE_DEFER(AST(0), number) &&
-		READ('x') && AST_MERGE(AST(0)) && AST_APPEND_STR("x"));
-	MATCH(
-		READ_STR("DF") && AST_APPEND_STR("std::bfloat") && RULE_DEFER(AST(0), number) &&
-		READ('b') && AST_MERGE(AST(0)) && AST_APPEND_STR("_t"));
-	MATCH(
-		READ_STR("DB") && AST_APPEND_STR("signed _BitInt(") && RULE_DEFER(AST(0), number) &&
-		AST_MERGE(AST(0)) && AST_APPEND_STR(")") && READ('_'));
-	MATCH(
-		READ_STR("DB") && AST_APPEND_STR("signed _BitInt(") && RULE_DEFER(AST(0), expression) &&
-		AST_MERGE(AST(0)) && AST_APPEND_STR(")") && READ('_'));
-	MATCH(
-		READ_STR("DU") && AST_APPEND_STR("unsigned _BitInt(") && RULE_DEFER(AST(0), number) &&
-		AST_MERGE(AST(0)) && AST_APPEND_STR(")") && READ('_'));
-	MATCH(
-		READ_STR("DU") && AST_APPEND_STR("unsigned _BitInt(") &&
-		RULE_DEFER(AST(0), expression) && AST_MERGE(AST(0)) && AST_APPEND_STR(")") &&
-		READ('_'));
-	MATCH(
-		READ('u') && RULE_DEFER(AST(0), source_name) && AST_MERGE(AST(0)) &&
-		OPTIONAL(RULE_DEFER(AST(1), template_args) && AST_MERGE(AST(1))));
+	MATCH(READ_STR("DF") && AST_APPEND_STR("_Float") && RULE_X(0, number) && READ('_'));
+	MATCH(READ_STR("DF") && AST_APPEND_STR("_Float") && RULE_X(0, number) && READ('x') && AST_APPEND_STR("x"));
+	MATCH(READ_STR("DF") && AST_APPEND_STR("std::bfloat") && RULE_X(0, number) && READ('b') && AST_APPEND_STR("_t"));
+	MATCH(READ_STR("DB") && AST_APPEND_STR("signed _BitInt(") && RULE_X(0, number) && AST_APPEND_STR(")") && READ('_'));
+	MATCH(READ_STR("DB") && AST_APPEND_STR("signed _BitInt(") && RULE_X(0, expression) && AST_APPEND_STR(")") && READ('_'));
+	MATCH(READ_STR("DU") && AST_APPEND_STR("unsigned _BitInt(") && RULE_X(0, number) && AST_APPEND_STR(")") && READ('_'));
+	MATCH(READ_STR("DU") && AST_APPEND_STR("unsigned _BitInt(") && RULE_X(0, expression) && AST_APPEND_STR(")") && READ('_'));
+	MATCH(READ('u') && RULE_X(0, source_name) && OPTIONAL(RULE_X(1, template_args)));
 	MATCH(READ_STR("DS") && READ_STR("DA") && AST_APPEND_STR("_Sat _Accum"));
 	MATCH(READ_STR("DS") && READ_STR("DR") && AST_APPEND_STR("_Sat _Fract"));
 	MATCH(READ('v') && AST_APPEND_STR("void"));
@@ -1599,13 +1485,8 @@ bool rule_extended_qualifier(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(extended_qualifier);
-	MATCH_AND_DO(
-		READ('U') && RULE_DEFER(AST(0), source_name) && RULE_DEFER(AST(1), template_args),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
-	MATCH(READ('U') && RULE(source_name));
+	MATCH(READ('U') && RULE_X(0, source_name) && RULE_X(1, template_args));
+	MATCH(READ('U') && RULE_X(0, source_name));
 	RULE_FOOT(extended_qualifier);
 }
 
@@ -1645,9 +1526,7 @@ bool rule_class_enum_type(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(class_enum_type);
-	MATCH(
-		OPTIONAL(READ_STR("Ts") || READ_STR("Tu") || READ_STR("Te")) &&
-		RULE_DEFER(AST(0), name) && AST_MERGE(AST(0)));
+	MATCH(OPTIONAL(READ_STR("Ts") || READ_STR("Tu") || READ_STR("Te")) && RULE_X(0, name));
 	RULE_FOOT(class_enum_type);
 }
 
@@ -1674,11 +1553,7 @@ bool rule_mangled_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(mangled_name);
-	MATCH_AND_DO(
-		READ_STR("_Z") && RULE_DEFER(AST(0), encoding) && OPTIONAL(READ('.') && RULE_DEFER(AST(1), vendor_specific_suffix)), {
-			AST_MERGE(AST(0));
-			AST_MERGE_OPT(AST(1));
-		});
+	MATCH(READ_STR("_Z") && RULE_X(0, encoding) && OPTIONAL(READ('.') && RULE_X(1, vendor_specific_suffix)));
 	RULE_FOOT(mangled_name);
 }
 
@@ -1714,9 +1589,7 @@ bool rule_qualifiers(
 				      _my_node_id) &&
 		VecDemAstNode_len(AST(0)->children) > 0;
 
-	MATCH(
-		RULE_DEFER(AST(1), cv_qualifiers) && AST_MERGE(AST(1)) &&
-		(!has_qualifiers || (AST_APPEND_CHR(' ') && AST_MERGE(AST(0)))));
+	MATCH(RULE_X(1, cv_qualifiers) && (!has_qualifiers || (AST_APPEND_CHR(' ') && AST_MERGE(AST(0)))));
 
 	RULE_FOOT(qualifiers);
 }
@@ -1799,18 +1672,15 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	});
 	// MATCH (RULE (template_template_param) && RULE (template_args));
 
-	MATCH(
-		RULE_DEFER(AST(0), substitution) && RULE_DEFER(AST(1), template_args) &&
-		AST_MERGE(AST(0)) && AST_MERGE(AST(1)) && AST_APPEND_TYPE);
-	MATCH(RULE_DEFER(AST(0), builtin_type) && AST_MERGE(AST(0)));
-	MATCH(
-		READ_STR("Dp") && RULE_CALL_DEFER(AST(0), type) && AST_MERGE(AST(0))); // pack expansion (C++11)
+	MATCH(RULE_X(0, substitution) && RULE_X(1, template_args) && AST_APPEND_TYPE);
+	MATCH1(builtin_type);
+	MATCH(READ_STR("Dp") && RULE_X(0, type)); // pack expansion (C++11)
 
 	// Extended qualifiers with CV qualifiers
-	MATCH(RULE_DEFER(AST(0), array_type) && AST_MERGE(AST(0)));
-	MATCH(RULE_DEFER(AST(0), pointer_to_member_type) && AST_MERGE(AST(0)));
-	MATCH(RULE_DEFER(AST(0), decltype) && AST_MERGE(AST(0)));
-	MATCH(RULE_DEFER(AST(0), substitution) && AST_MERGE(AST(0)));
+	MATCH1(array_type);
+	MATCH1(pointer_to_member_type);
+	MATCH1(decltype);
+	MATCH1(substitution);
 
 	switch (PEEK()) {
 	case 'T': {
@@ -1862,9 +1732,9 @@ bool rule_base_unresolved_name(
 			AST_MERGE(AST(0));
 			AST_MERGE(AST(1));
 		});
-	MATCH(READ_STR("on") && RULE(operator_name));
-	MATCH(READ_STR("dn") && RULE(destructor_name));
-	MATCH(RULE(simple_id));
+	MATCH(READ_STR("on") && RULE_X(0, operator_name));
+	MATCH(READ_STR("dn") && RULE_X(0, destructor_name));
+	MATCH(RULE_X(0, simple_id));
 	RULE_FOOT(base_unresolved_name);
 }
 
@@ -1952,7 +1822,7 @@ bool rule_operator_name(
 			AST_MERGE(AST(0));
 			AST_MERGE(AST(1));
 		});
-	MATCH(READ_STR("cv") && AST_APPEND_STR("operator (") && RULE(type) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("cv") && AST_APPEND_STR("operator (") && RULE_X(0, type) && AST_APPEND_STR(")"));
 	MATCH(READ_STR("nw") && AST_APPEND_STR("operator new"));
 	MATCH(READ_STR("na") && AST_APPEND_STR("operator new[]"));
 	MATCH(READ_STR("dl") && AST_APPEND_STR("operator delete"));
@@ -2005,8 +1875,7 @@ bool rule_operator_name(
 	MATCH(READ_STR("ix") && AST_APPEND_STR("operator[]"));
 
 	/* operator-name ::= li <source-name>          # operator ""*/
-	MATCH(
-		READ_STR("li") && RULE(source_name)); // TODO(brightprogrammer): How to generate for this operator?
+	MATCH(READ_STR("li") && RULE_X(0, source_name)); // TODO(brightprogrammer): How to generate for this operator?
 
 	MATCH(READ_STR("qu") && AST_APPEND_STR("operator?"));
 	RULE_FOOT(operator_name);
@@ -2030,8 +1899,8 @@ bool rule_destructor_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(destructor_name);
-	MATCH(RULE(unresolved_type));
-	MATCH(RULE(simple_id));
+	MATCH1(unresolved_type);
+	MATCH1(simple_id);
 	RULE_FOOT(destructor_name);
 }
 
@@ -2175,8 +2044,8 @@ bool rule_template_template_param(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(template_template_param);
-	MATCH(RULE(template_param));
-	MATCH(RULE(substitution));
+	MATCH1(template_param);
+	MATCH1(substitution);
 	RULE_FOOT(template_template_param);
 }
 
@@ -2276,8 +2145,8 @@ bool rule_ctor_dtor_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(ctor_dtor_name);
-	MATCH(RULE(ctor_name));
-	MATCH(RULE(dtor_name));
+	MATCH1(ctor_name);
+	MATCH1(dtor_name);
 	RULE_FOOT(ctor_dtor_name);
 }
 
@@ -2352,12 +2221,12 @@ bool rule_template_arg(
 	}
 	case 'T': {
 		if (!is_template_param_decl(msi)) {
-			return RULE_CALL_DEFER(AST(0), type);
+			MATCH1(type);
 		}
 		DEM_UNREACHABLE;
 	}
 	default:
-		return RULE_CALL_DEFER(AST(0), type);
+		MATCH1(type);
 	}
 
 	RULE_FOOT(template_arg);
@@ -2386,7 +2255,7 @@ bool rule_template_args(
 	if (tag_templates) {
 		VecNodeList_clear(&m->template_params);
 		VecNodeList_append(&m->template_params, &m->outer_template_params);
-		VecDemAstNode_clear(&m->outer_template_params);
+		VecDemAstNode_resize(&m->outer_template_params, 0);
 	}
 
 	while (!READ('E')) {
@@ -2394,12 +2263,12 @@ bool rule_template_args(
 		if (!rule_template_arg(RULE_ARGS(&node_arg))) {
 			TRACE_RETURN_FAILURE();
 		}
-		AST_APPEND_NODE(&node_arg);
 		if (tag_templates) {
 			DemAstNode node_arg_cloned = { 0 };
 			DemAstNode_copy(&node_arg_cloned, &node_arg);
 			VecF(DemAstNode, append)(&m->outer_template_params, &node_arg_cloned);
 		}
+		AST_APPEND_NODE(&node_arg);
 		if (READ('Q')) {
 			DEM_UNREACHABLE;
 		}
@@ -2541,17 +2410,14 @@ bool rule_braced_expression(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(braced_expression);
-	MATCH(
-		READ_STR("dX") && AST_APPEND_STR(" [") && RULE(range_begin_expression) &&
-		AST_APPEND_STR(" ... ") && RULE(range_end_expression) && AST_APPEND_STR("] = ") &&
-		RULE(braced_expression));
-	MATCH(
-		READ_STR("di") && AST_APPEND_STR(" .") && RULE(field_source_name) &&
-		AST_APPEND_STR(" = ") && RULE(braced_expression));
-	MATCH(
-		READ_STR("dx") && AST_APPEND_STR(" [") && RULE(index_expression) &&
-		AST_APPEND_STR("] = ") && RULE(braced_expression));
-	MATCH(RULE(expression));
+	MATCH(READ_STR("dX") && AST_APPEND_STR(" [") && RULE_X(0, range_begin_expression) &&
+		AST_APPEND_STR(" ... ") && RULE_X(1, range_end_expression) && AST_APPEND_STR("] = ") &&
+		RULE_X(2, braced_expression));
+	MATCH(READ_STR("di") && AST_APPEND_STR(" .") && RULE_X(0, field_source_name) &&
+		AST_APPEND_STR(" = ") && RULE_X(1, braced_expression));
+	MATCH(READ_STR("dx") && AST_APPEND_STR(" [") && RULE_X(0, index_expression) &&
+		AST_APPEND_STR("] = ") && RULE_X(1, braced_expression));
+	MATCH1(expression);
 	RULE_FOOT(braced_expression);
 }
 
@@ -2573,11 +2439,8 @@ bool rule_expr_primary(
 	//       "(bool)1" is converted to "false"
 	//       "(unsigned int)N" to "Nu"
 
-	MATCH(
-		READ('L') && RULE(type) && RULE(real_part_float) && READ('_') &&
-		RULE(imag_part_float) && READ('E'));
-	MATCH(
-		READ('L') && AST_APPEND_STR("(") && (PEEK() == 'P') && RULE(pointer_type) &&
+	MATCH(READ('L') && RULE_X(0, type) && RULE_X(1, real_part_float) && READ('_') && RULE_X(2, imag_part_float) && READ('E'));
+	MATCH(READ('L') && AST_APPEND_STR("(") && (PEEK() == 'P') && RULE_X(0, pointer_type) &&
 		AST_APPEND_STR(")") && READ('0') && AST_APPEND_CHR('0') && READ('E'));
 	// Non-type template parameter: L<type><value>E
 	// For bool: Lb0E -> false, Lb1E -> true
@@ -2608,15 +2471,9 @@ bool rule_expr_primary(
 			}
 		});
 
-	MATCH_AND_DO(
-		READ('L') && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), value_float) && READ('E'),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-		});
-
-	MATCH(READ('L') && RULE(string_type) && READ('E'));
-	MATCH(READ_STR("L_Z") && RULE(encoding) && READ('E'));
+	MATCH(READ('L') && RULE_X(0, type) && RULE_X(1, value_float) && READ('E'));
+	MATCH(READ('L') && RULE_X(0, string_type) && READ('E'));
+	MATCH(READ_STR("L_Z") && RULE_X(0, encoding) && READ('E'));
 	MATCH(READ_STR("LDnE") && AST_APPEND_STR("decltype(nullptr)0"));
 	MATCH(READ_STR("LDn0E") && AST_APPEND_STR("(decltype(nullptr))0"));
 	RULE_FOOT(expr_primary);
