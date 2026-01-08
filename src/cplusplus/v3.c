@@ -1475,7 +1475,9 @@ bool rule_source_name(
 	if (name_len == 0 || CUR() == dan->val.buf) {
 		TRACE_RETURN_FAILURE();
 	}
-	if (CUR() + name_len >= END()) {
+	// Avoid pointer overflow and ensure we have enough data
+	st64 remaining = END() - CUR();
+	if (name_len < 0 || name_len > remaining) {
 		TRACE_RETURN_FAILURE();
 	}
 
@@ -1989,6 +1991,9 @@ bool rule_nested_name(
 				}
 				ast_node = VecF(DemAstNode, append)(dan->children, &node_unqualified_name);
 				AST_MERGE(ast_node);
+			} else if (PEEK() != 'E' && PEEK() != 'M') {
+				// If unqualified_name fails and we're not at a valid terminator, fail
+				TRACE_RETURN_FAILURE();
 			}
 		}
 
