@@ -17,6 +17,7 @@
 #include "parser_combinator.h"
 #include "types.h"
 #include "vec.h"
+#include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -1671,11 +1672,31 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		break;
 	}
 	case 'S': {
+		// Save position to check what substitution we parsed
+		const char *before_subst = CUR();
 		if (!rule_substitution(RULE_ARGS(AST(0)))) {
 			TRACE_RETURN_FAILURE();
 		}
+		const char *after_subst = CUR();
+
 		AST_MERGE(AST(0));
-		if (!(RULE_X(1, template_args))) {
+
+		// Special case: St followed by digit means std::<identifier>
+		// Check if we consumed exactly "St" and next char is a digit
+		if (after_subst - before_subst == 2 && before_subst[0] == 'S' && before_subst[1] == 't' && isdigit(PEEK())) {
+			dem_string_append(&dan->dem, "::");
+			if (!RULE_CALL_DEFER(AST(1), source_name)) {
+				TRACE_RETURN_FAILURE();
+			}
+			AST_MERGE(AST(1));
+			// Add the qualified name (e.g., "std::function") to substitution table
+			// BEFORE parsing template args, so back-references work correctly
+			if (PEEK() == 'I') {
+				AST_APPEND_TYPE;
+			}
+		}
+
+		if (!(RULE_X(2, template_args))) {
 			TRACE_RETURN_SUCCESS;
 		}
 		break;
