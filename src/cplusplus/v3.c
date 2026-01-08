@@ -1984,8 +1984,10 @@ bool rule_nested_name(
 
 			DemAstNode node_unqualified_name = { 0 };
 			if (rule_unqualified_name(RULE_ARGS(&node_unqualified_name))) {
+				if (!VecF(DemAstNode, empty)(dan->children)) {
+					AST_APPEND_STR("::");
+				}
 				ast_node = VecF(DemAstNode, append)(dan->children, &node_unqualified_name);
-				AST_APPEND_STR("::");
 				AST_MERGE(ast_node);
 			}
 		}
