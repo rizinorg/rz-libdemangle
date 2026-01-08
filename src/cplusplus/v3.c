@@ -1986,7 +1986,10 @@ bool rule_nested_name(
 
 			DemAstNode node_unqualified_name = { 0 };
 			if (rule_unqualified_name(RULE_ARGS(&node_unqualified_name))) {
-				if (!VecF(DemAstNode, empty)(dan->children)) {
+				// Only add "::" if we've already added name components
+				// Note: indices 0,1 are pre-allocated for cv_qualifiers/ref_qualifier
+				// so actual name components start at index 2
+				if (dan->children && VecDemAstNode_len(dan->children) > 2) {
 					AST_APPEND_STR("::");
 				}
 				ast_node = VecF(DemAstNode, append)(dan->children, &node_unqualified_name);

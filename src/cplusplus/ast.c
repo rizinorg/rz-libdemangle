@@ -56,6 +56,11 @@ void DemAstNode_deinit(DemAstNode *dan) {
 	if (!dan) {
 		return;
 	}
+	if (getenv("DEMANGLE_TRACE")) {
+		fprintf(stderr, "[DemAstNode_deinit] dan=%p, dem.buf=%p ('%s'), dem.len=%zu, children=%p\n",
+			(void *)dan, (void *)dan->dem.buf, dan->dem.buf ? dan->dem.buf : "(null)",
+			dan->dem.len, (void *)dan->children);
+	}
 	VecDemAstNode_dtor(dan->children);
 	dem_string_deinit(&dan->dem);
 	memset(dan, 0, sizeof(DemAstNode));
