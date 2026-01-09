@@ -1970,6 +1970,7 @@ bool rule_nested_name(
 				TRACE_RETURN_FAILURE();
 			}
 			DemAstNode node_template_args = { 0 };
+			node_template_args.parent = dan;
 			if (rule_template_args(RULE_ARGS(&node_template_args))) {
 				if (ast_node && VecDemAstNode_len(ast_node->children) > 0 && VecDemAstNode_tail(ast_node->children)->tag == CP_DEM_TYPE_KIND_template_args) {
 					TRACE_RETURN_FAILURE();
