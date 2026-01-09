@@ -1292,7 +1292,7 @@ static DemAstNode *extract_func_type_node(DemAstNode *dan, DemString *func_name)
 		return dan;
 	}
 
-	if (func_name && dem_string_non_empty(func_name)) {
+	if (func_name && dem_string_non_empty(&dan->dem)) {
 		char *p = NULL;
 		if ((p = strstr(dan->dem.buf, "(*"))) {
 			size_t name_len = strchr(p, ')') - (p + 1);
