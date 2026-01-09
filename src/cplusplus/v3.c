@@ -1683,7 +1683,9 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 
 		// Special case: St followed by digit means std::<identifier>
 		// Check if we consumed exactly "St" and next char is a digit
+		bool is_std_identifier = false;
 		if (after_subst - before_subst == 2 && before_subst[0] == 'S' && before_subst[1] == 't' && isdigit(PEEK())) {
+			is_std_identifier = true;
 			dem_string_append(&dan->dem, "::");
 			if (!RULE_CALL_DEFER(AST(1), source_name)) {
 				TRACE_RETURN_FAILURE();
@@ -1697,6 +1699,11 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		}
 
 		if (!(RULE_X(2, template_args))) {
+			// Only add to substitution table if we parsed St<identifier>
+			// Builtin substitutions (St, So, Sa, etc.) and back-references (S_, S0_, etc.) should NOT be added
+			if (is_std_identifier) {
+				AST_APPEND_TYPE;
+			}
 			TRACE_RETURN_SUCCESS;
 		}
 		break;

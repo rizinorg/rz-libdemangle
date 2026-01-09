@@ -39,6 +39,8 @@ tests = [
     'pascal',
     'rust',
 
+    'subs',  # Substitution table tests
+
     'cxx.00',
     'cxx.01',
     'cxx.02',
@@ -141,16 +143,31 @@ if get_option('enable_tests') and not meson.is_subproject()
     slow_tests = ['cxx_base']
 
     foreach test : tests
-        exe = executable(
-            'test_@0@'.format(test),
-            'test/test_@0@.c'.format(test),
-            include_directories : include_directories(['include', 'test']),
-            dependencies : test_dependencies + libdemangle_dep,
-            c_args : common_c_args,
-            install : false,
-            install_rpath : '',
-            implicit_include_directories : false,
-        )
+        # Substitution table test needs access to internal structures
+        if test == 'subs'
+            exe = executable(
+                'test_@0@'.format(test),
+                ['test/test_@0@.c'.format(test), 'test/test_helper.c'],
+                link_whole : libdemangle.get_static_lib(),
+                include_directories : include_directories(['include', 'test', 'src']),
+                dependencies : test_dependencies,
+                c_args : common_c_args,
+                install : false,
+                install_rpath : '',
+                implicit_include_directories : false,
+            )
+        else
+            exe = executable(
+                'test_@0@'.format(test),
+                'test/test_@0@.c'.format(test),
+                include_directories : include_directories(['include', 'test']),
+                dependencies : test_dependencies + libdemangle_dep,
+                c_args : common_c_args,
+                install : false,
+                install_rpath : '',
+                implicit_include_directories : false,
+            )
+        endif
         if test in slow_tests
             test(test, exe, timeout : 120)
         else
