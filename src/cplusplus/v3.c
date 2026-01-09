@@ -2166,18 +2166,14 @@ bool rule_nv_offset(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(nv_offset);
-	MATCH_AND_DO(true, {
-		SKIP_CH('n');
-		const char *offset_begin = CUR();
-		while (IS_DIGIT(PEEK())) {
-			ADV();
-		}
-		if (CUR() == offset_begin) {
-			TRACE_RETURN_FAILURE();
-		}
-		AST_APPEND_STR_N(offset_begin, CUR() - offset_begin);
-		TRACE_RETURN_SUCCESS;
-	});
+	if (!READ('n')) {
+		TRACE_RETURN_FAILURE();
+	}
+	ut64 x = 0;
+	if (!parse_non_neg_number(msi, &x)) {
+		TRACE_RETURN_FAILURE();
+	}
+	TRACE_RETURN_SUCCESS;
 	RULE_FOOT(nv_offset);
 }
 
