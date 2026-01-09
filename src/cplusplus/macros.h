@@ -429,9 +429,6 @@
 		size_t _match_og_dem_len = dan->dem.len; \
 		size_t _match_og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0; \
 		size_t _match_og_types_len = m ? VecDemAstNode_len(&m->detected_types) : 0; \
-		if (getenv("DEMANGLE_TRACE") && m) { \
-			fprintf(stderr, "[MATCH_AND_DO] SAVE: types_len=%zu\n", _match_og_types_len); \
-		} \
 		if ((rules)) { \
 			/* caller execute code */ \
 			{ body }; \
@@ -444,16 +441,10 @@
 			} \
 			dan->val.len = msi->cur - dan->val.buf; \
 			AST_FLATTEN(dan); \
-			if (getenv("DEMANGLE_TRACE") && m) { \
-				fprintf(stderr, "[MATCH_AND_DO] SUCCESS: types_len now %zu\n", VecDemAstNode_len(&m->detected_types)); \
-			} \
 			return true; \
 		} else { \
 			if (graph && graph->enabled && _my_node_id >= 0) { \
 				trace_graph_set_result(graph, _my_node_id, NULL, 3); /* backtracked */ \
-			} \
-			if (getenv("DEMANGLE_TRACE") && m) { \
-				fprintf(stderr, "[MATCH_AND_DO] BACKTRACK: types_len was %zu, restoring to %zu\n", VecDemAstNode_len(&m->detected_types), _match_og_types_len); \
 			} \
 			dan->dem.len = _match_og_dem_len; \
 			if (dan->dem.buf) { \
@@ -472,9 +463,6 @@
 				while (VecDemAstNode_len(&m->detected_types) > _match_og_types_len) { \
 					size_t last_idx = VecDemAstNode_len(&m->detected_types) - 1; \
 					DemAstNode *node = VecDemAstNode_at(&m->detected_types, last_idx); \
-					if (getenv("DEMANGLE_TRACE")) { \
-						fprintf(stderr, "[BACKTRACK] popping detected_type %zu: '%s'\n", last_idx, node ? (node->dem.buf ? node->dem.buf : "(null)") : "(NULL PTR)"); \
-					} \
 					if (node) { \
 						DemAstNode_deinit(node); \
 					} \

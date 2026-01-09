@@ -75,20 +75,8 @@ void meta_deinit(Meta *m) {
 	if (!m) {
 		return;
 	}
-
-	if (getenv("DEMANGLE_TRACE")) {
-		fprintf(stderr, "[meta_deinit] START: detected_types.length=%zu\n", m->detected_types.length);
-	}
-
-	// Manually deinit each element in detected_types
-	if (getenv("DEMANGLE_TRACE")) {
-		fprintf(stderr, "[meta_deinit] cleaning up %zu detected_types\n", m->detected_types.length);
-	}
 	for (size_t i = 0; i < m->detected_types.length; i++) {
 		DemAstNode *node = &m->detected_types.data[i];
-		if (getenv("DEMANGLE_TRACE")) {
-			fprintf(stderr, "[meta_deinit] deiniting node %zu: '%s'\n", i, node->dem.buf ? node->dem.buf : "(null)");
-		}
 		DemAstNode_deinit(node);
 	}
 	// Now free the data array
@@ -103,20 +91,11 @@ void meta_deinit(Meta *m) {
 	VecF(DemAstNode, dtor)(m->outer_template_params);
 	VecF(PNodeList, deinit)(&m->template_params);
 	memset(m, 0, sizeof(Meta));
-
-	if (getenv("DEMANGLE_TRACE")) {
-		fprintf(stderr, "[meta_deinit] END\n");
-	}
 }
 
 bool meta_copy(Meta *dst, Meta *src) {
 	if (!(src && dst && src != dst)) {
 		return false;
-	}
-
-	if (getenv("DEMANGLE_TRACE")) {
-		fprintf(stderr, "[meta_copy] dst=%p (length=%zu) <- src=%p (length=%zu)\n",
-			(void *)dst, dst->detected_types.length, (void *)src, src->detected_types.length);
 	}
 
 	meta_deinit(dst);
@@ -128,21 +107,12 @@ bool meta_copy(Meta *dst, Meta *src) {
 	NodeList_copy(dst->outer_template_params, src->outer_template_params);
 	VecF(PNodeList, copy)(&dst->template_params, &src->template_params);
 
-	if (getenv("DEMANGLE_TRACE")) {
-		fprintf(stderr, "[meta_copy] DONE: dst.length=%zu\n", dst->detected_types.length);
-	}
-
 	return true;
 }
 
 void meta_move(Meta *dst, Meta *src) {
 	if (!(dst && src && dst != src)) {
 		return;
-	}
-
-	if (getenv("DEMANGLE_TRACE")) {
-		fprintf(stderr, "[meta_move] dst=%p (length=%zu) <- src=%p (length=%zu)\n",
-			(void *)dst, dst->detected_types.length, (void *)src, src->detected_types.length);
 	}
 
 	meta_deinit(dst);
@@ -155,10 +125,6 @@ void meta_move(Meta *dst, Meta *src) {
 	VecF(PNodeList, copy)(&dst->template_params, &src->template_params);
 
 	memset(src, 0, sizeof(Meta));
-
-	if (getenv("DEMANGLE_TRACE")) {
-		fprintf(stderr, "[meta_move] DONE: dst.length=%zu\n", dst->detected_types.length);
-	}
 }
 
 static const char *builtin_type_stings[] = {
@@ -245,32 +211,15 @@ bool append_type(Meta *m, const DemAstNode *x) {
 		return false;
 	}
 
-	const DemString *t = &x->dem;
-
-	// DEBUG
-	if (getenv("DEMANGLE_TRACE")) {
-		fprintf(stderr, "[append_type] BEFORE: m=%p, data=%p, length=%zu, capacity=%zu, trying to add: '%s'\n",
-			(void *)m, (void *)m->detected_types.data, m->detected_types.length, m->detected_types.capacity, t->buf);
-	}
-
 	DemAstNode *new_node = VecF(DemAstNode, append)(&m->detected_types, NULL);
 	if (!new_node) {
-		if (getenv("DEMANGLE_TRACE")) {
-			fprintf(stderr, "[append_type] FAILED to append! length=%zu\n", m->detected_types.length);
-		}
 		return false;
 	}
 	DemAstNode_copy(new_node, x);
-
-	if (getenv("DEMANGLE_TRACE")) {
-		fprintf(stderr, "[append_type] AFTER: m=%p, data=%p, length=%zu, capacity=%zu\n",
-			(void *)m, (void *)m->detected_types.data, m->detected_types.length, m->detected_types.capacity);
-	}
-
 	return true;
 }
 
-/**
+/**MATCH_AND_DO
  * Find the index of a type in the detected_types table.
  * Returns the index if found, or -1 if not found.
  */
@@ -311,16 +260,16 @@ bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan) {
 
 bool meta_substitute_tparam(Meta *m, DemAstNode *dan, ut64 level, ut64 index) {
 	if (level >= m->template_params.length) {
-		return false;
+		goto branch_fail;
 	}
 	NodeList **pptparams_at_level = vec_ptr_at(&m->template_params, level);
 	if (!(pptparams_at_level && *pptparams_at_level && index < (*pptparams_at_level)->length)) {
-		return false;
+		goto branch_fail;
 	}
 	NodeList *tparams_at_level = *pptparams_at_level;
 	DemAstNode *tparam_node = vec_ptr_at(tparams_at_level, index);
 	if (!tparam_node || DemAstNode_is_empty(tparam_node)) {
-		return false;
+		goto branch_fail;
 	}
 
 	DemAstNode x = { 0 };
@@ -330,6 +279,12 @@ bool meta_substitute_tparam(Meta *m, DemAstNode *dan, ut64 level, ut64 index) {
 		fprintf(stderr, "[substitute_tparam] L%ld_%ld -> '%s'\n", level, index, tparam_node->dem.buf);
 	}
 	return true;
+
+branch_fail:
+	if (m->trace) {
+		fprintf(stderr, "[substitute_tparam] dan[%p]%s FAILED L%ld_%ld\n", dan, dan->dem.buf, level, index);
+	}
+	return false;
 }
 
 // counts the number of :: in a name and adds 1 to it
