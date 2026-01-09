@@ -2541,12 +2541,9 @@ char *demangle_rule(const char *mangled, DemRule rule, CpDemOptions opts) {
 	}
 	char *result = NULL;
 
-	if (rule(dan, msi, m, graph, -1)) {
-		result = dan->dem.buf;
-		dan->dem.buf = NULL;
-		dem_string_deinit(&dan->dem);
+	if (!rule(dan, msi, m, graph, -1)) {
+		goto beach;
 	}
-
 	// Output graphviz trace if enabled
 	if (graph->enabled) {
 		// Mark the final successful path
@@ -2563,6 +2560,18 @@ char *demangle_rule(const char *mangled, DemRule rule, CpDemOptions opts) {
 		trace_graph_output_dot(graph, graph_filename, m);
 	}
 
+	if (m->trace && VecDemAstNode_len(&m->detected_types) > 0) {
+		fprintf(stderr, "substitutions:\n");
+		ut32 idx = 0;
+		vec_foreach_ptr(&m->detected_types, sub, {
+			fprintf(stderr, "[%u] %s\n", idx++, sub->dem.buf);
+		});
+	}
+
+	result = dan->dem.buf;
+	dan->dem.buf = NULL;
+	dem_string_deinit(&dan->dem);
+beach:
 	trace_graph_cleanup(graph);
 	meta_deinit(&meta);
 	DemAstNode_dtor(dan);
