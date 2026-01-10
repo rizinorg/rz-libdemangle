@@ -29,6 +29,21 @@ bool rule_vendor_specific_suffix(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(vendor_specific_suffix);
+
+	// Handle Apple/Objective-C block_invoke patterns
+	// These appear as suffixes after the main symbol
+
+	// Look for _block_invoke followed by optional number
+	if (READ_STR("block_invoke")) {
+		AST_APPEND_STR(" block_invoke");
+		if (READ('_')) {
+			AST_APPEND_STR("_");
+			RULE_X(0, number);
+		}
+		TRACE_RETURN_SUCCESS;
+	}
+
+	// If we can't parse it, return failure so the main rule continues
 	TRACE_RETURN_FAILURE();
 	RULE_FOOT(vendor_specific_suffix);
 }
@@ -84,11 +99,25 @@ bool rule_unresolved_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(unresolved_name);
-	MATCH(READ_STR("srN") && RULE_X(0, unresolved_type) &&
-		RULE_DEFER_ATLEAST_ONCE(AST(1), unresolved_qualifier_level) && AST_MERGE(AST(1)) && READ('E') && RULE_X(2, base_unresolved_name));
-	MATCH(OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && READ_STR("sr") &&
-		RULE_DEFER_ATLEAST_ONCE(AST(0), unresolved_qualifier_level) && AST_MERGE(AST(0)) && READ('E') && RULE_X(1, base_unresolved_name));
-	MATCH(READ_STR("sr") && RULE_X(0, unresolved_type) && RULE_X(1, base_unresolved_name));
+	MATCH_AND_DO(READ_STR("srN") && RULE_DEFER(AST(0), unresolved_type) && AST_MERGE(AST(0)) &&
+			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(1), unresolved_qualifier_level, "::") && READ('E') && RULE_DEFER(AST(2), base_unresolved_name),
+		{
+			AST_APPEND_STR("::");
+			AST_MERGE(AST(1));
+			AST_APPEND_STR("::");
+			AST_MERGE(AST(2));
+		});
+	MATCH_AND_DO(OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && READ_STR("sr") &&
+			RULE_DEFER_ATLEAST_ONCE(AST(0), unresolved_qualifier_level) && AST_MERGE(AST(0)) && READ('E') && RULE_DEFER(AST(1), base_unresolved_name),
+		{
+			AST_APPEND_STR("::");
+			AST_MERGE(AST(1));
+		});
+	MATCH_AND_DO(READ_STR("sr") && RULE_DEFER(AST(0), base_unresolved_name) && AST_MERGE(AST(0)) && READ('E') && RULE_DEFER(AST(1), base_unresolved_name), {
+		AST_APPEND_STR("::");
+		AST_MERGE(AST(1));
+	});
+	MATCH(READ_STR("sr") && RULE_X(0, unresolved_type) && READ('E') && AST_APPEND_STR("::") && RULE_X(1, base_unresolved_name));
 	MATCH(OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && RULE_X(0, base_unresolved_name));
 	RULE_FOOT(unresolved_name);
 }
@@ -100,7 +129,11 @@ bool rule_unscoped_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(unscoped_name);
+	// St followed by L indicates internal linkage (static variable in std namespace)
+	MATCH(READ_STR("StL") && AST_APPEND_STR("std::") && RULE_X(0, unqualified_name));
 	MATCH(READ_STR("St") && AST_APPEND_STR("std::") && RULE_X(0, unqualified_name));
+	// L prefix indicates internal linkage (file-scoped static variable)
+	MATCH(READ('L') && RULE_X(0, unqualified_name));
 	MATCH1(unqualified_name);
 	RULE_FOOT(unscoped_name);
 }
@@ -168,8 +201,25 @@ bool rule_array_type(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(array_type);
-	MATCH(READ('A') && OPTIONAL(RULE_X(0, number)) && READ('_') && RULE_X(1, type));
-	MATCH(READ('A') && RULE_X(0, expression) && READ('_') && RULE_X(1, type));
+	dan->subtag = ARRAY_TYPE;
+	MATCH_AND_DO(READ('A') && OPTIONAL(RULE_DEFER(AST(0), number)) && READ('_') && RULE_DEFER(AST(1), type), {
+		// Format: type [size]
+		// Merge type first
+		AST_MERGE(AST(1));
+		// Then add array notation
+		AST_APPEND_STR(" [");
+		if (DemAstNode_non_empty(AST(0))) {
+			AST_MERGE(AST(0));
+		}
+		AST_APPEND_STR("]");
+	});
+	MATCH_AND_DO(READ('A') && RULE_DEFER(AST(0), expression) && READ('_') && RULE_DEFER(AST(1), type), {
+		// Format: type [expression]
+		AST_MERGE(AST(1));
+		AST_APPEND_STR(" [");
+		AST_MERGE(AST(0));
+		AST_APPEND_STR("]");
+	});
 	RULE_FOOT(array_type);
 }
 
@@ -965,10 +1015,10 @@ bool rule_expression(
 	MATCH(READ_STR("mm_") && AST_APPEND_STR("--") && RULE_X(0, expression));
 	MATCH(READ_STR("ti") && AST_APPEND_STR("typeid(") && RULE_X(0, type) && AST_APPEND_STR(")"));
 	MATCH(READ_STR("te") && AST_APPEND_STR("typeid(") && RULE_X(0, expression) && AST_APPEND_STR(")"));
-	MATCH(READ_STR("st") && AST_APPEND_STR("sizeof(") && RULE_X(0, type) && AST_APPEND_STR(")"));
-	MATCH(READ_STR("sz") && AST_APPEND_STR("sizeof(") && RULE_X(0, expression) && AST_APPEND_STR(")"));
-	MATCH(READ_STR("at") && AST_APPEND_STR("alignof(") && RULE_X(0, type) && AST_APPEND_STR(")"));
-	MATCH(READ_STR("az") && AST_APPEND_STR("alignof(") && RULE_X(0, expression) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("st") && AST_APPEND_STR("sizeof (") && RULE_X(0, type) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("sz") && AST_APPEND_STR("sizeof (") && RULE_X(0, expression) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("at") && AST_APPEND_STR("alignof (") && RULE_X(0, type) && AST_APPEND_STR(")"));
+	MATCH(READ_STR("az") && AST_APPEND_STR("alignof (") && RULE_X(0, expression) && AST_APPEND_STR(")"));
 	MATCH(READ_STR("nx") && AST_APPEND_STR("noexcept(") && RULE_X(0, expression) && AST_APPEND_STR(")"));
 	MATCH(READ_STR("frss") && AST_APPEND_CHR('(') && RULE_X(0, expression) && AST_APPEND_STR(" <=>..."));
 	MATCH(READ_STR("sZ") && AST_APPEND_STR("sizeof...(") && RULE_X(0, template_param) && AST_APPEND_CHR(')'));
@@ -1259,24 +1309,35 @@ bool rule_function_type(
 	RULE_FOOT(function_type);
 }
 
-static void handle_pointer_to_func(DemAstNode *dan) {
-	if (VecF(DemAstNode, len)(dan->children) == 2 && AST(1)->tag == CP_DEM_TYPE_KIND_function_type) {
-		DemAstNode *func_node = AST(1);
-		AST_APPEND_DEMSTR(&AST_(func_node, 2)->dem); // return type
-		AST_APPEND_STR(" (");
-		AST_APPEND_DEMSTR(&AST(0)->dem);
-		AST_APPEND_STR("::*)");
-
-		AST_APPEND_STR("(");
-		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 3)->dem); // bare-function-type
-		AST_APPEND_STR(")");
-
-		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 4)->dem); // ref-qualifier
-		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 0)->dem); // cv-qualifiers
-		AST_APPEND_DEMSTR_OPT(&AST_(func_node, 1)->dem); // exception spec
-	} else {
-		DEM_UNREACHABLE;
+/**
+ * Extract the actual function_type node from a type node that may be qualified.
+ *
+ * For example, if the input is a QUALIFIED_TYPE wrapping a function_type,
+ * this returns the inner function_type node.
+ *
+ * @param type_node The type node to examine (may be function_type or qualified_type)
+ * @return The function_type node if found, NULL otherwise
+ */
+static DemAstNode *extract_function_from_type(DemAstNode *type_node) {
+	if (!type_node) {
+		return NULL;
 	}
+
+	// Direct function type
+	if (type_node->tag == CP_DEM_TYPE_KIND_function_type) {
+		return type_node;
+	}
+
+	// Qualified function type: QUALIFIED_TYPE wrapping a function_type
+	// Structure: AST(0) = qualifiers, AST(1) = function_type
+	if (type_node->subtag == QUALIFIED_TYPE && VecF(DemAstNode, len)(type_node->children) >= 2) {
+		DemAstNode *inner = AST_(type_node, 1);
+		if (inner && inner->tag == CP_DEM_TYPE_KIND_function_type) {
+			return inner;
+		}
+	}
+
+	return NULL;
 }
 
 static DemAstNode *extract_from_subs(DemAstNode *dan) {
@@ -1525,7 +1586,13 @@ bool rule_mangled_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(mangled_name);
-	MATCH(READ_STR("_Z") && RULE_X(0, encoding) && OPTIONAL(READ('.') && RULE_X(1, vendor_specific_suffix)));
+	// Handle internal linkage prefix: _ZL is treated as _Z (L is ignored)
+	MATCH(READ_STR("_ZL") && RULE_X(0, encoding) &&
+		OPTIONAL((READ('.') && RULE_X(1, vendor_specific_suffix)) ||
+			(READ('_') && RULE_X(1, vendor_specific_suffix))));
+	MATCH(READ_STR("_Z") && RULE_X(0, encoding) &&
+		OPTIONAL((READ('.') && RULE_X(1, vendor_specific_suffix)) ||
+			(READ('_') && RULE_X(1, vendor_specific_suffix))));
 	RULE_FOOT(mangled_name);
 }
 
@@ -1577,10 +1644,40 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			handle_func_pointer(dan, func_node, &func_name, AST(0)->dem.buf);
 			dem_string_deinit(&func_name);
 		} else {
-			AST_MERGE(AST(1));
-			if (AST(0)->dem.len > 0) {
-				AST_APPEND_STR(" ");
-				AST_MERGE(AST(0));
+			// Check if AST(1) is a pre-formatted function pointer string
+			// Pattern: "ret_type (*...)(params)"
+			const char *type_str = AST(1)->dem.buf;
+			const char *ptr_start = strstr(type_str, "(*");
+
+			if (ptr_start && AST(0)->dem.len > 0) {
+				// This is a function pointer - insert qualifier before the closing )
+				// Find the closing ) that matches the opening (
+				const char *close_paren = ptr_start + 2;
+				while (*close_paren == '*') {
+					close_paren++;
+				}
+				if (*close_paren == ')') {
+					// Insert: prefix + "(* ..." + " qualifier" + ")" + rest
+					size_t before_close = close_paren - type_str;
+					dem_string_append_n(&dan->dem, type_str, before_close);
+					AST_APPEND_STR(" ");
+					AST_MERGE(AST(0));
+					dem_string_append(&dan->dem, close_paren);
+				} else {
+					// Malformed, fall back to regular handling
+					AST_MERGE(AST(1));
+					if (AST(0)->dem.len > 0) {
+						AST_APPEND_STR(" ");
+						AST_MERGE(AST(0));
+					}
+				}
+			} else {
+				// Regular type: append qualifier at end
+				AST_MERGE(AST(1));
+				if (AST(0)->dem.len > 0) {
+					AST_APPEND_STR(" ");
+					AST_MERGE(AST(0));
+				}
 			}
 		}
 		AST_APPEND_TYPE;
@@ -1599,15 +1696,41 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			handle_func_pointer(dan, func_node, &func_name, "*");
 			dem_string_deinit(&func_name);
 		} else {
-			// Regular pointer: just append "*"
-			dem_string_concat(&dan->dem, &AST(0)->dem);
-			dem_string_append(&dan->dem, "*");
+			// Check if AST(0) is a pre-formatted function pointer string
+			// Pattern: "ret_type (*...)(params)" or "ret_type (**...)(params)"
+			const char *str = AST(0)->dem.buf;
+			const char *ptr_start = strstr(str, "(*");
+
+			if (ptr_start) {
+				// This is a function pointer - insert * before the closing )
+				// Find the closing ) that matches the opening (
+				const char *close_paren = ptr_start + 2;
+				while (*close_paren == '*' || *close_paren == ' ' ||
+					(*close_paren >= 'a' && *close_paren <= 'z')) {
+					close_paren++;
+				}
+				if (*close_paren == ')') {
+					// Insert: prefix + "(* ... " + "*" + ")" + rest
+					size_t before_close = close_paren - str;
+					dem_string_append_n(&dan->dem, str, before_close);
+					dem_string_append(&dan->dem, "*");
+					dem_string_append(&dan->dem, close_paren);
+				} else {
+					// Malformed, fall back to regular handling
+					dem_string_concat(&dan->dem, &AST(0)->dem);
+					dem_string_append(&dan->dem, "*");
+				}
+			} else {
+				// Regular pointer: just append "*"
+				dem_string_concat(&dan->dem, &AST(0)->dem);
+				dem_string_append(&dan->dem, "*");
+			}
 		}
 		AST_APPEND_TYPE;
 	});
 
 	MATCH_AND_DO(READ('R') && RULE_CALL_DEFER(AST(0), type), {
-		// Check if this is a function pointer type
+		// Check if this is a function pointer type or array type
 		dan->subtag = REFERENCE_TYPE;
 		DemAstNode *func_node = NULL;
 		DemString func_name = { 0 };
@@ -1616,6 +1739,24 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			// "void (* const)(int)" -> "void (* const&)(int)"
 			handle_func_pointer(dan, func_node, &func_name, "&");
 			dem_string_deinit(&func_name);
+		} else if (AST(0)->subtag == ARRAY_TYPE) {
+			// Array reference: "type [size]" -> "type (&) [size]"
+			// Find the position of '[' in the array type string
+			const char *arr_str = AST(0)->dem.buf;
+			const char *bracket_pos = strchr(arr_str, '[');
+			if (bracket_pos) {
+				// Copy the part before '['
+				size_t prefix_len = bracket_pos - arr_str;
+				dem_string_append_n(&dan->dem, arr_str, prefix_len);
+				// Add (&)
+				dem_string_append(&dan->dem, "(&) ");
+				// Add the rest (the [size] part)
+				dem_string_append(&dan->dem, bracket_pos);
+			} else {
+				// Fallback: just append &
+				AST_MERGE(AST(0));
+				dem_string_append(&dan->dem, "&");
+			}
 		} else {
 			AST_MERGE(AST(0));
 			dem_string_append(&dan->dem, "&");
@@ -1989,6 +2130,11 @@ bool rule_nested_name(
 				ast_node = DemAstNode_append(dan, &node_decltype);
 			}
 		} else {
+			// Skip 'L' prefix for internal linkage
+			if (PEEK() == 'L') {
+				ADV();
+			}
+
 			if (PEEK() == 'S') {
 				DemAstNode *subst = NULL;
 				if (PEEK_AT(1) == 't') {
@@ -2327,14 +2473,16 @@ bool rule_unnamed_type_name(
 		MATCH_AND_DO(
 			RULE_DEFER_MANY_WITH_SEP(AST(0), type, ", ") && READ('E') && OPTIONAL(parse_non_neg_number(msi, &number)) && READ('_'),
 			{
-				AST_APPEND_STR("'lambda'(");
+				// Use llvm-cxxfilt format: 'lambda'() for #0, 'lambda1'() for #1, etc.
+				AST_APPEND_STR("'lambda");
+				if (number > 0) {
+					dem_string_appendf(&dan->dem, "%llu", number);
+				}
+				AST_APPEND_STR("'(");
 				if (DemAstNode_non_empty(AST(0)) && strcmp(AST(0)->dem.buf, "void") != 0) {
 					AST_MERGE(AST(0));
 				}
 				AST_APPEND_CHR(')');
-				if (number > 0) {
-					dem_string_appendf(&dan->dem, "#%llu", number);
-				}
 			});
 	}
 
@@ -2348,16 +2496,67 @@ bool rule_pointer_to_member_type(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(pointer_to_member_type);
+
+	// Grammar: M <class-type> <member-type>
+	// For member function pointers: M <class> <function-type>
+	// For member data pointers: M <class> <data-type>
 	MATCH_AND_DO(
 		READ('M') && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), type),
 		{
-			if (AST(1) && (AST(1)->tag == CP_DEM_TYPE_KIND_function_type)) {
-				handle_pointer_to_func(dan);
+			DemAstNode *class_type = AST(0);
+			DemAstNode *member_type = AST(1);
+
+			// Try to extract function type (may be wrapped in qualifiers)
+			DemAstNode *func_type = extract_function_from_type(member_type);
+
+			if (func_type) {
+				// Pointer to member function
+				// Output format: return_type (Class::*)(params) [cv-qualifiers] [ref-qualifier] [exception-spec]
+
+				// function_type node structure:
+				// AST(0) = cv-qualifiers
+				// AST(1) = exception-spec
+				// AST(2) = return type
+				// AST(3) = parameters (bare-function-type)
+				// AST(4) = ref-qualifier
+
+				// Return type
+				AST_APPEND_DEMSTR(&AST_(func_type, 2)->dem);
+				AST_APPEND_STR(" (");
+
+				// Class name
+				AST_APPEND_DEMSTR(&class_type->dem);
+				AST_APPEND_STR("::*)");
+
+				// Parameters
+				AST_APPEND_STR("(");
+				AST_APPEND_DEMSTR_OPT(&AST_(func_type, 3)->dem);
+				AST_APPEND_STR(")");
+
+				// cv-qualifiers from qualified type wrapper (if present)
+				// This handles cases like "M<class>K<function>" where K wraps the function
+				if (member_type->subtag == QUALIFIED_TYPE && VecF(DemAstNode, len)(member_type->children) >= 1) {
+					DemAstNode *wrapper_quals = AST_(member_type, 0);
+					if (wrapper_quals && DemAstNode_non_empty(wrapper_quals)) {
+						AST_APPEND_STR(" ");
+						AST_APPEND_DEMSTR(&wrapper_quals->dem);
+					}
+				}
+
+				// ref-qualifier, cv-qualifiers from function itself, exception-spec
+				AST_APPEND_DEMSTR_OPT(&AST_(func_type, 4)->dem);
+				AST_APPEND_DEMSTR_OPT(&AST_(func_type, 0)->dem);
+				AST_APPEND_DEMSTR_OPT(&AST_(func_type, 1)->dem);
 			} else {
-				AST_MERGE(AST(0));
-				AST_MERGE(AST(1));
+				// Pointer to member data
+				// Output format: data_type Class::*
+				AST_MERGE(member_type);
+				AST_APPEND_STR(" ");
+				AST_MERGE(class_type);
+				AST_APPEND_STR("::*");
 			}
 		});
+
 	RULE_FOOT(pointer_to_member_type);
 }
 
@@ -2404,25 +2603,190 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 			OPTIONAL(
 				RULE_DEFER(AST(2), bare_function_type)),
 		{
-			if (DemAstNode_non_empty(AST(1))) {
-				AST_MERGE(AST(1));
-				AST_APPEND_STR(" ");
+			// For constructors with templates, AST(1) is the first parameter, not a return type
+			bool is_ctor_with_template = m->is_ctor && is_template(AST(0)) && DemAstNode_non_empty(AST(1));
+
+			// Check if return type is a function pointer by examining the formatted string
+			// Pattern: "type (**)(params)" or "type (*)(params)"
+			bool is_func_ptr_return = false;
+			if (!is_ctor_with_template && DemAstNode_non_empty(AST(1))) {
+				const char *ret_str = AST(1)->dem.buf;
+				// Look for "(**)" or "(*)" pattern followed by "("
+				const char *ptr_pattern = strstr(ret_str, "(*");
+				if (ptr_pattern) {
+					// Check if it's followed by ")" and then "("
+					const char *after_ptr = ptr_pattern + 2;
+					while (*after_ptr == '*') {
+						after_ptr++;
+					}
+					if (*after_ptr == ')' && *(after_ptr + 1) == '(') {
+						is_func_ptr_return = true;
+					}
+				}
 			}
-			AST_MERGE(AST(0));
-			if (DemAstNode_non_empty(AST(2))) {
+
+			if (is_ctor_with_template) {
+				// Constructor: no return type, but AST(1) is the first parameter
+				AST_MERGE(AST(0));
 				AST_APPEND_STR("(");
-				if (!dem_str_equals(AST(2)->dem.buf, "void")) {
+				// Prepend AST(1) as first parameter
+				AST_MERGE(AST(1));
+				// Then add rest of parameters
+				if (DemAstNode_non_empty(AST(2)) && !dem_str_equals(AST(2)->dem.buf, "void")) {
+					AST_APPEND_STR(", ");
 					AST_MERGE(AST(2));
 				}
 				AST_APPEND_STR(")");
+			} else if (is_func_ptr_return) {
+				// Function returning a function pointer
+				// Parse the return type string to extract components
+				// Pattern: "base_type (ptr_notation)(func_ptr_params)"
+				const char *ret_str = AST(1)->dem.buf;
+				const char *ptr_start = strstr(ret_str, "(*");
+
+				if (ptr_start) {
+					// Extract base return type (everything before "(*")
+					size_t base_len = ptr_start - ret_str;
+					while (base_len > 0 && ret_str[base_len - 1] == ' ') {
+						base_len--;
+					}
+
+					// Extract pointer notation: count asterisks
+					const char *ptr_pos = ptr_start + 2;
+					int ptr_count = 1;
+					while (*ptr_pos == '*') {
+						ptr_count++;
+						ptr_pos++;
+					}
+
+					// Find function pointer parameters (after ")(")
+					const char *func_ptr_params_start = strstr(ptr_pos, ")(");
+					const char *func_ptr_params_end = NULL;
+					if (func_ptr_params_start) {
+						func_ptr_params_start += 2; // Skip ")("
+						// Find matching closing paren
+						int paren_depth = 1;
+						func_ptr_params_end = func_ptr_params_start;
+						while (*func_ptr_params_end && paren_depth > 0) {
+							if (*func_ptr_params_end == '(') {
+								paren_depth++;
+							} else if (*func_ptr_params_end == ')') {
+								paren_depth--;
+							}
+							if (paren_depth > 0) {
+								func_ptr_params_end++;
+							}
+						}
+					}
+
+					// Format: base_type (**func_name(params))(func_ptr_params)
+					// Append base return type
+					dem_string_append_n(&dan->dem, ret_str, base_len);
+					AST_APPEND_STR(" (");
+
+					// Append pointer notation
+					for (int i = 0; i < ptr_count; i++) {
+						AST_APPEND_CHR('*');
+					}
+
+					// Append function name
+					AST_MERGE(AST(0));
+
+					// Append function parameters
+					AST_APPEND_STR("(");
+					if (DemAstNode_non_empty(AST(2)) && !dem_str_equals(AST(2)->dem.buf, "void")) {
+						AST_MERGE(AST(2));
+					}
+					AST_APPEND_STR("))");
+
+					// Append function pointer parameters
+					if (func_ptr_params_start && func_ptr_params_end) {
+						AST_APPEND_CHR('(');
+						dem_string_append_n(&dan->dem, func_ptr_params_start,
+							func_ptr_params_end - func_ptr_params_start);
+						AST_APPEND_CHR(')');
+					}
+				} else {
+					// Fallback to normal formatting if parsing fails
+					if (DemAstNode_non_empty(AST(1))) {
+						AST_MERGE(AST(1));
+						AST_APPEND_STR(" ");
+					}
+					AST_MERGE(AST(0));
+					if (DemAstNode_non_empty(AST(2))) {
+						AST_APPEND_STR("(");
+						if (!dem_str_equals(AST(2)->dem.buf, "void")) {
+							AST_MERGE(AST(2));
+						}
+						AST_APPEND_STR(")");
+					}
+				}
+			} else {
+				// Normal function or non-template constructor
+				if (DemAstNode_non_empty(AST(1))) {
+					AST_MERGE(AST(1));
+					AST_APPEND_STR(" ");
+				}
+				AST_MERGE(AST(0));
+				if (DemAstNode_non_empty(AST(2))) {
+					AST_APPEND_STR("(");
+					if (!dem_str_equals(AST(2)->dem.buf, "void")) {
+						AST_MERGE(AST(2));
+					}
+					AST_APPEND_STR(")");
+				}
 			}
 			// append const if it was detected to be a constant function
 			if (is_const_fn) {
 				AST_APPEND_STR(" const");
 			}
+
+			// Check for ref-qualifier in nested_name (for both const and non-const functions)
+			if (AST(0)->tag == CP_DEM_TYPE_KIND_nested_name) {
+				if (VecF(DemAstNode, len)(AST(0)->children) > 1) {
+					DemAstNode *ref_qual = AST_(AST(0), 1);
+					if (ref_qual && DemAstNode_non_empty(ref_qual)) {
+						AST_APPEND_STR(" ");
+						dem_string_concat(&dan->dem, &ref_qual->dem);
+					}
+				}
+			}
+
+			// Also check if the name is a local_name containing a nested_name with cv_qualifiers and ref_qualifier
+			// This handles lambda operator() and other local functions with const
+			if (!is_const_fn && AST(0)->tag == CP_DEM_TYPE_KIND_local_name) {
+				// local_name has: [0]=outer encoding, [1]=inner name, [2]=discriminator
+				if (VecF(DemAstNode, len)(AST(0)->children) > 1) {
+					DemAstNode *inner_name = AST_(AST(0), 1);
+					if (inner_name && inner_name->tag == CP_DEM_TYPE_KIND_nested_name &&
+						VecF(DemAstNode, len)(inner_name->children) > 1) {
+						// nested_name has: [0]=cv_qualifiers, [1]=ref_qualifier, [2+]=name components
+						DemAstNode *cv_quals = AST_(inner_name, 0);
+						DemAstNode *ref_qual = AST_(inner_name, 1);
+						if (cv_quals && DemAstNode_non_empty(cv_quals)) {
+							AST_APPEND_STR(" ");
+							dem_string_concat(&dan->dem, &cv_quals->dem);
+						}
+						if (ref_qual && DemAstNode_non_empty(ref_qual)) {
+							AST_APPEND_STR(" ");
+							dem_string_concat(&dan->dem, &ref_qual->dem);
+						}
+					}
+				}
+			}
+			// Also check if the name is directly a nested_name with cv_qualifiers (for non-const functions)
+			else if (!is_const_fn && AST(0)->tag == CP_DEM_TYPE_KIND_nested_name) {
+				if (VecF(DemAstNode, len)(AST(0)->children) > 0) {
+					DemAstNode *cv_quals = AST_(AST(0), 0);
+					if (cv_quals && DemAstNode_non_empty(cv_quals)) {
+						AST_APPEND_STR(" ");
+						dem_string_concat(&dan->dem, &cv_quals->dem);
+					}
+				}
+			}
 		});
 
-	// MATCH (RULE (name));
+	// MATCH1(name);
 
 	MATCH1(special_name);
 
@@ -2485,14 +2849,36 @@ bool rule_expr_primary(
 					} else {
 						AST_APPEND_STR("true");
 					}
-				} else {
-					// For other types, just output the value
-					// Optionally with suffix for unsigned types
+				} else if (strcmp(type_str, "int") == 0) {
+					// Plain int: just the value, no suffix or cast
 					AST_MERGE(AST(1));
-					if (strstr(type_str, "unsigned") != NULL ||
-						strcmp(type_str, "unsigned int") == 0) {
-						AST_APPEND_STR("u");
-					}
+				} else if (strcmp(type_str, "unsigned int") == 0) {
+					// unsigned int: value with 'u' suffix
+					AST_MERGE(AST(1));
+					AST_APPEND_STR("u");
+				} else if (strcmp(type_str, "long") == 0) {
+					// long: value with 'l' suffix
+					AST_MERGE(AST(1));
+					AST_APPEND_STR("l");
+				} else if (strcmp(type_str, "unsigned long") == 0) {
+					// unsigned long: value with 'ul' suffix
+					AST_MERGE(AST(1));
+					AST_APPEND_STR("ul");
+				} else if (strcmp(type_str, "long long") == 0) {
+					// long long: value with 'll' suffix
+					AST_MERGE(AST(1));
+					AST_APPEND_STR("ll");
+				} else if (strcmp(type_str, "unsigned long long") == 0) {
+					// unsigned long long: value with 'ull' suffix
+					AST_MERGE(AST(1));
+					AST_APPEND_STR("ull");
+				} else {
+					// For all other types (short, unsigned short, char, unsigned char, enums, etc.):
+					// output as (Type)value
+					AST_APPEND_STR("(");
+					AST_MERGE(AST(0));
+					AST_APPEND_STR(")");
+					AST_MERGE(AST(1));
 				}
 			}
 		});
@@ -2582,5 +2968,21 @@ beach:
  * @return
  */
 char *cp_demangle_v3(const char *mangled, CpDemOptions opts) {
+	// Handle vendor-specific prefixes (Apple/Objective-C extensions)
+	// These appear as multiple underscores before the actual _Z symbol
+	const char *p = mangled;
+
+	// Count leading underscores
+	while (*p == '_') {
+		p++;
+	}
+
+	// If we found a _Z after underscores, and there were underscores, process from the _Z
+	if (*p == 'Z' && p > mangled) {
+		// p points to 'Z', so p-1 points to '_', which is the start of "_Z"
+		return demangle_rule(p - 1, rule_mangled_name, opts);
+	}
+
+	// Otherwise, process the original string
 	return demangle_rule(mangled, rule_mangled_name, opts);
 }
