@@ -1511,18 +1511,6 @@ bool rule_builtin_type(
 	RULE_FOOT(builtin_type);
 }
 
-bool rule_extended_qualifier(
-	DemAstNode *dan,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id) {
-	RULE_HEAD(extended_qualifier);
-	MATCH(READ('U') && RULE_X(0, source_name) && RULE_X(1, template_args));
-	MATCH(READ('U') && RULE_X(0, source_name));
-	RULE_FOOT(extended_qualifier);
-}
-
 bool rule_source_name(
 	DemAstNode *dan,
 	StrIter *msi,
@@ -1609,6 +1597,18 @@ bool rule_cv_qualifiers(
 	RULE_FOOT(cv_qualifiers);
 }
 
+bool rule_extended_qualifier(
+	DemAstNode *dan,
+	StrIter *msi,
+	Meta *m,
+	TraceGraph *graph,
+	int parent_node_id) {
+	RULE_HEAD(extended_qualifier);
+	MATCH(READ('U') && RULE_X(0, source_name) && RULE_X(1, template_args));
+	MATCH(READ('U') && RULE_X(0, source_name));
+	RULE_FOOT(extended_qualifier);
+}
+
 bool rule_qualifiers(
 	DemAstNode *dan,
 	StrIter *msi,
@@ -1633,55 +1633,57 @@ bool rule_qualifiers(
 	RULE_FOOT(qualifiers);
 }
 
+static bool handle_qualified_type(DemAstNode *dan, StrIter *msi, Meta *m) {
+	dan->subtag = QUALIFIED_TYPE;
+	DemAstNode *func_node = NULL;
+	DemString func_name = { 0 };
+	if ((func_node = extract_func_type_node(AST(1), &func_name))) {
+		handle_func_pointer(dan, func_node, &func_name, AST(0)->dem.buf);
+		dem_string_deinit(&func_name);
+		return true;
+	}
+
+	// Check if AST(1) is a pre-formatted function pointer string
+	// Pattern: "ret_type (*...)(params)"
+	const char *type_str = AST(1)->dem.buf;
+	const char *ptr_start = strstr(type_str, "(*");
+
+	if (ptr_start && AST(0)->dem.len > 0) {
+		// This is a function pointer - insert qualifier before the closing )
+		// Find the closing ) that matches the opening (
+		const char *close_paren = ptr_start + 2;
+		while (*close_paren == '*') {
+			close_paren++;
+		}
+		if (*close_paren == ')') {
+			// Insert: prefix + "(* ..." + " qualifier" + ")" + rest
+			size_t before_close = close_paren - type_str;
+			dem_string_append_n(&dan->dem, type_str, before_close);
+			AST_APPEND_STR(" ");
+			AST_MERGE(AST(0));
+			dem_string_append(&dan->dem, close_paren);
+		} else {
+			// Malformed, fall back to regular handling
+			AST_MERGE(AST(1));
+			if (AST(0)->dem.len > 0) {
+				AST_APPEND_STR(" ");
+				AST_MERGE(AST(0));
+			}
+		}
+	} else {
+		// Regular type: append qualifier at end
+		AST_MERGE(AST(1));
+		if (AST(0)->dem.len > 0) {
+			AST_APPEND_STR(" ");
+			AST_MERGE(AST(0));
+		}
+	}
+	return true;
+}
+
 bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(type);
 
-	MATCH_AND_DO(RULE_CALL_DEFER(AST(0), qualifiers) && RULE_CALL_DEFER(AST(1), type), {
-		dan->subtag = QUALIFIED_TYPE;
-		DemAstNode *func_node = NULL;
-		DemString func_name = { 0 };
-		if ((func_node = extract_func_type_node(AST(1), &func_name))) {
-			handle_func_pointer(dan, func_node, &func_name, AST(0)->dem.buf);
-			dem_string_deinit(&func_name);
-		} else {
-			// Check if AST(1) is a pre-formatted function pointer string
-			// Pattern: "ret_type (*...)(params)"
-			const char *type_str = AST(1)->dem.buf;
-			const char *ptr_start = strstr(type_str, "(*");
-
-			if (ptr_start && AST(0)->dem.len > 0) {
-				// This is a function pointer - insert qualifier before the closing )
-				// Find the closing ) that matches the opening (
-				const char *close_paren = ptr_start + 2;
-				while (*close_paren == '*') {
-					close_paren++;
-				}
-				if (*close_paren == ')') {
-					// Insert: prefix + "(* ..." + " qualifier" + ")" + rest
-					size_t before_close = close_paren - type_str;
-					dem_string_append_n(&dan->dem, type_str, before_close);
-					AST_APPEND_STR(" ");
-					AST_MERGE(AST(0));
-					dem_string_append(&dan->dem, close_paren);
-				} else {
-					// Malformed, fall back to regular handling
-					AST_MERGE(AST(1));
-					if (AST(0)->dem.len > 0) {
-						AST_APPEND_STR(" ");
-						AST_MERGE(AST(0));
-					}
-				}
-			} else {
-				// Regular type: append qualifier at end
-				AST_MERGE(AST(1));
-				if (AST(0)->dem.len > 0) {
-					AST_APPEND_STR(" ");
-					AST_MERGE(AST(0));
-				}
-			}
-		}
-		AST_APPEND_TYPE;
-	});
 	MATCH(READ('C') && RULE_X(0, type)); // complex pair (C99)
 	MATCH(READ('G') && RULE_X(0, type)); // imaginary (C99)
 
@@ -1728,7 +1730,6 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		}
 		AST_APPEND_TYPE;
 	});
-
 	MATCH_AND_DO(READ('R') && RULE_CALL_DEFER(AST(0), type), {
 		// Check if this is a function pointer type or array type
 		dan->subtag = REFERENCE_TYPE;
@@ -1790,37 +1791,32 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	MATCH1(function_type);
 
 	switch (PEEK()) {
+	case 'r':
+	case 'V':
+	case 'K':
+	case 'U': {
+		MUST_MATCH(RULE_CALL_DEFER(AST(0), qualifiers));
+		MUST_MATCH(RULE_CALL_DEFER(AST(1), type));
+		handle_qualified_type(dan, msi, m);
+		break;
+	}
 	case 'T': {
 		if (strchr("sue", PEEK_AT(1)) != NULL) {
-			if (!RULE_CALL_DEFER(AST(0), class_enum_type)) {
-				TRACE_RETURN_FAILURE();
-			}
-			AST_MERGE(AST(0));
+			MUST_MATCH_I(0, class_enum_type);
 			break;
 		}
-		if (!RULE_CALL_DEFER(AST(0), template_param)) {
-			TRACE_RETURN_FAILURE();
-		}
-		AST_MERGE(AST(0));
+		MUST_MATCH_I(0, template_param);
 		if (PEEK() == 'I') {
 			AST_APPEND_TYPE;
-			DemAstNode node_template_args = { 0 };
-			if (!rule_template_args(RULE_ARGS(&node_template_args))) {
-				TRACE_RETURN_FAILURE();
-			}
-			AST_APPEND_NODE(&node_template_args);
+			MUST_MATCH_I(1, template_args);
 		}
 		break;
 	}
 	case 'S': {
 		// Save position to check what substitution we parsed
 		const char *before_subst = CUR();
-		if (!rule_substitution(RULE_ARGS(AST(0)))) {
-			TRACE_RETURN_FAILURE();
-		}
+		MUST_MATCH_I(0, substitution);
 		const char *after_subst = CUR();
-
-		AST_MERGE(AST(0));
 
 		// Special case: St followed by digit means std::<identifier>
 		// Check if we consumed exactly "St" and next char is a digit
@@ -1828,10 +1824,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		if (after_subst - before_subst == 2 && before_subst[0] == 'S' && before_subst[1] == 't' && isdigit(PEEK())) {
 			is_std_identifier = true;
 			dem_string_append(&dan->dem, "::");
-			if (!RULE_CALL_DEFER(AST(1), source_name)) {
-				TRACE_RETURN_FAILURE();
-			}
-			AST_MERGE(AST(1));
+			MUST_MATCH_I(1, source_name);
 			// Add the qualified name (e.g., "std::function") to substitution table
 			// BEFORE parsing template args, so back-references work correctly
 			if (PEEK() == 'I') {
@@ -1850,9 +1843,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		break;
 	}
 	default:
-		if (!RULE_CALL(class_enum_type)) {
-			TRACE_RETURN_FAILURE();
-		}
+		MUST_MATCH(RULE_CALL(class_enum_type));
 		break;
 	}
 
