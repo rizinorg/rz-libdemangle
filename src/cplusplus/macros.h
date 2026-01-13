@@ -190,8 +190,6 @@
 
 #define RULE_X(I, x) (RULE_DEFER(AST(I), x) && AST_MERGE(AST(I)))
 
-#define MATCH1(R) MATCH(RULE_DEFER(AST(0), R) && AST_MERGE(AST(0)));
-
 #define APPEND_DEFER_VAR(var) DemAstNode_append(dan, (var))
 
 /**
@@ -271,30 +269,6 @@
 	} \
 	dan->val.len = msi->cur - dan->val.buf; \
 	return false;
-
-#define RULE_IMPL(X, XS) \
-	do { \
-		RULE_HEAD(X); \
-		{ XS }; \
-		RULE_FOOT(X); \
-	} while (0)
-
-/**
- * \b Define a rule with name x and given rule body.
- *
- * This will define a function for the given rule name.
- * The rule body will generally contain further rule matchings.
- *
- * \p x          Rule name.
- * \p rule_body  Rule body.
- *
- * \return DemString* containing currently demangled string on success.
- * \return NULL otherwise.
- */
-#define DEFN_RULE(x, rule_body) \
-	DECL_RULE(x) { \
-		RULE_IMPL(x, rule_body); \
-	}
 
 /**
  * \b Declare a rule alias x for rule y.
@@ -442,6 +416,16 @@
 	} while (0)
 
 #define MATCH(rules) MATCH_AND_DO(rules, {})
+
+#define MUST_MATCH(rules) \
+	do { \
+		if (!(rules)) { \
+			TRACE_RETURN_FAILURE(); \
+		} \
+	} while (0)
+
+#define MATCH1(R)          MATCH(RULE_DEFER(AST(0), R) && AST_MERGE(AST(0)));
+#define MUST_MATCH_I(I, R) MUST_MATCH(RULE_DEFER(AST(I), R) && AST_MERGE(AST(I)));
 
 #define AST_APPEND_STR(s)        dem_string_append(&dan->dem, s)
 #define AST_APPEND_STR_N(s, n)   dem_string_append_n(&dan->dem, s, n);
