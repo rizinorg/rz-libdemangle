@@ -1953,16 +1953,10 @@ bool rule_substitution(
 	// For std::string (Ss), expand to full form when followed by ctor/dtor (C or D)
 	// This handles cases like _ZNSsC2ERKSs (std::basic_string constructor)
 	MATCH(READ_STR("Ss") && ((PEEK() == 'C' || PEEK() == 'D') ? AST_APPEND_STR("std::basic_string<char, std::char_traits<char>, std::allocator<char>>") : AST_APPEND_STR("std::string")));
-	MATCH(READ_STR("Si") && AST_APPEND_STR("std::istream")
-		// AST_APPEND_STR ("std::basic_istream<char, std::char_traits<char>>")
-	);
-	MATCH(READ_STR("So") && AST_APPEND_STR("std::ostream")
-		// AST_APPEND_STR ("std::basic_ostream<char, std::char_traits<char>>")
-	);
+	MATCH(READ_STR("Si") && AST_APPEND_STR("std::istream"));
+	MATCH(READ_STR("So") && AST_APPEND_STR("std::ostream"));
 
-	MATCH(READ_STR("Sd") && AST_APPEND_STR("std::iostream")
-		// AST_APPEND_STR ("std::basic_iostream<char, std::char_traits<char>>")
-	);
+	MATCH(READ_STR("Sd") && AST_APPEND_STR("std::iostream"));
 	RULE_FOOT(substitution);
 }
 
@@ -2112,14 +2106,11 @@ bool rule_nested_name(
 			}
 			DemAstNode node_template_args = { 0 };
 			node_template_args.parent = dan;
-			if (rule_template_args(RULE_ARGS(&node_template_args))) {
-				if (ast_node && VecDemAstNode_len(ast_node->children) > 0 && VecDemAstNode_tail(ast_node->children)->tag == CP_DEM_TYPE_KIND_template_args) {
-					TRACE_RETURN_FAILURE();
-				}
-				DemAstNode_append(dan, &node_template_args);
-			} else {
+			MUST_MATCH(rule_template_args(RULE_ARGS(&node_template_args)));
+			if (ast_node && VecDemAstNode_len(ast_node->children) > 0 && VecDemAstNode_tail(ast_node->children)->tag == CP_DEM_TYPE_KIND_template_args) {
 				TRACE_RETURN_FAILURE();
 			}
+			DemAstNode_append(dan, &node_template_args);
 			ast_node = dan;
 		} else if (PEEK() == 'D' && (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T')) {
 			if (ast_node != NULL) {
@@ -2153,10 +2144,9 @@ bool rule_nested_name(
 				}
 				if (ast_node != NULL) {
 					TRACE_RETURN_FAILURE();
-				} else {
-					ast_node = subst;
-					continue;
 				}
+				ast_node = subst;
+				continue;
 			}
 
 			DemAstNode node_unqualified_name = { 0 };
@@ -2257,15 +2247,11 @@ bool rule_ctor_name(
 	int parent_node_id) {
 	RULE_HEAD(ctor_name);
 	// NOTE: reference taken from https://github.com/rizinorg/rz-libdemangle/blob/c2847137398cf8d378d46a7510510aaefcffc8c6/src/cxx/cp-demangle.c#L2143
-	MATCH(
-		READ_STR("C1") && SET_CTOR() && append_last_class_name(dan, m)); // gnu complete object ctor
-	MATCH(
-		READ_STR("C2") && SET_CTOR() && append_last_class_name(dan, m)); // gnu base object ctor
-	MATCH(
-		READ_STR("C3") && SET_CTOR() && append_last_class_name(dan, m)); // gnu complete object allocating ctor
+	MATCH(READ_STR("C1") && SET_CTOR() && append_last_class_name(dan, m)); // gnu complete object ctor
+	MATCH(READ_STR("C2") && SET_CTOR() && append_last_class_name(dan, m)); // gnu base object ctor
+	MATCH(READ_STR("C3") && SET_CTOR() && append_last_class_name(dan, m)); // gnu complete object allocating ctor
 	MATCH(READ_STR("C4") && SET_CTOR() && append_last_class_name(dan, m)); // gnu unified ctor
-	MATCH(
-		READ_STR("C5") && SET_CTOR() && append_last_class_name(dan, m)); // gnu object ctor group
+	MATCH(READ_STR("C5") && SET_CTOR() && append_last_class_name(dan, m)); // gnu object ctor group
 	MATCH(READ_STR("CI1") && SET_CTOR() && append_last_class_name(dan, m));
 	MATCH(READ_STR("CI2") && SET_CTOR() && append_last_class_name(dan, m));
 	RULE_FOOT(ctor_name);
@@ -2279,17 +2265,12 @@ bool rule_dtor_name(
 	int parent_node_id) {
 	RULE_HEAD(dtor_name);
 	// NOTE: reference taken from https://github.com/rizinorg/rz-libdemangle/blob/c2847137398cf8d378d46a7510510aaefcffc8c6/src/cxx/cp-demangle.c#L2143
-	MATCH(
-		READ_STR("D0") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu deleting dtor
-	MATCH(
-		READ_STR("D1") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu complete object dtor
-	MATCH(
-		READ_STR("D2") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu base object dtor
+	MATCH(READ_STR("D0") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu deleting dtor
+	MATCH(READ_STR("D1") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu complete object dtor
+	MATCH(READ_STR("D2") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu base object dtor
 	// 3 is not used
-	MATCH(
-		READ_STR("D4") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu unified dtor
-	MATCH(
-		READ_STR("D5") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu object dtor group
+	MATCH(READ_STR("D4") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu unified dtor
+	MATCH(READ_STR("D5") && SET_DTOR() && AST_APPEND_STR("~") && append_last_class_name(dan, m)); // gnu object dtor group
 	RULE_FOOT(dtor_name);
 }
 
@@ -2338,12 +2319,8 @@ bool rule_template_arg(
 	switch (PEEK()) {
 	case 'X': {
 		ADV();
-		DemAstNode arg = { 0 };
-		if (rule_expression(RULE_ARGS(&arg)) && READ('E')) {
-			AST_APPEND_NODE(&arg);
-			TRACE_RETURN_SUCCESS;
-		}
-		TRACE_RETURN_FAILURE();
+		MUST_MATCH_I(0, expression);
+		TRACE_RETURN_SUCCESS;
 	}
 	case 'J': {
 		const char *start_pos = CUR();
@@ -2351,11 +2328,10 @@ bool rule_template_arg(
 		ut64 args_begin = VecF(DemAstNode, len)(&m->names);
 		while (!READ('E')) {
 			DemAstNode node_arg = { 0 };
-			if (rule_template_arg(RULE_ARGS(&node_arg))) {
-				VecF(DemAstNode, append)(&m->names, &node_arg);
-			} else {
+			if (!rule_template_arg(RULE_ARGS(&node_arg))) {
 				TRACE_RETURN_FAILURE();
 			}
+			VecF(DemAstNode, append)(&m->names, &node_arg);
 		}
 		NodeList *args_list = NodeList_pop_trailing(&m->names, args_begin);
 		DemAstNode node_args = { 0 };
@@ -2367,28 +2343,19 @@ bool rule_template_arg(
 		AST_APPEND_NODE(&node_args);
 	}
 	case 'L': {
-		if (!rule_expr_primary(RULE_ARGS(AST(0)))) {
-			TRACE_RETURN_FAILURE();
-		}
-		AST_MERGE(AST(0));
+		MUST_MATCH_I(0, expr_primary);
 		TRACE_RETURN_SUCCESS;
 		break;
 	}
 	case 'T': {
 		if (!is_template_param_decl(msi)) {
-			if (!rule_type(RULE_ARGS(AST(0)))) {
-				TRACE_RETURN_FAILURE();
-			}
-			AST_MERGE(AST(0));
+			MUST_MATCH_I(0, type);
 			TRACE_RETURN_SUCCESS;
 		}
 		DEM_UNREACHABLE;
 	}
 	default:
-		if (!rule_type(RULE_ARGS(AST(0)))) {
-			TRACE_RETURN_FAILURE();
-		}
-		AST_MERGE(AST(0));
+		MUST_MATCH_I(0, type);
 		TRACE_RETURN_SUCCESS;
 		break;
 	}
@@ -2582,14 +2549,16 @@ bool is_template(DemAstNode *dan) {
 bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(encoding);
 
-	bool is_const_fn = false;
+	if (PEEK() == 'G' || PEEK() == 'T') {
+		MUST_MATCH_I(0, special_name);
+		TRACE_RETURN_SUCCESS;
+	}
+
+	bool is_const_fn = (PEEK_AT(0) == 'N' && PEEK_AT(1) == 'K') || (PEEK_AT(0) == 'K');
 
 	MATCH_AND_DO(
-		// determine if this function has const or const& at the end
-		OPTIONAL(
-			is_const_fn = (PEEK_AT(0) == 'N' && PEEK_AT(1) == 'K') || (PEEK_AT(0) == 'K')) &&
-			// get function name (can be template or non-template)
-			RULE_DEFER(AST(0), name) &&
+		// get function name (can be template or non-template)
+		RULE_DEFER(AST(0), name) &&
 
 			// determine whether this is a template function alongside normal demangling
 			// template functions specify a return type
@@ -2785,10 +2754,6 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 				}
 			}
 		});
-
-	// MATCH1(name);
-
-	MATCH1(special_name);
 
 	RULE_FOOT(encoding);
 }
