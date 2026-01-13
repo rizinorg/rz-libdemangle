@@ -358,14 +358,11 @@
 	} while (0)
 
 #define context_save(N) \
-	SAVE_POS(0); \
-	/* make a temporary string to prevent from altering real string */ \
-	Meta N##meta = { 0 }; \
-	Meta *_og_meta = m; \
-	m = &N##meta; \
-	meta_copy(&N##meta, _og_meta); \
-	size_t _og_dem_len = dan->dem.len; \
-	size_t _og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0;
+	SAVE_POS(N); \
+	size_t _match_og_dem_len = dan->dem.len; \
+	size_t _match_og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0; \
+	size_t _match_og_types_len = m ? VecDemAstNode_len(&m->detected_types) : 0;
+
 #define rule_success(N) \
 	if (graph && graph->enabled && _my_node_id >= 0) { \
 		trace_graph_set_result( \
@@ -374,30 +371,39 @@
 			(dan->dem.buf && dan->dem.len > 0) ? dan->dem.buf : "success", \
 			1); \
 	} \
-	meta_move(_og_meta, &N##meta); \
-	m = _og_meta; \
 	dan->val.len = msi->cur - dan->val.buf; \
+	AST_FLATTEN(dan); \
 	return true;
+
 #define context_restore(N) \
 	if (graph && graph->enabled && _my_node_id >= 0) { \
 		trace_graph_set_result(graph, _my_node_id, NULL, 3); /* backtracked */ \
 	} \
-	dan->dem.len = _og_dem_len; \
-	if (dan->dem.buf) \
-		dan->dem.buf[_og_dem_len] = 0; \
+	dan->dem.len = _match_og_dem_len; \
+	if (dan->dem.buf) { \
+		dan->dem.buf[_match_og_dem_len] = 0; \
+	} \
 	if (dan->children) { \
-		while (VecDemAstNode_len(dan->children) > _og_children_len) { \
-			DemAstNode *node = VecDemAstNode_pop(dan->children); \
+		while (VecDemAstNode_len(dan->children) > _match_og_children_len) { \
+			DemAstNode *node = VecDemAstNode_at(dan->children, VecDemAstNode_len(dan->children) - 1); \
 			if (node) { \
 				DemAstNode_deinit(node); \
 			} \
+			VecDemAstNode_pop(dan->children); \
 		} \
 	} \
-	meta_deinit(&N##_meta); \
-	m = _og_meta; \
-	DemAstNode_deinit(dan); \
-	/* if rule matched, then concat tmp with original and switch back names */ \
-	RESTORE_POS(I);
+	if (m) { \
+		while (VecDemAstNode_len(&m->detected_types) > _match_og_types_len) { \
+			size_t last_idx = VecDemAstNode_len(&m->detected_types) - 1; \
+			DemAstNode *node = VecDemAstNode_at(&m->detected_types, last_idx); \
+			if (node) { \
+				DemAstNode_deinit(node); \
+			} \
+			VecDemAstNode_pop(&m->detected_types); \
+		} \
+	} \
+	RESTORE_POS(N); \
+	break;
 
 /**
  * \b Match for given rules in a recoverable manner. If rule matching fails,
@@ -425,52 +431,13 @@
  */
 #define MATCH_AND_DO(rules, body) \
 	do { \
-		SAVE_POS(0); \
-		size_t _match_og_dem_len = dan->dem.len; \
-		size_t _match_og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0; \
-		size_t _match_og_types_len = m ? VecDemAstNode_len(&m->detected_types) : 0; \
+		context_save(0); \
 		if ((rules)) { \
 			/* caller execute code */ \
 			{ body }; \
-			if (graph && graph->enabled && _my_node_id >= 0) { \
-				trace_graph_set_result( \
-					graph, \
-					_my_node_id, \
-					(dan->dem.buf && dan->dem.len > 0) ? dan->dem.buf : "success", \
-					1); \
-			} \
-			dan->val.len = msi->cur - dan->val.buf; \
-			AST_FLATTEN(dan); \
-			return true; \
+			rule_success(0); \
 		} else { \
-			if (graph && graph->enabled && _my_node_id >= 0) { \
-				trace_graph_set_result(graph, _my_node_id, NULL, 3); /* backtracked */ \
-			} \
-			dan->dem.len = _match_og_dem_len; \
-			if (dan->dem.buf) { \
-				dan->dem.buf[_match_og_dem_len] = 0; \
-			} \
-			if (dan->children) { \
-				while (VecDemAstNode_len(dan->children) > _match_og_children_len) { \
-					DemAstNode *node = VecDemAstNode_at(dan->children, VecDemAstNode_len(dan->children) - 1); \
-					if (node) { \
-						DemAstNode_deinit(node); \
-					} \
-					VecDemAstNode_pop(dan->children); \
-				} \
-			} \
-			if (m) { \
-				while (VecDemAstNode_len(&m->detected_types) > _match_og_types_len) { \
-					size_t last_idx = VecDemAstNode_len(&m->detected_types) - 1; \
-					DemAstNode *node = VecDemAstNode_at(&m->detected_types, last_idx); \
-					if (node) { \
-						DemAstNode_deinit(node); \
-					} \
-					VecDemAstNode_pop(&m->detected_types); \
-				} \
-			} \
-			RESTORE_POS(0); \
-			break; \
+			context_restore(0); \
 		} \
 	} while (0)
 
