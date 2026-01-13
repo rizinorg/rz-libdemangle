@@ -99,26 +99,52 @@ bool rule_unresolved_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(unresolved_name);
-	MATCH_AND_DO(READ_STR("srN") && RULE_DEFER(AST(0), unresolved_type) && AST_MERGE(AST(0)) &&
-			RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(1), unresolved_qualifier_level, "::") && READ('E') && RULE_DEFER(AST(2), base_unresolved_name),
-		{
-			AST_APPEND_STR("::");
-			AST_MERGE(AST(1));
-			AST_APPEND_STR("::");
-			AST_MERGE(AST(2));
-		});
-	MATCH_AND_DO(OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && READ_STR("sr") &&
-			RULE_DEFER_ATLEAST_ONCE(AST(0), unresolved_qualifier_level) && AST_MERGE(AST(0)) && READ('E') && RULE_DEFER(AST(1), base_unresolved_name),
-		{
-			AST_APPEND_STR("::");
-			AST_MERGE(AST(1));
-		});
-	MATCH_AND_DO(READ_STR("sr") && RULE_DEFER(AST(0), base_unresolved_name) && AST_MERGE(AST(0)) && READ('E') && RULE_DEFER(AST(1), base_unresolved_name), {
+	const bool is_global = READ_STR("gs");
+
+	if (READ_STR("srN")) {
+		MATCH_AND_DO(RULE_X(0, unresolved_type) &&
+				(PEEK() == 'I' ? RULE_DEFER(AST(1), template_args) : true) &&
+				RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(2), unresolved_qualifier_level, "::") && READ('E') &&
+				RULE_DEFER(AST(3), base_unresolved_name),
+			{
+				AST_MERGE_OPT(AST(1));
+				AST_APPEND_STR("::");
+				AST_MERGE(AST(2));
+				AST_APPEND_STR("::");
+				AST_MERGE(AST(3));
+			});
+	}
+	if (!(READ_STR("sr"))) {
+		MUST_MATCH(RULE_DEFER(AST(0), base_unresolved_name));
+		if (is_global) {
+			AST_PREPEND_STR("::");
+		}
+		AST_MERGE(AST(0));
+		TRACE_RETURN_SUCCESS
+	}
+
+	if (isdigit(PEEK())) {
+		MUST_MATCH(RULE_DEFER_ATLEAST_ONCE(AST(0), unresolved_qualifier_level) && READ('E'));
+	} else {
+		MUST_MATCH(RULE_DEFER(AST(0), unresolved_type));
+		if (PEEK() == 'I') {
+			MUST_MATCH(RULE_DEFER(AST(1), template_args) && READ('E'));
+		}
+	}
+
+	MUST_MATCH(RULE_CALL_DEFER(AST(2), base_unresolved_name));
+	if (is_global) {
+		AST_PREPEND_STR("::");
+	}
+	AST_MERGE(AST(0));
+	AST_APPEND_STR("::");
+	AST_MERGE_OPT(AST(1));
+	if (DemAstNode_non_empty(AST(1))) {
 		AST_APPEND_STR("::");
-		AST_MERGE(AST(1));
-	});
-	MATCH(READ_STR("sr") && RULE_X(0, unresolved_type) && READ('E') && AST_APPEND_STR("::") && RULE_X(1, base_unresolved_name));
-	MATCH(OPTIONAL(READ_STR("gs") && AST_APPEND_STR("::")) && RULE_X(0, base_unresolved_name));
+	}
+	AST_MERGE(AST(2));
+	TRACE_RETURN_SUCCESS;
+
 	RULE_FOOT(unresolved_name);
 }
 
@@ -1861,10 +1887,19 @@ bool rule_base_unresolved_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(base_unresolved_name);
-	MATCH(READ_STR("on") && RULE_X(0, operator_name) && RULE_X(1, template_args));
-	MATCH(READ_STR("on") && RULE_X(0, operator_name));
-	MATCH(READ_STR("dn") && RULE_X(0, destructor_name));
 	MATCH(RULE_X(0, simple_id));
+	if (READ_STR("dn")) {
+		MUST_MATCH_I(0, destructor_name);
+		TRACE_RETURN_SUCCESS;
+	}
+	READ_STR("on");
+
+	MUST_MATCH_I(0, operator_name);
+	if (PEEK() == 'I') {
+		MUST_MATCH_I(1, template_args);
+	}
+	TRACE_RETURN_SUCCESS;
+
 	RULE_FOOT(base_unresolved_name);
 }
 
@@ -2141,19 +2176,15 @@ bool rule_nested_name(
 			}
 
 			DemAstNode node_unqualified_name = { 0 };
-			if (rule_unqualified_name(RULE_ARGS(&node_unqualified_name))) {
-				// Only add "::" if we've already added name components
-				// Note: indices 0,1 are pre-allocated for cv_qualifiers/ref_qualifier
-				// so actual name components start at index 2
-				if (dan->children && VecDemAstNode_len(dan->children) > 2) {
-					AST_APPEND_STR("::");
-				}
-				ast_node = VecF(DemAstNode, append)(dan->children, &node_unqualified_name);
-				AST_MERGE(ast_node);
-			} else if (PEEK() != 'E' && PEEK() != 'M') {
-				// If unqualified_name fails and we're not at a valid terminator, fail
-				TRACE_RETURN_FAILURE();
+			MUST_MATCH(rule_unqualified_name(RULE_ARGS(&node_unqualified_name)));
+			// Only add "::" if we've already added name components
+			// Note: indices 0,1 are pre-allocated for cv_qualifiers/ref_qualifier
+			// so actual name components start at index 2
+			if (dan->children && VecDemAstNode_len(dan->children) > 2) {
+				AST_APPEND_STR("::");
 			}
+			ast_node = VecF(DemAstNode, append)(dan->children, &node_unqualified_name);
+			AST_MERGE(ast_node);
 		}
 
 		if (ast_node == NULL) {
@@ -2311,6 +2342,7 @@ bool rule_template_arg(
 	case 'X': {
 		ADV();
 		MUST_MATCH_I(0, expression);
+		MUST_MATCH(READ('E'));
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'J': {
