@@ -298,56 +298,11 @@
 		} \
 	} while (0)
 
-/* Macros for rules that use direct returns */
-#define TRACE_RETURN_SUCCESS \
-	do { /*trace success*/ \
-		if (graph && graph->enabled && _my_node_id >= 0) { \
-			DemString *result = &dan->dem; \
-			const char *_res_str = NULL; \
-			if (result && result->buf && result->len > 0) { \
-				_res_str = result->buf; \
-			} \
-			trace_graph_set_result(graph, _my_node_id, _res_str, 1); \
-		} \
-		dan->val.len = msi->cur - dan->val.buf; \
-		AST_FLATTEN(dan); \
-		return true; \
-	} while (0)
-
-#define TRACE_RETURN_FAILURE() \
-	do { /*trace fail*/ \
-		if (graph && graph->enabled && _my_node_id >= 0) { \
-			trace_graph_set_result(graph, _my_node_id, NULL, 2); \
-		} \
-		return false; \
-	} while (0)
-
-#define MATCH_FAILED(I) \
-	do { /*match fail*/ \
-		/* NOTE: Do NOT call DemAstNode_deinit(dan) here! */ \
-		/* dan->dem was already restored to _og_dem_len by MATCH_AND_DO */ \
-		/* Calling deinit would clear content written by parent rules */ \
-		RESTORE_POS(I); \
-		break; \
-	} while (0)
-
 #define context_save(N) \
 	SAVE_POS(N); \
 	size_t _match_og_dem_len = dan->dem.len; \
 	size_t _match_og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0; \
 	size_t _match_og_types_len = m ? VecDemAstNode_len(&m->detected_types) : 0;
-
-#define rule_success(N) \
-	if (graph && graph->enabled && _my_node_id >= 0) { \
-		trace_graph_set_result( \
-			graph, \
-			_my_node_id, \
-			(dan->dem.buf && dan->dem.len > 0) ? dan->dem.buf : "success", \
-			1); \
-	} \
-	dan->val.len = msi->cur - dan->val.buf; \
-	AST_FLATTEN(dan); \
-	return true;
 
 #define context_restore(N) \
 	if (graph && graph->enabled && _my_node_id >= 0) { \
@@ -379,6 +334,29 @@
 	RESTORE_POS(N); \
 	break;
 
+/* Macros for rules that use direct returns */
+#define TRACE_RETURN_SUCCESS \
+	do { /*trace success*/ \
+		if (graph && graph->enabled && _my_node_id >= 0) { \
+			trace_graph_set_result( \
+				graph, \
+				_my_node_id, \
+				(dan->dem.buf && dan->dem.len > 0) ? dan->dem.buf : "success", \
+				1); \
+		} \
+		dan->val.len = msi->cur - dan->val.buf; \
+		AST_FLATTEN(dan); \
+		return true; \
+	} while (0);
+
+#define TRACE_RETURN_FAILURE() \
+	do { /*trace fail*/ \
+		if (graph && graph->enabled && _my_node_id >= 0) { \
+			trace_graph_set_result(graph, _my_node_id, NULL, 2); \
+		} \
+		return false; \
+	} while (0)
+
 /**
  * \b Match for given rules in a recoverable manner. If rule matching fails,
  * the demangled string in current context is not changed. This allows
@@ -409,7 +387,7 @@
 		if ((rules)) { \
 			/* caller execute code */ \
 			{ body }; \
-			rule_success(0); \
+			TRACE_RETURN_SUCCESS(0); \
 		} else { \
 			context_restore(0); \
 		} \
@@ -432,6 +410,7 @@
 			context_restore(I); \
 		} \
 	} while (0)
+#define CTX_MUST_MATCH_I(CI, I, R) CTX_MUST_MATCH(CI, RULE_DEFER(AST(I), R) && AST_MERGE(AST(I)));
 
 #define AST_APPEND_STR(s)        dem_string_append(&dan->dem, s)
 #define AST_APPEND_STR_N(s, n)   dem_string_append_n(&dan->dem, s, n);

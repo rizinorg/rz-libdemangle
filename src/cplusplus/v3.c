@@ -2773,7 +2773,7 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 	// Append qualifiers (const, ref-qualifiers)
 	append_function_qualifiers(dan, AST(0), is_const_fn);
 
-	rule_success(0);
+	TRACE_RETURN_SUCCESS(0);
 	RULE_FOOT(encoding);
 }
 
