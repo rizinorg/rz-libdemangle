@@ -1659,52 +1659,119 @@ bool rule_qualifiers(
 	RULE_FOOT(qualifiers);
 }
 
+
+/**
+ * Insert a modifier (like "*", "&", "&&", "const") inside a function pointer notation.
+ * Input: "void (* const)(int)" + "&" -> Output: "void (* const&)(int)"
+ * Returns true if successfully inserted, false if not a function pointer or malformed.
+ */
+static bool insert_modifier_in_func_ptr(DemAstNode *dan, const char *func_ptr_str, const char *modifier) {
+	const char *ptr_start = strstr(func_ptr_str, "(*");
+	if (!ptr_start) {
+		return false;
+	}
+
+	// Find the closing ) that matches the opening (
+	const char *close_paren = ptr_start + 2;
+	while (*close_paren == '*' || *close_paren == ' ' ||
+		(*close_paren >= 'a' && *close_paren <= 'z')) {
+		close_paren++;
+	}
+
+	if (*close_paren != ')') {
+		return false;
+	}
+
+	// Insert: prefix + "(* ..." + modifier + ")" + rest
+	size_t before_close = close_paren - func_ptr_str;
+	dem_string_append_n(&dan->dem, func_ptr_str, before_close);
+	
+	// Add space before word modifiers (const, volatile, restrict) but not symbols (*, &, &&)
+	if (modifier[0] >= 'a' && modifier[0] <= 'z') {
+		dem_string_append(&dan->dem, " ");
+	}
+	
+	dem_string_append(&dan->dem, modifier);
+	dem_string_append(&dan->dem, close_paren);
+	return true;
+}
+
+/**
+ * Handle qualified types (const, volatile, restrict).
+ * Applies qualifiers to the inner type, with special handling for function pointers.
+ */
 static bool handle_qualified_type(DemAstNode *dan, StrIter *msi, Meta *m) {
 	dan->subtag = QUALIFIED_TYPE;
 	DemAstNode *func_node = NULL;
 	DemString func_name = { 0 };
+	
+	// Try function pointer with node
 	if ((func_node = extract_func_type_node(AST(1), &func_name))) {
 		handle_func_pointer(dan, func_node, &func_name, AST(0)->dem.buf);
 		dem_string_deinit(&func_name);
 		return true;
 	}
 
-	// Check if AST(1) is a pre-formatted function pointer string
-	// Pattern: "ret_type (*...)(params)"
+	// Try pre-formatted function pointer string
 	const char *type_str = AST(1)->dem.buf;
-	const char *ptr_start = strstr(type_str, "(*");
-
-	if (ptr_start && AST(0)->dem.len > 0) {
-		// This is a function pointer - insert qualifier before the closing )
-		// Find the closing ) that matches the opening (
-		const char *close_paren = ptr_start + 2;
-		while (*close_paren == '*') {
-			close_paren++;
-		}
-		if (*close_paren == ')') {
-			// Insert: prefix + "(* ..." + " qualifier" + ")" + rest
-			size_t before_close = close_paren - type_str;
-			dem_string_append_n(&dan->dem, type_str, before_close);
-			AST_APPEND_STR(" ");
-			AST_MERGE(AST(0));
-			dem_string_append(&dan->dem, close_paren);
-		} else {
-			// Malformed, fall back to regular handling
-			AST_MERGE(AST(1));
-			if (AST(0)->dem.len > 0) {
-				AST_APPEND_STR(" ");
-				AST_MERGE(AST(0));
-			}
-		}
-	} else {
-		// Regular type: append qualifier at end
-		AST_MERGE(AST(1));
-		if (AST(0)->dem.len > 0) {
-			AST_APPEND_STR(" ");
-			AST_MERGE(AST(0));
+	if (AST(0)->dem.len > 0 && strstr(type_str, "(*") != NULL) {
+		if (insert_modifier_in_func_ptr(dan, type_str, AST(0)->dem.buf)) {
+			return true;
 		}
 	}
+
+	// Regular type: append qualifier at end
+	AST_MERGE(AST(1));
+	if (AST(0)->dem.len > 0) {
+		AST_APPEND_STR(" ");
+		AST_MERGE(AST(0));
+	}
 	return true;
+}
+
+/**
+ * Apply a modifier (*, &, &&) to a type, handling function pointers specially.
+ * This consolidates the common logic for pointer, reference, and rvalue reference types.
+ */
+static void apply_type_modifier(DemAstNode *dan, DemAstNode *inner_type, 
+	const char *modifier, int subtag) {
+	dan->subtag = subtag;
+	DemAstNode *func_node = NULL;
+	DemString func_name = { 0 };
+
+	// Try to extract function type node
+	if ((func_node = extract_func_type_node(inner_type, &func_name))) {
+		handle_func_pointer(dan, func_node, &func_name, modifier);
+		dem_string_deinit(&func_name);
+		return;
+	}
+
+	// Special handling for array references (only for & and &&)
+	if (subtag == REFERENCE_TYPE || subtag == RVALUE_REFERENCE_TYPE) {
+		if (inner_type->subtag == ARRAY_TYPE) {
+			const char *arr_str = inner_type->dem.buf;
+			const char *bracket_pos = strchr(arr_str, '[');
+			if (bracket_pos) {
+				size_t prefix_len = bracket_pos - arr_str;
+				dem_string_append_n(&dan->dem, arr_str, prefix_len);
+				dem_string_append(&dan->dem, "(");
+				dem_string_append(&dan->dem, modifier);
+				dem_string_append(&dan->dem, ") ");
+				dem_string_append(&dan->dem, bracket_pos);
+				return;
+			}
+		}
+	}
+
+	// Try to handle pre-formatted function pointer string
+	const char *str = inner_type->dem.buf;
+	if (insert_modifier_in_func_ptr(dan, str, modifier)) {
+		return;
+	}
+
+	// Regular type: append modifier at the end
+	dem_string_concat(&dan->dem, &inner_type->dem);
+	dem_string_append(&dan->dem, modifier);
 }
 
 bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
@@ -1716,95 +1783,16 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	// Handle pointer types - special handling for function types
 	// For PF...E, we need to produce "ret (*)(args)" and add both S_entries
 	MATCH_AND_DO(READ('P') && RULE_CALL_DEFER(AST(0), type), {
-		// Check if this is a function type by checking child AST tag
-		dan->subtag = POINTER_TYPE;
-		DemAstNode *func_node = NULL;
-		DemString func_name = { 0 };
-		if ((func_node = extract_func_type_node(AST(0), &func_name))) {
-			handle_func_pointer(dan, func_node, &func_name, "*");
-			dem_string_deinit(&func_name);
-		} else {
-			// Check if AST(0) is a pre-formatted function pointer string
-			// Pattern: "ret_type (*...)(params)" or "ret_type (**...)(params)"
-			const char *str = AST(0)->dem.buf;
-			const char *ptr_start = strstr(str, "(*");
-
-			if (ptr_start) {
-				// This is a function pointer - insert * before the closing )
-				// Find the closing ) that matches the opening (
-				const char *close_paren = ptr_start + 2;
-				while (*close_paren == '*' || *close_paren == ' ' ||
-					(*close_paren >= 'a' && *close_paren <= 'z')) {
-					close_paren++;
-				}
-				if (*close_paren == ')') {
-					// Insert: prefix + "(* ... " + "*" + ")" + rest
-					size_t before_close = close_paren - str;
-					dem_string_append_n(&dan->dem, str, before_close);
-					dem_string_append(&dan->dem, "*");
-					dem_string_append(&dan->dem, close_paren);
-				} else {
-					// Malformed, fall back to regular handling
-					dem_string_concat(&dan->dem, &AST(0)->dem);
-					dem_string_append(&dan->dem, "*");
-				}
-			} else {
-				// Regular pointer: just append "*"
-				dem_string_concat(&dan->dem, &AST(0)->dem);
-				dem_string_append(&dan->dem, "*");
-			}
-		}
+		apply_type_modifier(dan, AST(0), "*", POINTER_TYPE);
 		AST_APPEND_TYPE;
 	});
 	MATCH_AND_DO(READ('R') && RULE_CALL_DEFER(AST(0), type), {
-		// Check if this is a function pointer type or array type
-		dan->subtag = REFERENCE_TYPE;
-		DemAstNode *func_node = NULL;
-		DemString func_name = { 0 };
-		if ((func_node = extract_func_type_node(AST(0), &func_name))) {
-			// Function pointer: insert & inside the (*...) before the closing )
-			// "void (* const)(int)" -> "void (* const&)(int)"
-			handle_func_pointer(dan, func_node, &func_name, "&");
-			dem_string_deinit(&func_name);
-		} else if (AST(0)->subtag == ARRAY_TYPE) {
-			// Array reference: "type [size]" -> "type (&) [size]"
-			// Find the position of '[' in the array type string
-			const char *arr_str = AST(0)->dem.buf;
-			const char *bracket_pos = strchr(arr_str, '[');
-			if (bracket_pos) {
-				// Copy the part before '['
-				size_t prefix_len = bracket_pos - arr_str;
-				dem_string_append_n(&dan->dem, arr_str, prefix_len);
-				// Add (&)
-				dem_string_append(&dan->dem, "(&) ");
-				// Add the rest (the [size] part)
-				dem_string_append(&dan->dem, bracket_pos);
-			} else {
-				// Fallback: just append &
-				AST_MERGE(AST(0));
-				dem_string_append(&dan->dem, "&");
-			}
-		} else {
-			AST_MERGE(AST(0));
-			dem_string_append(&dan->dem, "&");
-		}
+		apply_type_modifier(dan, AST(0), "&", REFERENCE_TYPE);
 		// Reference types ARE substitutable per Itanium ABI section 5.1.5
 		AST_APPEND_TYPE;
 	});
 	MATCH_AND_DO(READ('O') && RULE_CALL_DEFER(AST(0), type), {
-		// Check if this is a function pointer type
-		dan->subtag = RVALUE_REFERENCE_TYPE;
-		DemAstNode *func_node = NULL;
-		DemString func_name = { 0 };
-		if ((func_node = extract_func_type_node(AST(0), &func_name))) {
-			// Function pointer: insert && inside the (*...) before the closing )
-			// "void (* const)(int)" -> "void (* const&&)(int)"
-			handle_func_pointer(dan, func_node, &func_name, "&&");
-			dem_string_deinit(&func_name);
-		} else {
-			AST_MERGE(AST(0));
-			dem_string_append(&dan->dem, "&&");
-		}
+		apply_type_modifier(dan, AST(0), "&&", RVALUE_REFERENCE_TYPE);
 		// Rvalue reference types ARE substitutable per Itanium ABI section 5.1.5
 		AST_APPEND_TYPE;
 	});
