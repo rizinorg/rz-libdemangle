@@ -227,25 +227,25 @@ bool rule_array_type(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(array_type);
+	MUST_MATCH(READ('A'));
 	dan->subtag = ARRAY_TYPE;
-	MATCH_AND_DO(READ('A') && OPTIONAL(RULE_DEFER(AST(0), number)) && READ('_') && RULE_DEFER(AST(1), type), {
-		// Format: type [size]
-		// Merge type first
-		AST_MERGE(AST(1));
-		// Then add array notation
-		AST_APPEND_STR(" [");
-		if (DemAstNode_non_empty(AST(0))) {
-			AST_MERGE(AST(0));
-		}
-		AST_APPEND_STR("]");
-	});
-	MATCH_AND_DO(READ('A') && RULE_DEFER(AST(0), expression) && READ('_') && RULE_DEFER(AST(1), type), {
-		// Format: type [expression]
-		AST_MERGE(AST(1));
-		AST_APPEND_STR(" [");
-		AST_MERGE(AST(0));
-		AST_APPEND_STR("]");
-	});
+
+	if (isdigit(PEEK())) {
+		MUST_MATCH(RULE_CALL_DEFER(AST(0), number) && READ('_'));
+	} else {
+		MUST_MATCH(RULE_DEFER(AST(0), expression) && READ('_'));
+	}
+	MUST_MATCH(RULE_DEFER(AST(1), type));
+
+	// Format: type [size]
+	// Merge type first
+	AST_MERGE(AST(1));
+	// Then add array notation
+	AST_APPEND_STR(" [");
+	AST_MERGE(AST(0));
+	AST_APPEND_STR("]");
+	TRACE_RETURN_SUCCESS;
+
 	RULE_FOOT(array_type);
 }
 
@@ -277,10 +277,6 @@ bool rule_expression(
 		RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(0), expression, ", ") &&
 		AST_MERGE(AST(0)) && AST_APPEND_STR(") ") && READ('_') &&
 		RULE_X(1, type) && RULE_X(2, initializer));
-	MATCH(
-		READ_STR("cv") && RULE_X(0, type) && READ('_') && AST_APPEND_STR("(") &&
-		RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(1), expression, ", ") &&
-		AST_MERGE(AST(1)) && AST_APPEND_STR(")") && READ('E'));
 	/* binary operators */
 	MATCH(
 		READ_STR("qu") && RULE_X(0, expression) && AST_APPEND_STR("?") && RULE_X(1, expression) &&
@@ -350,24 +346,28 @@ bool rule_expression(
 	/* expression (expr-list), call */
 	EXPRESSION_BINARY_OP("||", "oo");
 
-	/* (name) (expr-list), call that would use argument-dependent lookup but for the parentheses*/
-	MATCH_AND_DO(
-		READ_STR("cv") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression),
-		{
+	// cv |= type _ expr* E
+	//    |= type expr
+	if (READ_STR("cv")) {
+		MUST_MATCH(RULE_DEFER(AST(0), type));
+		if (READ('_')) {
+			MUST_MATCH(RULE_DEFER_MANY_WITH_SEP(AST(1), expression, ", ") && READ('E'));
 			AST_APPEND_STR("(");
 			AST_MERGE(AST(0));
-			AST_APPEND_STR(")");
+			AST_APPEND_STR(")(");
 			AST_MERGE(AST(1));
-		});
+			AST_APPEND_STR(")");
+			TRACE_RETURN_SUCCESS;
+		}
+		MUST_MATCH(RULE_DEFER(AST(1), expression));
+		AST_APPEND_STR("(");
+		AST_MERGE(AST(0));
+		AST_APPEND_STR(")(");
+		AST_MERGE(AST(1));
+		AST_APPEND_STR(")");
+		TRACE_RETURN_SUCCESS;
+	}
 
-	/* type (expression), conversion with one argument */
-	MATCH_AND_DO(
-		READ_STR("cv") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression), {
-			AST_MERGE(AST(0));
-			AST_APPEND_STR("(");
-			AST_MERGE(AST(1));
-			AST_APPEND_STR(")");
-		});
 	/* type (expr-list), conversion with other than one argument */
 	MATCH_AND_DO(
 		READ_STR("il") && RULE_DEFER_MANY_WITH_SEP(AST(0), braced_expression, ", ") && READ('E'),
@@ -427,21 +427,24 @@ bool rule_expression(
 			AST_APPEND_STR(")");
 		});
 
-	/* delete expression */
+	/* expr.expr */
 	MATCH_AND_DO(
-		READ_STR("dt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), unresolved_name),
+		READ_STR("dt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
 		{
+			AST_APPEND_STR("(");
 			AST_MERGE(AST(0));
-			AST_APPEND_CHR('.');
+			AST_APPEND_STR(").");
 			AST_MERGE(AST(1));
 		});
 
-	/* delete [] expression */
+	/* expr->expr */
 	MATCH_AND_DO(
-		READ_STR("pt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), unresolved_name),
+		READ_STR("pt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
 		{
+			AST_APPEND_STR("(");
 			AST_MERGE(AST(0));
-			AST_APPEND_STR("->");
+			AST_APPEND_STR(")->");
+			AST_MERGE(AST(0));
 			AST_MERGE(AST(1));
 		});
 
@@ -1659,7 +1662,6 @@ bool rule_qualifiers(
 	RULE_FOOT(qualifiers);
 }
 
-
 /**
  * Insert a modifier (like "*", "&", "&&", "const") inside a function pointer notation.
  * Input: "void (* const)(int)" + "&" -> Output: "void (* const&)(int)"
@@ -1685,12 +1687,12 @@ static bool insert_modifier_in_func_ptr(DemAstNode *dan, const char *func_ptr_st
 	// Insert: prefix + "(* ..." + modifier + ")" + rest
 	size_t before_close = close_paren - func_ptr_str;
 	dem_string_append_n(&dan->dem, func_ptr_str, before_close);
-	
+
 	// Add space before word modifiers (const, volatile, restrict) but not symbols (*, &, &&)
 	if (modifier[0] >= 'a' && modifier[0] <= 'z') {
 		dem_string_append(&dan->dem, " ");
 	}
-	
+
 	dem_string_append(&dan->dem, modifier);
 	dem_string_append(&dan->dem, close_paren);
 	return true;
@@ -1704,7 +1706,7 @@ static bool handle_qualified_type(DemAstNode *dan, StrIter *msi, Meta *m) {
 	dan->subtag = QUALIFIED_TYPE;
 	DemAstNode *func_node = NULL;
 	DemString func_name = { 0 };
-	
+
 	// Try function pointer with node
 	if ((func_node = extract_func_type_node(AST(1), &func_name))) {
 		handle_func_pointer(dan, func_node, &func_name, AST(0)->dem.buf);
@@ -1733,7 +1735,7 @@ static bool handle_qualified_type(DemAstNode *dan, StrIter *msi, Meta *m) {
  * Apply a modifier (*, &, &&) to a type, handling function pointers specially.
  * This consolidates the common logic for pointer, reference, and rvalue reference types.
  */
-static void apply_type_modifier(DemAstNode *dan, DemAstNode *inner_type, 
+static void apply_type_modifier(DemAstNode *dan, DemAstNode *inner_type,
 	const char *modifier, int subtag) {
 	dan->subtag = subtag;
 	DemAstNode *func_node = NULL;
