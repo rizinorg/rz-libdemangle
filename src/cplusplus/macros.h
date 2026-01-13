@@ -416,6 +416,7 @@
 	} while (0)
 
 #define MATCH(rules) MATCH_AND_DO(rules, {})
+#define MATCH1(R)    MATCH(RULE_DEFER(AST(0), R) && AST_MERGE(AST(0)));
 
 #define MUST_MATCH(rules) \
 	do { \
@@ -423,9 +424,14 @@
 			TRACE_RETURN_FAILURE(); \
 		} \
 	} while (0)
-
-#define MATCH1(R)          MATCH(RULE_DEFER(AST(0), R) && AST_MERGE(AST(0)));
 #define MUST_MATCH_I(I, R) MUST_MATCH(RULE_DEFER(AST(I), R) && AST_MERGE(AST(I)));
+
+#define CTX_MUST_MATCH(I, rules) \
+	do { \
+		if (!(rules)) { \
+			context_restore(I); \
+		} \
+	} while (0)
 
 #define AST_APPEND_STR(s)        dem_string_append(&dan->dem, s)
 #define AST_APPEND_STR_N(s, n)   dem_string_append_n(&dan->dem, s, n);

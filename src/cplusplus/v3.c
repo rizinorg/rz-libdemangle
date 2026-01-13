@@ -2555,205 +2555,195 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 	}
 
 	bool is_const_fn = (PEEK_AT(0) == 'N' && PEEK_AT(1) == 'K') || (PEEK_AT(0) == 'K');
+	context_save(0);
 
-	MATCH_AND_DO(
-		// get function name (can be template or non-template)
-		RULE_DEFER(AST(0), name) &&
+	CTX_MUST_MATCH(0, RULE_DEFER(AST(0), name));
+	if (is_template(AST(0))) {
+		RULE_DEFER(AST(1), type);
+	}
+	RULE_DEFER(AST(2), bare_function_type);
+	// For constructors with templates, AST(1) is the first parameter, not a return type
+	bool is_ctor_with_template = m->is_ctor && is_template(AST(0)) && DemAstNode_non_empty(AST(1));
 
-			// determine whether this is a template function alongside normal demangling
-			// template functions specify a return type
-			// If this is a template function then get return type first
-			OPTIONAL(
-				is_template(AST(0)) && RULE_DEFER(AST(1), type)) &&
+	// Check if return type is a function pointer by examining the formatted string
+	// Pattern: "type (**)(params)" or "type (*)(params)"
+	bool is_func_ptr_return = false;
+	if (!is_ctor_with_template && DemAstNode_non_empty(AST(1))) {
+		const char *ret_str = AST(1)->dem.buf;
+		// Look for "(**)" or "(*)" pattern followed by "("
+		const char *ptr_pattern = strstr(ret_str, "(*");
+		if (ptr_pattern) {
+			// Check if it's followed by ")" and then "("
+			const char *after_ptr = ptr_pattern + 2;
+			while (*after_ptr == '*') {
+				after_ptr++;
+			}
+			if (*after_ptr == ')' && *(after_ptr + 1) == '(') {
+				is_func_ptr_return = true;
+			}
+		}
+	}
 
-			// get function params
-			// set it as optional, because there's a rule which just matches for name,
-			// so to supress the noise of backtracking, we just make it optional here
-			OPTIONAL(
-				RULE_DEFER(AST(2), bare_function_type)),
-		{
-			// For constructors with templates, AST(1) is the first parameter, not a return type
-			bool is_ctor_with_template = m->is_ctor && is_template(AST(0)) && DemAstNode_non_empty(AST(1));
+	if (is_ctor_with_template) {
+		// Constructor: no return type, but AST(1) is the first parameter
+		AST_MERGE(AST(0));
+		AST_APPEND_STR("(");
+		// Prepend AST(1) as first parameter
+		AST_MERGE(AST(1));
+		// Then add rest of parameters
+		if (DemAstNode_non_empty(AST(2)) && !dem_str_equals(AST(2)->dem.buf, "void")) {
+			AST_APPEND_STR(", ");
+			AST_MERGE(AST(2));
+		}
+		AST_APPEND_STR(")");
+	} else if (is_func_ptr_return) {
+		// Function returning a function pointer
+		// Parse the return type string to extract components
+		// Pattern: "base_type (ptr_notation)(func_ptr_params)"
+		const char *ret_str = AST(1)->dem.buf;
+		const char *ptr_start = strstr(ret_str, "(*");
 
-			// Check if return type is a function pointer by examining the formatted string
-			// Pattern: "type (**)(params)" or "type (*)(params)"
-			bool is_func_ptr_return = false;
-			if (!is_ctor_with_template && DemAstNode_non_empty(AST(1))) {
-				const char *ret_str = AST(1)->dem.buf;
-				// Look for "(**)" or "(*)" pattern followed by "("
-				const char *ptr_pattern = strstr(ret_str, "(*");
-				if (ptr_pattern) {
-					// Check if it's followed by ")" and then "("
-					const char *after_ptr = ptr_pattern + 2;
-					while (*after_ptr == '*') {
-						after_ptr++;
+		if (ptr_start) {
+			// Extract base return type (everything before "(*")
+			size_t base_len = ptr_start - ret_str;
+			while (base_len > 0 && ret_str[base_len - 1] == ' ') {
+				base_len--;
+			}
+
+			// Extract pointer notation: count asterisks
+			const char *ptr_pos = ptr_start + 2;
+			int ptr_count = 1;
+			while (*ptr_pos == '*') {
+				ptr_count++;
+				ptr_pos++;
+			}
+
+			// Find function pointer parameters (after ")(")
+			const char *func_ptr_params_start = strstr(ptr_pos, ")(");
+			const char *func_ptr_params_end = NULL;
+			if (func_ptr_params_start) {
+				func_ptr_params_start += 2; // Skip ")("
+				// Find matching closing paren
+				int paren_depth = 1;
+				func_ptr_params_end = func_ptr_params_start;
+				while (*func_ptr_params_end && paren_depth > 0) {
+					if (*func_ptr_params_end == '(') {
+						paren_depth++;
+					} else if (*func_ptr_params_end == ')') {
+						paren_depth--;
 					}
-					if (*after_ptr == ')' && *(after_ptr + 1) == '(') {
-						is_func_ptr_return = true;
+					if (paren_depth > 0) {
+						func_ptr_params_end++;
 					}
 				}
 			}
 
-			if (is_ctor_with_template) {
-				// Constructor: no return type, but AST(1) is the first parameter
-				AST_MERGE(AST(0));
-				AST_APPEND_STR("(");
-				// Prepend AST(1) as first parameter
+			// Format: base_type (**func_name(params))(func_ptr_params)
+			// Append base return type
+			dem_string_append_n(&dan->dem, ret_str, base_len);
+			AST_APPEND_STR(" (");
+
+			// Append pointer notation
+			for (int i = 0; i < ptr_count; i++) {
+				AST_APPEND_CHR('*');
+			}
+
+			// Append function name
+			AST_MERGE(AST(0));
+
+			// Append function parameters
+			AST_APPEND_STR("(");
+			if (DemAstNode_non_empty(AST(2)) && !dem_str_equals(AST(2)->dem.buf, "void")) {
+				AST_MERGE(AST(2));
+			}
+			AST_APPEND_STR("))");
+
+			// Append function pointer parameters
+			if (func_ptr_params_start && func_ptr_params_end) {
+				AST_APPEND_CHR('(');
+				dem_string_append_n(&dan->dem, func_ptr_params_start,
+					func_ptr_params_end - func_ptr_params_start);
+				AST_APPEND_CHR(')');
+			}
+		} else {
+			// Fallback to normal formatting if parsing fails
+			if (DemAstNode_non_empty(AST(1))) {
 				AST_MERGE(AST(1));
-				// Then add rest of parameters
-				if (DemAstNode_non_empty(AST(2)) && !dem_str_equals(AST(2)->dem.buf, "void")) {
-					AST_APPEND_STR(", ");
+				AST_APPEND_STR(" ");
+			}
+			AST_MERGE(AST(0));
+			if (DemAstNode_non_empty(AST(2))) {
+				AST_APPEND_STR("(");
+				if (!dem_str_equals(AST(2)->dem.buf, "void")) {
 					AST_MERGE(AST(2));
 				}
 				AST_APPEND_STR(")");
-			} else if (is_func_ptr_return) {
-				// Function returning a function pointer
-				// Parse the return type string to extract components
-				// Pattern: "base_type (ptr_notation)(func_ptr_params)"
-				const char *ret_str = AST(1)->dem.buf;
-				const char *ptr_start = strstr(ret_str, "(*");
+			}
+		}
+	} else {
+		// Normal function or non-template constructor
+		if (DemAstNode_non_empty(AST(1))) {
+			AST_MERGE(AST(1));
+			AST_APPEND_STR(" ");
+		}
+		AST_MERGE(AST(0));
+		if (DemAstNode_non_empty(AST(2))) {
+			AST_APPEND_STR("(");
+			if (!dem_str_equals(AST(2)->dem.buf, "void")) {
+				AST_MERGE(AST(2));
+			}
+			AST_APPEND_STR(")");
+		}
+	}
+	// append const if it was detected to be a constant function
+	if (is_const_fn) {
+		AST_APPEND_STR(" const");
+	}
 
-				if (ptr_start) {
-					// Extract base return type (everything before "(*")
-					size_t base_len = ptr_start - ret_str;
-					while (base_len > 0 && ret_str[base_len - 1] == ' ') {
-						base_len--;
-					}
+	// Check for ref-qualifier in nested_name (for both const and non-const functions)
+	if (AST(0)->tag == CP_DEM_TYPE_KIND_nested_name) {
+		if (VecF(DemAstNode, len)(AST(0)->children) > 1) {
+			DemAstNode *ref_qual = AST_(AST(0), 1);
+			if (ref_qual && DemAstNode_non_empty(ref_qual)) {
+				AST_APPEND_STR(" ");
+				dem_string_concat(&dan->dem, &ref_qual->dem);
+			}
+		}
+	}
 
-					// Extract pointer notation: count asterisks
-					const char *ptr_pos = ptr_start + 2;
-					int ptr_count = 1;
-					while (*ptr_pos == '*') {
-						ptr_count++;
-						ptr_pos++;
-					}
-
-					// Find function pointer parameters (after ")(")
-					const char *func_ptr_params_start = strstr(ptr_pos, ")(");
-					const char *func_ptr_params_end = NULL;
-					if (func_ptr_params_start) {
-						func_ptr_params_start += 2; // Skip ")("
-						// Find matching closing paren
-						int paren_depth = 1;
-						func_ptr_params_end = func_ptr_params_start;
-						while (*func_ptr_params_end && paren_depth > 0) {
-							if (*func_ptr_params_end == '(') {
-								paren_depth++;
-							} else if (*func_ptr_params_end == ')') {
-								paren_depth--;
-							}
-							if (paren_depth > 0) {
-								func_ptr_params_end++;
-							}
-						}
-					}
-
-					// Format: base_type (**func_name(params))(func_ptr_params)
-					// Append base return type
-					dem_string_append_n(&dan->dem, ret_str, base_len);
-					AST_APPEND_STR(" (");
-
-					// Append pointer notation
-					for (int i = 0; i < ptr_count; i++) {
-						AST_APPEND_CHR('*');
-					}
-
-					// Append function name
-					AST_MERGE(AST(0));
-
-					// Append function parameters
-					AST_APPEND_STR("(");
-					if (DemAstNode_non_empty(AST(2)) && !dem_str_equals(AST(2)->dem.buf, "void")) {
-						AST_MERGE(AST(2));
-					}
-					AST_APPEND_STR("))");
-
-					// Append function pointer parameters
-					if (func_ptr_params_start && func_ptr_params_end) {
-						AST_APPEND_CHR('(');
-						dem_string_append_n(&dan->dem, func_ptr_params_start,
-							func_ptr_params_end - func_ptr_params_start);
-						AST_APPEND_CHR(')');
-					}
-				} else {
-					// Fallback to normal formatting if parsing fails
-					if (DemAstNode_non_empty(AST(1))) {
-						AST_MERGE(AST(1));
-						AST_APPEND_STR(" ");
-					}
-					AST_MERGE(AST(0));
-					if (DemAstNode_non_empty(AST(2))) {
-						AST_APPEND_STR("(");
-						if (!dem_str_equals(AST(2)->dem.buf, "void")) {
-							AST_MERGE(AST(2));
-						}
-						AST_APPEND_STR(")");
-					}
-				}
-			} else {
-				// Normal function or non-template constructor
-				if (DemAstNode_non_empty(AST(1))) {
-					AST_MERGE(AST(1));
+	// Also check if the name is a local_name containing a nested_name with cv_qualifiers and ref_qualifier
+	// This handles lambda operator() and other local functions with const
+	if (!is_const_fn && AST(0)->tag == CP_DEM_TYPE_KIND_local_name) {
+		// local_name has: [0]=outer encoding, [1]=inner name, [2]=discriminator
+		if (VecF(DemAstNode, len)(AST(0)->children) > 1) {
+			DemAstNode *inner_name = AST_(AST(0), 1);
+			if (inner_name && inner_name->tag == CP_DEM_TYPE_KIND_nested_name &&
+				VecF(DemAstNode, len)(inner_name->children) > 1) {
+				// nested_name has: [0]=cv_qualifiers, [1]=ref_qualifier, [2+]=name components
+				DemAstNode *cv_quals = AST_(inner_name, 0);
+				DemAstNode *ref_qual = AST_(inner_name, 1);
+				if (cv_quals && DemAstNode_non_empty(cv_quals)) {
 					AST_APPEND_STR(" ");
+					dem_string_concat(&dan->dem, &cv_quals->dem);
 				}
-				AST_MERGE(AST(0));
-				if (DemAstNode_non_empty(AST(2))) {
-					AST_APPEND_STR("(");
-					if (!dem_str_equals(AST(2)->dem.buf, "void")) {
-						AST_MERGE(AST(2));
-					}
-					AST_APPEND_STR(")");
+				if (ref_qual && DemAstNode_non_empty(ref_qual)) {
+					AST_APPEND_STR(" ");
+					dem_string_concat(&dan->dem, &ref_qual->dem);
 				}
 			}
-			// append const if it was detected to be a constant function
-			if (is_const_fn) {
-				AST_APPEND_STR(" const");
+		}
+	}
+	// Also check if the name is directly a nested_name with cv_qualifiers (for non-const functions)
+	else if (!is_const_fn && AST(0)->tag == CP_DEM_TYPE_KIND_nested_name) {
+		if (VecF(DemAstNode, len)(AST(0)->children) > 0) {
+			DemAstNode *cv_quals = AST_(AST(0), 0);
+			if (cv_quals && DemAstNode_non_empty(cv_quals)) {
+				AST_APPEND_STR(" ");
+				dem_string_concat(&dan->dem, &cv_quals->dem);
 			}
-
-			// Check for ref-qualifier in nested_name (for both const and non-const functions)
-			if (AST(0)->tag == CP_DEM_TYPE_KIND_nested_name) {
-				if (VecF(DemAstNode, len)(AST(0)->children) > 1) {
-					DemAstNode *ref_qual = AST_(AST(0), 1);
-					if (ref_qual && DemAstNode_non_empty(ref_qual)) {
-						AST_APPEND_STR(" ");
-						dem_string_concat(&dan->dem, &ref_qual->dem);
-					}
-				}
-			}
-
-			// Also check if the name is a local_name containing a nested_name with cv_qualifiers and ref_qualifier
-			// This handles lambda operator() and other local functions with const
-			if (!is_const_fn && AST(0)->tag == CP_DEM_TYPE_KIND_local_name) {
-				// local_name has: [0]=outer encoding, [1]=inner name, [2]=discriminator
-				if (VecF(DemAstNode, len)(AST(0)->children) > 1) {
-					DemAstNode *inner_name = AST_(AST(0), 1);
-					if (inner_name && inner_name->tag == CP_DEM_TYPE_KIND_nested_name &&
-						VecF(DemAstNode, len)(inner_name->children) > 1) {
-						// nested_name has: [0]=cv_qualifiers, [1]=ref_qualifier, [2+]=name components
-						DemAstNode *cv_quals = AST_(inner_name, 0);
-						DemAstNode *ref_qual = AST_(inner_name, 1);
-						if (cv_quals && DemAstNode_non_empty(cv_quals)) {
-							AST_APPEND_STR(" ");
-							dem_string_concat(&dan->dem, &cv_quals->dem);
-						}
-						if (ref_qual && DemAstNode_non_empty(ref_qual)) {
-							AST_APPEND_STR(" ");
-							dem_string_concat(&dan->dem, &ref_qual->dem);
-						}
-					}
-				}
-			}
-			// Also check if the name is directly a nested_name with cv_qualifiers (for non-const functions)
-			else if (!is_const_fn && AST(0)->tag == CP_DEM_TYPE_KIND_nested_name) {
-				if (VecF(DemAstNode, len)(AST(0)->children) > 0) {
-					DemAstNode *cv_quals = AST_(AST(0), 0);
-					if (cv_quals && DemAstNode_non_empty(cv_quals)) {
-						AST_APPEND_STR(" ");
-						dem_string_concat(&dan->dem, &cv_quals->dem);
-					}
-				}
-			}
-		});
+		}
+	}
+	rule_success(0);
 
 	RULE_FOOT(encoding);
 }
