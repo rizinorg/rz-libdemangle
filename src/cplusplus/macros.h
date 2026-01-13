@@ -188,7 +188,7 @@
 	DemAstNode *var = &tmp_defer_var_##var; \
 	DemAstNode_init(var);
 
-#define RULE_X(I, x) (RULE_DEFER(AST(I), x) && AST_MERGE(AST(I)))
+#define RULE_X(I, x) (RULE_CALL_DEFER(AST(I), x) && AST_MERGE(AST(I)))
 
 #define APPEND_DEFER_VAR(var) DemAstNode_append(dan, (var))
 
