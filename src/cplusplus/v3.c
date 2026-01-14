@@ -2846,65 +2846,70 @@ bool rule_expr_primary(
 	//       "(bool)1" is converted to "false"
 	//       "(unsigned int)N" to "Nu"
 
-	MATCH(READ('L') && RULE_X(0, type) && RULE_X(1, real_part_float) && READ('_') && RULE_X(2, imag_part_float) && READ('E'));
-	MATCH(READ('L') && AST_APPEND_STR("(") && (PEEK() == 'P') && RULE_X(0, pointer_type) &&
+	if (!READ('L')) {
+		TRACE_RETURN_FAILURE();
+	}
+
+	MATCH(PEEK() == 'P' && AST_APPEND_STR("(") && RULE_X(0, pointer_type) &&
 		AST_APPEND_STR(")") && READ('0') && AST_APPEND_CHR('0') && READ('E'));
+	MATCH(READ_STR("_Z") && RULE_X(0, encoding) && READ('E'));
+	MATCH(READ_STR("DnE") && AST_APPEND_STR("decltype(nullptr)0"));
+	MATCH(READ_STR("Dn0E") && AST_APPEND_STR("(decltype(nullptr))0"));
+
+	MUST_MATCH(RULE_CALL_DEFER(AST(0), type));
 	// Non-type template parameter: L<type><value>E
 	// For bool: Lb0E -> false, Lb1E -> true
 	// For other types: L<type><number>E -> (<type>)<number> or just <number>
-	MATCH_AND_DO(
-		READ('L') && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), value_number) &&
-			READ('E'),
-		{
-			const char *type_str = AST(0)->dem.buf;
-			const char *value_str = AST(1)->dem.buf;
-			if (type_str && value_str) {
-				// Convert bool to true/false
-				if (strcmp(type_str, "bool") == 0) {
-					if (strcmp(value_str, "0") == 0) {
-						AST_APPEND_STR("false");
-					} else {
-						AST_APPEND_STR("true");
-					}
-				} else if (strcmp(type_str, "int") == 0) {
-					// Plain int: just the value, no suffix or cast
-					AST_MERGE(AST(1));
-				} else if (strcmp(type_str, "unsigned int") == 0) {
-					// unsigned int: value with 'u' suffix
-					AST_MERGE(AST(1));
-					AST_APPEND_STR("u");
-				} else if (strcmp(type_str, "long") == 0) {
-					// long: value with 'l' suffix
-					AST_MERGE(AST(1));
-					AST_APPEND_STR("l");
-				} else if (strcmp(type_str, "unsigned long") == 0) {
-					// unsigned long: value with 'ul' suffix
-					AST_MERGE(AST(1));
-					AST_APPEND_STR("ul");
-				} else if (strcmp(type_str, "long long") == 0) {
-					// long long: value with 'll' suffix
-					AST_MERGE(AST(1));
-					AST_APPEND_STR("ll");
-				} else if (strcmp(type_str, "unsigned long long") == 0) {
-					// unsigned long long: value with 'ull' suffix
-					AST_MERGE(AST(1));
-					AST_APPEND_STR("ull");
-				} else {
-					// For all other types (short, unsigned short, char, unsigned char, enums, etc.):
-					// output as (Type)value
-					AST_APPEND_STR("(");
-					AST_MERGE(AST(0));
-					AST_APPEND_STR(")");
-					AST_MERGE(AST(1));
-				}
+	MATCH_AND_DO(RULE_DEFER(AST(1), value_number) && READ('E'), {
+		const char *type_str = AST(0)->dem.buf;
+		const char *value_str = AST(1)->dem.buf;
+		if (!(type_str && value_str)) {
+			TRACE_RETURN_FAILURE();
+		}
+		// Convert bool to true/false
+		if (strcmp(type_str, "bool") == 0) {
+			if (strcmp(value_str, "0") == 0) {
+				AST_APPEND_STR("false");
+			} else {
+				AST_APPEND_STR("true");
 			}
-		});
+		} else if (strcmp(type_str, "int") == 0) {
+			// Plain int: just the value, no suffix or cast
+			AST_MERGE(AST(1));
+		} else if (strcmp(type_str, "unsigned int") == 0) {
+			// unsigned int: value with 'u' suffix
+			AST_MERGE(AST(1));
+			AST_APPEND_STR("u");
+		} else if (strcmp(type_str, "long") == 0) {
+			// long: value with 'l' suffix
+			AST_MERGE(AST(1));
+			AST_APPEND_STR("l");
+		} else if (strcmp(type_str, "unsigned long") == 0) {
+			// unsigned long: value with 'ul' suffix
+			AST_MERGE(AST(1));
+			AST_APPEND_STR("ul");
+		} else if (strcmp(type_str, "long long") == 0) {
+			// long long: value with 'll' suffix
+			AST_MERGE(AST(1));
+			AST_APPEND_STR("ll");
+		} else if (strcmp(type_str, "unsigned long long") == 0) {
+			// unsigned long long: value with 'ull' suffix
+			AST_MERGE(AST(1));
+			AST_APPEND_STR("ull");
+		} else {
+			// For all other types (short, unsigned short, char, unsigned char, enums, etc.):
+			// output as (Type)value
+			AST_APPEND_STR("(");
+			AST_MERGE(AST(0));
+			AST_APPEND_STR(")");
+			AST_MERGE(AST(1));
+		}
+	});
 
-	MATCH(READ('L') && RULE_X(0, type) && RULE_X(1, value_float) && READ('E'));
-	MATCH(READ('L') && RULE_X(0, string_type) && READ('E'));
-	MATCH(READ_STR("L_Z") && RULE_X(0, encoding) && READ('E'));
-	MATCH(READ_STR("LDnE") && AST_APPEND_STR("decltype(nullptr)0"));
-	MATCH(READ_STR("LDn0E") && AST_APPEND_STR("(decltype(nullptr))0"));
+	AST_MERGE(AST(0));
+	MATCH(RULE_X(1, real_part_float) && READ('_') && RULE_X(2, imag_part_float) && READ('E'));
+	MATCH(RULE_X(1, value_float) && READ('E'));
+
 	RULE_FOOT(expr_primary);
 }
 
