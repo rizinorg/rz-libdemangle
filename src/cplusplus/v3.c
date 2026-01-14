@@ -2370,6 +2370,12 @@ bool rule_template_arg(
 		AST_APPEND_NODE(&node_args);
 	}
 	case 'L': {
+		if (PEEK_AT(1) == 'Z') {
+			ADV_BY(2);
+			MUST_MATCH_I(0, encoding);
+			MUST_MATCH(READ('E'));
+			TRACE_RETURN_SUCCESS;
+		}
 		MUST_MATCH_I(0, expr_primary);
 		TRACE_RETURN_SUCCESS;
 		break;
