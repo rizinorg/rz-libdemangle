@@ -2360,6 +2360,9 @@ bool rule_template_arg(
 			VecF(DemAstNode, append)(&m->names, &node_arg);
 		}
 		NodeList *args_list = NodeList_pop_trailing(&m->names, args_begin);
+		if (!args_list) {
+			TRACE_RETURN_FAILURE();
+		}
 		DemAstNode node_args = { 0 };
 		DemAstNode_ctor_inplace(&node_args, CP_DEM_TYPE_KIND_template_args, "<", start_pos, 1);
 		for (ut64 i = 0; i < args_list->length; i++) {
@@ -2367,6 +2370,7 @@ bool rule_template_arg(
 		}
 		dem_string_append(&node_args.dem, ">");
 		AST_APPEND_NODE(&node_args);
+		TRACE_RETURN_SUCCESS;
 	}
 	case 'L': {
 		if (PEEK_AT(1) == 'Z') {

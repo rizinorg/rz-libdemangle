@@ -24,7 +24,7 @@ void NodeList_copy(NodeList *dst, const NodeList *src) {
 }
 
 NodeList *NodeList_make(NodeList *self, ut64 from, ut64 to) {
-	if (to < VecF(DemAstNode, len)(self) && from < to) {
+	if (to > VecF(DemAstNode, len)(self) || from >= to) {
 		return NULL;
 	}
 	ut64 sz = to - from;
@@ -33,7 +33,8 @@ NodeList *NodeList_make(NodeList *self, ut64 from, ut64 to) {
 		return NULL;
 	}
 	VecF(DemAstNode, reserve)(new_list, sz);
-	memcpy(new_list, VecF(DemAstNode, at)(self, from), sizeof(DemAstNode) * sz);
+	memcpy(new_list->data, VecF(DemAstNode, at)(self, from), sizeof(DemAstNode) * sz);
+	new_list->length = sz;
 	return new_list;
 }
 
