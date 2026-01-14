@@ -220,6 +220,25 @@ bool rule_exception_spec(
 	RULE_FOOT(exception_spec);
 }
 
+void pp_array_type(DemAstNode *dan, DemString *out) {
+	if (!dan || dan->tag != CP_DEM_TYPE_KIND_array_type) {
+		return;
+	}
+
+	DemAstNode *type_node = dan;
+	DemAstNode *size_node = dan;
+	while (type_node->tag == CP_DEM_TYPE_KIND_array_type) {
+		DemAstNode *parent_node = type_node;
+		type_node = AST_(parent_node, 1);
+		size_node = AST_(parent_node, 0);
+		dem_string_appends(out, "[");
+		dem_string_appends(out, size_node->dem.buf);
+		dem_string_appends(out, "]");
+	}
+	dem_string_appends_prefix(out, " ");
+	dem_string_appends_prefix(out, type_node->dem.buf);
+}
+
 bool rule_array_type(
 	DemAstNode *dan,
 	StrIter *msi,
@@ -237,13 +256,8 @@ bool rule_array_type(
 	}
 	MUST_MATCH(RULE_DEFER(AST(1), type));
 
-	// Format: type [size]
-	// Merge type first
-	AST_MERGE(AST(1));
-	// Then add array notation
-	AST_APPEND_STR(" [");
-	AST_MERGE(AST(0));
-	AST_APPEND_STR("]");
+	pp_array_type(dan, &dan->dem);
+	AST_APPEND_TYPE;
 	TRACE_RETURN_SUCCESS;
 
 	RULE_FOOT(array_type);
