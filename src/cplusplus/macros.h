@@ -305,9 +305,6 @@
 	size_t _match_og_types_len = m ? VecDemAstNode_len(&m->detected_types) : 0;
 
 #define context_restore(N) \
-	if (graph && graph->enabled && _my_node_id >= 0) { \
-		trace_graph_set_result(graph, _my_node_id, NULL, 3); /* backtracked */ \
-	} \
 	dan->dem.len = _match_og_dem_len; \
 	if (dan->dem.buf) { \
 		dan->dem.buf[_match_og_dem_len] = 0; \
@@ -389,6 +386,9 @@
 			TRACE_RETURN_SUCCESS(0); \
 		} else { \
 			context_restore(0); \
+			if (graph && graph->enabled && _my_node_id >= 0) { \
+				trace_graph_set_result(graph, _my_node_id, NULL, 2); \
+			} \
 			break; \
 		} \
 	} while (0)
