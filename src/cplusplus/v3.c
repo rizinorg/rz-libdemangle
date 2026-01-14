@@ -326,6 +326,14 @@ bool rule_expression(
 			AST_MERGE(AST(1)); \
 		});
 
+#define EXPRESSION_UNARY_OP(OP_STR, OP_CODE) \
+	MATCH_AND_DO( \
+		READ_STR(OP_CODE) && RULE_CALL_DEFER(AST(0), expression), \
+		{ \
+			AST_APPEND_STR(OP_STR); \
+			AST_MERGE(AST(0)); \
+		});
+
 	EXPRESSION_BINARY_OP("+", "pl")
 	EXPRESSION_BINARY_OP("-", "mi")
 	EXPRESSION_BINARY_OP("*", "ml")
@@ -360,7 +368,7 @@ bool rule_expression(
 	EXPRESSION_BINARY_OP("<=>", "ss")
 
 	/* prefix operators */
-	EXPRESSION_BINARY_OP("!", "nt");
+	EXPRESSION_UNARY_OP("!", "nt");
 	EXPRESSION_BINARY_OP("&&", "aa");
 
 	/* expression (expr-list), call */
