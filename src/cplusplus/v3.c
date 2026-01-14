@@ -84,7 +84,7 @@ bool rule_unqualified_name(
 	MATCH(RULE_X(0, operator_name) && OPTIONAL(RULE_X(1, abi_tags)));
 	MATCH(READ_STR("12_GLOBAL__N_1") && AST_APPEND_STR("(anonymous namespace)"));
 	MATCH1(ctor_dtor_name);
-	MATCH1(source_name);
+	MATCH(RULE_X(0, source_name) && OPTIONAL(RULE_X(1, abi_tags)));
 	MATCH1(expr_primary);
 	MATCH1(unnamed_type_name);
 
@@ -1080,6 +1080,9 @@ bool rule_expression(
 	MATCH(READ_STR("frss") && AST_APPEND_CHR('(') && RULE_X(0, expression) && AST_APPEND_STR(" <=>..."));
 	MATCH(READ_STR("sZ") && AST_APPEND_STR("sizeof...(") && RULE_X(0, template_param) && AST_APPEND_CHR(')'));
 	MATCH(READ_STR("sZ") && AST_APPEND_STR("sizeof...(") && RULE_X(0, function_param) && AST_APPEND_CHR(')'));
+	// sp <expression> is pack expansion - but when used with template parameter in parameter pack context,
+	// the expansion is already handled by the J...E wrapper, so don't add "..."
+	MATCH(READ_STR("sp") && RULE_X(0, template_param));
 	MATCH(READ_STR("sp") && RULE_X(0, expression) && AST_APPEND_STR("..."));
 
 	/* binary left fold */
@@ -1267,8 +1270,8 @@ bool rule_initializer(
 
 bool rule_abi_tag(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(abi_tag);
-	// will generate " \"<source_name>\","
-	MATCH(READ('B') && AST_APPEND_STR(" \"") && RULE_X(0, source_name) && AST_APPEND_STR("\","));
+	// will generate "[abi:<source_name>]"
+	MATCH(READ('B') && AST_APPEND_STR("[abi:") && RULE_X(0, source_name) && AST_APPEND_STR("]"));
 	RULE_FOOT(abi_tag);
 }
 
@@ -2085,7 +2088,7 @@ bool rule_operator_name(
 	MATCH(READ_STR("ix") && AST_APPEND_STR("operator[]"));
 
 	/* operator-name ::= li <source-name>          # operator ""*/
-	MATCH(READ_STR("li") && RULE_X(0, source_name)); // TODO(brightprogrammer): How to generate for this operator?
+	MATCH(READ_STR("li") && AST_APPEND_STR("operator\"\" ") && RULE_X(0, source_name));
 
 	MATCH(READ_STR("qu") && AST_APPEND_STR("operator?"));
 	RULE_FOOT(operator_name);
