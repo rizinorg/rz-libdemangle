@@ -2556,70 +2556,72 @@ bool rule_pointer_to_member_type(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(pointer_to_member_type);
+	if (!READ('M')) {
+		TRACE_RETURN_FAILURE();
+	}
 
+	context_save(0);
 	// Grammar: M <class-type> <member-type>
 	// For member function pointers: M <class> <function-type>
 	// For member data pointers: M <class> <data-type>
-	MATCH_AND_DO(
-		READ('M') && RULE_CALL_DEFER(AST(0), type) && RULE_CALL_DEFER(AST(1), type),
-		{
-			DemAstNode *class_type = AST(0);
-			DemAstNode *member_type = AST(1);
+	CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(0), type));
+	CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(1), type));
+	DemAstNode *class_type = AST(0);
+	DemAstNode *member_type = AST(1);
 
-			// Try to extract function type (may be wrapped in qualifiers)
-			DemAstNode *func_type = extract_function_from_type(member_type);
+	// Try to extract function type (may be wrapped in qualifiers)
+	DemAstNode *func_type = extract_function_from_type(member_type);
+	if (func_type) {
+		// Pointer to member function
+		// Output format: return_type (Class::*)(params) [cv-qualifiers] [ref-qualifier] [exception-spec]
 
-			if (func_type) {
-				// Pointer to member function
-				// Output format: return_type (Class::*)(params) [cv-qualifiers] [ref-qualifier] [exception-spec]
+		// function_type node structure:
+		// AST(0) = cv-qualifiers
+		// AST(1) = exception-spec
+		// AST(2) = return type
+		// AST(3) = parameters (bare-function-type)
+		// AST(4) = ref-qualifier
 
-				// function_type node structure:
-				// AST(0) = cv-qualifiers
-				// AST(1) = exception-spec
-				// AST(2) = return type
-				// AST(3) = parameters (bare-function-type)
-				// AST(4) = ref-qualifier
+		// Return type
+		AST_APPEND_DEMSTR(&AST_(func_type, 2)->dem);
+		AST_APPEND_STR(" (");
 
-				// Return type
-				AST_APPEND_DEMSTR(&AST_(func_type, 2)->dem);
-				AST_APPEND_STR(" (");
+		// Class name
+		AST_APPEND_DEMSTR(&class_type->dem);
+		AST_APPEND_STR("::*)");
 
-				// Class name
-				AST_APPEND_DEMSTR(&class_type->dem);
-				AST_APPEND_STR("::*)");
+		// Parameters
+		AST_APPEND_STR("(");
+		AST_APPEND_DEMSTR_OPT(&AST_(func_type, 3)->dem);
+		AST_APPEND_STR(")");
 
-				// Parameters
-				AST_APPEND_STR("(");
-				AST_APPEND_DEMSTR_OPT(&AST_(func_type, 3)->dem);
-				AST_APPEND_STR(")");
-
-				// cv-qualifiers from qualified type wrapper (if present)
-				// This handles cases like "M<class>K<function>" where K wraps the function
-				if (member_type->subtag == QUALIFIED_TYPE && VecF(DemAstNode, len)(member_type->children) >= 1) {
-					DemAstNode *wrapper_quals = AST_(member_type, 0);
-					if (wrapper_quals && DemAstNode_non_empty(wrapper_quals)) {
-						AST_APPEND_STR(" ");
-						AST_APPEND_DEMSTR(&wrapper_quals->dem);
-					}
-				}
-
-				// ref-qualifier, cv-qualifiers from function itself, exception-spec
-				AST_APPEND_DEMSTR_OPT(&AST_(func_type, 4)->dem);
-				// Add space before cv-qualifiers if present
-				if (DemAstNode_non_empty(AST_(func_type, 0))) {
-					AST_APPEND_STR(" ");
-				}
-				AST_APPEND_DEMSTR_OPT(&AST_(func_type, 0)->dem);
-				AST_APPEND_DEMSTR_OPT(&AST_(func_type, 1)->dem);
-			} else {
-				// Pointer to member data
-				// Output format: data_type Class::*
-				AST_MERGE(member_type);
+		// cv-qualifiers from qualified type wrapper (if present)
+		// This handles cases like "M<class>K<function>" where K wraps the function
+		if (member_type->subtag == QUALIFIED_TYPE && VecF(DemAstNode, len)(member_type->children) >= 1) {
+			DemAstNode *wrapper_quals = AST_(member_type, 0);
+			if (wrapper_quals && DemAstNode_non_empty(wrapper_quals)) {
 				AST_APPEND_STR(" ");
-				AST_MERGE(class_type);
-				AST_APPEND_STR("::*");
+				AST_APPEND_DEMSTR(&wrapper_quals->dem);
 			}
-		});
+		}
+
+		// ref-qualifier, cv-qualifiers from function itself, exception-spec
+		AST_APPEND_DEMSTR_OPT(&AST_(func_type, 4)->dem);
+		// Add space before cv-qualifiers if present
+		if (DemAstNode_non_empty(AST_(func_type, 0))) {
+			AST_APPEND_STR(" ");
+		}
+		AST_APPEND_DEMSTR_OPT(&AST_(func_type, 0)->dem);
+		AST_APPEND_DEMSTR_OPT(&AST_(func_type, 1)->dem);
+	} else {
+		// Pointer to member data
+		// Output format: data_type Class::*
+		AST_MERGE(member_type);
+		AST_APPEND_STR(" ");
+		AST_MERGE(class_type);
+		AST_APPEND_STR("::*");
+	}
+	TRACE_RETURN_SUCCESS;
 
 	RULE_FOOT(pointer_to_member_type);
 }
