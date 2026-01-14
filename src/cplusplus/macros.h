@@ -331,8 +331,7 @@
 			VecDemAstNode_pop(&m->detected_types); \
 		} \
 	} \
-	RESTORE_POS(N); \
-	break;
+	RESTORE_POS(N);
 
 /* Macros for rules that use direct returns */
 #define TRACE_RETURN_SUCCESS \
@@ -390,6 +389,7 @@
 			TRACE_RETURN_SUCCESS(0); \
 		} else { \
 			context_restore(0); \
+			break; \
 		} \
 	} while (0)
 
@@ -408,6 +408,7 @@
 	do { \
 		if (!(rules)) { \
 			context_restore(I); \
+			TRACE_RETURN_FAILURE(); \
 		} \
 	} while (0)
 #define CTX_MUST_MATCH_I(CI, I, R) CTX_MUST_MATCH(CI, RULE_DEFER(AST(I), R) && AST_MERGE(AST(I)));
