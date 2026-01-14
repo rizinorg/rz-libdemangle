@@ -12,7 +12,6 @@
 
 #include "demangle.h"
 #include "demangler_util.h"
-#include "first.h"
 #include "macros.h"
 #include "parser_combinator.h"
 #include "types.h"
@@ -69,7 +68,7 @@ bool rule_number(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int 
 bool rule_v_offset(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(v_offset);
 	// ignore the number
-	MATCH(RULE_DEFER(AST(0), number) && READ('_') && RULE_DEFER(AST(1), number));
+	MATCH(RULE_CALL_DEFER(AST(0), number) && READ('_') && RULE_CALL_DEFER(AST(1), number));
 	RULE_FOOT(v_offset);
 }
 
@@ -103,9 +102,9 @@ bool rule_unresolved_name(
 
 	if (READ_STR("srN")) {
 		MATCH_AND_DO(RULE_X(0, unresolved_type) &&
-				(PEEK() == 'I' ? RULE_DEFER(AST(1), template_args) : true) &&
+				(PEEK() == 'I' ? RULE_CALL_DEFER(AST(1), template_args) : true) &&
 				RULE_DEFER_ATLEAST_ONCE_WITH_SEP(AST(2), unresolved_qualifier_level, "::") && READ('E') &&
-				RULE_DEFER(AST(3), base_unresolved_name),
+				RULE_CALL_DEFER(AST(3), base_unresolved_name),
 			{
 				AST_MERGE_OPT(AST(1));
 				AST_APPEND_STR("::");
@@ -115,7 +114,7 @@ bool rule_unresolved_name(
 			});
 	}
 	if (!(READ_STR("sr"))) {
-		MUST_MATCH(RULE_DEFER(AST(0), base_unresolved_name));
+		MUST_MATCH(RULE_CALL_DEFER(AST(0), base_unresolved_name));
 		if (is_global) {
 			AST_PREPEND_STR("::");
 		}
@@ -126,9 +125,9 @@ bool rule_unresolved_name(
 	if (isdigit(PEEK())) {
 		MUST_MATCH(RULE_DEFER_ATLEAST_ONCE(AST(0), unresolved_qualifier_level) && READ('E'));
 	} else {
-		MUST_MATCH(RULE_DEFER(AST(0), unresolved_type));
+		MUST_MATCH(RULE_CALL_DEFER(AST(0), unresolved_type));
 		if (PEEK() == 'I') {
-			MUST_MATCH(RULE_DEFER(AST(1), template_args) && READ('E'));
+			MUST_MATCH(RULE_CALL_DEFER(AST(1), template_args) && READ('E'));
 		}
 	}
 
@@ -252,9 +251,9 @@ bool rule_array_type(
 	if (isdigit(PEEK())) {
 		MUST_MATCH(RULE_CALL_DEFER(AST(0), number) && READ('_'));
 	} else {
-		MUST_MATCH(RULE_DEFER(AST(0), expression) && READ('_'));
+		MUST_MATCH(RULE_CALL_DEFER(AST(0), expression) && READ('_'));
 	}
-	MUST_MATCH(RULE_DEFER(AST(1), type));
+	MUST_MATCH(RULE_CALL_DEFER(AST(1), type));
 
 	pp_array_type(dan, &dan->dem);
 	AST_APPEND_TYPE;
@@ -313,7 +312,7 @@ bool rule_expression(
 		AST_MERGE(AST(1)) && READ('E'));
 #define EXPRESSION_BINARY_OP(OP_STR, OP_CODE) \
 	MATCH_AND_DO( \
-		READ_STR(OP_CODE) && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression), \
+		READ_STR(OP_CODE) && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression), \
 		{ \
 			AST_MERGE(AST(0)); \
 			AST_APPEND_STR(OP_STR); \
@@ -363,7 +362,7 @@ bool rule_expression(
 	// cv |= type _ expr* E
 	//    |= type expr
 	if (READ_STR("cv")) {
-		MUST_MATCH(RULE_DEFER(AST(0), type));
+		MUST_MATCH(RULE_CALL_DEFER(AST(0), type));
 		if (READ('_')) {
 			MUST_MATCH(RULE_DEFER_MANY_WITH_SEP(AST(1), expression, ", ") && READ('E'));
 			AST_APPEND_STR("(");
@@ -373,7 +372,7 @@ bool rule_expression(
 			AST_APPEND_STR(")");
 			TRACE_RETURN_SUCCESS;
 		}
-		MUST_MATCH(RULE_DEFER(AST(1), expression));
+		MUST_MATCH(RULE_CALL_DEFER(AST(1), expression));
 		AST_APPEND_STR("(");
 		AST_MERGE(AST(0));
 		AST_APPEND_STR(")(");
@@ -399,7 +398,7 @@ bool rule_expression(
 
 	/* new (expr-list) type */
 	MATCH_AND_DO(
-		READ_STR("dc") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression),
+		READ_STR("dc") && RULE_CALL_DEFER(AST(0), type) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_STR("dynamic_cast<");
 			AST_MERGE(AST(0));
@@ -410,7 +409,7 @@ bool rule_expression(
 
 	/* new (expr-list) type (init) */
 	MATCH_AND_DO(
-		READ_STR("sc") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression),
+		READ_STR("sc") && RULE_CALL_DEFER(AST(0), type) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_STR("static_cast<");
 			AST_MERGE(AST(0));
@@ -421,7 +420,7 @@ bool rule_expression(
 
 	/* new[] (expr-list) type */
 	MATCH_AND_DO(
-		READ_STR("cc") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression),
+		READ_STR("cc") && RULE_CALL_DEFER(AST(0), type) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_STR("const_cast<");
 			AST_MERGE(AST(0));
@@ -432,7 +431,7 @@ bool rule_expression(
 
 	/* new[] (expr-list) type (init) */
 	MATCH_AND_DO(
-		READ_STR("rc") && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), expression),
+		READ_STR("rc") && RULE_CALL_DEFER(AST(0), type) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_STR("reinterpret_cast<");
 			AST_MERGE(AST(0));
@@ -443,7 +442,7 @@ bool rule_expression(
 
 	/* expr.expr */
 	MATCH_AND_DO(
-		READ_STR("dt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("dt") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_STR("(");
 			AST_MERGE(AST(0));
@@ -453,7 +452,7 @@ bool rule_expression(
 
 	/* expr->expr */
 	MATCH_AND_DO(
-		READ_STR("pt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("pt") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_STR("(");
 			AST_MERGE(AST(0));
@@ -464,7 +463,7 @@ bool rule_expression(
 
 	// dc <type> <expression>                               # dynamic_cast<type> (expression)
 	MATCH_AND_DO(
-		READ_STR("ds") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("ds") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_MERGE(AST(0));
 			AST_APPEND_STR(".*");
@@ -476,7 +475,7 @@ bool rule_expression(
 		AST_APPEND_CHR(')') && READ('E'));
 	// cc <type> <expression>                               # const_cast<type> (expression)
 	MATCH_AND_DO(
-		READ_STR("fLpl") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLpl") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -486,7 +485,7 @@ bool rule_expression(
 		});
 	// rc <type> <expression>                               # reinterpret_cast<type> (expression)
 	MATCH_AND_DO(
-		READ_STR("fLmi") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLmi") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -497,7 +496,7 @@ bool rule_expression(
 
 	// ti <type>                                            # typeid (type)
 	MATCH_AND_DO(
-		READ_STR("fLml") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLml") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -507,7 +506,7 @@ bool rule_expression(
 		});
 	// te <expression>                                      # typeid (expression)
 	MATCH_AND_DO(
-		READ_STR("fLdv") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLdv") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -517,7 +516,7 @@ bool rule_expression(
 		});
 	// st <type>                                            # sizeof (type)
 	MATCH_AND_DO(
-		READ_STR("fLrm") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLrm") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -527,7 +526,7 @@ bool rule_expression(
 		});
 	// sz <expression>                                      # sizeof (expression)
 	MATCH_AND_DO(
-		READ_STR("fLan") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLan") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -537,7 +536,7 @@ bool rule_expression(
 		});
 	// at <type>                                            # alignof (type)
 	MATCH_AND_DO(
-		READ_STR("fLor") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLor") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -547,7 +546,7 @@ bool rule_expression(
 		});
 	// az <expression>                                      # alignof (expression)
 	MATCH_AND_DO(
-		READ_STR("fLeo") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLeo") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -557,7 +556,7 @@ bool rule_expression(
 		});
 	// nx <expression>                                      # noexcept (expression)
 	MATCH_AND_DO(
-		READ_STR("fLaS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLaS") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -567,7 +566,7 @@ bool rule_expression(
 		});
 
 	MATCH_AND_DO(
-		READ_STR("fLpL") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLpL") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -576,7 +575,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLmI") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLmI") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -586,7 +585,7 @@ bool rule_expression(
 		});
 
 	MATCH_AND_DO(
-		READ_STR("fLmL") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLmL") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -595,7 +594,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLdV") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLdV") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -604,7 +603,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLrM") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLrM") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -614,7 +613,7 @@ bool rule_expression(
 		});
 
 	MATCH_AND_DO(
-		READ_STR("fLaN") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLaN") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -623,7 +622,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLoR") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLoR") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -632,7 +631,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLeO") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLeO") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -641,7 +640,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLls") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLls") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -652,7 +651,7 @@ bool rule_expression(
 
 	/* unary left fold */
 	MATCH_AND_DO(
-		READ_STR("fLrs") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLrs") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -661,7 +660,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLlS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLlS") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -670,7 +669,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLrS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLrS") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -679,7 +678,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLeq") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLeq") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -688,7 +687,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLne") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLne") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -697,7 +696,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLlt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLlt") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -706,7 +705,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLgt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLgt") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -715,7 +714,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLle") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLle") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -724,7 +723,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLge") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLge") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -733,7 +732,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLss") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLss") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -742,7 +741,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLnt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLnt") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -751,7 +750,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLaa") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLaa") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -760,7 +759,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fLoo") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fLoo") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -769,7 +768,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRpl") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRpl") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -778,7 +777,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRmi") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRmi") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -787,7 +786,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRml") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRml") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -796,7 +795,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRdv") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRdv") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -805,7 +804,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRrm") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRrm") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -814,7 +813,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRan") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRan") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -823,7 +822,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRor") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRor") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -832,7 +831,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fReo") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fReo") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -841,7 +840,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRaS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRaS") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -850,7 +849,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRpL") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRpL") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -859,7 +858,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRmI") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRmI") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -868,7 +867,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRmL") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRmL") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -877,7 +876,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRdV") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRdV") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -886,7 +885,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRrM") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRrM") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -895,7 +894,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRaN") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRaN") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -904,7 +903,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRoR") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRoR") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -913,7 +912,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fReO") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fReO") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -922,7 +921,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRls") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRls") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -933,7 +932,7 @@ bool rule_expression(
 
 	/* unary fold right */
 	MATCH_AND_DO(
-		READ_STR("fRrs") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRrs") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -942,7 +941,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRlS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRlS") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -951,7 +950,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRrS") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRrS") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -960,7 +959,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fReq") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fReq") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -969,7 +968,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRne") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRne") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -978,7 +977,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRlt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRlt") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -987,7 +986,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRgt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRgt") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -996,7 +995,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRle") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRle") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -1005,7 +1004,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRge") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRge") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -1014,7 +1013,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRss") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRss") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -1023,7 +1022,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRnt") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRnt") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -1032,7 +1031,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRaa") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRaa") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -1041,7 +1040,7 @@ bool rule_expression(
 			AST_APPEND_CHR(')');
 		});
 	MATCH_AND_DO(
-		READ_STR("fRoo") && RULE_DEFER(AST(0), expression) && RULE_DEFER(AST(1), expression),
+		READ_STR("fRoo") && RULE_CALL_DEFER(AST(0), expression) && RULE_CALL_DEFER(AST(1), expression),
 		{
 			AST_APPEND_CHR('(');
 			AST_MERGE(AST(0));
@@ -1302,7 +1301,7 @@ bool rule_special_name(
 	RULE_HEAD(special_name);
 	MATCH(READ_STR("Tc") && RULE_X(0, call_offset) && RULE_X(1, call_offset) && RULE_X(2, encoding));
 	MATCH_AND_DO(
-		READ_STR("GR") && RULE_DEFER(AST(0), name) && RULE_DEFER(AST(1), seq_id) && READ('_'),
+		READ_STR("GR") && RULE_CALL_DEFER(AST(0), name) && RULE_CALL_DEFER(AST(1), seq_id) && READ('_'),
 		{
 			AST_APPEND_STR("reference temporary for ");
 			AST_MERGE(AST(0));
@@ -1331,14 +1330,14 @@ bool rule_function_type(
 	// P prefix is handled in the type rule, which properly inserts * for function pointers
 
 	MATCH_AND_DO(
-		OPTIONAL(RULE_DEFER(AST(0), cv_qualifiers)) && OPTIONAL(RULE_DEFER(AST(1), exception_spec)) &&
+		OPTIONAL(RULE_CALL_DEFER(AST(0), cv_qualifiers)) && OPTIONAL(RULE_CALL_DEFER(AST(1), exception_spec)) &&
 			OPTIONAL(READ_STR("Dx")) && READ('F') && OPTIONAL(READ('Y')) &&
 
 			// Return type. If return type is builtin type, then it's not substitutable
 			// If return type is a type, then it's substitutable, so add using APPEND_TYPE
-			RULE_DEFER(AST(2), type) &&
-			RULE_DEFER(AST(3), bare_function_type) &&
-			OPTIONAL(RULE_DEFER(AST(4), ref_qualifier)) && READ('E'),
+			RULE_CALL_DEFER(AST(2), type) &&
+			RULE_CALL_DEFER(AST(3), bare_function_type) &&
+			OPTIONAL(RULE_CALL_DEFER(AST(4), ref_qualifier)) && READ('E'),
 		{
 			AST_MERGE(AST(2)); // return type
 			AST_APPEND_STR(" (");
@@ -1666,7 +1665,7 @@ bool rule_qualifiers(
 
 	context_save(0);
 	RULE_DEFER_MANY_WITH_SEP(AST(0), extended_qualifier, " ");
-	RULE_DEFER(AST(1), cv_qualifiers);
+	RULE_CALL_DEFER(AST(1), cv_qualifiers);
 
 	if (DemAstNode_is_empty(AST(0)) && DemAstNode_is_empty(AST(1))) {
 		context_restore(0);
@@ -1918,8 +1917,8 @@ bool rule_local_name(
 	int parent_node_id) {
 	RULE_HEAD(local_name);
 	MATCH_AND_DO(
-		READ('Z') && RULE_DEFER(AST(0), encoding) && READ_STR("Ed") && OPTIONAL(RULE_DEFER(AST(1), number)) &&
-			READ('_') && RULE_DEFER(AST(2), name),
+		READ('Z') && RULE_CALL_DEFER(AST(0), encoding) && READ_STR("Ed") && OPTIONAL(RULE_CALL_DEFER(AST(1), number)) &&
+			READ('_') && RULE_CALL_DEFER(AST(2), name),
 		{
 			AST_MERGE(AST(0));
 			AST_MERGE(AST(1));
@@ -1927,8 +1926,8 @@ bool rule_local_name(
 			AST_MERGE(AST(2));
 		});
 	MATCH_AND_DO(
-		READ('Z') && RULE_DEFER(AST(0), encoding) && READ('E') && RULE_DEFER(AST(1), name) &&
-			OPTIONAL(RULE_DEFER(AST(2), discriminator)),
+		READ('Z') && RULE_CALL_DEFER(AST(0), encoding) && READ('E') && RULE_CALL_DEFER(AST(1), name) &&
+			OPTIONAL(RULE_CALL_DEFER(AST(2), discriminator)),
 		{
 			AST_MERGE(AST(0));
 			AST_APPEND_STR("::");
@@ -2500,7 +2499,7 @@ bool rule_pointer_to_member_type(
 	// For member function pointers: M <class> <function-type>
 	// For member data pointers: M <class> <data-type>
 	MATCH_AND_DO(
-		READ('M') && RULE_DEFER(AST(0), type) && RULE_DEFER(AST(1), type),
+		READ('M') && RULE_CALL_DEFER(AST(0), type) && RULE_CALL_DEFER(AST(1), type),
 		{
 			DemAstNode *class_type = AST(0);
 			DemAstNode *member_type = AST(1);
@@ -2763,11 +2762,11 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 	context_save(0);
 
 	// Parse: name, [return_type], parameters
-	CTX_MUST_MATCH(0, RULE_DEFER(AST(0), name));
+	CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(0), name));
 	if (is_template(AST(0))) {
-		RULE_DEFER(AST(1), type);
+		RULE_CALL_DEFER(AST(1), type);
 	}
-	RULE_DEFER(AST(2), bare_function_type);
+	RULE_CALL_DEFER(AST(2), bare_function_type);
 
 	// Determine function type
 	// For constructors with templates, AST(1) is the first parameter, not a return type
@@ -2863,7 +2862,7 @@ bool rule_expr_primary(
 	// Non-type template parameter: L<type><value>E
 	// For bool: Lb0E -> false, Lb1E -> true
 	// For other types: L<type><number>E -> (<type>)<number> or just <number>
-	MATCH_AND_DO(RULE_DEFER(AST(1), value_number) && READ('E'), {
+	MATCH_AND_DO(RULE_CALL_DEFER(AST(1), value_number) && READ('E'), {
 		const char *type_str = AST(0)->dem.buf;
 		const char *value_str = AST(1)->dem.buf;
 		if (!(type_str && value_str)) {

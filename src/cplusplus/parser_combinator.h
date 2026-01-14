@@ -9,7 +9,6 @@
 #include "types.h"
 
 bool match_one_or_more_rules(
-	DemRuleFirst first,
 	DemRule rule,
 	const char *sep,
 	DemAstNode *ast_node,
@@ -18,7 +17,6 @@ bool match_one_or_more_rules(
 	TraceGraph *graph,
 	int parent_node_id);
 bool match_zero_or_more_rules(
-	DemRuleFirst first,
 	DemRule rule,
 	const char *sep,
 	DemAstNode *ast_node,

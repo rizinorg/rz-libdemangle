@@ -17,7 +17,6 @@
  * \return NULL otherwise.
  */
 bool match_one_or_more_rules(
-	DemRuleFirst first,
 	DemRule rule,
 	const char *sep,
 	DemAstNode *ast_node,
@@ -25,7 +24,7 @@ bool match_one_or_more_rules(
 	Meta *m,
 	TraceGraph *graph,
 	int parent_node_id) {
-	if (!match_zero_or_more_rules(first, rule, sep, ast_node, msi, m, graph, parent_node_id)) {
+	if (!match_zero_or_more_rules(rule, sep, ast_node, msi, m, graph, parent_node_id)) {
 		return false;
 	}
 	if (!ast_node->dem.buf) {
@@ -48,7 +47,6 @@ bool match_one_or_more_rules(
  * \return NULL otherwise.
  */
 bool match_zero_or_more_rules(
-	DemRuleFirst first,
 	DemRule rule,
 	const char *sep,
 	DemAstNode *ast_node,
@@ -64,7 +62,7 @@ bool match_zero_or_more_rules(
 	while (true) {
 		DemAstNode tmp = { 0 };
 		SAVE_POS(0);
-		if (first(CUR()) && rule(&tmp, msi, m, graph, parent_node_id)) {
+		if (rule(&tmp, msi, m, graph, parent_node_id)) {
 			DemAstNode_append(ast_node, &tmp);
 			if (sep) {
 				dem_string_append(&ast_node->dem, sep);
