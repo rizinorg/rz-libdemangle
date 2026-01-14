@@ -1345,6 +1345,10 @@ bool rule_function_type(
 			AST_MERGE(AST(3)); // bare-function-type
 			AST_APPEND_STR(")");
 			AST_MERGE_OPT(AST(4)); // ref-qualifier
+			// Add space before cv-qualifiers if present
+			if (DemAstNode_non_empty(AST(0)) || DemAstNode_non_empty(AST(1))) {
+				AST_APPEND_STR(" ");
+			}
 			AST_MERGE_OPT(AST(0)); // cv-qualifiers
 			AST_MERGE_OPT(AST(1)); // exception spec
 			AST_APPEND_TYPE;
@@ -1732,7 +1736,7 @@ static bool handle_qualified_type(DemAstNode *dan, StrIter *msi, Meta *m) {
 
 	// Try pre-formatted function pointer string
 	const char *type_str = AST(1)->dem.buf;
-	if (AST(0)->dem.len > 0 && strstr(type_str, "(*") != NULL) {
+	if (type_str && AST(0)->dem.len > 0 && strstr(type_str, "(*") != NULL) {
 		if (insert_modifier_in_func_ptr(dan, type_str, AST(0)->dem.buf)) {
 			return true;
 		}
@@ -2349,27 +2353,19 @@ bool rule_template_arg(
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'J': {
-		const char *start_pos = CUR();
+		// Template parameter pack - expand arguments directly into parent
 		ADV();
-		ut64 args_begin = VecF(DemAstNode, len)(&m->names);
 		while (!READ('E')) {
+			// Add comma separator if this is not the first argument in parent
+			if (VecF(DemAstNode, len)(dan->children) > 0) {
+				AST_APPEND_STR(", ");
+			}
 			DemAstNode node_arg = { 0 };
 			if (!rule_template_arg(RULE_ARGS(&node_arg))) {
 				TRACE_RETURN_FAILURE();
 			}
-			VecF(DemAstNode, append)(&m->names, &node_arg);
+			AST_APPEND_NODE(&node_arg);
 		}
-		NodeList *args_list = NodeList_pop_trailing(&m->names, args_begin);
-		if (!args_list) {
-			TRACE_RETURN_FAILURE();
-		}
-		DemAstNode node_args = { 0 };
-		DemAstNode_ctor_inplace(&node_args, CP_DEM_TYPE_KIND_template_args, "<", start_pos, 1);
-		for (ut64 i = 0; i < args_list->length; i++) {
-			DemAstNode_append(&node_args, vec_ptr_at(args_list, i));
-		}
-		dem_string_append(&node_args.dem, ">");
-		AST_APPEND_NODE(&node_args);
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'L': {
@@ -2548,6 +2544,10 @@ bool rule_pointer_to_member_type(
 
 				// ref-qualifier, cv-qualifiers from function itself, exception-spec
 				AST_APPEND_DEMSTR_OPT(&AST_(func_type, 4)->dem);
+				// Add space before cv-qualifiers if present
+				if (DemAstNode_non_empty(AST_(func_type, 0))) {
+					AST_APPEND_STR(" ");
+				}
 				AST_APPEND_DEMSTR_OPT(&AST_(func_type, 0)->dem);
 				AST_APPEND_DEMSTR_OPT(&AST_(func_type, 1)->dem);
 			} else {
