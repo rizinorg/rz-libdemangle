@@ -1799,7 +1799,7 @@ ok:
  * This consolidates the common logic for pointer, reference, and rvalue reference types.
  */
 static void apply_type_modifier(DemAstNode *dan, DemAstNode *inner_type,
-	const char *modifier, int subtag) {
+	const char *modifier, ut32 subtag) {
 	if (!inner_type->dem.buf || !modifier) {
 		return;
 	}
@@ -1845,31 +1845,7 @@ static void apply_type_modifier(DemAstNode *dan, DemAstNode *inner_type,
 bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(type);
 
-	MATCH(READ('C') && RULE_X(0, type)); // complex pair (C99)
-	MATCH(READ('G') && RULE_X(0, type)); // imaginary (C99)
-
-	// Handle pointer types - special handling for function types
-	// For PF...E, we need to produce "ret (*)(args)" and add both S_entries
-	MATCH_AND_DO(READ('P') && RULE_CALL_DEFER(AST(0), type), {
-		apply_type_modifier(dan, AST(0), "*", POINTER_TYPE);
-		AST_APPEND_TYPE;
-	});
-	MATCH_AND_DO(READ('R') && RULE_CALL_DEFER(AST(0), type), {
-		apply_type_modifier(dan, AST(0), "&", REFERENCE_TYPE);
-		// Reference types ARE substitutable per Itanium ABI section 5.1.5
-		AST_APPEND_TYPE;
-	});
-	MATCH_AND_DO(READ('O') && RULE_CALL_DEFER(AST(0), type), {
-		apply_type_modifier(dan, AST(0), "&&", RVALUE_REFERENCE_TYPE);
-		// Rvalue reference types ARE substitutable per Itanium ABI section 5.1.5
-		AST_APPEND_TYPE;
-	});
-	MATCH(READ_STR("Dp") && RULE_X(0, type)); // pack expansion (C++11)
-
 	MATCH1(builtin_type);
-	MATCH1(array_type);
-	MATCH1(pointer_to_member_type);
-	MATCH1(decltype);
 	MATCH1(function_type);
 
 	switch (PEEK()) {
@@ -1884,6 +1860,54 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		}
 		break;
 	}
+	case 'M':
+		MUST_MATCH_I(0, pointer_to_member_type);
+		break;
+	case 'A':
+		MUST_MATCH_I(0, array_type);
+		break;
+	case 'C':
+	case 'G':
+		ADV();
+		MUST_MATCH_I(0, type);
+		break;
+	case 'P':
+	case 'R':
+	case 'O': {
+		const char *modfier = NULL;
+		ut32 subtag = 0;
+		switch (PEEK()) {
+		case 'P':
+			modfier = "*";
+			subtag = POINTER_TYPE;
+			break;
+		case 'R':
+			modfier = "&";
+			subtag = REFERENCE_TYPE;
+			break;
+		case 'O':
+			modfier = "&&";
+			subtag = RVALUE_REFERENCE_TYPE;
+			break;
+		default:
+			DEM_UNREACHABLE;
+		}
+		ADV();
+		MUST_MATCH(RULE_CALL_DEFER(AST(0), type));
+		apply_type_modifier(dan, AST(0), modfier, subtag);
+		break;
+	}
+	case 'D':
+		if (PEEK_AT(1) == 'p') {
+			ADV_BY(2);
+			MUST_MATCH_I(0, type);
+			break;
+		}
+		if (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T') {
+			MUST_MATCH_I(0, decltype);
+			break;
+		}
+		// fallthrough
 	case 'T': {
 		if (strchr("sue", PEEK_AT(1)) != NULL) {
 			MUST_MATCH_I(0, class_enum_type);
