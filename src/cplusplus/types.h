@@ -115,6 +115,7 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_nested_name_with_substitution_only,
 	CP_DEM_TYPE_KIND_nv_digit,
 	CP_DEM_TYPE_KIND_non_neg_number,
+	CP_DEM_TYPE_KIND_fwd_template_ref,
 } CpDemTypeKind;
 
 typedef Vec(CpDemTypeKind) CpDemTypeKinds;
@@ -135,13 +136,28 @@ enum {
 	ARRAY_TYPE
 };
 
+struct DemAstNode_t;
+
+// Forward template reference: stores a reference to T_ that needs resolution later
+typedef struct ForwardTemplateRef {
+	struct DemAstNode_t *node; // The AST node
+	ut64 level; // Template parameter level
+	ut64 index; // Template parameter index
+} ForwardTemplateRef;
+
+typedef ForwardTemplateRef *PForwardTemplateRef;
+
 typedef struct DemAstNode_t {
 	struct DemAstNode_t *parent;
 	struct Vec_t(DemAstNode) * children;
 	DemString dem;
 	DemStringView val;
 	CpDemTypeKind tag;
-	ut32 subtag;
+
+	union {
+		ut32 subtag;
+		PForwardTemplateRef fwd_template_ref;
+	};
 } DemAstNode;
 
 DemAstNode *DemAstNode_new();
@@ -169,13 +185,21 @@ static inline void PNodeList_free(void *self) {
 typedef NodeList *PNodeList;
 VecIMPL(PNodeList, PNodeList_free);
 
+static inline void ForwardTemplateRef_free(void *ref) {
+	(void)ref; // Node is owned by AST, don't free
+}
+
+VecIMPL(PForwardTemplateRef, ForwardTemplateRef_free);
+
 typedef struct Meta {
 	NodeList detected_types;
 	NodeList names;
 	PNodeList outer_template_params;
 	VecT(PNodeList) template_params;
+	VecT(PForwardTemplateRef) forward_template_refs; // Forward refs to resolve later
 	bool is_ctor;
 	bool is_dtor;
+	bool not_parse_template_args;
 	bool trace; // Debug tracing flag (now just for compatibility)
 } Meta;
 
@@ -213,6 +237,7 @@ size_t parse_sequence_id(StrIter *msi, Meta *m);
 bool append_type(Meta *m, const DemAstNode *x);
 bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan);
 bool meta_substitute_tparam(Meta *m, DemAstNode *dan, ut64 level, ut64 index);
+bool resolve_forward_template_refs(Meta *m);
 st64 find_type_index(Meta *m, const char *type_str);
 
 ut32 count_name_parts(const DemString *x);

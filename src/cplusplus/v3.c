@@ -1217,8 +1217,39 @@ bool rule_template_param(
 		index++;
 	}
 
+	// Try to substitute the template parameter
 	if (!meta_substitute_tparam(m, dan, level, index)) {
-		TRACE_RETURN_FAILURE();
+		// If substitution failed, create a forward reference
+		// Use a placeholder that will be resolved later
+		ForwardTemplateRef fwd_ref = {
+			.node = NULL,
+			.level = level,
+			.index = index
+		};
+		DemAstNode *fwd_node = DemAstNode_append(dan, NULL);
+		if (!fwd_node) {
+			TRACE_RETURN_FAILURE();
+		}
+		fwd_node->fwd_template_ref = malloc(sizeof(ForwardTemplateRef));
+		if (!fwd_node->fwd_template_ref) {
+			TRACE_RETURN_FAILURE();
+		}
+		*(fwd_node->fwd_template_ref) = fwd_ref;
+
+		VecF(PForwardTemplateRef, append)(&m->forward_template_refs, &fwd_node->fwd_template_ref);
+
+		// Create a placeholder string so parsing can continue
+		// Format: __FWD_T<level>_<index>__
+		if (level > 0) {
+			dem_string_appendf(&dan->dem, "__FWD_TL%lu_%lu__", level, index);
+		} else {
+			dem_string_appendf(&dan->dem, "__FWD_T%lu__", index);
+		}
+
+		if (m->trace) {
+			fprintf(stderr, "[template_param] Created forward ref L%ld_%ld -> '%s'\n",
+				level, index, dan->dem.buf);
+		}
 	}
 	TRACE_RETURN_SUCCESS;
 	RULE_FOOT(template_param);
@@ -1914,7 +1945,7 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 			break;
 		}
 		MUST_MATCH_I(0, template_param);
-		if (PEEK() == 'I') {
+		if (PEEK() == 'I' && !m->not_parse_template_args) {
 			AST_APPEND_TYPE;
 			MUST_MATCH_I(1, template_args);
 		}
@@ -2072,8 +2103,20 @@ bool rule_operator_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(operator_name);
+
 	MATCH(READ('v') && RULE_X(0, digit) && RULE_X(1, source_name));
-	MATCH(READ_STR("cv") && AST_APPEND_STR("operator (") && RULE_X(0, type) && AST_APPEND_STR(")"));
+	{
+		context_save(0);
+		if (READ_STR("cv")) {
+			AST_APPEND_STR("operator ");
+			bool old_not_parse = m->not_parse_template_args;
+			m->not_parse_template_args = true;
+			CTX_MUST_MATCH_I(0, 0, type);
+			m->not_parse_template_args = old_not_parse;
+			TRACE_RETURN_SUCCESS;
+		}
+		context_restore(0);
+	}
 	MATCH(READ_STR("nw") && AST_APPEND_STR("operator new"));
 	MATCH(READ_STR("na") && AST_APPEND_STR("operator new[]"));
 	MATCH(READ_STR("dl") && AST_APPEND_STR("operator delete"));
@@ -2851,6 +2894,11 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 
 	// Parse: name, [return_type], parameters
 	CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(0), name));
+	if (!resolve_forward_template_refs(m)) {
+		context_restore(0);
+		TRACE_RETURN_FAILURE();
+	}
+
 	bool has_template = is_template(AST(0));
 	if (has_template) {
 		// Template functions must have an explicit return type

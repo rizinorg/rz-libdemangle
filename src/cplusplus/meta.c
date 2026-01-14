@@ -70,6 +70,7 @@ void meta_init(Meta *m) {
 	vec_init(&m->detected_types);
 	vec_init(&m->names);
 	vec_init(&m->template_params);
+	vec_init(&m->forward_template_refs);
 }
 
 void meta_deinit(Meta *m) {
@@ -91,6 +92,7 @@ void meta_deinit(Meta *m) {
 	VecF(DemAstNode, deinit)(&m->names);
 	VecF(DemAstNode, dtor)(m->outer_template_params);
 	VecF(PNodeList, deinit)(&m->template_params);
+	VecF(PForwardTemplateRef, deinit)(&m->forward_template_refs);
 	memset(m, 0, sizeof(Meta));
 }
 
@@ -259,7 +261,7 @@ bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan) {
 	return true;
 }
 
-bool meta_substitute_tparam(Meta *m, DemAstNode *dan, ut64 level, ut64 index) {
+DemAstNode *meta_get_tparam(Meta *m, ut64 level, ut64 index) {
 	if (level >= m->template_params.length) {
 		goto branch_fail;
 	}
@@ -268,7 +270,20 @@ bool meta_substitute_tparam(Meta *m, DemAstNode *dan, ut64 level, ut64 index) {
 		goto branch_fail;
 	}
 	NodeList *tparams_at_level = *pptparams_at_level;
-	DemAstNode *tparam_node = vec_ptr_at(tparams_at_level, index);
+	return vec_ptr_at(tparams_at_level, index);
+
+branch_fail:
+	if (m->trace) {
+		fprintf(stderr, "[get_tparam] FAILED L%ld_%ld\n", level, index);
+	}
+	return NULL;
+}
+
+bool meta_substitute_tparam(Meta *m, DemAstNode *dan, ut64 level, ut64 index) {
+	if (!dan) {
+		return false;
+	}
+	DemAstNode *tparam_node = meta_get_tparam(m, level, index);
 	if (!tparam_node || DemAstNode_is_empty(tparam_node)) {
 		goto branch_fail;
 	}
@@ -286,6 +301,29 @@ branch_fail:
 		fprintf(stderr, "[substitute_tparam] dan[%p]%s FAILED L%ld_%ld\n", dan, dan->dem.buf, level, index);
 	}
 	return false;
+}
+
+bool resolve_forward_template_refs(Meta *m) {
+	if (!m || m->forward_template_refs.length == 0) {
+		return true;
+	}
+
+	bool all_resolved = true;
+	vec_foreach_ptr(&m->forward_template_refs, ppfwd_ref, {
+		ForwardTemplateRef *fwd_ref = *ppfwd_ref;
+		ut64 level = fwd_ref->level;
+		ut64 index = fwd_ref->index;
+
+		fwd_ref->node = meta_get_tparam(m, level, index);
+		if (!fwd_ref->node) {
+			all_resolved = false;
+		}
+	});
+
+	// Clear the forward references vector after attempting resolution
+	VecF(PForwardTemplateRef, clear)(&m->forward_template_refs);
+
+	return all_resolved;
 }
 
 // counts the number of :: in a name and adds 1 to it
