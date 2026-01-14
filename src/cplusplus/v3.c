@@ -2085,23 +2085,23 @@ bool rule_destructor_name(
 bool rule_name(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(name);
 
-	// For unscoped_name + template_args, we need to record:
-	// 1. The template name (unscoped_name) BEFORE processing template_args
-	// 2. NOTE: The complete template instantiation is NOT added here because
-	//    function/variable template instantiations are not substitutable per ABI 5.1.4
-	//    Only type template instantiations are substitutable (handled in rule_type)
-	MATCH(RULE_X(0, unscoped_name) &&
-		// If followed by template args, add the template name to substitution table NOW
-		// This ensures correct ordering (template name comes before template args)
-		(PEEK() == 'I' ? AST_APPEND_TYPE1(AST(0)) : true) &&
-		RULE_X(1, template_args));
+	{
+		context_save(0);
+		if (RULE_CALL_DEFER(AST(0), unscoped_name)) {
+			// If unscoped_name parsed successfully, check for template_args
+			AST_MERGE(AST(0));
+			if (PEEK() == 'I') {
+				AST_APPEND_TYPE1(AST(0));
+				CTX_MUST_MATCH(0, RULE_X(1, template_args));
+			}
+			TRACE_RETURN_SUCCESS;
+		}
+		context_restore(0);
+	}
 
 	// For substitution + template_args, the substitution reference itself is already in the table
 	MATCH(RULE_X(0, substitution) && RULE_X(1, template_args));
-
-	// nested_name - propagate tag if it's a template function
 	MATCH1(nested_name);
-	MATCH1(unscoped_name);
 	MATCH1(local_name);
 
 	RULE_FOOT(name);
