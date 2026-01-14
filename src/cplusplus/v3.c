@@ -1938,33 +1938,37 @@ bool rule_local_name(
 	RULE_FOOT(local_name);
 }
 
-static ut64 base36_to_int(const char *buf, ut64 *px) {
+static bool parse_base36(StrIter *msi, ut64 *px) {
 	static const char *base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; /* base 36 */
 	char *pos = NULL;
-	ut64 pow = 1;
 	ut64 x = 0;
 	ut64 sz = 0;
-	while ((pos = strchr(base, buf[sz]))) {
+	while ((pos = strchr(base, msi->cur[sz]))) {
 		st64 based_val = pos - base;
-		x += based_val * pow;
-		pow *= 36;
+		if (x > 0) {
+			x *= 36;
+		}
+		x += based_val;
 		sz++;
 	}
 	*px = x;
-	return sz;
+	msi->cur += sz;
+	return true;
 }
 
 bool rule_seq_id(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(seq_id);
+	ut64 sid = 0;
 	if (IS_DIGIT(PEEK()) || IS_UPPER(PEEK())) {
-		ut64 sid = 0;
-		msi->cur += base36_to_int(msi->cur, &sid);
-		return meta_substitute_type(m, sid + 1, dan);
+		if (!parse_base36(msi, &sid)) {
+			TRACE_RETURN_FAILURE();
+		}
+		sid += 1;
 	}
-	if (PEEK() == '_') {
-		return meta_substitute_type(m, 0, dan);
+	if (!READ('_')) {
+		TRACE_RETURN_FAILURE();
 	}
-	RULE_FOOT(seq_id);
+	return meta_substitute_type(m, sid, dan);
 }
 
 bool rule_substitution(
@@ -1974,21 +1978,17 @@ bool rule_substitution(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(substitution);
-	if (PEEK() != 'S') {
+	if (!READ('S')) {
 		TRACE_RETURN_FAILURE();
 	}
-	MATCH(READ('S') && RULE_X(0, seq_id) && READ('_'));
-
-	MATCH(READ_STR("St") && AST_APPEND_STR("std"));
-	MATCH(READ_STR("Sa") && AST_APPEND_STR("std::allocator"));
-	MATCH(READ_STR("Sb") && AST_APPEND_STR("std::basic_string"));
-	// For std::string (Ss), expand to full form when followed by ctor/dtor (C or D)
-	// This handles cases like _ZNSsC2ERKSs (std::basic_string constructor)
-	MATCH(READ_STR("Ss") && ((PEEK() == 'C' || PEEK() == 'D') ? AST_APPEND_STR("std::basic_string<char, std::char_traits<char>, std::allocator<char>>") : AST_APPEND_STR("std::string")));
-	MATCH(READ_STR("Si") && AST_APPEND_STR("std::istream"));
-	MATCH(READ_STR("So") && AST_APPEND_STR("std::ostream"));
-
-	MATCH(READ_STR("Sd") && AST_APPEND_STR("std::iostream"));
+	MATCH(READ_STR("t") && AST_APPEND_STR("std"));
+	MATCH(READ_STR("a") && AST_APPEND_STR("std::allocator"));
+	MATCH(READ_STR("b") && AST_APPEND_STR("std::basic_string"));
+	MATCH(READ_STR("s") && ((PEEK() == 'C' || PEEK() == 'D') ? AST_APPEND_STR("std::basic_string<char, std::char_traits<char>, std::allocator<char>>") : AST_APPEND_STR("std::string")));
+	MATCH(READ_STR("i") && AST_APPEND_STR("std::istream"));
+	MATCH(READ_STR("o") && AST_APPEND_STR("std::ostream"));
+	MATCH(READ_STR("d") && AST_APPEND_STR("std::iostream"));
+	MATCH(RULE_X(0, seq_id));
 	RULE_FOOT(substitution);
 }
 
