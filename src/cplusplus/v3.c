@@ -231,7 +231,9 @@ void pp_array_type(DemAstNode *dan, DemString *out) {
 		type_node = AST_(parent_node, 1);
 		size_node = AST_(parent_node, 0);
 		dem_string_appends(out, "[");
-		dem_string_appends(out, size_node->dem.buf);
+		if (size_node && size_node->dem.buf) {
+			dem_string_appends(out, size_node->dem.buf);
+		}
 		dem_string_appends(out, "]");
 	}
 	dem_string_appends_prefix(out, " ");
@@ -248,7 +250,12 @@ bool rule_array_type(
 	MUST_MATCH(READ('A'));
 	dan->subtag = ARRAY_TYPE;
 
-	if (isdigit(PEEK())) {
+	if (PEEK() == '_') {
+		// Empty dimension: A_<type> - just consume the '_' without creating a size node
+		MUST_MATCH(READ('_'));
+		// AST(1) will be created when we call RULE_CALL_DEFER(AST(1), type),
+		// and AST(0) will be auto-created as empty by DemAstNode_children_at
+	} else if (isdigit(PEEK())) {
 		MUST_MATCH(RULE_CALL_DEFER(AST(0), number) && READ('_'));
 	} else {
 		MUST_MATCH(RULE_CALL_DEFER(AST(0), expression) && READ('_'));
@@ -1782,8 +1789,8 @@ static void apply_type_modifier(DemAstNode *dan, DemAstNode *inner_type,
 		return;
 	}
 
-	// Special handling for array references (only for & and &&)
-	if (subtag == REFERENCE_TYPE || subtag == RVALUE_REFERENCE_TYPE) {
+	// Special handling for array references and pointers (only for &, &&, and *)
+	if (subtag == REFERENCE_TYPE || subtag == RVALUE_REFERENCE_TYPE || subtag == POINTER_TYPE) {
 		if (inner_type->subtag == ARRAY_TYPE) {
 			const char *arr_str = inner_type->dem.buf;
 			const char *bracket_pos = strchr(arr_str, '[');
@@ -2429,6 +2436,12 @@ bool rule_template_args(
 		TRACE_RETURN_FAILURE();
 	}
 
+	// Save and restore ctor/dtor flags to prevent them from leaking from template args
+	bool saved_is_ctor = m->is_ctor;
+	bool saved_is_dtor = m->is_dtor;
+	m->is_ctor = false;
+	m->is_dtor = false;
+
 	const bool tag_templates = is_tag_templates(dan) || (dan->parent && dan->parent->tag == CP_DEM_TYPE_KIND_nested_name && is_tag_templates(dan->parent));
 
 	if (tag_templates) {
@@ -2444,6 +2457,8 @@ bool rule_template_args(
 	while (!READ('E')) {
 		DemAstNode node_arg = { 0 };
 		if (!rule_template_arg(RULE_ARGS(&node_arg))) {
+			m->is_ctor = saved_is_ctor;
+			m->is_dtor = saved_is_dtor;
 			TRACE_RETURN_FAILURE();
 		}
 		if (tag_templates) {
@@ -2460,6 +2475,11 @@ bool rule_template_args(
 		}
 	}
 	AST_APPEND_STR(">");
+
+	// Restore ctor/dtor flags
+	m->is_ctor = saved_is_ctor;
+	m->is_dtor = saved_is_dtor;
+
 	TRACE_RETURN_SUCCESS;
 	RULE_FOOT(template_args);
 }
@@ -2782,9 +2802,11 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 	CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(0), name));
 	bool has_template = is_template(AST(0));
 	if (has_template) {
-		RULE_CALL_DEFER(AST(1), type);
+		// Template functions must have an explicit return type
+		CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(1), type));
 	}
-	RULE_CALL_DEFER(AST(2), bare_function_type);
+	// Parameters are optional (for data members)
+	OPTIONAL(RULE_CALL_DEFER(AST(2), bare_function_type));
 
 	// Determine function type
 	// For constructors with templates, AST(1) is the first parameter, not a return type
