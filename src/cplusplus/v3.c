@@ -1687,6 +1687,9 @@ bool rule_qualifiers(
  * Returns true if successfully inserted, false if not a function pointer or malformed.
  */
 static bool insert_modifier_in_func_ptr(DemAstNode *dan, const char *func_ptr_str, const char *modifier) {
+	if (!func_ptr_str) {
+		return false;
+	}
 	const char *ptr_start = strstr(func_ptr_str, "(*");
 	if (!ptr_start) {
 		return false;
@@ -1722,6 +1725,10 @@ static bool insert_modifier_in_func_ptr(DemAstNode *dan, const char *func_ptr_st
  * Applies qualifiers to the inner type, with special handling for function pointers.
  */
 static bool handle_qualified_type(DemAstNode *dan, StrIter *msi, Meta *m) {
+	if (DemAstNode_is_empty(AST(1))) {
+		return false;
+	}
+
 	dan->subtag = QUALIFIED_TYPE;
 	DemAstNode *func_node = NULL;
 	DemString func_name = { 0 };
@@ -1730,23 +1737,28 @@ static bool handle_qualified_type(DemAstNode *dan, StrIter *msi, Meta *m) {
 	if ((func_node = extract_func_type_node(AST(1), &func_name))) {
 		handle_func_pointer(dan, func_node, &func_name, AST(0)->dem.buf);
 		dem_string_deinit(&func_name);
-		return true;
+		goto ok;
 	}
 
 	// Try pre-formatted function pointer string
 	const char *type_str = AST(1)->dem.buf;
 	if (type_str && AST(0)->dem.len > 0 && strstr(type_str, "(*") != NULL) {
 		if (insert_modifier_in_func_ptr(dan, type_str, AST(0)->dem.buf)) {
-			return true;
+			goto ok;
 		}
 	}
 
 	// Regular type: append qualifier at end
-	AST_MERGE(AST(1));
-	if (AST(0)->dem.len > 0) {
-		AST_APPEND_STR(" ");
-		AST_MERGE(AST(0));
+	if (AST(1)->dem.buf != NULL) {
+		AST_MERGE(AST(1));
+		if (AST(0)->dem.len > 0) {
+			AST_APPEND_STR(" ");
+			AST_MERGE(AST(0));
+		}
 	}
+ok:
+	dan->val.len += AST(0)->val.len;
+	dan->val.len += AST(1)->val.len;
 	return true;
 }
 
@@ -1756,6 +1768,9 @@ static bool handle_qualified_type(DemAstNode *dan, StrIter *msi, Meta *m) {
  */
 static void apply_type_modifier(DemAstNode *dan, DemAstNode *inner_type,
 	const char *modifier, int subtag) {
+	if (!inner_type->dem.buf || !modifier) {
+		return;
+	}
 	dan->subtag = subtag;
 	DemAstNode *func_node = NULL;
 	DemString func_name = { 0 };
@@ -1832,7 +1847,9 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	case 'U': {
 		MUST_MATCH(RULE_CALL_DEFER(AST(0), qualifiers));
 		MUST_MATCH(RULE_CALL_DEFER(AST(1), type));
-		handle_qualified_type(dan, msi, m);
+		if (!handle_qualified_type(dan, msi, m)) {
+			TRACE_RETURN_FAILURE();
+		}
 		break;
 	}
 	case 'T': {
@@ -2763,14 +2780,15 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 
 	// Parse: name, [return_type], parameters
 	CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(0), name));
-	if (is_template(AST(0))) {
+	bool has_template = is_template(AST(0));
+	if (has_template) {
 		RULE_CALL_DEFER(AST(1), type);
 	}
 	RULE_CALL_DEFER(AST(2), bare_function_type);
 
 	// Determine function type
 	// For constructors with templates, AST(1) is the first parameter, not a return type
-	bool is_ctor_with_template = m->is_ctor && is_template(AST(0)) && DemAstNode_non_empty(AST(1));
+	bool is_ctor_with_template = m->is_ctor && has_template && DemAstNode_non_empty(AST(1));
 	bool is_func_ptr_return = !is_ctor_with_template &&
 		DemAstNode_non_empty(AST(1)) &&
 		is_function_pointer_return_type(AST(1)->dem.buf);
