@@ -1660,18 +1660,20 @@ bool rule_qualifiers(
 	int parent_node_id) {
 	RULE_HEAD(qualifiers);
 
-	bool has_qualifiers = match_zero_or_more_rules(
-				      first_of_rule_extended_qualifier,
-				      rule_extended_qualifier,
-				      " ",
-				      AST(0),
-				      msi,
-				      m,
-				      graph,
-				      _my_node_id) &&
-		VecDemAstNode_len(AST(0)->children) > 0;
+	context_save(0);
+	RULE_DEFER_MANY_WITH_SEP(AST(0), extended_qualifier, " ");
+	RULE_DEFER(AST(1), cv_qualifiers);
 
-	MATCH(RULE_X(1, cv_qualifiers) && (!has_qualifiers || (AST_APPEND_CHR(' ') && AST_MERGE(AST(0)))));
+	if (DemAstNode_is_empty(AST(0)) && DemAstNode_is_empty(AST(1))) {
+		context_restore(0);
+		TRACE_RETURN_FAILURE();
+	}
+	AST_MERGE_OPT(AST(1));
+	if (DemAstNode_non_empty(AST(0)) && DemAstNode_non_empty(AST(1))) {
+		AST_APPEND_STR(" ");
+	}
+	AST_MERGE_OPT(AST(0));
+	TRACE_RETURN_SUCCESS;
 
 	RULE_FOOT(qualifiers);
 }
