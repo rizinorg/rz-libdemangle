@@ -1317,6 +1317,20 @@ bool rule_special_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(special_name);
+	// TC <derived-type> <offset> _ <base-type>   # construction vtable
+	MATCH_AND_DO(
+		READ_STR("TC") && RULE_CALL_DEFER(AST(0), type),
+		{
+			st64 offset = -1;
+			READ_NUMBER(offset);
+			if (offset < 0 || !READ('_') || !RULE_CALL_DEFER(AST(1), type)) {
+				TRACE_RETURN_FAILURE();
+			}
+			AST_APPEND_STR("construction vtable for ");
+			AST_MERGE(AST(1)); // base class
+			AST_APPEND_STR("-in-");
+			AST_MERGE(AST(0)); // derived class
+		});
 	MATCH(READ_STR("Tc") && RULE_X(0, call_offset) && RULE_X(1, call_offset) && RULE_X(2, encoding));
 	MATCH_AND_DO(
 		READ_STR("GR") && RULE_CALL_DEFER(AST(0), name) && RULE_CALL_DEFER(AST(1), seq_id) && READ('_'),
