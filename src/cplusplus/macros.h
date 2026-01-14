@@ -179,8 +179,8 @@
  * \return NULL if rule match fails for any reason.
  */
 #define RULE_CALL_DEFER(var, x) rule_##x((var), msi, m, graph, _my_node_id)
-#define RULE_X(I, x) (RULE_CALL_DEFER(AST(I), x) && AST_MERGE(AST(I)))
-#define APPEND_DEFER_VAR(var) DemAstNode_append(dan, (var))
+#define RULE_X(I, x)            (RULE_CALL_DEFER(AST(I), x) && AST_MERGE(AST(I)))
+#define APPEND_DEFER_VAR(var)   DemAstNode_append(dan, (var))
 
 /**
  * Always evaluate to true, even if rule does not match.
@@ -388,7 +388,9 @@
 
 #define MUST_MATCH(rules) \
 	do { \
-		if (!(rules)) { \
+		if ((rules)) { \
+			dan->val.len = msi->cur - dan->val.buf; \
+		} else { \
 			TRACE_RETURN_FAILURE(); \
 		} \
 	} while (0)
@@ -396,7 +398,9 @@
 
 #define CTX_MUST_MATCH(I, rules) \
 	do { \
-		if (!(rules)) { \
+		if ((rules)) { \
+			dan->val.len = msi->cur - dan->val.buf; \
+		} else { \
 			context_restore(I); \
 			TRACE_RETURN_FAILURE(); \
 		} \
