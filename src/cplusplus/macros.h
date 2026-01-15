@@ -290,17 +290,17 @@
 
 #define context_save(N) \
 	SAVE_POS(N); \
-	size_t _match_og_dem_len = dan->dem.len; \
-	size_t _match_og_children_len = dan->children ? VecDemAstNode_len(dan->children) : 0; \
-	size_t _match_og_types_len = m ? VecDemAstNode_len(&m->detected_types) : 0;
+	size_t _match_og_dem_len##N = dan->dem.len; \
+	size_t _match_og_children_len##N = dan->children ? VecDemAstNode_len(dan->children) : 0; \
+	size_t _match_og_types_len##N = m ? VecDemAstNode_len(&m->detected_types) : 0;
 
 #define context_restore(N) \
-	dan->dem.len = _match_og_dem_len; \
+	dan->dem.len = _match_og_dem_len##N; \
 	if (dan->dem.buf) { \
-		dan->dem.buf[_match_og_dem_len] = 0; \
+		dan->dem.buf[_match_og_dem_len##N] = 0; \
 	} \
 	if (dan->children) { \
-		while (VecDemAstNode_len(dan->children) > _match_og_children_len) { \
+		while (VecDemAstNode_len(dan->children) > _match_og_children_len##N) { \
 			DemAstNode *node = VecDemAstNode_at(dan->children, VecDemAstNode_len(dan->children) - 1); \
 			if (node) { \
 				DemAstNode_deinit(node); \
@@ -309,7 +309,7 @@
 		} \
 	} \
 	if (m) { \
-		while (VecDemAstNode_len(&m->detected_types) > _match_og_types_len) { \
+		while (VecDemAstNode_len(&m->detected_types) > _match_og_types_len##N) { \
 			size_t last_idx = VecDemAstNode_len(&m->detected_types) - 1; \
 			DemAstNode *node = VecDemAstNode_at(&m->detected_types, last_idx); \
 			if (node) { \
