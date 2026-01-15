@@ -56,6 +56,7 @@ static void meta_copy_scalars(Meta *dst, Meta *src) {
 	}
 	dst->is_ctor = src->is_ctor;
 	dst->is_dtor = src->is_dtor;
+	dst->is_conversion_operator = src->is_conversion_operator;
 	dst->trace = src->trace;
 }
 
@@ -303,8 +304,8 @@ branch_fail:
 	return false;
 }
 
-bool resolve_forward_template_refs(Meta *m) {
-	if (!m || m->forward_template_refs.length == 0) {
+bool resolve_forward_template_refs(Meta *m, DemAstNode *dan) {
+	if (!m || m->forward_template_refs.length == 0 || !dan || !dan->dem.buf) {
 		return true;
 	}
 
@@ -320,10 +321,63 @@ bool resolve_forward_template_refs(Meta *m) {
 		}
 	});
 
-	// Clear the forward references vector after attempting resolution
-	VecF(PForwardTemplateRef, clear)(&m->forward_template_refs);
+	// Don't clear yet - we'll need the references for final string replacement
+	// Replace placeholders in the final result string
+	char *result = dan->dem.buf;
+	if (!result || m->forward_template_refs.length <= 0 || !all_resolved) {
+		return all_resolved;
+	}
+	vec_foreach_ptr(&m->forward_template_refs, ppfwd_ref, {
+		ForwardTemplateRef *fwd_ref = *ppfwd_ref;
+		if (!fwd_ref->node || !fwd_ref->node->dem.buf) {
+			continue;
+		}
 
-	return all_resolved;
+		// Build placeholder string
+		char placeholder[64];
+		if (fwd_ref->level > 0) {
+			snprintf(placeholder, sizeof(placeholder), "__FWD_TL%lu_%lu__",
+				fwd_ref->level, fwd_ref->index);
+		} else {
+			snprintf(placeholder, sizeof(placeholder), "__FWD_T%lu__", fwd_ref->index);
+		}
+
+		// Find and replace all occurrences
+		const char *replacement = fwd_ref->node->dem.buf;
+		char *found = strstr(result, placeholder);
+		while (found) {
+			size_t prefix_len = found - result;
+			size_t placeholder_len = strlen(placeholder);
+			size_t suffix_len = strlen(found + placeholder_len);
+			size_t replacement_len = strlen(replacement);
+
+			// Allocate new string
+			char *new_result = (char *)malloc(prefix_len + replacement_len + suffix_len + 1);
+			if (!new_result) {
+				break;
+			}
+
+			// Build: prefix + replacement + suffix
+			memcpy(new_result, result, prefix_len);
+			memcpy(new_result + prefix_len, replacement, replacement_len);
+			memcpy(new_result + prefix_len + replacement_len, found + placeholder_len, suffix_len + 1);
+
+			free(result);
+			result = new_result;
+
+			// Continue searching from after the replacement
+			found = strstr(result + prefix_len + replacement_len, placeholder);
+		}
+	});
+
+	VecF(PForwardTemplateRef, deinit)(&m->forward_template_refs);
+
+	if (result != dan->dem.buf) {
+		free(dan->dem.buf);
+		dan->dem.buf = result;
+		dan->dem.len = strlen(result);
+	}
+	return true;
 }
 
 // counts the number of :: in a name and adds 1 to it

@@ -1700,9 +1700,44 @@ bool rule_cv_qualifiers(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(cv_qualifiers);
-	MATCH(READ('K') && AST_APPEND_STR("const"));
-	MATCH(READ('V') && AST_APPEND_STR("volatile"));
-	MATCH(READ('r') && AST_APPEND_STR("restrict"));
+	// Parse all CV qualifiers in sequence: [r] [V] [K]
+	// Output in conventional C++ order: const volatile restrict
+	bool has_restrict = false;
+	bool has_volatile = false;
+	bool has_const = false;
+
+	if (READ('r')) {
+		has_restrict = true;
+	}
+	if (READ('V')) {
+		has_volatile = true;
+	}
+	if (READ('K')) {
+		has_const = true;
+	}
+
+	// Output in order: const volatile restrict
+	bool need_space = false;
+	if (has_const) {
+		AST_APPEND_STR("const");
+		need_space = true;
+	}
+	if (has_volatile) {
+		if (need_space) {
+			AST_APPEND_STR(" ");
+		}
+		AST_APPEND_STR("volatile");
+		need_space = true;
+	}
+	if (has_restrict) {
+		if (need_space) {
+			AST_APPEND_STR(" ");
+		}
+		AST_APPEND_STR("restrict");
+	}
+
+	// This rule can match empty (no qualifiers), so always succeed
+	TRACE_RETURN_SUCCESS;
 	RULE_FOOT(cv_qualifiers);
 }
 
@@ -2020,25 +2055,42 @@ bool rule_local_name(
 	TraceGraph *graph,
 	int parent_node_id) {
 	RULE_HEAD(local_name);
-	MATCH_AND_DO(
-		READ('Z') && RULE_CALL_DEFER(AST(0), encoding) && READ_STR("Ed") && OPTIONAL(RULE_CALL_DEFER(AST(1), number)) &&
-			READ('_') && RULE_CALL_DEFER(AST(2), name),
-		{
-			AST_MERGE(AST(0));
-			AST_MERGE(AST(1));
-			AST_APPEND_STR("::");
-			AST_MERGE(AST(2));
-		});
-	MATCH_AND_DO(
-		READ('Z') && RULE_CALL_DEFER(AST(0), encoding) && READ('E') && RULE_CALL_DEFER(AST(1), name) &&
-			OPTIONAL(RULE_CALL_DEFER(AST(2), discriminator)),
-		{
-			AST_MERGE(AST(0));
-			AST_APPEND_STR("::");
-			AST_MERGE(AST(1));
-			AST_MERGE(AST(2));
-		});
-	MATCH(READ('Z') && RULE_X(0, encoding) && READ_STR("Es") && OPTIONAL(RULE_X(1, discriminator)));
+	if (!READ('Z')) {
+		TRACE_RETURN_FAILURE();
+	}
+
+	context_save(0);
+	CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(0), encoding) && READ('E'));
+	if (READ('d')) {
+		OPTIONAL(RULE_CALL_DEFER(AST(1), number));
+		CTX_MUST_MATCH(0, READ('_') && RULE_CALL_DEFER(AST(2), name));
+		AST_MERGE(AST(0));
+		AST_MERGE(AST(1));
+		AST_APPEND_STR("::");
+		AST_MERGE(AST(2));
+		TRACE_RETURN_SUCCESS;
+	}
+	if (READ('s')) {
+		OPTIONAL(RULE_X(1, discriminator));
+		TRACE_RETURN_SUCCESS;
+	}
+
+	context_save(1);
+	// Try encoding first (for local functions)
+	if (!RULE_CALL_DEFER(AST(1), encoding)) {
+		context_restore(1);
+		if (!RULE_CALL_DEFER(AST(1), name)) {
+			context_restore(0);
+			TRACE_RETURN_FAILURE();
+		}
+	}
+	OPTIONAL(RULE_CALL_DEFER(AST(2), discriminator));
+	AST_MERGE(AST(0));
+	AST_APPEND_STR("::");
+	AST_MERGE(AST(1));
+	AST_MERGE(AST(2));
+	TRACE_RETURN_SUCCESS;
+
 	RULE_FOOT(local_name);
 }
 
@@ -2108,6 +2160,7 @@ bool rule_operator_name(
 	{
 		context_save(0);
 		if (READ_STR("cv")) {
+			m->is_conversion_operator = true;
 			AST_APPEND_STR("operator ");
 			bool old_not_parse = m->not_parse_template_args;
 			m->not_parse_template_args = true;
@@ -2894,14 +2947,15 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 
 	// Parse: name, [return_type], parameters
 	CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(0), name));
-	if (!resolve_forward_template_refs(m)) {
+	if (!resolve_forward_template_refs(m, dan)) {
 		context_restore(0);
 		TRACE_RETURN_FAILURE();
 	}
 
 	bool has_template = is_template(AST(0));
-	if (has_template) {
+	if (has_template && !m->is_conversion_operator) {
 		// Template functions must have an explicit return type
+		// Exception: conversion operators don't have explicit return types
 		CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(1), type));
 	}
 	// Parameters are optional (for data members)
@@ -2915,7 +2969,12 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 		is_function_pointer_return_type(AST(1)->dem.buf);
 
 	// Format based on function type
-	if (is_ctor_with_template) {
+	if (m->is_conversion_operator) {
+		// Conversion operator: name() [const]
+		// The return type is part of the operator name itself (e.g., "operator char*")
+		AST_MERGE(AST(0));
+		AST_APPEND_STR("()");
+	} else if (is_ctor_with_template) {
 		// Constructor with template: name(first_param, rest_params)
 		AST_MERGE(AST(0));
 		AST_APPEND_STR("(");
@@ -2946,6 +3005,9 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 
 	// Append qualifiers (const, ref-qualifiers)
 	append_function_qualifiers(dan, AST(0), is_const_fn);
+
+	// Reset conversion operator flag after use
+	m->is_conversion_operator = false;
 
 	TRACE_RETURN_SUCCESS(0);
 	RULE_FOOT(encoding);

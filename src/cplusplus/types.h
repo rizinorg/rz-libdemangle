@@ -199,6 +199,7 @@ typedef struct Meta {
 	VecT(PForwardTemplateRef) forward_template_refs; // Forward refs to resolve later
 	bool is_ctor;
 	bool is_dtor;
+	bool is_conversion_operator;
 	bool not_parse_template_args;
 	bool trace; // Debug tracing flag (now just for compatibility)
 } Meta;
@@ -237,7 +238,7 @@ size_t parse_sequence_id(StrIter *msi, Meta *m);
 bool append_type(Meta *m, const DemAstNode *x);
 bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan);
 bool meta_substitute_tparam(Meta *m, DemAstNode *dan, ut64 level, ut64 index);
-bool resolve_forward_template_refs(Meta *m);
+bool resolve_forward_template_refs(Meta *m, DemAstNode *dan);
 st64 find_type_index(Meta *m, const char *type_str);
 
 ut32 count_name_parts(const DemString *x);
