@@ -373,7 +373,6 @@ bool resolve_forward_template_refs(Meta *m, DemAstNode *dan) {
 	VecF(PForwardTemplateRef, deinit)(&m->forward_template_refs);
 
 	if (result != dan->dem.buf) {
-		free(dan->dem.buf);
 		dan->dem.buf = result;
 		dan->dem.len = strlen(result);
 	}

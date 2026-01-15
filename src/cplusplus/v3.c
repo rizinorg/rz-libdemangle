@@ -2939,7 +2939,7 @@ bool rule_encoding(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, in
 
 	// Parse: name, [return_type], parameters
 	CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(0), name));
-	if (!resolve_forward_template_refs(m, dan)) {
+	if (!resolve_forward_template_refs(m, AST(0))) {
 		context_restore(0);
 		TRACE_RETURN_FAILURE();
 	}
