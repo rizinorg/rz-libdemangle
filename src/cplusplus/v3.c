@@ -2075,15 +2075,7 @@ bool rule_local_name(
 		TRACE_RETURN_SUCCESS;
 	}
 
-	context_save(1);
-	// Try encoding first (for local functions)
-	if (!RULE_CALL_DEFER(AST(1), encoding)) {
-		context_restore(1);
-		if (!RULE_CALL_DEFER(AST(1), name)) {
-			context_restore(0);
-			TRACE_RETURN_FAILURE();
-		}
-	}
+	CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(1), name));
 	OPTIONAL(RULE_CALL_DEFER(AST(2), discriminator));
 	AST_MERGE(AST(0));
 	AST_APPEND_STR("::");
