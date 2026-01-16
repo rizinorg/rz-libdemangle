@@ -1908,7 +1908,6 @@ static void apply_type_modifier(DemAstNode *dan, DemAstNode *inner_type,
 	dem_string_append(&dan->dem, modifier);
 }
 
-
 bool pp_pack_expansion(DemAstNode *dan, DemString *out) {
 	AST_MERGE(AST(0));
 	return true;
@@ -1930,7 +1929,6 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		if (!handle_qualified_type(dan, msi, m, AST(0), AST(1))) {
 			TRACE_RETURN_FAILURE();
 		}
-		TRACE_RETURN_SUCCESS;
 		break;
 	}
 	case 'M':
