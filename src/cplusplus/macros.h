@@ -12,427 +12,360 @@
 
 /**
  * \b Give current read position.
- *
- * \return const char pointer to current read position.
  */
-#define CUR() (msi->cur)
+#define CUR() (p->cur)
 
 /**
  * \b Give position where string begins.
- *
- * \return const char pointer to beginning of mangled string.
  */
-#define BEG() (msi->beg)
+#define BEG() (p->beg)
 
 /**
  * \b Give position of NULL terminator.
- *
- * \return const char pointer to end of mangled string.
  */
-#define END() (msi->end)
+#define END() (p->end)
+
+#define P_SIZE() (size_t)(END() - BEG())
 
 /**
  * \b Check whether the provided position is in range of readable address.
- *
- * \p read_pos : char pointer to check for range.
- *
- * \return 1 if in range.
- * \return 0 otherwise.
  */
 #define IN_RANGE(read_pos) ((read_pos) >= BEG() ? ((read_pos) < END() ? 1 : 0) : 0)
 
 /**
- * \b Seek to given read position if it's in range. This will change the current
- * read position to given target_read_pos.
- *
- * \p target_read_pos : char pointer specifying the target read position to seek to.
- *
- * \return target_read_pos on success.
- * \return CUR() otherwise.
+ * \b Seek to given read position if it's in range.
  */
-#define SEEK_TO(target_read_pos) (msi->cur = IN_RANGE(target_read_pos) ? (target_read_pos) : CUR())
+#define SEEK_TO(target_read_pos) (p->cur = IN_RANGE(target_read_pos) ? (target_read_pos) : CUR())
 
 /**
- * Peek one character from current read position in demangling context.
- * This will NOT advance, unlike READ().
- *
- * \return char on success.
- * \return 0 if no more characters left
+ * Peek one character from current read position.
  */
-#define PEEK() (IN_RANGE(CUR()) ? *msi->cur : 0)
+#define PEEK() (IN_RANGE(CUR()) ? *p->cur : 0)
 
-#define PEEK_AT(p) (IN_RANGE(msi->cur + p) ? msi->cur[p] : 0)
+#define PEEK_AT(offset) (IN_RANGE(p->cur + (offset)) ? p->cur[(offset)] : 0)
 
 /**
- * \b Read one character from current read position in demangling context
- * and then advance by one position.
- *
- * \return 1 on success.
- * \return 0 otherwise.
+ * \b Read one character and advance.
  */
-#define READ(ch)          (IN_RANGE(CUR()) ? ((*msi->cur == ch) ? (ADV(), 1) : 0) : 0)
+#define READ(ch)          (IN_RANGE(CUR()) ? ((*p->cur == ch) ? (ADV(), 1) : 0) : 0)
 #define READ_OPTIONAL(ch) (READ(ch) || true)
 #define SKIP_CH(ch) \
 	do { \
-		if (IN_RANGE(CUR()) && *msi->cur == ch) { \
+		if (IN_RANGE(CUR()) && *p->cur == ch) { \
 			ADV(); \
 		} \
 	} while (0)
 
 /**
- * \b Read multiple characters in a null-terminated character array,
- * and if the string is found starting from current position, return 1, and
- * advance by that many characters.
- *
- * \return 1 on success.
- * \return 0 otherwise.
+ * \b Read multiple characters in a string.
  */
 #define READ_STR(s) \
 	(IN_RANGE(CUR() + sizeof(s) - 1) ? (!strncmp(CUR(), s, sizeof(s) - 1) ? (ADV_BY(sizeof(s) - 1), 1) : 0) : 0)
 #define READ_STR_OPTIONAL(s) (READ_STR(s) || true)
 
 /**
- * \b Advance current read position by one character, if this next
- * position is in range, otherwise stay at current read position.
- *
- * \return updated read position on success.
- * \return NULL otherwise.
+ * \b Advance current read position by one character.
  */
-#define ADV()     (IN_RANGE(CUR() + 1) ? msi->cur++ : NULL)
-#define CONSUME() (IN_RANGE(CUR() + 1) ? msi->cur++ : NULL)
+#define ADV() (IN_RANGE(CUR()) ? p->cur++ : NULL)
 
 /**
- * \b Advance current read position by "n" characters, if this next
- * position is in range, otherwise stay at current read position.
- *
- * \return updated read position on success.
- * \return NULL otherwise.
+ * \b Advance current read position by "n" characters.
  */
-#define ADV_BY(n) (IN_RANGE(CUR() + n) ? (msi->cur = msi->cur + (n)) : NULL)
+#define ADV_BY(n) (IN_RANGE(CUR() + n) ? (p->cur = p->cur + (n)) : NULL)
 
 /**
- * \b Save current read position in demangling context to restore it later.
- * This is used when we know that while matching a rule we might fail, and we'll
- * need to backtrack. For this we must remember the initial trial start pos.
+ * \b Save current read position.
  */
-#define SAVE_POS(I) const char *_____trial_start_pos_##I = CUR();
+#define SAVE_POS(I) const char *save_pos_##I = CUR();
 
 /**
- * \b Restore saved position
+ * \b Restore saved position.
  */
-#define RESTORE_POS(I) \
-	do { \
-		SEEK_TO(_____trial_start_pos_##I); \
-	} while (0)
+#define RESTORE_POS(I) SEEK_TO(save_pos_##I);
 
-/**
- * Reads a number from current demangling position to provided "var" variable.
- * Automatically will adjust next read position if numbe read is successful, otherwise, will
- * set var to -1
- */
-#define READ_NUMBER(var) \
-	do { \
-		char *end = NULL; \
-		(var) = strtoll(CUR(), &end, 10); \
-		if (!end) { \
-			(var) = -1; \
-			break; \
-		} \
-		SEEK_TO(end); \
-	} while (0)
+#define IS_CTOR() (p->is_ctor)
+#define IS_DTOR() (p->is_dtor)
 
-#define IS_CTOR() (m->is_ctor)
-#define IS_DTOR() (m->is_dtor)
+#define SET_CTOR() (p->is_dtor = false, (p->is_ctor = true))
+#define SET_DTOR() (p->is_ctor = false, (p->is_dtor = true))
 
-#define SET_CTOR() (m->is_dtor = false, (m->is_ctor = true))
-#define SET_DTOR() (m->is_ctor = false, (m->is_dtor = true))
-
-#define UNSET_CTOR() (m->is_dtor = false, m->is_ctor = false, true)
-#define UNSET_DTOR() (m->is_ctor = false, m->is_dtor = false, true)
-
-/**
- * \b Call a rule.
- *
- * \p x Rule name.
- *
- * \return DemString containing demangled string generated by the called rule.
- * \return NULL if rule match fails for any reason.
- */
-#define RULE_ARGS(X) (X), msi, m, graph, _my_node_id
-#define RULE_CALL(x) rule_##x(dan, msi, m, graph, _my_node_id)
-
-/**
- * \b Defer the demangling to `var`.
- *
- * This is used in cases where we don't want to immidiately add the demangled
- * string generated by an issued rule. The demangled string stored in provided `var`
- * can then be later on appended to a higher level demangled string generated by
- * a higher level rule.
- *
- * If a rule X calls another rule Y, then rule X is called the higher level rule
- * in this context.
- *
- * \p var Variable to defer the demangled name to.
- * \p x   Rule name
- *
- * \return DemString containing demangled string generated by the called rule.
- * \return NULL if rule match fails for any reason.
- */
-#define RULE_CALL_DEFER(var, x) rule_##x((var), msi, m, graph, _my_node_id)
-#define RULE_X(I, x)            (RULE_CALL_DEFER(AST(I), x) && AST_MERGE(AST(I)))
-#define APPEND_DEFER_VAR(var)   DemAstNode_append(dan, (var))
+#define UNSET_CTOR() (p->is_dtor = false, m->is_ctor = false, true)
+#define UNSET_DTOR() (p->is_ctor = false, m->is_dtor = false, true)
 
 /**
  * Always evaluate to true, even if rule does not match.
- * */
+ */
 #define OPTIONAL(x) ((x) || true)
 
 /**
- * \b Match given rule name atleast once.
- *
- * \p x Rule name
- *
- * \return DemString containing demangled string generated by the called rule.
- * \return NULL if rule match fails for any reason.
- */
-#define RULE_ATLEAST_ONCE(x) \
-	match_one_or_more_rules(rule_##x, NULL, dan, msi, m, graph, _my_node_id)
-#define RULE_ATLEAST_ONCE_WITH_SEP(x, sep) \
-	match_one_or_more_rules(rule_##x, sep, dan, msi, m, graph, _my_node_id)
-#define RULE_DEFER_ATLEAST_ONCE(var, x) \
-	match_one_or_more_rules(rule_##x, NULL, (var), msi, m, graph, _my_node_id)
-#define RULE_DEFER_ATLEAST_ONCE_WITH_SEP(var, x, sep) \
-	match_one_or_more_rules(rule_##x, sep, (var), msi, m, graph, _my_node_id)
-
-/**
- * \b Match given rule name any number of times.
- *
- * \p x Rule name
- *
- * \return DemString containing demangled string generated by the called rule.
- * \return NULL if rule match fails for any reason.
- */
-#define RULE_MANY(x) \
-	match_zero_or_more_rules(rule_##x, NULL, dan, msi, m, graph, _my_node_id)
-#define RULE_MANY_WITH_SEP(x, sep) \
-	match_zero_or_more_rules(rule_##x, sep, dan, msi, m, graph, _my_node_id)
-#define RULE_DEFER_MANY(var, x) \
-	match_zero_or_more_rules(rule_##x, NULL, (var), msi, m, graph, _my_node_id)
-#define RULE_DEFER_MANY_WITH_SEP(var, x, sep) \
-	match_zero_or_more_rules(rule_##x, sep, (var), msi, m, graph, _my_node_id)
-
-/**
- * \b Declare a new rule so that it can be used with RULE(...) macro later on.
- *
- * \p x Rule name
+ * \b Declare a new rule.
  */
 #define DECL_RULE(x) \
-	bool rule_##x(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id)
+	bool rule_##x(DemParser *p, const DemNode *parent, DemResult *r)
 #define DECL_RULE_STATIC(x) \
-	static inline bool \
-	rule_##x(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id)
-
-#define trace_graph_set_result(G, N, R, S) \
-	trace_graph_set_result_impl(G, N, (size_t)(msi->cur - msi->beg), R, S)
-
-#define RULE_HEAD(X) \
-	if (!dan || !msi || !m || !IN_RANGE(CUR())) { \
-		return false; \
-	} \
-	int _my_node_id = -1; \
-	if (graph && graph->enabled) { \
-		_my_node_id = trace_graph_add_node( \
-			graph, \
-			#X, \
-			(size_t)(msi->cur - msi->beg), \
-			msi->cur, \
-			parent_node_id); \
-	} \
-	dan->tag = CP_DEM_TYPE_KIND_##X; \
-	dan->val.buf = msi->cur; \
-	const char *_rule_start_pos = msi->cur; \
-	((void)_rule_start_pos);
-
-#define RULE_FOOT(_) \
-	if (graph && graph->enabled && _my_node_id >= 0) { \
-		trace_graph_set_result(graph, _my_node_id, NULL, 2); /* failed */ \
-	} \
-	dan->val.len = msi->cur - dan->val.buf; \
-	return false;
-
+	static inline bool rule_##x(DemParser *p, const DemNode *parent, DemResult *r)
 /**
  * \b Declare a rule alias x for rule y.
- *
- * For example, a rule alias <function_name> for rule <name>
- * This will define a function then and there for rule alias, so
- * no explicit defnition must be present.
- *
- * \p X Name of rule alias
- * \p Y Name of rule to create alias for.
  */
 #define DECL_RULE_ALIAS(X, Y) \
 	DECL_RULE_STATIC(X) { \
-		return rule_##Y(dan, msi, m, graph, parent_node_id); \
+		return rule_##Y(p, parent, r); \
 	}
 
-#define AST_FLATTEN(X) \
-	do { \
-		if ((X)->children && VecDemAstNode_len((X)->children) == 1) { \
-			DemAstNode *only_child = AST(0); \
-			if (only_child && dem_string_equals(&(X)->dem, &only_child->dem) && only_child->val.buf == (X)->val.buf && only_child->val.len == (X)->val.len) { \
-				DemAstNode node = *only_child; \
-				memset(only_child, 0, sizeof(DemAstNode)); \
-				DemAstNode_deinit(dan); \
-				*dan = node; \
-			} \
+#define RULE_HEAD(X) \
+	if (!IN_RANGE(CUR())) { \
+		r->error = DEM_ERR_UNEXPECTED_END; \
+		DemNode_dtor(r->output); \
+		return false; \
+	} \
+	DemNode *node = NULL; \
+	bool is_PASSTHRU = false; \
+	if (!r->output) { \
+		node = (DemNode *)malloc(sizeof(DemNode)); \
+		if (!node) { \
+			r->error = DEM_ERR_OUT_OF_MEMORY; \
+			return false; \
 		} \
-	} while (0)
+		DemNode_init(node); \
+		node->parent = (DemNode *)parent; \
+		node->val.buf = p->cur; \
+		node->children = VecPDemNode_ctor(); \
+		if (!node->children) { \
+			free(node); \
+			r->error = DEM_ERR_OUT_OF_MEMORY; \
+			return false; \
+		} \
+	} else { \
+		is_PASSTHRU = true; \
+		node = r->output; \
+	} \
+	node->tag = CP_DEM_TYPE_KIND_##X; \
+	context_save(rule);
+
+#define RULE_FOOT(X) TRACE_RETURN_FAILURE();
 
 #define context_save(N) \
 	SAVE_POS(N); \
-	size_t _match_og_dem_len##N = dan->dem.len; \
-	size_t _match_og_children_len##N = dan->children ? VecDemAstNode_len(dan->children) : 0; \
-	size_t _match_og_types_len##N = m ? VecDemAstNode_len(&m->detected_types) : 0;
+	size_t save_children_len_##N = node->children ? VecPDemNode_len(node->children) : 0; \
+	size_t save_types_len_##N = VecPDemNode_len(&p->detected_types);
+
+#define context_restore_node(N) \
+	if (node->children) { \
+		while (VecPDemNode_len(node->children) > save_children_len_##N) { \
+			PDemNode *node_ptr = VecPDemNode_at(node->children, VecPDemNode_len(node->children) - 1); \
+			DemNode *child = node_ptr ? *node_ptr : NULL; \
+			if (child) { \
+				DemNode_dtor(child); \
+			} \
+			VecPDemNode_pop(node->children); \
+		} \
+	}
+#define context_restore_parser(N) \
+	if (p) { \
+		while (VecPDemNode_len(&p->detected_types) > save_types_len_##N) { \
+			size_t last_idx = VecPDemNode_len(&p->detected_types) - 1; \
+			PDemNode *node_ptr = VecPDemNode_at(&p->detected_types, last_idx); \
+			DemNode *type_node = node_ptr ? *node_ptr : NULL; \
+			if (type_node) { \
+				DemNode_dtor(type_node); \
+			} \
+			VecPDemNode_pop(&p->detected_types); \
+		} \
+	}
 
 #define context_restore(N) \
-	dan->dem.len = _match_og_dem_len##N; \
-	if (dan->dem.buf) { \
-		dan->dem.buf[_match_og_dem_len##N] = 0; \
-	} \
-	if (dan->children) { \
-		while (VecDemAstNode_len(dan->children) > _match_og_children_len##N) { \
-			DemAstNode *node = VecDemAstNode_at(dan->children, VecDemAstNode_len(dan->children) - 1); \
-			if (node) { \
-				DemAstNode_deinit(node); \
-			} \
-			VecDemAstNode_pop(dan->children); \
-		} \
-	} \
-	if (m) { \
-		while (VecDemAstNode_len(&m->detected_types) > _match_og_types_len##N) { \
-			size_t last_idx = VecDemAstNode_len(&m->detected_types) - 1; \
-			DemAstNode *node = VecDemAstNode_at(&m->detected_types, last_idx); \
-			if (node) { \
-				DemAstNode_deinit(node); \
-			} \
-			VecDemAstNode_pop(&m->detected_types); \
-		} \
-	} \
+	context_restore_node(N); \
+	context_restore_parser(N); \
 	RESTORE_POS(N);
 
 /* Macros for rules that use direct returns */
 #define TRACE_RETURN_SUCCESS \
-	do { /*trace success*/ \
-		if (graph && graph->enabled && _my_node_id >= 0) { \
-			trace_graph_set_result( \
-				graph, \
-				_my_node_id, \
-				(dan->dem.buf && dan->dem.len > 0) ? dan->dem.buf : "success", \
-				1); \
-		} \
-		dan->val.len = msi->cur - dan->val.buf; \
-		AST_FLATTEN(dan); \
+	do { \
+		node->val.len = p->cur - node->val.buf; \
+		r->output = node; \
+		r->error = DEM_ERR_OK; \
 		return true; \
 	} while (0);
 
 #define TRACE_RETURN_FAILURE() \
-	do { /*trace fail*/ \
-		if (graph && graph->enabled && _my_node_id >= 0) { \
-			trace_graph_set_result(graph, _my_node_id, NULL, 2); \
+	do { \
+		if (!is_PASSTHRU) { \
+			if (node) { \
+				DemNode_dtor(node); \
+			} \
+			r->output = NULL; \
+		} else { \
+			/* In PASSTHRU mode, node is owned by parent, but we still need to clean up children we added */ \
+			context_restore_node(rule); \
 		} \
+		r->error = DEM_ERR_INVALID_SYNTAX; \
+		context_restore_parser(rule); \
+		RESTORE_POS(rule); \
 		return false; \
 	} while (0)
 
 /**
- * \b Match for given rules in a recoverable manner. If rule matching fails,
- * the demangled string in current context is not changed. This allows
- * multiple matches to be tried one after another without any if-else
- * case, just like an alternation.
- *
- * In other words, this MATCH macro provides a way to backtrack out of the box.
- * If rule matching is successful then it'll add the demangled string and return.
- *
- * Since the first match will be appended to demangled string in current context,
- * it's very important to match the superset languages first, and then subsets.
- * For example, see how `RULE(mangled_name)` is defined.
- *
- * NOTE: By default, match_and_do will always be successful, once it attempts
- * to execute the given code body. But this can be changed by calling MATCH_FAIL()
- * to say that the mayching actually failed inside the given code body, and
- * the rule must continue looking for an alternative match by continuing the code
- * execution
- *
- * WARN: never return from a rule, this will disrupt the control flow.
- *
- * \p rules  A sequence concatenation or alternation of RULEs and READs
- * \p body   What to do if rule matches.
+ * \b Match for given rules in a recoverable manner.
  */
 #define MATCH_AND_DO(rules, body) \
 	do { \
 		context_save(0); \
-		if ((rules)) { \
+		if (rules) { \
 			/* caller execute code */ \
 			{ body }; \
-			TRACE_RETURN_SUCCESS(0); \
+			TRACE_RETURN_SUCCESS; \
 		} else { \
 			context_restore(0); \
-			if (graph && graph->enabled && _my_node_id >= 0) { \
-				trace_graph_set_result(graph, _my_node_id, NULL, 2); \
-			} \
 			break; \
 		} \
 	} while (0)
 
-#define MATCH(rules) MATCH_AND_DO(rules, {})
-#define MATCH1(R)    MATCH(RULE_CALL_DEFER(AST(0), R) && AST_MERGE(AST(0)));
+#define TRY_MATCH(rules) MATCH_AND_DO(rules, {})
 
 #define MUST_MATCH(rules) \
 	do { \
 		if ((rules)) { \
-			dan->val.len = msi->cur - dan->val.buf; \
+			node->val.len = p->cur - node->val.buf; \
 		} else { \
 			TRACE_RETURN_FAILURE(); \
 		} \
 	} while (0)
-#define MUST_MATCH_I(I, R) MUST_MATCH(RULE_CALL_DEFER(AST(I), R) && AST_MERGE(AST(I)));
+
+#define PASSTHRU_RULE_VA(rule_fn, ...) \
+	do { \
+		DemNode *save_output = r->output; \
+		CpDemTypeKind save_tag = node->tag; \
+		r->output = node; \
+		bool _success = (rule_fn)(p, parent, r, __VA_ARGS__); \
+		if ((_success)) { \
+			TRACE_RETURN_SUCCESS; \
+		} else { \
+			if (!save_output && node) { \
+				DemNode_deinit(node); \
+				DemNode_init(node); \
+				node->parent = (DemNode *)parent; \
+				node->val.buf = p->cur; \
+				node->tag = save_tag; \
+			} \
+			r->output = save_output; \
+			context_restore(rule); \
+			break; \
+		} \
+	} while (0)
+
+#define PASSTHRU_RULE(rule_fn) \
+	do { \
+		DemNode *save_output = r->output; \
+		CpDemTypeKind save_tag = node->tag; \
+		r->output = node; \
+		bool _success = (rule_fn)(p, parent, r); \
+		if ((_success)) { \
+			TRACE_RETURN_SUCCESS; \
+		} else { \
+			if (!save_output && node) { \
+				DemNode_deinit(node); \
+				DemNode_init(node); \
+				node->parent = (DemNode *)parent; \
+				node->val.buf = p->cur; \
+				node->tag = save_tag; \
+			} \
+			r->output = save_output; \
+			context_restore(rule); \
+			break; \
+		} \
+	} while (0)
+
+// Helper macro to call a rule and append its output as a child
+#define CALL_RULE(rule_fn) \
+	({ \
+		DemResult _child_result = { 0 }; \
+		bool _success = (rule_fn)(p, node, &_child_result); \
+		if (_success && _child_result.output) { \
+			AST_APPEND_NODE(_child_result.output); \
+			_child_result.output = NULL; \
+		} else { \
+			DemResult_deinit(&_child_result); \
+		} \
+		_success; \
+	})
+
+#define CALL_RULE_N_VA(N, rule_fn, ...) \
+	({ \
+		DemResult _child_result = { 0 }; \
+		bool _success = (rule_fn)(p, node, &_child_result, __VA_ARGS__); \
+		if (_success && _child_result.output) { \
+			N = _child_result.output; \
+		} else { \
+			DemResult_deinit(&_child_result); \
+		} \
+		_success; \
+	})
+
+#define CALL_RULE_N(N, rule_fn) \
+	({ \
+		DemResult _child_result = { 0 }; \
+		bool _success = (rule_fn)(p, node, &_child_result); \
+		if (_success && _child_result.output) { \
+			N = _child_result.output; \
+		} else { \
+			DemResult_deinit(&_child_result); \
+		} \
+		_success; \
+	})
+
+// Helper macro for match_many/match_many1 calls
+#define CALL_MATCH_MANY(rule_fn, sep) \
+	({ \
+		DemResult _child_result = { 0 }; \
+		bool _success = match_many(p, node, &_child_result, (rule_fn), (sep)); \
+		if (_success && _child_result.output) { \
+			AST_APPEND_NODE(_child_result.output); \
+		} else { \
+			DemResult_deinit(&_child_result); \
+		} \
+		_success; \
+	})
+
+#define CALL_MATCH_MANY1(rule_fn, sep) \
+	({ \
+		DemResult _child_result = { 0 }; \
+		bool _success = match_many1(p, node, &_child_result, (rule_fn), (sep)); \
+		if (_success && _child_result.output) { \
+			AST_APPEND_NODE(_child_result.output); \
+		} else { \
+			DemResult_deinit(&_child_result); \
+		} \
+		_success; \
+	})
 
 #define CTX_MUST_MATCH(I, rules) \
 	do { \
 		if ((rules)) { \
-			dan->val.len = msi->cur - dan->val.buf; \
+			node->val.len = p->cur - node->val.buf; \
 		} else { \
 			context_restore(I); \
+			r->error = DEM_ERR_INVALID_SYNTAX; \
 			TRACE_RETURN_FAILURE(); \
 		} \
 	} while (0)
-#define CTX_MUST_MATCH_I(CI, I, R) CTX_MUST_MATCH(CI, RULE_CALL_DEFER(AST(I), R) && AST_MERGE(AST(I)));
 
-#define AST_APPEND_STR(s)        dem_string_append(&dan->dem, s)
-#define AST_APPEND_STR_N(s, n)   dem_string_append_n(&dan->dem, s, n);
-#define AST_APPEND_DEMSTR(D)     dem_string_append_n(&dan->dem, (D)->buf, (D)->len)
-#define AST_APPEND_DEMSTR_OPT(D) ((D) && (D)->buf && (D)->len > 0 && dem_string_append_n(&dan->dem, (D)->buf, (D)->len))
-#define AST_PREPEND_STR(s)       dem_string_append_prefix_n(&dan->dem, s, strlen(s))
-#define AST_PREPEND_DEMSTR(D)    dem_string_append_prefix_n(&dan->dem, (D)->buf, (D)->len)
-#define AST_APPEND_CHR(c)        dem_string_append_char(&dan->dem, c)
-#define AST_APPEND_TYPE          append_type(m, dan)
-#define AST_APPEND_TYPE1(T)      append_type(m, (T))
-#define AST_APPEND_NODE(X)       DemAstNode_append(dan, (X))
-#define AST(I)                   DemAstNode_children_at(dan, (I))
-#define AST_(X, I)               DemAstNode_children_at((X), (I))
+static inline DemNode *Node_append(DemNode *node, DemNode *x) {
+	if (!(node && x)) {
+		return NULL;
+	}
+	DemNode **res = VecPDemNode_append(node->children, &x);
+	return res ? *res : NULL;
+}
 
-#define APPEND_TYPE(tname) append_type(m, (tname))
+#define AST_APPEND_STR(s)     Node_append(node, make_primitive_type_node(CUR(), CUR(), s, strlen(s)))
+#define AST_APPEND_STRN(s, N) Node_append(node, make_primitive_type_node(CUR(), CUR(), s, N))
+#define AST_APPENDF(s, ...)   true //(dem_string_appendf(&node->dem, s, __VA_ARGS__))
 
-#define AST_MERGE(X) \
-	(dem_string_concat(&dan->dem, &(X)->dem), \
-		dan->val.len += (X)->val.len, \
-		dan->val.buf = dan->val.buf ? dan->val.buf : (X)->val.buf, \
-		(X))
-
-#define AST_MERGE_OPT(X) \
-	(DemAstNode_non_empty(X) ? dem_string_concat(&dan->dem, &(X)->dem), \
-		dan->val.len += (X)->val.len, \
-		dan->val.buf = dan->val.buf ? dan->val.buf : (X)->val.buf, \
-		(X) : 0)
+#define AST_APPEND_TYPE     append_type(p, node)
+#define AST_APPEND_TYPE1(T) append_type(p, (T))
+#define AST_APPEND_NODE(X)  Node_append(node, (X))
+#define AST_(X, I)          (VecPDemNode_at((X)->children, (I)) ? *VecPDemNode_at((X)->children, (I)) : NULL)
+#define AST(I)              (AST_(node, I))
 
 #define DEM_UNREACHABLE \
 	do { \

@@ -151,34 +151,6 @@
 
 /**
  * Iterate over each element in vector.
- * Provides a de-referenced access to each element one by one.
- *
- * \param v    : Pointer to vector.
- * \param var  : Variable where value will be stored.
- * \param body : For loop body. Yes, it's a parameter here! To handle local variable scope.
- *
- * NOTE: to maintain this macro in future, consider replacing the large iterator name with a small one
- * and then replace it back to an uncommon name :-)
- */
-#define vec_foreach(v, var, body) \
-	do { \
-		size_t _i_needed_a_very_very_uncommon_name_for_this_iterator = 0; \
-		VEC_DATA_TYPE(v) \
-		var = { 0 }; \
-		if ((v) && (v)->length) { \
-			for ((_i_needed_a_very_very_uncommon_name_for_this_iterator) = 0; \
-				(_i_needed_a_very_very_uncommon_name_for_this_iterator) < (v)->length; \
-				++(_i_needed_a_very_very_uncommon_name_for_this_iterator)) { \
-				var = (v)->data[(_i_needed_a_very_very_uncommon_name_for_this_iterator)]; \
-				{ \
-					body \
-				} \
-			} \
-		} \
-	} while (0)
-
-/**
- * Iterate over each element in vector.
  * Provides a pointer to access to each element one by one.
  *
  * \param v    : Pointer to vector.
@@ -204,6 +176,33 @@
 		} \
 	} while (0)
 #define vec_foreach_ptr(v, var, body) vec_foreach_ptr_i(v, _idx_##var, var, body)
+/**
+ * Iterate over each element in vector.
+ * Provides a de-referenced access to each element one by one.
+ *
+ * \param v    : Pointer to vector.
+ * \param var  : Variable where value will be stored.
+ * \param body : For loop body. Yes, it's a parameter here! To handle local variable scope.
+ *
+ * NOTE: to maintain this macro in future, consider replacing the large iterator name with a small one
+ * and then replace it back to an uncommon name :-)
+ */
+#define vec_foreach(v, var, body) \
+	do { \
+		size_t _it_##var = 0; \
+		VEC_DATA_TYPE(v) \
+		var = { 0 }; \
+		if ((v) && (v)->length) { \
+			for ((_it_##var) = 0; \
+				(_it_##var) < (v)->length; \
+				++(_it_##var)) { \
+				var = (v)->data[(_it_##var)]; \
+				{ \
+					body \
+				} \
+			} \
+		} \
+	} while (0)
 
 #define Vec_t(T)   Vec##T##_t
 #define VecT(T)    Vec##T
@@ -236,7 +235,9 @@
 	} \
 	static inline void VecF(T, deinit)(Vec##T * self) { \
 		if (self && self->data) { \
-			vec_foreach_ptr(self, x, { F(x); }); \
+			for (size_t i = 0; i < self->length; i++) { \
+				F(&self->data[i]); \
+			} \
 			free(self->data); \
 			self->data = NULL; \
 			self->length = 0; \

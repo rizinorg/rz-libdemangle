@@ -8,10 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-
-typedef int bool;
-#define true  1
-#define false 0
+#include <stdbool.h>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -81,6 +78,7 @@ DemString *dem_string_new();
 DemString *dem_string_new_with_capacity(size_t cap);
 DemString *dem_string_init(DemString *ds);
 DemString *dem_string_init_clone(DemString *dst, const DemString *src);
+char *dem_string_drain_no_free(DemString *ds);
 char *dem_string_drain(DemString *ds);
 bool dem_string_append(DemString *ds, const char *string);
 bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size);

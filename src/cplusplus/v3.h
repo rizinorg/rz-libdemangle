@@ -7,21 +7,19 @@
 #define RZ_LIBDEMANGLE_V3_H
 #include "macros.h"
 #include "demangle.h"
+#include "types.h"
 
+void ast_pp(DemNode *node, DemString *out);
 char *demangle_rule(const char *mangled, DemRule rule, CpDemOptions opts);
 
 // Rule declarations
 DECL_RULE(mangled_name);
 DECL_RULE(encoding);
 DECL_RULE(name);
-DECL_RULE(unscoped_name);
 DECL_RULE(nested_name);
-DECL_RULE(cv_qualifiers);
-DECL_RULE(ref_qualifier);
 DECL_RULE(template_param);
 DECL_RULE(decltype);
 DECL_RULE(template_prefix);
-DECL_RULE(unqualified_name);
 DECL_RULE(ctor_name);
 DECL_RULE(dtor_name);
 DECL_RULE(ctor_dtor_name);
@@ -68,43 +66,6 @@ DECL_RULE(nv_offset);
 DECL_RULE(v_offset);
 DECL_RULE(bare_function_type);
 
-// Helper rules for new grammar implementation
-DECL_RULE(prefix_or_template_prefix_start);
-DECL_RULE(prefix_start_unit);
-DECL_RULE(prefix_start_rr);
-DECL_RULE(prefix_start);
-DECL_RULE(prefix_nested_class_or_namespace);
-DECL_RULE(closure_prefix_unit);
-DECL_RULE(closure_prefix_rr);
-DECL_RULE(closure_prefix);
-
 DECL_RULE(unscoped_template_name);
-
-// Rule aliases
-DECL_RULE_ALIAS(top_level_cv_qualifiers, cv_qualifiers);
-DECL_RULE_ALIAS(non_negative_number, number);
-DECL_RULE_ALIAS(value_number, number);
-DECL_RULE_ALIAS(value_float, float);
-DECL_RULE_ALIAS(string_type, type);
-DECL_RULE_ALIAS(pointer_type, type);
-DECL_RULE_ALIAS(real_part_float, float);
-DECL_RULE_ALIAS(imag_part_float, float);
-DECL_RULE_ALIAS(field_source_name, source_name);
-DECL_RULE_ALIAS(index_expression, expression);
-DECL_RULE_ALIAS(range_begin_expression, expression);
-DECL_RULE_ALIAS(range_end_expression, expression);
-DECL_RULE_ALIAS(instantiation_dependent_expression, expression);
-DECL_RULE_ALIAS(element_type, type);
-DECL_RULE_ALIAS(instantiation_dependent_array_bound_expression, expression);
-DECL_RULE_ALIAS(array_bound_number, number);
-DECL_RULE_ALIAS(class_type, type);
-DECL_RULE_ALIAS(function_encoding, encoding);
-DECL_RULE_ALIAS(entity_name, name);
-DECL_RULE_ALIAS(base_encoding, encoding);
-DECL_RULE_ALIAS(offset_number, number);
-DECL_RULE_ALIAS(virtual_offset_number, number);
-DECL_RULE_ALIAS(function_name, name);
-DECL_RULE_ALIAS(data_name, name);
-DECL_RULE_ALIAS(signature_type, type);
 
 #endif // RZ_LIBDEMANGLE_V3_H

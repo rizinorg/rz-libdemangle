@@ -2,27 +2,12 @@
 // SPDX-FileCopyrightText: 2025 Siddharth Mishra <admin@brightprogrammer.in>
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#ifndef RZ_LIBDEMANGLE_PARSER_COMBINATOR_H
-#define RZ_LIBDEMANGLE_PARSER_COMBINATOR_H
+#ifndef V3_IMPL_PARSER_COMB_H
+#define V3_IMPL_PARSER_COMB_H
 
-#include "../demangler_util.h"
 #include "types.h"
 
-bool match_one_or_more_rules(
-	DemRule rule,
-	const char *sep,
-	DemAstNode *ast_node,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id);
-bool match_zero_or_more_rules(
-	DemRule rule,
-	const char *sep,
-	DemAstNode *ast_node,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id);
+bool match_many1(DemParser *p, const DemNode *parent, DemResult *r, DemRule rule, const char *sep);
+bool match_many(DemParser *p, const DemNode *parent, DemResult *r, DemRule rule, const char *sep);
 
-#endif // RZ_LIBDEMANGLE_PARSER_COMBINATOR_H
+#endif // V3_IMPL_PARSER_COMB_H

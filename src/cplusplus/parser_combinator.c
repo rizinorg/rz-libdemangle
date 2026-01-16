@@ -4,84 +4,87 @@
 
 #include "parser_combinator.h"
 
-/**
- * \b Takes a rule and matches at least one occurence of it.
- * Meaning one or more rule matches. If not even a single match is available,
- * then returns NULL.
- *
- * \p rule  Rule to apply one or more times.
- * \p dem   Demangled string will be stored here.
- * \p msi   Mangled string iter.
- *
- * \return dem If at least one rule match exists for given rule.
- * \return NULL otherwise.
- */
-bool match_one_or_more_rules(
+#include "macros.h"
+
+bool match_many1(
+	DemParser *p,
+	const DemNode *parent,
+	DemResult *r,
 	DemRule rule,
-	const char *sep,
-	DemAstNode *ast_node,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id) {
-	if (!match_zero_or_more_rules(rule, sep, ast_node, msi, m, graph, parent_node_id)) {
+	const char *sep) {
+	const char *saved_pos = p->cur;
+	if (!match_many(p, parent, r, rule, sep)) {
+		p->cur = saved_pos;
 		return false;
 	}
-	if (!ast_node->dem.buf) {
+	if (!r->output || VecF(PDemNode, len)(r->output->children) == 0) {
+		p->cur = saved_pos;
+		DemNode_dtor(r->output);
+		r->output = NULL;
 		return false;
 	}
 	return true;
 }
 
-/**
- * \b Takes a rule and matches at any number of occurences of it.
- * Meaning one or more rule matches. If not even a single match is available,
- * then returns NULL.
- *
- * \p rule  Rule to apply any number of times.
- * \p sep   If provided, is appended after each rule match success.
- * \p dem   Demangled string will be stored here.
- * \p msi   Mangled string iter.
- *
- * \return dem If given arguments are non-null.
- * \return NULL otherwise.
- */
-bool match_zero_or_more_rules(
+bool match_many(
+	DemParser *p,
+	const DemNode *parent,
+	DemResult *r,
 	DemRule rule,
-	const char *sep,
-	DemAstNode *ast_node,
-	StrIter *msi,
-	Meta *m,
-	TraceGraph *graph,
-	int parent_node_id) {
-	if (!rule || !ast_node || !msi || !m) {
+	const char *sep) {
+	if (!rule || !r || !p) {
+		r->error = DEM_ERR_INVALID_SYNTAX;
 		return false;
 	}
 
-	size_t count = 0;
+	// Allocate output node with tag=many
+	DemNode *many_node = DemNode_new();
+	if (!many_node) {
+		r->error = DEM_ERR_OUT_OF_MEMORY;
+		return false;
+	}
+	many_node->tag = CP_DEM_TYPE_KIND_many;
+	many_node->parent = (DemNode *)parent;
+	many_node->val.buf = p->cur;
+
+	// Allocate children vector
+	many_node->children = VecPDemNode_ctor();
+	if (!many_node->children) {
+		free(many_node);
+		r->error = DEM_ERR_OUT_OF_MEMORY;
+		return false;
+	}
+	many_node->many_ty.sep = sep ? sep : ""; // Use provided separator or default to empty
+
 	while (true) {
-		DemAstNode tmp = { 0 };
-		SAVE_POS(0);
-		if (rule(&tmp, msi, m, graph, parent_node_id)) {
-			DemAstNode_append(ast_node, &tmp);
-			if (sep) {
-				dem_string_append(&ast_node->dem, sep);
+		DemResult child_result = { 0 };
+		const char *saved_pos = p->cur;
+		if (rule(p, many_node, &child_result)) {
+			// Check if the rule advanced the pointer
+			if (p->cur == saved_pos) {
+				// Rule succeeded but didn't advance - must clean up output
+				if (child_result.output) {
+					DemNode_dtor(child_result.output);
+				}
+				break;
 			}
-			count++;
+			if (child_result.output) {
+				VecPDemNode_append(many_node->children, (PDemNode *)&child_result.output);
+			}
 		} else {
-			RESTORE_POS(0);
-			DemAstNode_deinit(&tmp);
+			// Restore position on failure
+			p->cur = saved_pos;
+			if (child_result.output) {
+				DemNode_dtor(child_result.output);
+			}
 			break;
 		}
 	}
 
-	/* remove last sep */
-	if (sep && ast_node->dem.buf && count > 0) {
-		for (int l = 0; l < strlen(sep); l++) {
-			ast_node->dem.buf[--ast_node->dem.len] = 0;
-		}
-	}
+	many_node->val.len = p->cur - many_node->val.buf;
 
 	/* we always match, even if nothing matches */
+	r->output = many_node;
+	r->error = DEM_ERR_OK;
 	return true;
 }

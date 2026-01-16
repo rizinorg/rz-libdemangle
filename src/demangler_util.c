@@ -254,6 +254,19 @@ static bool dem_string_increase_capacity(DemString *ds, ssize_t size) {
 	return true;
 }
 
+char *dem_string_drain_no_free(DemString *ds) {
+	dem_return_val_if_fail(ds, NULL);
+	char *ret = ds->buf;
+	if (ds->len + 1 < ds->cap) {
+		// optimise memory space.
+		ret = realloc(ret, ds->len + 1);
+	}
+	ds->buf = NULL;
+	ds->len = 0;
+	ds->cap = 0;
+	return ret;
+}
+
 /**
  * This will issue a free call on the provided DemString object.
  * Make sure not to use this on objects that have not been malloc'd
@@ -264,11 +277,7 @@ static bool dem_string_increase_capacity(DemString *ds, ssize_t size) {
  */
 char *dem_string_drain(DemString *ds) {
 	dem_return_val_if_fail(ds, NULL);
-	char *ret = ds->buf;
-	if ((ds->len + 1) < ds->cap) {
-		// optimise memory space.
-		ret = realloc(ret, ds->len + 1);
-	}
+	char *ret = dem_string_drain_no_free(ds);
 	free(ds);
 	return ret;
 }

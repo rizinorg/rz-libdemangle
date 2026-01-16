@@ -7,8 +7,7 @@
 #define V3_IMPL_TYPES_H
 
 #include "../demangler_util.h"
-#include "macros.h"
-#include "trace_graph.h"
+#include "demangle.h"
 #include "vec.h"
 
 #define DBG_PRINT_DETECTED_TYPES   0
@@ -25,6 +24,7 @@ typedef struct StrIter {
 
 typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_unknown,
+	CP_DEM_TYPE_KIND_primitive_ty,
 	CP_DEM_TYPE_KIND_mangled_name,
 	CP_DEM_TYPE_KIND_encoding,
 	CP_DEM_TYPE_KIND_name,
@@ -32,12 +32,6 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_nested_name,
 	CP_DEM_TYPE_KIND_cv_qualifiers,
 	CP_DEM_TYPE_KIND_ref_qualifier,
-	CP_DEM_TYPE_KIND_prefix,
-	CP_DEM_TYPE_KIND_prefix_start,
-	CP_DEM_TYPE_KIND_prefix_suffix,
-	CP_DEM_TYPE_KIND_prefix_tail,
-	CP_DEM_TYPE_KIND_closure_prefix,
-	CP_DEM_TYPE_KIND_template_prefix,
 	CP_DEM_TYPE_KIND_template_param,
 	CP_DEM_TYPE_KIND_decltype,
 	CP_DEM_TYPE_KIND_unqualified_name,
@@ -53,6 +47,7 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_type,
 	CP_DEM_TYPE_KIND_builtin_type,
 	CP_DEM_TYPE_KIND_expression,
+	CP_DEM_TYPE_KIND_fold_expression,
 	CP_DEM_TYPE_KIND_unresolved_name,
 	CP_DEM_TYPE_KIND_function_param,
 	CP_DEM_TYPE_KIND_expr_primary,
@@ -65,6 +60,7 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_unresolved_type,
 	CP_DEM_TYPE_KIND_unresolved_qualifier_level,
 	CP_DEM_TYPE_KIND_qualified_type,
+	CP_DEM_TYPE_KIND_vendor_ext_qualified_type,
 	CP_DEM_TYPE_KIND_qualifiers,
 	CP_DEM_TYPE_KIND_extended_qualifier,
 	CP_DEM_TYPE_KIND_function_type,
@@ -116,6 +112,9 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_nv_digit,
 	CP_DEM_TYPE_KIND_non_neg_number,
 	CP_DEM_TYPE_KIND_fwd_template_ref,
+	CP_DEM_TYPE_KIND_many,
+	CP_DEM_TYPE_KIND_module_name,
+	CP_DEM_TYPE_KIND_name_with_template_args,
 } CpDemTypeKind;
 
 typedef Vec(CpDemTypeKind) CpDemTypeKinds;
@@ -125,7 +124,7 @@ typedef struct {
 	size_t len;
 } DemStringView;
 
-struct Vec_t(DemAstNode);
+struct Vec_t(DemNode);
 
 enum {
 	INVALID_TYPE,
@@ -137,48 +136,119 @@ enum {
 	TEMPLATE_PARAMETER_PACK,
 };
 
-struct DemAstNode_t;
+struct DemNode_t;
 
 // Forward template reference: stores a reference to T_ that needs resolution later
 typedef struct ForwardTemplateRef {
-	struct DemAstNode_t *node; // The AST node
+	struct DemNode_t *node; // The AST node
 	ut64 level; // Template parameter level
 	ut64 index; // Template parameter index
 } ForwardTemplateRef;
 
 typedef ForwardTemplateRef *PForwardTemplateRef;
 
-typedef struct DemAstNode_t {
-	struct DemAstNode_t *parent;
-	struct Vec_t(DemAstNode) * children;
-	DemString dem;
+typedef struct DemNode_t *PDemNode;
+
+typedef struct {
+	DemString name;
+} PrimitiveTy;
+
+typedef struct {
+	const char *sep; // Separator string (e.g., ", " for parameters)
+} ManyTy;
+
+typedef struct {
+	bool is_const : 1;
+	bool is_volatile : 1;
+	bool is_restrict : 1;
+} CvQualifiers;
+
+typedef struct {
+	bool is_l_value : 1;
+	bool is_r_value : 1;
+} RefQualifiers;
+
+typedef struct {
+	PDemNode params; // Points to a node with tag=many containing parameter nodes
+	PDemNode ret;
+	PDemNode name;
+	PDemNode requires_node;
+	PDemNode exception_spec;
+	CvQualifiers cv_qualifiers;
+	RefQualifiers ref_qualifiers;
+} FunctionTy;
+
+typedef struct {
+	PDemNode inner_type; // The type being qualified (e.g., "QString")
+	CvQualifiers qualifiers; // The CV qualifiers (const, volatile, restrict)
+} QualifiedTy;
+
+typedef struct {
+	PDemNode inner_type; // The type being qualified (e.g., "QString")
+	DemStringView vendor_ext;
+	PDemNode template_args; // Template arguments node
+} VendorExtQualifiedTy;
+
+typedef struct {
+	bool IsPartition;
+	PDemNode name;
+	PDemNode pare;
+} ModuleNameTy;
+
+typedef struct {
+	PDemNode name;
+	PDemNode template_args;
+} NameWithTemplateArgs;
+
+typedef struct DemNode_t {
+	struct DemNode_t *parent;
 	DemStringView val;
 	CpDemTypeKind tag;
+	ut32 subtag;
+	struct Vec_t(PDemNode) * children; // Moved outside union, used by all types
 
 	union {
-		ut32 subtag;
 		PForwardTemplateRef fwd_template_ref;
+		PrimitiveTy primitive_ty;
+		QualifiedTy qualified_ty;
+		VendorExtQualifiedTy vendor_ext_qualified_ty;
+		FunctionTy fn_ty;
+		ManyTy many_ty;
+		ModuleNameTy module_name_ty;
+		NameWithTemplateArgs name_with_template_args;
 	};
-} DemAstNode;
+} DemNode;
 
-DemAstNode *DemAstNode_new();
-DemAstNode *DemAstNode_ctor_inplace(DemAstNode *dan, CpDemTypeKind tag, const char *dem, const char *val_begin, size_t val_len);
-DemAstNode *DemAstNode_ctor(CpDemTypeKind tag, const char *dem, const char *val_begin, size_t val_len);
-void DemAstNode_dtor(DemAstNode *dan);
-bool DemAstNode_init(DemAstNode *dan);
-void DemAstNode_deinit(DemAstNode *dan);
-DemAstNode *DemAstNode_append(DemAstNode *xs, DemAstNode *x);
-DemAstNode *DemAstNode_children_at(DemAstNode *xs, size_t idx);
-bool DemAstNode_is_empty(DemAstNode *x);
-void DemAstNode_copy(DemAstNode *dst, const DemAstNode *src);
-void DemAstNode_init_clone(DemAstNode *dst, const DemAstNode *src);
-#define DemAstNode_non_empty(X) (!DemAstNode_is_empty(X))
+;
 
-VecIMPL(DemAstNode, DemAstNode_deinit);
+DemNode *DemNode_new();
+DemNode *DemNode_ctor_inplace(DemNode *asm_node, CpDemTypeKind tag, const char *val_begin, size_t val_len);
+DemNode *DemNode_ctor(CpDemTypeKind tag, const char *val_begin, size_t val_len);
+void DemNode_dtor(DemNode *dan);
+bool DemNode_init(DemNode *dan);
+void DemNode_deinit(DemNode *dan);
+bool DemNode_is_empty(DemNode *x);
+void DemNode_copy(DemNode *dst, const DemNode *src);
+void DemNode_init_clone(DemNode *dst, const DemNode *src);
+DemNode *DemNode_clone(const DemNode *src);
+#define DemNode_non_empty(X) (!DemNode_is_empty(X))
 
-typedef VecT(DemAstNode) NodeList;
+DemNode *make_primitive_type_node(const char *begin, const char *end, const char *name, size_t name_len);
+DemNode *make_name_with_template_args_node(const char *begin, const char *end, DemNode *name_node, DemNode *template_args_node);
+
+static inline void PDemNode_free(void *ptr) {
+	if (ptr) {
+		DemNode *node = *(DemNode **)ptr;
+		if (node) {
+			DemNode_dtor(node);
+		}
+	}
+}
+
+VecIMPL(PDemNode, PDemNode_free);
+
+typedef VecT(PDemNode) NodeList;
 void NodeList_copy(NodeList *dst, const NodeList *src);
-NodeList *NodeList_pop_trailing(NodeList *self, ut64 from);
 
 static inline void PNodeList_free(void *self) {
 }
@@ -192,58 +262,75 @@ static inline void ForwardTemplateRef_free(void *ref) {
 
 VecIMPL(PForwardTemplateRef, ForwardTemplateRef_free);
 
-typedef struct Meta {
+/**
+ * Parser context that deeply contains string iterator, metadata, and trace graph.
+ * This is the main context passed to all rule functions.
+ */
+typedef struct DemParser {
+	const char *beg;
+	const char *end;
+	const char *cur;
+
 	NodeList detected_types;
 	NodeList names;
 	PNodeList outer_template_params;
 	VecT(PNodeList) template_params;
-	VecT(PForwardTemplateRef) forward_template_refs; // Forward refs to resolve later
+	VecT(PForwardTemplateRef) forward_template_refs;
 	bool is_ctor;
 	bool is_dtor;
 	bool is_conversion_operator;
 	bool not_parse_template_args;
 	bool pack_expansion;
-	bool trace; // Debug tracing flag (now just for compatibility)
-} Meta;
+	bool trace;
+} DemParser;
 
-struct TraceGraph;
+/**
+ * Error codes for parsing failures
+ */
+typedef enum DemErrorCode {
+	DEM_ERR_OK = 0,
+	DEM_ERR_UNEXPECTED_END,
+	DEM_ERR_OUT_OF_MEMORY,
+	DEM_ERR_INVALID_SYNTAX,
+	DEM_ERR_UNKNOWN
+} DemErrorCode;
+
+/**
+ * Result of a parsing rule.
+ * Contains either the output node (on success) or error code (on failure).
+ */
+typedef struct DemResult {
+	DemNode *output; /**< Output node (allocated on success) */
+	DemErrorCode error; /**< Error code (on failure) */
+} DemResult;
+
+typedef struct {
+	DemParser parser;
+	DemResult result;
+	DemString output;
+} DemContext;
+
+void DemContext_deinit(DemContext *ctx);
 
 /**
  * Type of rules.
- *
- * \p dem Demangled string.
- * \p msi Mangled string iter.
- * \p m   Meta context.
- * \p graph Trace graph for debugging.
- * \p parent_node_id Parent node ID in the trace graph (-1 for root).
- *
- * \return dem on success.
- * \return NULL otherwise.
+ * @param p Parser context
+ * @param parent Parent node (read-only, can be NULL for root)
+ * @param r Result structure to fill
+ * @return true on success (r->output set), false on failure (r->error may be set)
  */
-typedef bool (*DemRule)(
-	DemAstNode *ast_node,
-	StrIter *msi,
-	Meta *m,
-	struct TraceGraph *graph,
-	int parent_node_id);
+typedef bool (*DemRule)(DemParser *p, const DemNode *parent, DemResult *r);
 
-typedef bool (*DemRuleFirst)(const char *input);
-
-// Meta helper functions
-bool meta_copy(Meta *dst, Meta *src);
-void meta_move(Meta *dst, Meta *src);
-void meta_init(Meta *m);
-void meta_deinit(Meta *m);
+// DemParser helper functions
+void DemParser_init(DemParser *p, const char *input);
+void DemParser_deinit(DemParser *p);
+void DemResult_deinit(DemResult *r);
+bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions opts);
 
 // Helper functions
-size_t parse_sequence_id(StrIter *msi, Meta *m);
-bool append_type(Meta *m, const DemAstNode *x);
-bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan);
-bool meta_substitute_tparam(Meta *m, DemAstNode *dan, ut64 level, ut64 index);
-bool resolve_forward_template_refs(Meta *m, DemAstNode *dan);
-st64 find_type_index(Meta *m, const char *type_str);
-
-ut32 count_name_parts(const DemString *x);
-bool is_builtin_type(const char *t);
+bool append_type(DemParser *p, const DemNode *x);
+DemNode *substitute_get(DemParser *p, ut64 id);
+DemNode *template_param_get(DemParser *p, ut64 level, ut64 index);
+bool resolve_forward_template_refs(DemParser *p, DemNode *dan);
 
 #endif // V3_IMPL_TYPES_H

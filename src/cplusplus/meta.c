@@ -13,196 +13,81 @@ void NodeList_copy(NodeList *dst, const NodeList *src) {
 		return;
 	}
 
-	VecF(DemAstNode, deinit)(dst);
-	vec_init(dst);
+	VecF(PDemNode, deinit)(dst);
+	VecF(PDemNode, init)(dst);
 
-	vec_foreach_ptr(src, n, {
-		DemAstNode cloned = { 0 };
-		DemAstNode_init_clone(&cloned, n);
-		VecF(DemAstNode, append)(dst, &cloned);
+	vec_foreach_ptr(src, node_ptr, {
+		if (!node_ptr || !*node_ptr) {
+			return;
+		}
+		DemNode *cloned = DemNode_clone(*node_ptr);
+		VecF(PDemNode, append)(dst, &cloned);
 	});
 }
 
 NodeList *NodeList_make(NodeList *self, ut64 from, ut64 to) {
-	if (to > VecF(DemAstNode, len)(self) || from >= to) {
+	if (to > VecF(PDemNode, len)(self) || from >= to) {
 		return NULL;
 	}
 	ut64 sz = to - from;
-	NodeList *new_list = VecF(DemAstNode, ctor)();
+	NodeList *new_list = VecF(PDemNode, ctor)();
 	if (!new_list) {
 		return NULL;
 	}
-	VecF(DemAstNode, reserve)(new_list, sz);
-	memcpy(new_list->data, VecF(DemAstNode, at)(self, from), sizeof(DemAstNode) * sz);
+	VecF(PDemNode, reserve)(new_list, sz);
+	memcpy(new_list->data, VecF(PDemNode, at)(self, from), sizeof(PDemNode) * sz);
 	new_list->length = sz;
 	return new_list;
 }
 
-NodeList *NodeList_pop_trailing(NodeList *self, ut64 from) {
-	if (from >= VecF(DemAstNode, len)(self)) {
-		return NULL;
-	}
-	NodeList *new_list = NodeList_make(self, from, VecF(DemAstNode, len)(self));
-	if (!new_list) {
-		return NULL;
-	}
-	self->length = from;
-	return new_list;
-}
+// ============================================================================
+// DemParser functions
+// ============================================================================
 
-static void meta_copy_scalars(Meta *dst, Meta *src) {
-	if (dst == src) {
-		return;
-	}
-	dst->is_ctor = src->is_ctor;
-	dst->is_dtor = src->is_dtor;
-	dst->is_conversion_operator = src->is_conversion_operator;
-	dst->trace = src->trace;
-}
-
-void meta_init(Meta *m) {
-	if (!m) {
+void DemParser_init(DemParser *p, const char *input) {
+	if (!p) {
 		return;
 	}
 
-	memset(m, 0, sizeof(Meta));
-	m->outer_template_params = VecF(DemAstNode, ctor)();
+	memset(p, 0, sizeof(DemParser));
 
-	vec_init(&m->detected_types);
-	vec_init(&m->names);
-	vec_init(&m->template_params);
-	vec_init(&m->forward_template_refs);
+	// Initialize string iterator fields
+	p->beg = input;
+	p->cur = input;
+	p->end = input ? (input + strlen(input)) : NULL;
+
+	// Initialize metadata fields
+	p->outer_template_params = VecF(PDemNode, ctor)();
+	vec_init(&p->detected_types);
+	vec_init(&p->names);
+	vec_init(&p->template_params);
+	vec_init(&p->forward_template_refs);
 }
 
-void meta_deinit(Meta *m) {
-	if (!m) {
-		return;
-	}
-	for (size_t i = 0; i < m->detected_types.length; i++) {
-		DemAstNode *node = &m->detected_types.data[i];
-		DemAstNode_deinit(node);
-	}
-	// Now free the data array
-	if (m->detected_types.data) {
-		free(m->detected_types.data);
-		m->detected_types.data = NULL;
-		m->detected_types.length = 0;
-		m->detected_types.capacity = 0;
-	}
-
-	VecF(DemAstNode, deinit)(&m->names);
-	VecF(DemAstNode, dtor)(m->outer_template_params);
-	VecF(PNodeList, deinit)(&m->template_params);
-	VecF(PForwardTemplateRef, deinit)(&m->forward_template_refs);
-	memset(m, 0, sizeof(Meta));
-}
-
-bool meta_copy(Meta *dst, Meta *src) {
-	if (!(src && dst && src != dst)) {
-		return false;
-	}
-
-	meta_deinit(dst);
-	meta_init(dst);
-	meta_copy_scalars(dst, src);
-
-	NodeList_copy(&dst->detected_types, &src->detected_types);
-	NodeList_copy(&dst->names, &src->names);
-	NodeList_copy(dst->outer_template_params, src->outer_template_params);
-	VecF(PNodeList, copy)(&dst->template_params, &src->template_params);
-
-	return true;
-}
-
-void meta_move(Meta *dst, Meta *src) {
-	if (!(dst && src && dst != src)) {
+void DemParser_deinit(DemParser *p) {
+	if (!p) {
 		return;
 	}
 
-	meta_deinit(dst);
-	meta_init(dst);
-	meta_copy_scalars(dst, src);
+	// Deinitialize metadata fields
+	VecF(PDemNode, deinit)(&p->detected_types);
+	VecF(PDemNode, deinit)(&p->names);
+	VecF(PDemNode, dtor)(p->outer_template_params);
+	VecF(PNodeList, deinit)(&p->template_params);
+	VecF(PForwardTemplateRef, deinit)(&p->forward_template_refs);
 
-	VecF(DemAstNode, move)(&dst->detected_types, &src->detected_types);
-	VecF(DemAstNode, move)(&dst->names, &src->names);
-	VecF(DemAstNode, move)(dst->outer_template_params, src->outer_template_params);
-	VecF(PNodeList, copy)(&dst->template_params, &src->template_params);
-
-	memset(src, 0, sizeof(Meta));
+	memset(p, 0, sizeof(DemParser));
 }
 
-static const char *builtin_type_stings[] = {
-	"void",
-	"wchar_t",
-	"bool",
-	"char",
-	"signed char",
-	"unsigned char",
-	"short",
-	"unsigned short",
-	"int",
-	"unsigned int",
-	"long",
-	"unsigned long",
-	"long long",
-	"__int64",
-	"unsigned long long",
-	"__int64",
-	"__int128",
-	"unsigned __int128",
-	"float",
-	"double",
-	"long double",
-	"__float80",
-	"__float128",
-	"...",
-	"decimal64",
-	"decimal128",
-	"decimal32",
-	"half",
-	"char32_t",
-	"char16_t",
-	"char8_t",
-	"auto",
-	"decltype(auto)",
-	"std::nullptr_t",
-	"_Accum",
-	"_Fract",
-	NULL,
-};
-static const char *builtin_type_prefix_stings[] = {
-	"_Float",
-	"std::bfloat",
-	"signed _BitInt(",
-	"signed _BitInt(",
-	"unsigned _BitInt(",
-	"unsigned _BitInt(",
-};
-
-bool is_builtin_type(const char *t) {
-	if (!(t && *t)) {
-		return false;
+void DemResult_deinit(DemResult *r) {
+	if (!r) {
+		return;
 	}
-	for (size_t i = 0; i < sizeof(builtin_type_stings) / sizeof(builtin_type_stings[0]); i++) {
-		if (!builtin_type_stings[i]) {
-			break;
-		}
-		if (strcmp(builtin_type_stings[i], t) == 0) {
-			return true;
-		}
+	if (r->output) {
+		DemNode_dtor(r->output);
+		r->output = NULL;
 	}
-	for (size_t i = 0;
-		i < sizeof(builtin_type_prefix_stings) / sizeof(builtin_type_prefix_stings[0]);
-		i++) {
-		if (!builtin_type_prefix_stings[i]) {
-			break;
-		}
-		if (strncmp(t, builtin_type_prefix_stings[i], strlen(builtin_type_prefix_stings[i])) ==
-			0) {
-			return true;
-		}
-	}
-	return false;
+	r->error = DEM_ERR_OK;
 }
 
 /**
@@ -210,112 +95,59 @@ bool is_builtin_type(const char *t) {
  * This vector is then used to refer back to a detected type in substitution
  * rules.
  */
-bool append_type(Meta *m, const DemAstNode *x) {
-	if (!m || !x || dem_string_empty(&x->dem)) {
+bool append_type(DemParser *p, const DemNode *x) {
+	if (!p || !x) {
 		return false;
 	}
 
-	DemAstNode *new_node = VecF(DemAstNode, append)(&m->detected_types, NULL);
-	if (!new_node) {
+	DemNode *new_node = DemNode_clone(x);
+	PDemNode *slot = VecF(PDemNode, append)(&p->detected_types, &new_node);
+	if (!slot) {
+		DemNode_dtor(new_node);
 		return false;
-	}
-	DemAstNode_copy(new_node, x);
-	return true;
-}
-
-/**MATCH_AND_DO
- * Find the index of a type in the detected_types table.
- * Returns the index if found, or -1 if not found.
- */
-st64 find_type_index(Meta *m, const char *type_str) {
-	if (!m || !type_str) {
-		return -1;
-	}
-	for (ut64 i = 0; i < m->detected_types.length; i++) {
-		DemAstNode *dt = vec_ptr_at(&m->detected_types, i);
-		if (dt && dt->dem.buf && !strcmp(dt->dem.buf, type_str)) {
-			return (st64)i;
-		}
-	}
-	return -1;
-}
-
-/**
- * Refer back to a previous type from detected types and then add that
- * type to the currently demangled string
- */
-bool meta_substitute_type(Meta *m, ut64 id, DemAstNode *dan) {
-	if (m->detected_types.length <= id) {
-		return false;
-	}
-	DemAstNode *type_node = vec_ptr_at(&m->detected_types, id);
-	if (!type_node || DemAstNode_is_empty(type_node)) {
-		return false;
-	}
-
-	DemAstNode x = { 0 };
-	DemAstNode_init_clone(&x, type_node);
-	DemAstNode_append(dan, &x);
-	if (m->trace) {
-		fprintf(stderr, "[substitute_type] %ld -> '%s'\n", id, type_node->dem.buf);
 	}
 	return true;
 }
 
-DemAstNode *meta_get_tparam(Meta *m, ut64 level, ut64 index) {
-	if (level >= m->template_params.length) {
+DemNode *substitute_get(DemParser *p, ut64 id) {
+	if (p->detected_types.length <= id) {
+		return NULL;
+	}
+	PDemNode *type_node_ptr = vec_ptr_at(&p->detected_types, id);
+	return type_node_ptr ? *type_node_ptr : NULL;
+}
+
+DemNode *template_param_get(DemParser *p, ut64 level, ut64 index) {
+	if (level >= p->template_params.length) {
 		goto branch_fail;
 	}
-	NodeList **pptparams_at_level = vec_ptr_at(&m->template_params, level);
+	NodeList **pptparams_at_level = vec_ptr_at(&p->template_params, level);
 	if (!(pptparams_at_level && *pptparams_at_level && index < (*pptparams_at_level)->length)) {
 		goto branch_fail;
 	}
 	NodeList *tparams_at_level = *pptparams_at_level;
-	return vec_ptr_at(tparams_at_level, index);
+	PDemNode *node_ptr = vec_ptr_at(tparams_at_level, index);
+	return node_ptr ? *node_ptr : NULL;
 
 branch_fail:
-	if (m->trace) {
+	if (p->trace) {
 		fprintf(stderr, "[get_tparam] FAILED L%ld_%ld\n", level, index);
 	}
 	return NULL;
 }
 
-bool meta_substitute_tparam(Meta *m, DemAstNode *dan, ut64 level, ut64 index) {
-	if (!dan) {
-		return false;
-	}
-	DemAstNode *tparam_node = meta_get_tparam(m, level, index);
-	if (!tparam_node || DemAstNode_is_empty(tparam_node)) {
-		goto branch_fail;
-	}
-
-	DemAstNode x = { 0 };
-	DemAstNode_init_clone(&x, tparam_node);
-	DemAstNode_append(dan, &x);
-	if (m->trace) {
-		fprintf(stderr, "[substitute_tparam] L%ld_%ld -> '%s'\n", level, index, tparam_node->dem.buf);
-	}
-	return true;
-
-branch_fail:
-	if (m->trace) {
-		fprintf(stderr, "[substitute_tparam] dan[%p]%s FAILED L%ld_%ld\n", dan, dan->dem.buf, level, index);
-	}
-	return false;
-}
-
-bool resolve_forward_template_refs(Meta *m, DemAstNode *dan) {
-	if (!m || m->forward_template_refs.length == 0 || !dan || !dan->dem.buf) {
+bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
+	if (!p || p->forward_template_refs.length == 0 || !dan) {
 		return true;
 	}
 
 	bool all_resolved = true;
-	vec_foreach_ptr(&m->forward_template_refs, ppfwd_ref, {
+	vec_foreach_ptr(&p->forward_template_refs, ppfwd_ref, {
 		ForwardTemplateRef *fwd_ref = *ppfwd_ref;
 		ut64 level = fwd_ref->level;
 		ut64 index = fwd_ref->index;
 
-		fwd_ref->node = meta_get_tparam(m, level, index);
+		fwd_ref->node = template_param_get(p, level, index);
 		if (!fwd_ref->node) {
 			all_resolved = false;
 		}
@@ -323,88 +155,17 @@ bool resolve_forward_template_refs(Meta *m, DemAstNode *dan) {
 
 	// Don't clear yet - we'll need the references for final string replacement
 	// Replace placeholders in the final result string
-	char *result = dan->dem.buf;
-	if (!result || m->forward_template_refs.length <= 0 || !all_resolved) {
+	if (p->forward_template_refs.length <= 0 || !all_resolved) {
 		return all_resolved;
 	}
-	vec_foreach_ptr(&m->forward_template_refs, ppfwd_ref, {
+	vec_foreach_ptr(&p->forward_template_refs, ppfwd_ref, {
 		ForwardTemplateRef *fwd_ref = *ppfwd_ref;
-		if (!fwd_ref->node || !fwd_ref->node->dem.buf) {
+		if (!fwd_ref->node) {
 			continue;
 		}
-
-		// Build placeholder string
-		char placeholder[64];
-		if (fwd_ref->level > 0) {
-			snprintf(placeholder, sizeof(placeholder), "__FWD_TL%lu_%lu__",
-				fwd_ref->level, fwd_ref->index);
-		} else {
-			snprintf(placeholder, sizeof(placeholder), "__FWD_T%lu__", fwd_ref->index);
-		}
-
-		// Find and replace all occurrences
-		const char *replacement = fwd_ref->node->dem.buf;
-		char *found = strstr(result, placeholder);
-		while (found) {
-			size_t prefix_len = found - result;
-			size_t placeholder_len = strlen(placeholder);
-			size_t suffix_len = strlen(found + placeholder_len);
-			size_t replacement_len = strlen(replacement);
-
-			// Allocate new string
-			char *new_result = (char *)malloc(prefix_len + replacement_len + suffix_len + 1);
-			if (!new_result) {
-				break;
-			}
-
-			// Build: prefix + replacement + suffix
-			memcpy(new_result, result, prefix_len);
-			memcpy(new_result + prefix_len, replacement, replacement_len);
-			memcpy(new_result + prefix_len + replacement_len, found + placeholder_len, suffix_len + 1);
-
-			free(result);
-			result = new_result;
-
-			// Continue searching from after the replacement
-			found = strstr(result + prefix_len + replacement_len, placeholder);
-		}
+		// TODO:
 	});
 
-	VecF(PForwardTemplateRef, deinit)(&m->forward_template_refs);
-
-	if (result != dan->dem.buf) {
-		dan->dem.buf = result;
-		dan->dem.len = strlen(result);
-	}
+	VecF(PForwardTemplateRef, deinit)(&p->forward_template_refs);
 	return true;
-}
-
-// counts the number of :: in a name and adds 1 to it
-// but ignores :: inside template arguments (between < and >)
-ut32 count_name_parts(const DemString *x) {
-	// count number of parts
-	const char *it = x->buf;
-	const char *end = it + x->len;
-	ut32 num_parts = 1;
-	int template_depth = 0;
-
-	while (it < end) {
-		if (*it == '<') {
-			template_depth++;
-		} else if (*it == '>') {
-			template_depth--;
-		} else if (template_depth == 0 && it[0] == ':' && it[1] == ':') {
-			// Only count :: when we're not inside template arguments
-			if (it[2]) {
-				num_parts++;
-				it += 2; // advance past the "::" to avoid infinite loop
-				continue;
-			} else {
-				// this case is possible and must be ignored with an error
-				return 0;
-			}
-		}
-		it++;
-	}
-	return num_parts;
 }

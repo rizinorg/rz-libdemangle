@@ -15,10 +15,11 @@
  * Unlike mu_demangle_tests, these tests check EACH substitution table entry
  */
 
-#include "test_helper.h"
+#include "../src/cplusplus/types.h"
+#include "../src/cplusplus/v3.h"
+
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
 // Color definitions
 #define TRED   "\x1b[31m"
@@ -29,64 +30,51 @@
 static int tests_run = 0;
 static int tests_passed = 0;
 
-// Helper to print substitution table (for debugging)
-static void print_subs_table(CxxDemangleResult *result) {
-	printf("  Substitution table (%zu entries):\n", result->subs_count);
-	for (size_t i = 0; i < result->subs_count; i++) {
-		printf("    [%zu] = %s\n", i, result->subs_table[i] ? result->subs_table[i] : "(null)");
-	}
-}
-
 // Helper to check substitution table
-static int check_subs(CxxDemangleResult *result, const char **expected_subs, size_t expected_count) {
-	if (!result->success) {
+static int check_subs(const char *input, const char *expected_output, const char **expected_subs, size_t expected_count) {
+	DemContext _ctx = { 0 };
+	DemContext *ctx = &_ctx;
+	CpDemOptions opt = { 0 };
+	int result = 0;
+	if (!parse_rule(ctx, input, rule_mangled_name, opt)) {
 		printf(TBOLD TRED "  Demangling FAILED\n" TRESET);
-		return 0;
+		goto beach;
 	}
 
-	if (result->subs_count != expected_count) {
+	if (strcmp(ctx->output.buf, expected_output) != 0) {
+		printf(TBOLD TRED "  Demangled output mismatch:\n" TRESET);
+		printf("    Expected: %s\n", expected_output);
+		printf("    Got:      %s\n", ctx->output.buf);
+		goto beach;
+	}
+
+	if (VecPDemNode_len(&ctx->parser.detected_types) != expected_count) {
 		printf(TBOLD TRED "  Substitution count mismatch:\n" TRESET);
 		printf("    Expected: %zu entries\n", expected_count);
-		printf("    Got:      %zu entries\n", result->subs_count);
-		print_subs_table(result);
-		return 0;
+		printf("    Got:      %zu entries\n", VecPDemNode_len(&ctx->parser.detected_types));
+		goto beach;
 	}
 
 	for (size_t i = 0; i < expected_count; i++) {
-		if (!result->subs_table[i]) {
+		DemNode **psub_node = vec_ptr_at(&ctx->parser.detected_types, i);
+		if (!psub_node || !*psub_node) {
 			printf(TBOLD TRED "  Substitution [%zu] is NULL\n" TRESET, i);
-			return 0;
+			goto beach;
 		}
-		if (strcmp(result->subs_table[i], expected_subs[i]) != 0) {
+		DemNode *sub_node = *psub_node;
+		DemString buf = { 0 };
+		ast_pp(sub_node, &buf);
+		if (strcmp(buf.buf, expected_subs[i]) != 0) {
 			printf(TBOLD TRED "  Substitution [%zu] mismatch:\n" TRESET, i);
 			printf("    Expected: %s\n", expected_subs[i]);
-			printf("    Got:      %s\n", result->subs_table[i]);
-			return 0;
+			printf("    Got:      %s\n", buf.buf);
+			goto beach;
 		}
 	}
-
-	return 1;
-}
-
-// Helper to check demangled output
-static int check_output(CxxDemangleResult *result, const char *expected_output) {
-	if (!result->success) {
-		return 0;
-	}
-
-	if (!result->demangled) {
-		printf(TBOLD TRED "  Demangled output is NULL\n" TRESET);
-		return 0;
-	}
-
-	if (strcmp(result->demangled, expected_output) != 0) {
-		printf(TBOLD TRED "  Demangled output mismatch:\n" TRESET);
-		printf("    Expected: %s\n", expected_output);
-		printf("    Got:      %s\n", result->demangled);
-		return 0;
-	}
-
-	return 1;
+	result = 1;
+beach:
+	DemContext_deinit(ctx);
+	return result;
 }
 
 // Test runner macro
@@ -117,17 +105,7 @@ static int test_basic_vector(void) {
 	};
 	size_t expected_count = 3;
 
-	CxxDemangleResult *result = cxx_demangle_with_subs(mangled);
-	if (!result) {
-		printf("  cxx_demangle_with_subs returned NULL\n");
-		return 0;
-	}
-
-	int success = check_output(result, expected_output) &&
-		check_subs(result, expected_subs, expected_count);
-
-	cxx_demangle_result_free(result);
-	return success;
+	return check_subs(mangled, expected_output, expected_subs, expected_count);
 }
 
 // Test 2: std::function template
@@ -145,17 +123,7 @@ static int test_function_template(void) {
 	};
 	size_t expected_count = 3;
 
-	CxxDemangleResult *result = cxx_demangle_with_subs(mangled);
-	if (!result) {
-		printf("  cxx_demangle_with_subs returned NULL\n");
-		return 0;
-	}
-
-	int success = check_output(result, expected_output) &&
-		check_subs(result, expected_subs, expected_count);
-
-	cxx_demangle_result_free(result);
-	return success;
+	return check_subs(mangled, expected_output, expected_subs, expected_count);
 }
 
 // Test 3: std::ostream::_M_insert template method
@@ -173,17 +141,7 @@ static int test_ostream_m_insert(void) {
 	};
 	size_t expected_count = 3;
 
-	CxxDemangleResult *result = cxx_demangle_with_subs(mangled);
-	if (!result) {
-		printf("  cxx_demangle_with_subs returned NULL\n");
-		return 0;
-	}
-
-	int success = check_output(result, expected_output) &&
-		check_subs(result, expected_subs, expected_count);
-
-	cxx_demangle_result_free(result);
-	return success;
+	return check_subs(mangled, expected_output, expected_subs, expected_count);
 }
 
 // Test 4: std::_Rb_tree_insert_and_rebalance with S0_ and RS_
@@ -201,17 +159,7 @@ static int test_rb_tree_insert_and_rebalance(void) {
 	};
 	size_t expected_count = 3;
 
-	CxxDemangleResult *result = cxx_demangle_with_subs(mangled);
-	if (!result) {
-		printf("  cxx_demangle_with_subs returned NULL\n");
-		return 0;
-	}
-
-	int success = check_output(result, expected_output) &&
-		check_subs(result, expected_subs, expected_count);
-
-	cxx_demangle_result_free(result);
-	return success;
+	return check_subs(mangled, expected_output, expected_subs, expected_count);
 }
 
 // Test 5: std::_Rb_tree_rebalance_for_erase with RS_
@@ -229,17 +177,7 @@ static int test_rb_tree_rebalance_for_erase(void) {
 	};
 	size_t expected_count = 3;
 
-	CxxDemangleResult *result = cxx_demangle_with_subs(mangled);
-	if (!result) {
-		printf("  cxx_demangle_with_subs returned NULL\n");
-		return 0;
-	}
-
-	int success = check_output(result, expected_output) &&
-		check_subs(result, expected_subs, expected_count);
-
-	cxx_demangle_result_free(result);
-	return success;
+	return check_subs(mangled, expected_output, expected_subs, expected_count);
 }
 
 // Test 6: std::_Function_base::_Base_manager with complex lambda and RKS6_
@@ -266,17 +204,7 @@ static int test_function_base_manager_lambda(void) {
 	};
 	size_t expected_count = 12;
 
-	CxxDemangleResult *result = cxx_demangle_with_subs(mangled);
-	if (!result) {
-		printf("  cxx_demangle_with_subs returned NULL\n");
-		return 0;
-	}
-
-	int success = check_output(result, expected_output) &&
-		check_subs(result, expected_subs, expected_count);
-
-	cxx_demangle_result_free(result);
-	return success;
+	return check_subs(mangled, expected_output, expected_subs, expected_count);
 }
 
 // Test 7: std::pair nested in std::vector with S1_
@@ -296,17 +224,7 @@ static int test_pair_in_vector_with_s1(void) {
 	};
 	size_t expected_count = 5;
 
-	CxxDemangleResult *result = cxx_demangle_with_subs(mangled);
-	if (!result) {
-		printf("  cxx_demangle_with_subs returned NULL\n");
-		return 0;
-	}
-
-	int success = check_output(result, expected_output) &&
-		check_subs(result, expected_subs, expected_count);
-
-	cxx_demangle_result_free(result);
-	return success;
+	return check_subs(mangled, expected_output, expected_subs, expected_count);
 }
 
 // Test 8: std::_Function_base::_M_manager with RKS1_
@@ -327,17 +245,7 @@ static int test_any_data_with_rks1(void) {
 	};
 	size_t expected_count = 5;
 
-	CxxDemangleResult *result = cxx_demangle_with_subs(mangled);
-	if (!result) {
-		printf("  cxx_demangle_with_subs returned NULL\n");
-		return 0;
-	}
-
-	int success = check_output(result, expected_output) &&
-		check_subs(result, expected_subs, expected_count);
-
-	cxx_demangle_result_free(result);
-	return success;
+	return check_subs(mangled, expected_output, expected_subs, expected_count);
 }
 
 int main(int argc, char **argv) {
