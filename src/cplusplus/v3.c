@@ -1822,8 +1822,8 @@ static bool insert_modifier_in_func_ptr(DemAstNode *dan, const char *func_ptr_st
  * Handle qualified types (const, volatile, restrict).
  * Applies qualifiers to the inner type, with special handling for function pointers.
  */
-static bool handle_qualified_type(DemAstNode *dan, StrIter *msi, Meta *m) {
-	if (DemAstNode_is_empty(AST(1))) {
+static bool handle_qualified_type(DemAstNode *dan, StrIter *msi, Meta *m, DemAstNode *qualifies, DemAstNode *inner_type) {
+	if (DemAstNode_is_empty(inner_type)) {
 		return false;
 	}
 
@@ -1832,26 +1832,26 @@ static bool handle_qualified_type(DemAstNode *dan, StrIter *msi, Meta *m) {
 	DemString func_name = { 0 };
 
 	// Try function pointer with node
-	if ((func_node = extract_func_type_node(AST(1), &func_name))) {
-		handle_func_pointer(dan, func_node, &func_name, AST(0)->dem.buf);
+	if ((func_node = extract_func_type_node(inner_type, &func_name))) {
+		handle_func_pointer(dan, func_node, &func_name, inner_type->dem.buf);
 		dem_string_deinit(&func_name);
 		goto ok;
 	}
 
 	// Try pre-formatted function pointer string
-	const char *type_str = AST(1)->dem.buf;
-	if (type_str && AST(0)->dem.len > 0 && strstr(type_str, "(*") != NULL) {
-		if (insert_modifier_in_func_ptr(dan, type_str, AST(0)->dem.buf)) {
+	const char *type_str = inner_type->dem.buf;
+	if (type_str && inner_type->dem.len > 0 && strstr(type_str, "(*") != NULL) {
+		if (insert_modifier_in_func_ptr(dan, type_str, qualifies->dem.buf)) {
 			goto ok;
 		}
 	}
 
 	// Regular type: append qualifier at end
-	if (AST(1)->dem.buf != NULL) {
-		AST_MERGE(AST(1));
-		if (AST(0)->dem.len > 0) {
+	if (inner_type->dem.buf != NULL) {
+		AST_MERGE(inner_type);
+		if (qualifies->dem.len > 0) {
 			AST_APPEND_STR(" ");
-			AST_MERGE(AST(0));
+			AST_MERGE(qualifies);
 		}
 	}
 ok:
@@ -1908,6 +1908,12 @@ static void apply_type_modifier(DemAstNode *dan, DemAstNode *inner_type,
 	dem_string_append(&dan->dem, modifier);
 }
 
+
+bool pp_pack_expansion(DemAstNode *dan, DemString *out) {
+	AST_MERGE(AST(0));
+	return true;
+}
+
 bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int parent_node_id) {
 	RULE_HEAD(type);
 
@@ -1921,9 +1927,10 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 	case 'U': {
 		MUST_MATCH(RULE_CALL_DEFER(AST(0), qualifiers));
 		MUST_MATCH(RULE_CALL_DEFER(AST(1), type));
-		if (!handle_qualified_type(dan, msi, m)) {
+		if (!handle_qualified_type(dan, msi, m, AST(0), AST(1))) {
 			TRACE_RETURN_FAILURE();
 		}
+		TRACE_RETURN_SUCCESS;
 		break;
 	}
 	case 'M':
@@ -1964,9 +1971,15 @@ bool rule_type(DemAstNode *dan, StrIter *msi, Meta *m, TraceGraph *graph, int pa
 		break;
 	}
 	case 'D':
+		// Dp <type>       # pack expansion (C++0x)
 		if (PEEK_AT(1) == 'p') {
+			context_save(0);
 			ADV_BY(2);
-			MUST_MATCH_I(0, type);
+			CTX_MUST_MATCH(0, RULE_CALL_DEFER(AST(0), type));
+			if (!pp_pack_expansion(dan, &dan->dem)) {
+				context_restore(0);
+				TRACE_RETURN_FAILURE();
+			}
 			break;
 		}
 		if (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T') {
@@ -2513,7 +2526,6 @@ bool rule_template_arg(
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'J': {
-		// Template parameter pack - expand arguments directly into parent
 		ADV();
 		while (!READ('E')) {
 			// Add comma separator if this is not the first argument in parent
@@ -2526,6 +2538,7 @@ bool rule_template_arg(
 			}
 			AST_APPEND_NODE(&node_arg);
 		}
+		dan->subtag = TEMPLATE_PARAMETER_PACK;
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'L': {
