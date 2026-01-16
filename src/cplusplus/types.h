@@ -133,7 +133,8 @@ enum {
 	REFERENCE_TYPE,
 	RVALUE_REFERENCE_TYPE,
 	QUALIFIED_TYPE,
-	ARRAY_TYPE
+	ARRAY_TYPE,
+	TEMPLATE_PARAMETER_PACK,
 };
 
 struct DemAstNode_t;
@@ -201,6 +202,7 @@ typedef struct Meta {
 	bool is_dtor;
 	bool is_conversion_operator;
 	bool not_parse_template_args;
+	bool pack_expansion;
 	bool trace; // Debug tracing flag (now just for compatibility)
 } Meta;
 

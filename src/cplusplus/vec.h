@@ -188,21 +188,22 @@
  * NOTE: to maintain this macro in future, consider replacing the large iterator name with a small one
  * and then replace it back to an uncommon name :-)
  */
-#define vec_foreach_ptr(v, var, body) \
+#define vec_foreach_ptr_i(v, I, var, body) \
 	do { \
-		size_t _i_needed_a_very_very_uncommon_name_for_this_iterator = 0; \
+		size_t I = 0; \
 		VEC_DATA_TYPE(v) *var = { 0 }; \
 		if ((v) && (v)->length) { \
-			for ((_i_needed_a_very_very_uncommon_name_for_this_iterator) = 0; \
-				(_i_needed_a_very_very_uncommon_name_for_this_iterator) < (v)->length; \
-				++(_i_needed_a_very_very_uncommon_name_for_this_iterator)) { \
-				var = &(v)->data[(_i_needed_a_very_very_uncommon_name_for_this_iterator)]; \
+			for ((I) = 0; \
+				(I) < (v)->length; \
+				++(I)) { \
+				var = &(v)->data[(I)]; \
 				{ \
 					body \
 				} \
 			} \
 		} \
 	} while (0)
+#define vec_foreach_ptr(v, var, body) vec_foreach_ptr_i(v, _idx_##var, var, body)
 
 #define Vec_t(T)   Vec##T##_t
 #define VecT(T)    Vec##T
