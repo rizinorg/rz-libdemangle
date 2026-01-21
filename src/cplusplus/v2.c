@@ -319,7 +319,7 @@ CpDem *cpdem_public_name(CpDem *dem) {
 			ADV_BY(2);
 
 			/* type_info [node | function] */
-			bool ch = PEEK();
+			char ch = PEEK();
 			if ((ch == 'i' || ch == 'f')) {
 				ADV();
 				ClassNameVec class_names = { 0 };

@@ -88,7 +88,7 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	}
 }
 
-static char *sanitize_label(const char *str, size_t len) {
+__attribute__((unused)) static char *sanitize_label(const char *str, size_t len) {
 	if (!str || len == 0) {
 		return strdup("\"\"");
 	}

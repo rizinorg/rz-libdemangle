@@ -213,27 +213,27 @@
 		ut64 length; \
 		ut64 capacity; \
 	} Vec##T; \
-	static inline T *VecF(T, data)(Vec##T * self) { \
+	__attribute__((unused)) static inline T *VecF(T, data)(Vec##T * self) { \
 		return self ? self->data : NULL; \
 	} \
-	static inline size_t VecF(T, len)(Vec##T * self) { \
+	__attribute__((unused)) static inline size_t VecF(T, len)(Vec##T * self) { \
 		return self ? self->length : 0; \
 	} \
-	static inline size_t VecF(T, cap)(Vec##T * self) { \
+	__attribute__((unused)) static inline size_t VecF(T, cap)(Vec##T * self) { \
 		return self ? self->capacity : 0; \
 	} \
-	static inline bool VecF(T, empty)(Vec##T * self) { \
+	__attribute__((unused)) static inline bool VecF(T, empty)(Vec##T * self) { \
 		return !self || !VecF(T, data)(self) || VecF(T, len)(self) == 0; \
 	} \
-	static inline size_t VecF(T, mem_size)(Vec##T * self) { \
+	__attribute__((unused)) static inline size_t VecF(T, mem_size)(Vec##T * self) { \
 		return VecF(T, len)(self) * sizeof(T); \
 	} \
-	static inline void VecF(T, init)(Vec##T * self) { \
+	__attribute__((unused)) static inline void VecF(T, init)(Vec##T * self) { \
 		if (self) { \
 			memset(self, 0, sizeof(VecT(T))); \
 		} \
 	} \
-	static inline void VecF(T, deinit)(Vec##T * self) { \
+	__attribute__((unused)) static inline void VecF(T, deinit)(Vec##T * self) { \
 		if (self && self->data) { \
 			for (size_t i = 0; i < self->length; i++) { \
 				F(&self->data[i]); \
@@ -244,28 +244,28 @@
 			self->capacity = 0; \
 		} \
 	} \
-	static inline VecT(T) * VecF(T, ctor)() { \
+	__attribute__((unused)) static inline VecT(T) * VecF(T, ctor)() { \
 		return calloc(1, sizeof(VecT(T))); \
 	} \
-	static inline void VecF(T, dtor)(Vec##T * self) { \
+	__attribute__((unused)) static inline void VecF(T, dtor)(Vec##T * self) { \
 		if (self) { \
 			VecF(T, deinit)(self); \
 			free(self); \
 		} \
 	} \
-	static inline T *VecF(T, at)(Vec##T * self, size_t idx) { \
+	__attribute__((unused)) static inline T *VecF(T, at)(Vec##T * self, size_t idx) { \
 		if (self && self->data && idx < self->length) { \
 			return &self->data[idx]; \
 		} \
 		return NULL; \
 	} \
-	static inline T *VecF(T, head)(Vec##T * self) { \
+	__attribute__((unused)) static inline T *VecF(T, head)(Vec##T * self) { \
 		return VecF(T, at)(self, 0); \
 	} \
-	static inline T *VecF(T, tail)(Vec##T * self) { \
+	__attribute__((unused)) static inline T *VecF(T, tail)(Vec##T * self) { \
 		return VecF(T, at)(self, VecF(T, len)(self) - 1); \
 	} \
-	static inline bool VecF(T, reserve)(Vec##T * self, size_t new_cap) { \
+	__attribute__((unused)) static inline bool VecF(T, reserve)(Vec##T * self, size_t new_cap) { \
 		if (!self) { \
 			return false; \
 		} \
@@ -280,7 +280,7 @@
 		self->capacity = new_cap; \
 		return true; \
 	} \
-	static inline bool VecF(T, resize)(Vec##T * self, size_t new_size) { \
+	__attribute__((unused)) static inline bool VecF(T, resize)(Vec##T * self, size_t new_size) { \
 		if (!self) { \
 			return false; \
 		} \
@@ -298,7 +298,7 @@
 		self->length = new_size; \
 		return true; \
 	} \
-	static inline T *VecF(T, append)(Vec##T * self, const T *x) { \
+	__attribute__((unused)) static inline T *VecF(T, append)(Vec##T * self, const T *x) { \
 		if (!self) { \
 			return NULL; \
 		} \
@@ -317,7 +317,7 @@
 		self->length++; \
 		return result; \
 	} \
-	static inline T *VecF(T, pop)(Vec##T * self) { \
+	__attribute__((unused)) static inline T *VecF(T, pop)(Vec##T * self) { \
 		if (VecF(T, empty)(self)) { \
 			return NULL; \
 		} \
@@ -325,7 +325,7 @@
 		self->length--; \
 		return x; \
 	} \
-	static inline Vec##T *VecF(T, concat)(Vec##T * self, Vec##T * xs) { \
+	__attribute__((unused)) static inline Vec##T *VecF(T, concat)(Vec##T * self, Vec##T * xs) { \
 		if (!self || !xs) { \
 			return NULL; \
 		} \
@@ -344,7 +344,7 @@
 		self->length = new_len; \
 		return self; \
 	} \
-	static inline Vec##T *VecF(T, copy)(Vec##T * self, Vec##T * xs) { \
+	__attribute__((unused)) static inline Vec##T *VecF(T, copy)(Vec##T * self, Vec##T * xs) { \
 		if (!self || !xs) { \
 			return NULL; \
 		} \
@@ -364,7 +364,7 @@
 		} \
 		return self; \
 	} \
-	static inline Vec##T *VecF(T, move)(Vec##T * self, Vec##T * xs) { \
+	__attribute__((unused)) static inline Vec##T *VecF(T, move)(Vec##T * self, Vec##T * xs) { \
 		if (!self || !xs || self == xs) { \
 			return NULL; \
 		} \
@@ -373,7 +373,7 @@
 		memset(xs, 0, sizeof(VecT(T))); \
 		return self; \
 	} \
-	static inline void VecF(T, clear)(Vec##T * self) { \
+	__attribute__((unused)) static inline void VecF(T, clear)(Vec##T * self) { \
 		if (!self) { \
 			return; \
 		} \

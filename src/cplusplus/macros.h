@@ -76,7 +76,7 @@
 /**
  * \b Save current read position.
  */
-#define SAVE_POS(I) const char *save_pos_##I = CUR();
+#define SAVE_POS(I) __attribute__((unused)) const char *save_pos_##I = CUR();
 
 /**
  * \b Restore saved position.
@@ -140,8 +140,8 @@
 
 #define context_save(N) \
 	SAVE_POS(N); \
-	size_t save_children_len_##N = node->children ? VecPDemNode_len(node->children) : 0; \
-	size_t save_types_len_##N = VecPDemNode_len(&p->detected_types);
+	__attribute__((unused)) size_t save_children_len_##N = node->children ? VecPDemNode_len(node->children) : 0; \
+	__attribute__((unused)) size_t save_types_len_##N = VecPDemNode_len(&p->detected_types);
 
 #define context_restore_node(N) \
 	if (node->children) { \

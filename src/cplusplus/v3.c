@@ -255,7 +255,6 @@ bool parse_ref_qualifiers(DemParser *p, RefQualifiers *quals) {
 }
 
 bool parse_base_source_name(DemParser *p, const char **pout, ut64 *plen) {
-	const char *start = p->cur;
 	ut64 num = 0;
 	if (!parse_non_neg_number(p, &num)) {
 		return false;
@@ -401,7 +400,7 @@ bool rule_unqualified_name(DemParser *p, const DemNode *parent, DemResult *r,
 
 bool rule_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(unresolved_name);
-	const bool is_global = READ_STR("gs");
+	(void)READ_STR("gs");
 	if (READ_STR("srN")) {
 		MATCH_AND_DO((CALL_RULE(rule_unresolved_type)) &&
 				(PEEK() == 'I' ? CALL_RULE(rule_template_args) : true) &&
