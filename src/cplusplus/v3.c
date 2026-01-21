@@ -455,10 +455,12 @@ bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, bool 
 			TRACE_RETURN_FAILURE();
 		}
 	}
+
+	DemNode_move(node, result);
 	if (!result && std_node) {
 		PASSTHRU_RULE_VA(rule_unqualified_name, std_node, module);
+		TRACE_RETURN_FAILURE();
 	}
-	DemNode_move(node, result);
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -1531,11 +1533,11 @@ bool rule_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(name);
 	if (PEEK() == 'N') {
 		PASSTHRU_RULE(rule_nested_name);
-		TRACE_RETURN_SUCCESS;
+		TRACE_RETURN_FAILURE();
 	}
 	if (PEEK() == 'Z') {
 		PASSTHRU_RULE(rule_local_name);
-		TRACE_RETURN_SUCCESS;
+		TRACE_RETURN_FAILURE();
 	}
 
 	DemNode *result = NULL;
@@ -1655,8 +1657,7 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (pop_node) {
 		DemNode_dtor(*pop_node);
 	}
-	DemNode_copy(node, ast_node);
-	free(ast_node);
+	DemNode_move(node, ast_node);
 	TRACE_RETURN_SUCCESS;
 fail:
 	DemNode_dtor(ast_node);
