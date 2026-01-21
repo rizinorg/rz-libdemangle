@@ -82,12 +82,14 @@ beach:
 	do { \
 		tests_run++; \
 		printf(TBOLD "%s" TRESET " ", test_name); \
+		fflush(stdout); \
 		if (test_func()) { \
 			tests_passed++; \
 			printf(TGREEN "OK\n" TRESET); \
 		} else { \
 			printf(TBOLD TRED "FAILED\n" TRESET); \
 		} \
+		fflush(stdout); \
 	} while (0)
 
 // Test 1: Basic substitution with std::vector and std::allocator

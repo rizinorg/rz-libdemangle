@@ -234,72 +234,13 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 	}
 }
 
-void DemNode_shallow_copy(DemNode *dst, const DemNode *src) {
-	if (!(dst && src)) {
+void DemNode_move(DemNode *dst, DemNode *src) {
+	if (!(dst && src && dst != src)) {
 		return;
 	}
-	dst->val = src->val;
-	dst->tag = src->tag;
-	dst->parent = src->parent;
-	dst->subtag = src->subtag;
-	// Shallow copy: share the same children vector (don't deep copy)
-	dst->children = src->children;
-
-	// Copy union fields based on tag (but don't recursively clone)
-	switch (src->tag) {
-	case CP_DEM_TYPE_KIND_primitive_ty:
-		dem_string_init_clone(&dst->primitive_ty.name, &src->primitive_ty.name);
-		break;
-	case CP_DEM_TYPE_KIND_encoding:
-	case CP_DEM_TYPE_KIND_function_type:
-		// Shallow copy: just copy pointers, don't clone
-		dst->fn_ty.name = src->fn_ty.name;
-		dst->fn_ty.ret = src->fn_ty.ret;
-		dst->fn_ty.requires_node = src->fn_ty.requires_node;
-		dst->fn_ty.exception_spec = src->fn_ty.exception_spec;
-		dst->fn_ty.params = src->fn_ty.params;
-		dst->fn_ty.cv_qualifiers = src->fn_ty.cv_qualifiers;
-		dst->fn_ty.ref_qualifiers = src->fn_ty.ref_qualifiers;
-		break;
-	case CP_DEM_TYPE_KIND_qualified_type:
-		// Shallow copy: just copy pointer, don't clone
-		dst->qualified_ty.inner_type = src->qualified_ty.inner_type;
-		dst->qualified_ty.qualifiers = src->qualified_ty.qualifiers;
-		break;
-	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type:
-		// Shallow copy: just copy pointer, don't clone
-		dst->vendor_ext_qualified_ty.inner_type = src->vendor_ext_qualified_ty.inner_type;
-		dst->vendor_ext_qualified_ty.vendor_ext = src->vendor_ext_qualified_ty.vendor_ext;
-		dst->vendor_ext_qualified_ty.template_args = src->vendor_ext_qualified_ty.template_args;
-		break;
-	case CP_DEM_TYPE_KIND_module_name:
-		dst->module_name_ty.IsPartition = src->module_name_ty.IsPartition;
-		dst->module_name_ty.name = src->module_name_ty.name;
-		dst->module_name_ty.pare = src->module_name_ty.pare;
-		break;
-	case CP_DEM_TYPE_KIND_name_with_template_args:
-		dst->name_with_template_args.name = src->name_with_template_args.name;
-		dst->name_with_template_args.template_args = src->name_with_template_args.template_args;
-		break;
-	case CP_DEM_TYPE_KIND_many:
-		// Deep copy many type fields
-		dst->many_ty.sep = src->many_ty.sep; // Separator is a string literal
-		// Fall through to copy children
-	default:
-		break;
-	}
-}
-
-DemNode *DemNode_shallow_clone(const DemNode *src) {
-	if (!src) {
-		return NULL;
-	}
-	DemNode *dst = DemNode_new();
-	if (!dst) {
-		return NULL;
-	}
-	DemNode_shallow_copy(dst, src);
-	return dst;
+	DemNode_deinit(dst);
+	memcpy(dst, src, sizeof(DemNode));
+	memset(src, 0, sizeof(DemNode));
 }
 
 void DemNode_init_clone(DemNode *dst, const DemNode *src) {
@@ -322,8 +263,11 @@ DemNode *DemNode_clone(const DemNode *src) {
 	return dst;
 }
 
-DemNode *make_primitive_type_node(const char *begin, const char *end, const char *name, size_t name_len) {
-	DemNode *node = DemNode_ctor(CP_DEM_TYPE_KIND_primitive_ty, begin, end - begin);
+DemNode *make_primitive_type_inplace(DemNode *x, const char *begin, const char *end, const char *name, size_t name_len) {
+	if (!x) {
+		return NULL;
+	}
+	DemNode *node = DemNode_ctor_inplace(x, CP_DEM_TYPE_KIND_primitive_ty, begin, end - begin);
 	if (!node) {
 		return NULL;
 	}
@@ -331,7 +275,15 @@ DemNode *make_primitive_type_node(const char *begin, const char *end, const char
 	return node;
 }
 
-DemNode *make_name_with_template_args_node(const char *begin, const char *end, DemNode *name_node, DemNode *template_args_node) {
+DemNode *make_primitive_type(const char *begin, const char *end, const char *name, size_t name_len) {
+	DemNode *node = DemNode_ctor(CP_DEM_TYPE_KIND_primitive_ty, begin, end - begin);
+	if (!node) {
+		return NULL;
+	}
+	return make_primitive_type_inplace(node, begin, end, name, name_len);
+}
+
+DemNode *make_name_with_template_args(const char *begin, const char *end, DemNode *name_node, DemNode *template_args_node) {
 	DemNode *node = DemNode_ctor(CP_DEM_TYPE_KIND_name_with_template_args, begin, end - begin);
 	if (!node) {
 		return NULL;

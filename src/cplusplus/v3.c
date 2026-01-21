@@ -432,7 +432,7 @@ bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, bool 
 
 	DemNode *std_node = NULL;
 	if (READ_STR("St")) {
-		std_node = make_primitive_type_node(CUR(), CUR(), "std::", 5);
+		std_node = make_primitive_type(CUR(), CUR(), "std::", 5);
 		if (!std_node) {
 			TRACE_RETURN_FAILURE();
 		}
@@ -459,8 +459,7 @@ bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, bool 
 	if (!result && std_node) {
 		PASSTHRU_RULE_VA(rule_unqualified_name, std_node, module);
 	}
-	DemNode_copy(node, result);
-	free(result);
+	DemNode_move(node, result);
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -1378,7 +1377,7 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 		break;
 	}
 	case 'S': {
-		if (!PEEK_AT(1) != 't') {
+		if (PEEK_AT(1) != 't') {
 			bool is_subst = false;
 			DemNode *result = NULL;
 			CALL_RULE_N_VA(result, rule_unscoped_name, &is_subst);
@@ -1464,41 +1463,41 @@ bool rule_substitution(DemParser *p, const DemNode *parent, DemResult *r) {
 	switch (PEEK()) {
 	case 't': {
 		ADV();
-		AST_APPEND_STR("std");
+		PRIMITIVE_TYPE("std");
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'a': {
 		ADV();
-		AST_APPEND_STR("std::allocator");
+		PRIMITIVE_TYPE("std::allocator");
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'b': {
 		ADV();
-		AST_APPEND_STR("std::basic_string");
+		PRIMITIVE_TYPE("std::basic_string");
 		TRACE_RETURN_SUCCESS;
 	}
 	case 's': {
 		ADV();
 		if (PEEK() == 'C' || PEEK() == 'D') {
-			AST_APPEND_STR("std::basic_string<char, std::char_traits<char>, std::allocator<char>>");
+			PRIMITIVE_TYPE("std::basic_string<char, std::char_traits<char>, std::allocator<char>>");
 		} else {
-			AST_APPEND_STR("std::string");
+			PRIMITIVE_TYPE("std::string");
 		}
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'i': {
 		ADV();
-		AST_APPEND_STR("std::istream");
+		PRIMITIVE_TYPE("std::istream");
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'o': {
 		ADV();
-		AST_APPEND_STR("std::ostream");
+		PRIMITIVE_TYPE("std::ostream");
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'd': {
 		ADV();
-		AST_APPEND_STR("std::iostream");
+		PRIMITIVE_TYPE("std::iostream");
 		TRACE_RETURN_SUCCESS;
 	}
 	default:
@@ -1601,7 +1600,7 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 					goto fail;
 				}
 			}
-			ast_node = make_name_with_template_args_node(save_pos_rule, CUR(), ast_node, ta);
+			ast_node = make_name_with_template_args(save_pos_rule, CUR(), ast_node, ta);
 		} else if (PEEK() == 'D' && (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T')) {
 			if (ast_node != NULL) {
 				goto fail;
@@ -1616,7 +1615,7 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 			if (PEEK() == 'S') {
 				DemNode *subst = NULL;
 				if (PEEK_AT(1) == 't') {
-					subst = make_primitive_type_node(CUR(), CUR() + 2, "std", 3);
+					subst = make_primitive_type(CUR(), CUR() + 2, "std", 3);
 					ADV_BY(2);
 				} else {
 					CALL_RULE_N(subst, rule_substitution);

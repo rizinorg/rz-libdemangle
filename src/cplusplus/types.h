@@ -229,12 +229,14 @@ bool DemNode_init(DemNode *dan);
 void DemNode_deinit(DemNode *dan);
 bool DemNode_is_empty(DemNode *x);
 void DemNode_copy(DemNode *dst, const DemNode *src);
+void DemNode_move(DemNode *dst, DemNode *src);
 void DemNode_init_clone(DemNode *dst, const DemNode *src);
 DemNode *DemNode_clone(const DemNode *src);
 #define DemNode_non_empty(X) (!DemNode_is_empty(X))
 
-DemNode *make_primitive_type_node(const char *begin, const char *end, const char *name, size_t name_len);
-DemNode *make_name_with_template_args_node(const char *begin, const char *end, DemNode *name_node, DemNode *template_args_node);
+DemNode *make_primitive_type_inplace(DemNode *x, const char *begin, const char *end, const char *name, size_t name_len);
+DemNode *make_primitive_type(const char *begin, const char *end, const char *name, size_t name_len);
+DemNode *make_name_with_template_args(const char *begin, const char *end, DemNode *name_node, DemNode *template_args_node);
 
 static inline void PDemNode_free(void *ptr) {
 	if (ptr) {
