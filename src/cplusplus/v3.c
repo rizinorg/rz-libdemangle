@@ -1253,11 +1253,11 @@ bool rule_source_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(source_name);
 	/* positive number providing length of name followed by it */
 	ut64 name_len = 0;
-	char *name = NULL;
+	const char *name = NULL;
 	if (!parse_base_source_name(p, &name, &name_len)) {
 		TRACE_RETURN_FAILURE();
 	}
-	AST_APPEND_STRN(name, name_len);
+	PRIMITIVE_TYPEN(name, name_len);
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -1500,7 +1500,7 @@ bool rule_substitution(DemParser *p, const DemNode *parent, DemResult *r) {
 		PRIMITIVE_TYPE("std::iostream");
 		TRACE_RETURN_SUCCESS;
 	}
-	default:
+	default: {
 		DemNode *child_node = NULL;
 		if (!parse_seq_id(p, &child_node)) {
 			TRACE_RETURN_FAILURE();
@@ -1508,6 +1508,7 @@ bool rule_substitution(DemParser *p, const DemNode *parent, DemResult *r) {
 		DemNode_copy(node, child_node);
 		TRACE_RETURN_SUCCESS;
 		break;
+	}
 	}
 	RULE_FOOT(substitution);
 }
@@ -1569,6 +1570,15 @@ bool rule_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(name);
 }
 
+static bool is_endswith_template_args(DemNode *node) {
+	if (!node) {
+		return false;
+	}
+	PDemNode *tail_ptr = VecF(PDemNode, len)(node->children) > 0 ? VecF(PDemNode, tail)(node->children) : NULL;
+	DemNode *tail_node = tail_ptr ? *tail_ptr : NULL;
+	return (tail_node && tail_node->tag == CP_DEM_TYPE_KIND_template_args);
+}
+
 bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(nested_name);
 	if (!READ('N')) {
@@ -1589,12 +1599,9 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		} else if (PEEK() == 'I') {
 			if (ast_node == NULL) {
 				TRACE_RETURN_FAILURE();
-			} else {
-				PDemNode *tail_ptr = VecPDemNode_tail(ast_node->children);
-				DemNode *tail_node = tail_ptr ? *tail_ptr : NULL;
-				if (tail_node && tail_node->tag == CP_DEM_TYPE_KIND_template_args) {
-					goto fail;
-				}
+			}
+			if (is_endswith_template_args(ast_node)) {
+				goto fail;
 			}
 			DemNode *ta = NULL;
 			MUST_MATCH(CALL_RULE_N(ta, rule_template_args));
@@ -1806,15 +1813,6 @@ bool parse_ref_qualifier(DemParser *p, RefQualifiers *quals) {
 	return p->cur != start;
 }
 
-bool is_template(DemNode *node) {
-	if (!node) {
-		return false;
-	}
-	PDemNode *tail_ptr = VecF(PDemNode, len)(node->children) > 0 ? VecF(PDemNode, tail)(node->children) : NULL;
-	DemNode *tail_node = tail_ptr ? *tail_ptr : NULL;
-	return (tail_node && tail_node->tag == CP_DEM_TYPE_KIND_template_args);
-}
-
 bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(encoding);
 	// Override tag to function_type since encoding produces function signatures
@@ -1831,7 +1829,7 @@ bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 		context_restore(0);
 		TRACE_RETURN_FAILURE();
 	}
-	bool has_template = is_template(node->fn_ty.name);
+	bool has_template = is_endswith_template_args(node->fn_ty.name);
 	if (has_template && !p->is_conversion_operator) {
 		// Template functions must have an explicit return type
 		// Exception: conversion operators don't have explicit return types
@@ -1876,7 +1874,6 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 	DemParser_init(&parser, mangled);
 	parser.trace = trace;
 	DemResult dem_result = { 0 };
-	char *result = NULL;
 	if (!rule(&parser, NULL, &dem_result)) {
 		ctx->parser = parser;
 		ctx->result = dem_result;
