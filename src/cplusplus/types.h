@@ -219,8 +219,6 @@ typedef struct DemNode_t {
 	};
 } DemNode;
 
-;
-
 DemNode *DemNode_new();
 DemNode *DemNode_ctor_inplace(DemNode *asm_node, CpDemTypeKind tag, const char *val_begin, size_t val_len);
 DemNode *DemNode_ctor(CpDemTypeKind tag, const char *val_begin, size_t val_len);

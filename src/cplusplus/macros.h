@@ -129,12 +129,6 @@
 		DemNode_init(node); \
 		node->parent = (DemNode *)parent; \
 		node->val.buf = p->cur; \
-		node->children = VecPDemNode_ctor(); \
-		if (!node->children) { \
-			free(node); \
-			r->error = DEM_ERR_OUT_OF_MEMORY; \
-			return false; \
-		} \
 	} else { \
 		is_PASSTHRU = true; \
 		node = r->output; \
@@ -350,8 +344,14 @@
 	} while (0)
 
 static inline DemNode *Node_append(DemNode *node, DemNode *x) {
-	if (!(node && x)) {
+	if (!(node && x && node != x)) {
 		return NULL;
+	}
+	if (!node->children) {
+		node->children = VecPDemNode_ctor();
+		if (!node->children) {
+			return NULL;
+		}
 	}
 	DemNode **res = VecPDemNode_append(node->children, &x);
 	return res ? *res : NULL;

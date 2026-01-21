@@ -1589,17 +1589,15 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		} else if (PEEK() == 'I') {
 			if (ast_node == NULL) {
 				TRACE_RETURN_FAILURE();
-			}
-
-			DemNode *ta = NULL;
-			MUST_MATCH(CALL_RULE_N(ta, rule_template_args));
-			if (ast_node) {
+			} else {
 				PDemNode *tail_ptr = VecPDemNode_tail(ast_node->children);
 				DemNode *tail_node = tail_ptr ? *tail_ptr : NULL;
 				if (tail_node && tail_node->tag == CP_DEM_TYPE_KIND_template_args) {
 					goto fail;
 				}
 			}
+			DemNode *ta = NULL;
+			MUST_MATCH(CALL_RULE_N(ta, rule_template_args));
 			ast_node = make_name_with_template_args(save_pos_rule, CUR(), ast_node, ta);
 		} else if (PEEK() == 'D' && (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T')) {
 			if (ast_node != NULL) {
