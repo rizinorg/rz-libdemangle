@@ -1497,6 +1497,7 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 				node = result;
 				TRACE_RETURN_SUCCESS;
 			}
+			break;
 		}
 		// fallthrough
 	}
