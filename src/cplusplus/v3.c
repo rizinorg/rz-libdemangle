@@ -1634,7 +1634,7 @@ bool rule_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	// If unscoped_name parsed successfully, check for template_args
 	if (PEEK() == 'I') {
 		if (!is_subst) {
-			AST_APPEND_TYPE1(AST(0));
+			AST_APPEND_TYPE1(result);
 		}
 		DemNode *ta = NULL;
 		CALL_RULE_N(ta, rule_template_args);
