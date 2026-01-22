@@ -1364,14 +1364,14 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	case 'V':
 	case 'K':
 	case 'U': {
-		PASSTHRU_RULE(rule_qualified_type);
+		CALL_RULE(rule_qualified_type);
 		break;
 	}
 	case 'M':
-		PASSTHRU_RULE(rule_pointer_to_member_type);
+		CALL_RULE(rule_pointer_to_member_type);
 		break;
 	case 'A':
-		PASSTHRU_RULE(rule_array_type);
+		CALL_RULE(rule_array_type);
 		break;
 	case 'C':
 		ADV();
@@ -1461,7 +1461,7 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 		// fallthrough
 	}
 	default:
-		PASSTHRU_RULE(rule_class_enum_type);
+		CALL_RULE(rule_class_enum_type);
 		break;
 	}
 	if (CUR() > save_pos_rule) {
