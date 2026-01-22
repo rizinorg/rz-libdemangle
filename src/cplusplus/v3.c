@@ -1308,7 +1308,7 @@ bool rule_source_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (!parse_base_source_name(p, &name, &name_len)) {
 		TRACE_RETURN_FAILURE();
 	}
-	if (strcmp(name, "_GLOBAL__N") == 0) {
+	if (strncmp(name, "_GLOBAL__N", name_len) == 0) {
 		node = PRIMITIVE_TYPE("(anonymous namespace)");
 	} else {
 		PRIMITIVE_TYPEN(name, name_len);
