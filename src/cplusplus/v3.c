@@ -1977,6 +1977,13 @@ bool parse_ref_qualifier(DemParser *p, RefQualifiers *quals) {
 	return p->cur != start;
 }
 
+bool is_end_of_encoding(const DemParser *p) {
+	// The set of chars that can potentially follow an <encoding> (none of which
+	// can start a <type>). Enumerating these allows us to avoid speculative
+	// parsing.
+	return PEEK() == 'E' || PEEK() == '.' || PEEK() == '_';
+};
+
 bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(encoding);
 	// Override tag to function_type since encoding produces function signatures
@@ -1993,6 +2000,14 @@ bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 		context_restore(0);
 		TRACE_RETURN_FAILURE();
 	}
+
+	if (is_end_of_encoding(p)) {
+		DemNode temp_node = { 0 };
+		DemNode_move(&temp_node, node->fn_ty.name);
+		DemNode_move(node, &temp_node);
+		TRACE_RETURN_SUCCESS;
+	}
+
 	if (node->fn_ty.name->tag == CP_DEM_TYPE_KIND_name_with_template_args && !p->is_conversion_ctor_dtor) {
 		// Template functions must have an explicit return type
 		// Exception: conversion operators don't have explicit return types
