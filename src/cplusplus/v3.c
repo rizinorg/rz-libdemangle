@@ -201,16 +201,46 @@ void ast_pp(DemNode *node, DemString *out) {
 		break;
 
 	case CP_DEM_TYPE_KIND_type:
-		vec_foreach_ptr(node->children, child_ptr, {
-			ast_pp(*child_ptr, out);
-		});
-		if (node->subtag == POINTER_TYPE) {
-			dem_string_append(out, "*");
-		} else if (node->subtag == REFERENCE_TYPE) {
-			dem_string_append(out, "&");
-		} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
-			dem_string_append(out, "&&");
+		if (AST(0) && AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
+			const FunctionTy *ft = &AST(0)->fn_ty;
+			if (ft->ret) {
+				ast_pp(ft->ret, out);
+				dem_string_append(out, " ");
+			}
+
+			dem_string_append(out, "(");
+			if (ft->name) {
+				ast_pp(ft->name, out);
+				dem_string_append(out, " ");
+			}
+			if (node->subtag == POINTER_TYPE) {
+				dem_string_append(out, "*");
+			} else if (node->subtag == REFERENCE_TYPE) {
+				dem_string_append(out, "&");
+			} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
+				dem_string_append(out, "&&");
+			}
+			dem_string_append(out, ")");
+
+			dem_string_append(out, "(");
+			ast_pp(ft->params, out);
+			dem_string_append(out, ")");
+			ast_pp(ft->exception_spec, out);
+			pp_cv_qualifiers(ft->cv_qualifiers, out);
+			pp_ref_qualifiers(ft->ref_qualifiers, out);
+		} else {
+			vec_foreach_ptr(node->children, child_ptr, {
+				ast_pp(*child_ptr, out);
+			});
+			if (node->subtag == POINTER_TYPE) {
+				dem_string_append(out, "*");
+			} else if (node->subtag == REFERENCE_TYPE) {
+				dem_string_append(out, "&");
+			} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
+				dem_string_append(out, "&&");
+			}
 		}
+
 		break;
 
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
@@ -559,8 +589,7 @@ bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, bool 
 	}
 
 	if (!result || std_node) {
-		PASSTHRU_RULE_VA(rule_unqualified_name, std_node, module);
-		TRACE_RETURN_FAILURE();
+		OK_OR_FAIL(PASSTHRU_RULE_VA(rule_unqualified_name, std_node, module));
 	}
 	if (result) {
 		DemNode_move(node, result);
@@ -1273,7 +1302,6 @@ bool rule_function_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	MUST_MATCH(READ('E'));
 
 	node->fn_ty.params = param_result.output;
-	AST_APPEND_TYPE;
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -1397,8 +1425,12 @@ bool rule_qualified_type(DemParser *p, const DemNode *parent, DemResult *r) {
 
 bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(type);
-	TRY_MATCH(CALL_RULE(rule_builtin_type));
-	TRY_MATCH(CALL_RULE(rule_function_type));
+	if (PASSTHRU_RULE(rule_builtin_type)) {
+		TRACE_RETURN_SUCCESS;
+	}
+	if (PASSTHRU_RULE(rule_function_type)) {
+		goto beach;
+	}
 	switch (PEEK()) {
 	case 'r':
 	case 'V':
@@ -1505,6 +1537,8 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 		CALL_RULE(rule_class_enum_type);
 		break;
 	}
+
+beach:
 	if (CUR() > save_pos_rule) {
 		AST_APPEND_TYPE;
 		TRACE_RETURN_SUCCESS;
@@ -1646,12 +1680,10 @@ bool rule_destructor_name(DemParser *p, const DemNode *parent, DemResult *r) {
 bool rule_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(name);
 	if (PEEK() == 'N') {
-		PASSTHRU_RULE(rule_nested_name);
-		TRACE_RETURN_FAILURE();
+		OK_OR_FAIL(PASSTHRU_RULE(rule_nested_name));
 	}
 	if (PEEK() == 'Z') {
-		PASSTHRU_RULE(rule_local_name);
-		TRACE_RETURN_FAILURE();
+		OK_OR_FAIL(PASSTHRU_RULE(rule_local_name));
 	}
 
 	DemNode *result = NULL;

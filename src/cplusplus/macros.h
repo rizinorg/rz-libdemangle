@@ -189,6 +189,15 @@
 		return false; \
 	} while (0)
 
+#define OK_OR_FAIL(expr) \
+	do { \
+		if (expr) { \
+			TRACE_RETURN_SUCCESS; \
+		} else { \
+			TRACE_RETURN_FAILURE(); \
+		} \
+	} while (0)
+
 /**
  * \b Match for given rules in a recoverable manner.
  */
@@ -217,14 +226,12 @@
 	} while (0)
 
 #define PASSTHRU_RULE_VA(rule_fn, ...) \
-	do { \
+	({ \
 		DemNode *save_output = r->output; \
 		CpDemTypeKind save_tag = node->tag; \
 		r->output = node; \
 		bool _success = (rule_fn)(p, parent, r, __VA_ARGS__); \
-		if ((_success)) { \
-			TRACE_RETURN_SUCCESS; \
-		} else { \
+		if (!(_success)) { \
 			if (!save_output && node) { \
 				DemNode_deinit(node); \
 				DemNode_init(node); \
@@ -234,19 +241,17 @@
 			} \
 			r->output = save_output; \
 			context_restore(rule); \
-			break; \
 		} \
-	} while (0)
+		_success; \
+	})
 
 #define PASSTHRU_RULE(rule_fn) \
-	do { \
+	({ \
 		DemNode *save_output = r->output; \
 		CpDemTypeKind save_tag = node->tag; \
 		r->output = node; \
 		bool _success = (rule_fn)(p, parent, r); \
-		if ((_success)) { \
-			TRACE_RETURN_SUCCESS; \
-		} else { \
+		if ((!_success)) { \
 			if (!save_output && node) { \
 				DemNode_deinit(node); \
 				DemNode_init(node); \
@@ -256,9 +261,9 @@
 			} \
 			r->output = save_output; \
 			context_restore(rule); \
-			break; \
 		} \
-	} while (0)
+		_success; \
+	})
 
 // Helper macro to call a rule and append its output as a child
 #define CALL_RULE(rule_fn) \
