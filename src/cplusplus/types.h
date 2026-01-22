@@ -108,7 +108,6 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_function_name,
 	CP_DEM_TYPE_KIND_data_name,
 	CP_DEM_TYPE_KIND_signature_type,
-	CP_DEM_TYPE_KIND_nested_name_with_substitution_only,
 	CP_DEM_TYPE_KIND_nv_digit,
 	CP_DEM_TYPE_KIND_template_param_decl,
 	CP_DEM_TYPE_KIND_non_neg_number,
@@ -208,6 +207,11 @@ typedef struct {
 	DemStringView count;
 } ClosureTyName;
 
+typedef struct {
+	PDemNode qual;
+	PDemNode name;
+} NestedName;
+
 typedef struct DemNode_t {
 	struct DemNode_t *parent;
 	DemStringView val;
@@ -225,6 +229,7 @@ typedef struct DemNode_t {
 		ModuleNameTy module_name_ty;
 		NameWithTemplateArgs name_with_template_args;
 		ClosureTyName closure_ty_name;
+		NestedName nested_name;
 	};
 } DemNode;
 

@@ -134,19 +134,12 @@ void ast_pp(DemNode *node, DemString *out) {
 
 	case CP_DEM_TYPE_KIND_nested_name:
 		// Nested names are separated by "::"
-		if (node->children) {
-			bool first = true;
-			vec_foreach_ptr(node->children, child_ptr, {
-				DemNode *child = child_ptr ? *child_ptr : NULL;
-				if (child) {
-					// Don't add "::" before template_args
-					if (!first && child->tag != CP_DEM_TYPE_KIND_template_args) {
-						dem_string_append(out, "::");
-					}
-					ast_pp(child, out);
-					first = false;
-				}
-			});
+		if (node->nested_name.qual) {
+			ast_pp(node->nested_name.qual, out);
+			dem_string_append(out, "::");
+		}
+		if (node->nested_name.name) {
+			ast_pp(node->nested_name.name, out);
 		}
 		break;
 
@@ -404,21 +397,52 @@ bool rule_module_name(DemParser *p, const DemNode *parent, DemResult *r) {
 bool rule_unqualified_name(DemParser *p, const DemNode *parent, DemResult *r,
 	DemNode *scope, DemNode *module) {
 	RULE_HEAD(unqualified_name);
-	TRY_MATCH(READ_STR("DC") && CALL_MANY1(rule_source_name, "") && READ('E'));
-	TRY_MATCH(PEEK() == 'U' && CALL_RULE(rule_unnamed_type_name));
-	TRY_MATCH(READ_STR("12_GLOBAL__N_1") && AST_APPEND_STR("(anonymous namespace)"));
-	if (PEEK() == 'D' || PEEK() == 'C') {
-		MUST_MATCH(CALL_RULE(rule_ctor_dtor_name));
-		TRACE_RETURN_SUCCESS;
-	}
-	if (isdigit(PEEK()) && CALL_RULE(rule_source_name)) {
-		CALL_MANY1(rule_abi_tag, "");
-		TRACE_RETURN_SUCCESS;
-	}
-	TRY_MATCH(CALL_RULE(rule_operator_name) && (CALL_MANY1(rule_abi_tag, "") || true));
-	TRY_MATCH(CALL_RULE(rule_expr_primary));
 
-	RULE_FOOT(unqualified_name);
+	bool is_member_like_friend = scope && READ('F');
+	READ('L');
+
+	DemNode *result = NULL;
+	if (READ_STR("DC")) {
+		CALL_MANY1_N(result, rule_source_name, ", ");
+		if (!READ('E')) {
+			TRACE_RETURN_FAILURE();
+		}
+	} else if (PEEK() == 'U') {
+		CALL_RULE_N(result, rule_unnamed_type_name);
+	} else if (PEEK() == 'D' || PEEK() == 'C') {
+		if (scope == NULL || module != NULL) {
+			TRACE_RETURN_FAILURE();
+		}
+		CALL_RULE_N(result, rule_ctor_dtor_name);
+	} else if (isdigit(PEEK())) {
+		CALL_RULE_N(result, rule_source_name);
+	} else {
+		CALL_RULE_N(result, rule_operator_name);
+	}
+
+	if (result && module) {
+		// TODO: handle module scoping
+		DEM_UNREACHABLE;
+	}
+	if (result) {
+		DemNode *abi_tags = NULL;
+		CALL_MANY1_N(abi_tags, rule_abi_tag, " ");
+	}
+	if (result && is_member_like_friend) {
+		// TODO: MemberLikeFriendName
+		DEM_UNREACHABLE;
+	} else if (result && scope) {
+		node->tag = CP_DEM_TYPE_KIND_nested_name;
+		node->nested_name.qual = scope;
+		node->nested_name.name = result;
+		TRACE_RETURN_SUCCESS;
+	}
+
+	if (!result) {
+		TRACE_RETURN_FAILURE();
+	}
+	DemNode_move(node, result);
+	TRACE_RETURN_SUCCESS;
 }
 
 bool rule_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
@@ -1284,7 +1308,11 @@ bool rule_source_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (!parse_base_source_name(p, &name, &name_len)) {
 		TRACE_RETURN_FAILURE();
 	}
-	PRIMITIVE_TYPEN(name, name_len);
+	if (strcmp(name, "_GLOBAL__N") == 0) {
+		node = PRIMITIVE_TYPE("(anonymous namespace)");
+	} else {
+		PRIMITIVE_TYPEN(name, name_len);
+	}
 	TRACE_RETURN_SUCCESS;
 }
 
