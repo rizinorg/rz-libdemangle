@@ -149,6 +149,23 @@ void ast_pp(DemNode *node, DemString *out) {
 		ast_pp(node->local_name.entry, out);
 		break;
 
+	case CP_DEM_TYPE_KIND_ctor_dtor_name:
+		if (node->ctor_dtor_name.is_dtor) {
+			dem_string_append(out, "~");
+		}
+		// For constructor/destructor names, we only want the final class name,
+		// not the full qualified name. Extract the last component.
+		if (node->ctor_dtor_name.name) {
+			PDemNode name_node = node->ctor_dtor_name.name;
+			// If it's a nested_name, get the final name component
+			if (name_node->tag == CP_DEM_TYPE_KIND_nested_name && name_node->nested_name.name) {
+				ast_pp(name_node->nested_name.name, out);
+			} else {
+				ast_pp(name_node, out);
+			}
+		}
+		break;
+
 	case CP_DEM_TYPE_KIND_closure_ty_name:
 		// Closure types are lambda expressions: 'lambda'(params)#count
 		dem_string_append(out, "'lambda");
@@ -376,7 +393,7 @@ bool rule_number(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(number);
 }
 
-bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r, PDemNode scope) {
 	RULE_HEAD(ctor_dtor_name);
 
 	// NOTE: reference taken from https://github.com/rizinorg/rz-libdemangle/blob/c2847137398cf8d378d46a7510510aaefcffc8c6/src/cxx/cp-demangle.c#L2143
@@ -390,6 +407,7 @@ bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r) {
 			MUST_MATCH(CALL_RULE(rule_name));
 		}
 		p->is_conversion_ctor_dtor = true;
+		node->ctor_dtor_name.name = scope;
 		TRACE_RETURN_SUCCESS;
 	}
 
@@ -398,8 +416,9 @@ bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r) {
 			TRACE_RETURN_FAILURE();
 		}
 		ADV();
-		AST_APPEND_STR("~");
 		p->is_conversion_ctor_dtor = true;
+		node->ctor_dtor_name.is_dtor = true;
+		node->ctor_dtor_name.name = scope;
 		TRACE_RETURN_SUCCESS;
 	}
 	RULE_FOOT(ctor_dtor_name);
@@ -449,7 +468,7 @@ bool rule_unqualified_name(DemParser *p, const DemNode *parent, DemResult *r,
 		if (scope == NULL || module != NULL) {
 			TRACE_RETURN_FAILURE();
 		}
-		CALL_RULE_N(result, rule_ctor_dtor_name);
+		CALL_RULE_N_VA(result, rule_ctor_dtor_name, scope);
 	} else if (isdigit(PEEK())) {
 		CALL_RULE_N(result, rule_source_name);
 	} else {

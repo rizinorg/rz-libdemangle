@@ -217,6 +217,11 @@ typedef struct {
 	PDemNode entry;
 } LocalName;
 
+typedef struct {
+	PDemNode name;
+	bool is_dtor;
+} CtorDtorName;
+
 typedef struct DemNode_t {
 	struct DemNode_t *parent;
 	DemStringView val;
@@ -236,6 +241,7 @@ typedef struct DemNode_t {
 		ClosureTyName closure_ty_name;
 		NestedName nested_name;
 		LocalName local_name;
+		CtorDtorName ctor_dtor_name;
 	};
 } DemNode;
 

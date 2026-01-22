@@ -690,6 +690,21 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
+	case CP_DEM_TYPE_KIND_local_name:
+		if (node->local_name.encoding) {
+			dot_graph_traverse_ast(dot, node->local_name.encoding, current_id, "encoding", "solid");
+		}
+		if (node->local_name.entry) {
+			dot_graph_traverse_ast(dot, node->local_name.entry, current_id, "entry", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_ctor_dtor_name:
+		if (node->ctor_dtor_name.name) {
+			dot_graph_traverse_ast(dot, node->ctor_dtor_name.name, current_id, "name", "solid");
+		}
+		break;
+
 	case CP_DEM_TYPE_KIND_many:
 	case CP_DEM_TYPE_KIND_template_args:
 		// These types use the generic children vector

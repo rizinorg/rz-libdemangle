@@ -166,6 +166,11 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->local_name.entry);
 		}
 		break;
+	case CP_DEM_TYPE_KIND_ctor_dtor_name:
+		// NOTE: ctor_dtor_name.name is a non-owning pointer to the scope,
+		// which is owned by the parent nested_name node. Do not free it here.
+		// is_dtor is a bool, no need to free
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -280,6 +285,13 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		if (dst->local_name.entry) {
 			dst->local_name.entry->parent = dst;
 		}
+		break;
+	case CP_DEM_TYPE_KIND_ctor_dtor_name:
+		// NOTE: ctor_dtor_name.name is a non-owning pointer.
+		// For shallow copy, just copy the pointer (don't clone).
+		dst->ctor_dtor_name.name = src->ctor_dtor_name.name;
+		dst->ctor_dtor_name.is_dtor = src->ctor_dtor_name.is_dtor;
+		// Do NOT set parent pointer since we don't own this node
 		break;
 	case CP_DEM_TYPE_KIND_many:
 		// Deep copy many type fields
