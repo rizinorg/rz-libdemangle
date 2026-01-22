@@ -83,15 +83,6 @@
  */
 #define RESTORE_POS(I) SEEK_TO(save_pos_##I);
 
-#define IS_CTOR() (p->is_ctor)
-#define IS_DTOR() (p->is_dtor)
-
-#define SET_CTOR() (p->is_dtor = false, (p->is_ctor = true))
-#define SET_DTOR() (p->is_ctor = false, (p->is_dtor = true))
-
-#define UNSET_CTOR() (p->is_dtor = false, m->is_ctor = false, true)
-#define UNSET_DTOR() (p->is_ctor = false, m->is_dtor = false, true)
-
 /**
  * Always evaluate to true, even if rule does not match.
  */

@@ -1672,8 +1672,12 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	}
 	CvQualifiers cv_quals = { 0 };
 	RefQualifiers ref_qual = { 0 };
-	parse_cv_qualifiers(p, &cv_quals);
-	parse_ref_qualifiers(p, &ref_qual);
+	if (parse_cv_qualifiers(p, &cv_quals)) {
+		p->cv_qualifiers = cv_quals;
+	}
+	if (parse_ref_qualifiers(p, &ref_qual)) {
+		p->ref_qualifiers = ref_qual;
+	}
 
 	DemNode *ast_node = NULL;
 	while (!READ('E')) {
@@ -1810,11 +1814,7 @@ bool rule_template_args(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (!READ('I')) {
 		TRACE_RETURN_FAILURE();
 	}
-	// Save and restore ctor/dtor flags to prevent them from leaking from template args
-	bool saved_is_ctor = p->is_ctor;
-	bool saved_is_dtor = p->is_dtor;
-	p->is_ctor = false;
-	p->is_dtor = false;
+	// TODO: Save and restore ctor/dtor flags to prevent them from leaking from template args
 	const bool tag_templates = is_tag_templates(parent);
 	if (tag_templates) {
 		VecPNodeList_clear(&p->template_params);
@@ -1824,8 +1824,6 @@ bool rule_template_args(DemParser *p, const DemNode *parent, DemResult *r) {
 	while (!READ('E')) {
 		DemResult child_r = { 0 };
 		if (!rule_template_arg(p, node, &child_r)) {
-			p->is_ctor = saved_is_ctor;
-			p->is_dtor = saved_is_dtor;
 			TRACE_RETURN_FAILURE();
 		}
 		if (tag_templates) {
@@ -1841,9 +1839,6 @@ bool rule_template_args(DemParser *p, const DemNode *parent, DemResult *r) {
 			DEM_UNREACHABLE;
 		}
 	}
-	// Restore ctor/dtor flags
-	p->is_ctor = saved_is_ctor;
-	p->is_dtor = saved_is_dtor;
 	TRACE_RETURN_SUCCESS;
 	RULE_FOOT(template_args);
 }
@@ -1962,6 +1957,8 @@ bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 		}
 	}
 
+	node->fn_ty.cv_qualifiers = p->cv_qualifiers;
+	node->fn_ty.ref_qualifiers = p->ref_qualifiers;
 	TRACE_RETURN_SUCCESS;
 }
 
