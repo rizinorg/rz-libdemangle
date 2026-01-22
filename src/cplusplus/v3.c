@@ -143,6 +143,31 @@ void ast_pp(DemNode *node, DemString *out) {
 		}
 		break;
 
+	case CP_DEM_TYPE_KIND_local_name:
+		ast_pp(node->local_name.encoding, out);
+		dem_string_append(out, "::");
+		ast_pp(node->local_name.entry, out);
+		break;
+
+	case CP_DEM_TYPE_KIND_closure_ty_name:
+		// Closure types are lambda expressions: 'lambda'(params)#count
+		dem_string_append(out, "'lambda");
+		if (node->closure_ty_name.template_params) {
+			dem_string_append(out, "<");
+			ast_pp(node->closure_ty_name.template_params, out);
+			dem_string_append(out, ">");
+		}
+		dem_string_append(out, "'(");
+		if (node->closure_ty_name.params) {
+			ast_pp(node->closure_ty_name.params, out);
+		}
+		dem_string_append(out, ")");
+		if (node->closure_ty_name.count.buf && node->closure_ty_name.count.len > 0) {
+			dem_string_append(out, "#");
+			dem_string_append_n(out, node->closure_ty_name.count.buf, node->closure_ty_name.count.len);
+		}
+		break;
+
 	case CP_DEM_TYPE_KIND_template_args:
 		dem_string_append(out, "<");
 		{
@@ -268,6 +293,15 @@ bool parse_ref_qualifiers(DemParser *p, RefQualifiers *quals) {
 		quals->is_r_value = true;
 	}
 	return p->cur != start;
+}
+
+bool parse_discriminator(DemParser *p) {
+	if (!(READ('_'))) {
+		return false;
+	}
+	READ('_');
+	parse_number(p, NULL, false);
+	return true;
 }
 
 bool parse_base_source_name(DemParser *p, const char **pout, ut64 *plen) {
@@ -478,7 +512,7 @@ bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, bool 
 
 	DemNode *std_node = NULL;
 	if (READ_STR("St")) {
-		std_node = make_primitive_type(CUR(), CUR(), "std::", 5);
+		std_node = make_primitive_type(CUR(), CUR(), "std", 5);
 		if (!std_node) {
 			TRACE_RETURN_FAILURE();
 		}
@@ -1084,29 +1118,6 @@ bool rule_template_param(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_discriminator(DemParser *p, const DemNode *parent, DemResult *r) {
-	RULE_HEAD(discriminator);
-	if (READ('_')) {
-		// matched two "_"
-		if (READ('_')) {
-			ut64 numlt10 = 0;
-			if (parse_non_neg_integer(p, &numlt10)) {
-				// do something
-				TRACE_RETURN_SUCCESS;
-			}
-		} else {
-			// matched single "_"
-			ut64 numlt10 = 0;
-			if (parse_non_neg_integer(p, &numlt10)) {
-				// do something
-				TRACE_RETURN_SUCCESS;
-			}
-		}
-	}
-	TRACE_RETURN_FAILURE();
-	RULE_FOOT(discriminator);
-}
-
 bool rule_initializer(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(initializer);
 	if (!READ_STR("pi")) {
@@ -1492,19 +1503,39 @@ bool rule_local_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (!READ('Z')) {
 		TRACE_RETURN_FAILURE();
 	}
-	context_save(0);
-	CTX_MUST_MATCH(0, CALL_RULE(rule_encoding) && READ('E'));
+
+	CALL_RULE_N(node->local_name.encoding, rule_encoding);
+	if (!node->local_name.encoding || !READ('E')) {
+		TRACE_RETURN_FAILURE();
+	}
+
+	const char *saved_pos = CUR();
+	if (READ('s')) {
+		parse_discriminator(p);
+		DemNode *string_lit = make_primitive_type(saved_pos, CUR(), "string literal", strlen("string literal"));
+		if (!string_lit) {
+			TRACE_RETURN_FAILURE();
+		}
+		node->local_name.entry = string_lit;
+		TRACE_RETURN_SUCCESS;
+	}
 	if (READ('d')) {
 		CALL_RULE(rule_number);
-		CTX_MUST_MATCH(0, READ('_') && CALL_RULE(rule_name));
+		parse_number(p, NULL, true);
+		if (!READ('_')) {
+			TRACE_RETURN_FAILURE();
+		}
+		CALL_RULE_N(node->local_name.entry, rule_name);
+		if (!node->local_name.entry) {
+			TRACE_RETURN_FAILURE();
+		}
 		TRACE_RETURN_SUCCESS;
 	}
-	if (READ('s')) {
-		CALL_RULE(rule_discriminator);
-		TRACE_RETURN_SUCCESS;
+	CALL_RULE_N(node->local_name.entry, rule_name);
+	if (!node->local_name.entry) {
+		TRACE_RETURN_FAILURE();
 	}
-	CTX_MUST_MATCH(0, CALL_RULE(rule_name));
-	CALL_RULE(rule_discriminator);
+	parse_discriminator(p);
 	TRACE_RETURN_SUCCESS;
 }
 

@@ -34,6 +34,10 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_many: return "many";
 	case CP_DEM_TYPE_KIND_encoding: return "encoding";
 	case CP_DEM_TYPE_KIND_mangled_name: return "mangled_name";
+	case CP_DEM_TYPE_KIND_closure_ty_name: return "closure_ty_name";
+	case CP_DEM_TYPE_KIND_module_name: return "module_name";
+	case CP_DEM_TYPE_KIND_name_with_template_args: return "name_w_tpl_args";
+	case CP_DEM_TYPE_KIND_fwd_template_ref: return "fwd_template_ref";
 	default: return "unknown";
 	}
 }
@@ -59,6 +63,10 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_many: return "note";
 	case CP_DEM_TYPE_KIND_encoding: return "component";
 	case CP_DEM_TYPE_KIND_mangled_name: return "component";
+	case CP_DEM_TYPE_KIND_closure_ty_name: return "invhouse";
+	case CP_DEM_TYPE_KIND_module_name: return "folder";
+	case CP_DEM_TYPE_KIND_name_with_template_args: return "tab";
+	case CP_DEM_TYPE_KIND_fwd_template_ref: return "doublecircle";
 	default: return "ellipse";
 	}
 }
@@ -84,6 +92,10 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_many: return "gold";
 	case CP_DEM_TYPE_KIND_encoding: return "darkgreen";
 	case CP_DEM_TYPE_KIND_mangled_name: return "darkgreen";
+	case CP_DEM_TYPE_KIND_closure_ty_name: return "violet";
+	case CP_DEM_TYPE_KIND_module_name: return "khaki";
+	case CP_DEM_TYPE_KIND_name_with_template_args: return "lightcyan";
+	case CP_DEM_TYPE_KIND_fwd_template_ref: return "greenyellow";
 	default: return "white";
 	}
 }
@@ -230,6 +242,23 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 		}
 		break;
 
+	case CP_DEM_TYPE_KIND_closure_ty_name:
+		if (node->closure_ty_name.count.buf && node->closure_ty_name.count.len > 0) {
+			len += snprintf(label + len, sizeof(label) - len, "\\ncount: %.*s",
+				(int)node->closure_ty_name.count.len, node->closure_ty_name.count.buf);
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_module_name:
+		if (node->module_name_ty.IsPartition) {
+			len += snprintf(label + len, sizeof(label) - len, "\\npartition");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_nested_name:
+		len += snprintf(label + len, sizeof(label) - len, "\\nqual::name");
+		break;
+
 	default:
 		// For other types, show basic value if available
 		if (node->val.buf && node->val.len > 0) {
@@ -322,8 +351,43 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_many:
+	case CP_DEM_TYPE_KIND_closure_ty_name:
+		if (node->closure_ty_name.template_params) {
+			dot_graph_traverse_ast(dot, node->closure_ty_name.template_params, current_id, "template_params", "solid");
+		}
+		if (node->closure_ty_name.params) {
+			dot_graph_traverse_ast(dot, node->closure_ty_name.params, current_id, "params", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_module_name:
+		if (node->module_name_ty.pare) {
+			dot_graph_traverse_ast(dot, node->module_name_ty.pare, current_id, "parent", "solid");
+		}
+		if (node->module_name_ty.name) {
+			dot_graph_traverse_ast(dot, node->module_name_ty.name, current_id, "name", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_name_with_template_args:
+		if (node->name_with_template_args.name) {
+			dot_graph_traverse_ast(dot, node->name_with_template_args.name, current_id, "name", "solid");
+		}
+		if (node->name_with_template_args.template_args) {
+			dot_graph_traverse_ast(dot, node->name_with_template_args.template_args, current_id, "template_args", "solid");
+		}
+		break;
+
 	case CP_DEM_TYPE_KIND_nested_name:
+		if (node->nested_name.qual) {
+			dot_graph_traverse_ast(dot, node->nested_name.qual, current_id, "qualifier", "solid");
+		}
+		if (node->nested_name.name) {
+			dot_graph_traverse_ast(dot, node->nested_name.name, current_id, "name", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_many:
 	case CP_DEM_TYPE_KIND_template_args:
 		// These types use the generic children vector
 		if (node->children) {

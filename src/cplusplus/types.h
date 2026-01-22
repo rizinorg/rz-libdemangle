@@ -212,6 +212,11 @@ typedef struct {
 	PDemNode name;
 } NestedName;
 
+typedef struct {
+	PDemNode encoding;
+	PDemNode entry;
+} LocalName;
+
 typedef struct DemNode_t {
 	struct DemNode_t *parent;
 	DemStringView val;
@@ -230,6 +235,7 @@ typedef struct DemNode_t {
 		NameWithTemplateArgs name_with_template_args;
 		ClosureTyName closure_ty_name;
 		NestedName nested_name;
+		LocalName local_name;
 	};
 } DemNode;
 

@@ -141,6 +141,31 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->name_with_template_args.template_args);
 		}
 		break;
+	case CP_DEM_TYPE_KIND_closure_ty_name:
+		if (xs->closure_ty_name.template_params) {
+			DemNode_dtor(xs->closure_ty_name.template_params);
+		}
+		if (xs->closure_ty_name.params) {
+			DemNode_dtor(xs->closure_ty_name.params);
+		}
+		// count is a DemStringView (not allocated), no need to free
+		break;
+	case CP_DEM_TYPE_KIND_nested_name:
+		if (xs->nested_name.qual) {
+			DemNode_dtor(xs->nested_name.qual);
+		}
+		if (xs->nested_name.name) {
+			DemNode_dtor(xs->nested_name.name);
+		}
+		break;
+	case CP_DEM_TYPE_KIND_local_name:
+		if (xs->local_name.encoding) {
+			DemNode_dtor(xs->local_name.encoding);
+		}
+		if (xs->local_name.entry) {
+			DemNode_dtor(xs->local_name.entry);
+		}
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -223,6 +248,37 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		}
 		if (dst->name_with_template_args.template_args) {
 			dst->name_with_template_args.template_args->parent = dst;
+		}
+		break;
+	case CP_DEM_TYPE_KIND_closure_ty_name:
+		dst->closure_ty_name.template_params = src->closure_ty_name.template_params ? DemNode_clone(src->closure_ty_name.template_params) : NULL;
+		dst->closure_ty_name.params = src->closure_ty_name.params ? DemNode_clone(src->closure_ty_name.params) : NULL;
+		dst->closure_ty_name.count = src->closure_ty_name.count; // DemStringView, shallow copy
+		if (dst->closure_ty_name.template_params) {
+			dst->closure_ty_name.template_params->parent = dst;
+		}
+		if (dst->closure_ty_name.params) {
+			dst->closure_ty_name.params->parent = dst;
+		}
+		break;
+	case CP_DEM_TYPE_KIND_nested_name:
+		dst->nested_name.qual = src->nested_name.qual ? DemNode_clone(src->nested_name.qual) : NULL;
+		dst->nested_name.name = src->nested_name.name ? DemNode_clone(src->nested_name.name) : NULL;
+		if (dst->nested_name.qual) {
+			dst->nested_name.qual->parent = dst;
+		}
+		if (dst->nested_name.name) {
+			dst->nested_name.name->parent = dst;
+		}
+		break;
+	case CP_DEM_TYPE_KIND_local_name:
+		dst->local_name.encoding = src->local_name.encoding ? DemNode_clone(src->local_name.encoding) : NULL;
+		dst->local_name.entry = src->local_name.entry ? DemNode_clone(src->local_name.entry) : NULL;
+		if (dst->local_name.encoding) {
+			dst->local_name.encoding->parent = dst;
+		}
+		if (dst->local_name.entry) {
+			dst->local_name.entry->parent = dst;
 		}
 		break;
 	case CP_DEM_TYPE_KIND_many:
