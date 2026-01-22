@@ -215,7 +215,30 @@ static bool parse_base36(DemParser *p, ut64 *px) {
 	return true;
 }
 
-bool parse_non_neg_number(
+bool parse_number(
+	DemParser *p, DemStringView *out, bool allow_negative) {
+	const char *start = p->cur;
+	if (allow_negative) {
+		READ('n');
+	}
+	if (!IN_RANGE(CUR()) || !isdigit(PEEK())) {
+		if (out) {
+			out->buf = NULL;
+			out->len = 0;
+		}
+		return true;
+	}
+	while (IN_RANGE(CUR()) && isdigit(PEEK())) {
+		ADV();
+	}
+	if (out) {
+		out->buf = start;
+		out->len = p->cur - start;
+	}
+	return true;
+}
+
+bool parse_non_neg_integer(
 	DemParser *p, ut64 *out) {
 	*out = 0;
 	if (PEEK() < '0' || PEEK() > '9') {
@@ -256,7 +279,7 @@ bool parse_ref_qualifiers(DemParser *p, RefQualifiers *quals) {
 
 bool parse_base_source_name(DemParser *p, const char **pout, ut64 *plen) {
 	ut64 num = 0;
-	if (!parse_non_neg_number(p, &num)) {
+	if (!parse_non_neg_integer(p, &num)) {
 		return false;
 	}
 	// Check if the length is valid and within bounds
@@ -319,7 +342,7 @@ bool rule_number(DemParser *p, const DemNode *parent, DemResult *r) {
 	}
 	READ('n');
 	ut64 num = 0;
-	if (!parse_non_neg_number(p, &num)) {
+	if (!parse_non_neg_integer(p, &num)) {
 		TRACE_RETURN_FAILURE();
 	}
 	TRACE_RETURN_SUCCESS;
@@ -381,7 +404,7 @@ bool rule_module_name(DemParser *p, const DemNode *parent, DemResult *r) {
 bool rule_unqualified_name(DemParser *p, const DemNode *parent, DemResult *r,
 	DemNode *scope, DemNode *module) {
 	RULE_HEAD(unqualified_name);
-	TRY_MATCH(READ_STR("DC") && CALL_MATCH_MANY1(rule_source_name, "") && READ('E'));
+	TRY_MATCH(READ_STR("DC") && CALL_MANY1(rule_source_name, "") && READ('E'));
 	TRY_MATCH(PEEK() == 'U' && CALL_RULE(rule_unnamed_type_name));
 	TRY_MATCH(READ_STR("12_GLOBAL__N_1") && AST_APPEND_STR("(anonymous namespace)"));
 	if (PEEK() == 'D' || PEEK() == 'C') {
@@ -389,10 +412,10 @@ bool rule_unqualified_name(DemParser *p, const DemNode *parent, DemResult *r,
 		TRACE_RETURN_SUCCESS;
 	}
 	if (isdigit(PEEK()) && CALL_RULE(rule_source_name)) {
-		CALL_MATCH_MANY1(rule_abi_tag, "");
+		CALL_MANY1(rule_abi_tag, "");
 		TRACE_RETURN_SUCCESS;
 	}
-	TRY_MATCH(CALL_RULE(rule_operator_name) && (CALL_MATCH_MANY1(rule_abi_tag, "") || true));
+	TRY_MATCH(CALL_RULE(rule_operator_name) && (CALL_MANY1(rule_abi_tag, "") || true));
 	TRY_MATCH(CALL_RULE(rule_expr_primary));
 
 	RULE_FOOT(unqualified_name);
@@ -404,7 +427,7 @@ bool rule_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (READ_STR("srN")) {
 		MATCH_AND_DO((CALL_RULE(rule_unresolved_type)) &&
 				(PEEK() == 'I' ? CALL_RULE(rule_template_args) : true) &&
-				CALL_MATCH_MANY1(rule_unresolved_qualifier_level, "") && READ('E') &&
+				CALL_MANY1(rule_unresolved_qualifier_level, "") && READ('E') &&
 				CALL_RULE(rule_base_unresolved_name),
 			{});
 	}
@@ -414,7 +437,7 @@ bool rule_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		TRACE_RETURN_SUCCESS
 	}
 	if (isdigit(PEEK())) {
-		MUST_MATCH(CALL_MATCH_MANY1(rule_unresolved_qualifier_level, "") && READ('E'));
+		MUST_MATCH(CALL_MANY1(rule_unresolved_qualifier_level, "") && READ('E'));
 	} else {
 		MUST_MATCH(CALL_RULE(rule_unresolved_type));
 		if (PEEK() == 'I') {
@@ -456,12 +479,15 @@ bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, bool 
 		}
 	}
 
-	DemNode_move(node, result);
-	if (!result && std_node) {
+	if (!result || std_node) {
 		PASSTHRU_RULE_VA(rule_unqualified_name, std_node, module);
 		TRACE_RETURN_FAILURE();
 	}
-	TRACE_RETURN_SUCCESS;
+	if (result) {
+		DemNode_move(node, result);
+		TRACE_RETURN_SUCCESS;
+	}
+	RULE_FOOT(unscoped_name);
 }
 
 bool rule_unresolved_type(DemParser *p, const DemNode *parent, DemResult *r) {
@@ -715,7 +741,7 @@ bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (READ_STR("v")) {
 		// ::= v <digit> <source-name>        # vendor extended operator
 		ut64 num = 0;
-		if (!parse_non_neg_number(p, &num)) {
+		if (!parse_non_neg_integer(p, &num)) {
 			TRACE_RETURN_FAILURE();
 		}
 		CTX_MUST_MATCH(rule, rule_source_name);
@@ -967,13 +993,13 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRY_MATCH(CALL_RULE(rule_template_param));
 	TRY_MATCH(CALL_RULE(rule_function_param));
 	TRY_MATCH(CALL_RULE(rule_fold_expression));
-	TRY_MATCH(READ_STR("il") && CALL_MATCH_MANY(rule_expression, "") && READ('E'));
-	TRY_MATCH(READ_STR("tl") && CALL_RULE(rule_type) && CALL_MATCH_MANY(rule_braced_expression, "") && READ('E'));
+	TRY_MATCH(READ_STR("il") && CALL_MANY(rule_expression, "") && READ('E'));
+	TRY_MATCH(READ_STR("tl") && CALL_RULE(rule_type) && CALL_MANY(rule_braced_expression, "") && READ('E'));
 	TRY_MATCH(READ_STR("nx") && AST_APPEND_STR("noexcept(") && CALL_RULE(rule_expression) && AST_APPEND_STR(")"));
 	TRY_MATCH(READ_STR("tw") && AST_APPEND_STR("throw ") && CALL_RULE(rule_expression));
 	TRY_MATCH(READ_STR("tr") && AST_APPEND_STR("throw"));
 	TRY_MATCH(READ_STR("sZ") && AST_APPEND_STR("sizeof...(") && (CALL_RULE(rule_template_param) || CALL_RULE(rule_function_param)) && AST_APPEND_STR(")"));
-	TRY_MATCH(READ_STR("sP") && AST_APPEND_STR("sizeof...(") && CALL_MATCH_MANY(rule_template_arg, "") && READ('E') && AST_APPEND_STR(")"));
+	TRY_MATCH(READ_STR("sP") && AST_APPEND_STR("sizeof...(") && CALL_MANY(rule_template_arg, "") && READ('E') && AST_APPEND_STR(")"));
 	TRY_MATCH(READ_STR("sp") && CALL_RULE(rule_expression) && AST_APPEND_STR("..."));
 	// NOTE: fl and fr are fold expressions, handled by rule_fold_expression above
 	TRY_MATCH(CALL_RULE(rule_unresolved_name));
@@ -994,14 +1020,14 @@ bool rule_template_param(DemParser *p, const DemNode *parent, DemResult *r) {
 	}
 	ut64 level = 0;
 	if (READ('L')) {
-		if (!(parse_non_neg_number(p, &level) && READ('_'))) {
+		if (!(parse_non_neg_integer(p, &level) && READ('_'))) {
 			TRACE_RETURN_FAILURE();
 		}
 		level++;
 	}
 	ut64 index = 0;
 	if (!READ('_')) {
-		if (!(parse_non_neg_number(p, &index) && READ('_'))) {
+		if (!(parse_non_neg_integer(p, &index) && READ('_'))) {
 			TRACE_RETURN_FAILURE();
 		}
 		index++;
@@ -1040,14 +1066,14 @@ bool rule_discriminator(DemParser *p, const DemNode *parent, DemResult *r) {
 		// matched two "_"
 		if (READ('_')) {
 			ut64 numlt10 = 0;
-			if (parse_non_neg_number(p, &numlt10)) {
+			if (parse_non_neg_integer(p, &numlt10)) {
 				// do something
 				TRACE_RETURN_SUCCESS;
 			}
 		} else {
 			// matched single "_"
 			ut64 numlt10 = 0;
-			if (parse_non_neg_number(p, &numlt10)) {
+			if (parse_non_neg_integer(p, &numlt10)) {
 				// do something
 				TRACE_RETURN_SUCCESS;
 			}
@@ -1089,7 +1115,7 @@ bool rule_call_offset(DemParser *p, const DemNode *parent, DemResult *r) {
 			TRACE_RETURN_FAILURE();
 		}
 		ut64 x = 0;
-		if (!parse_non_neg_number(p, &x)) {
+		if (!parse_non_neg_integer(p, &x)) {
 			TRACE_RETURN_FAILURE();
 		}
 		AST_APPENDF("non-virtual thunk to %lz", x);
@@ -1132,7 +1158,7 @@ bool rule_special_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		READ_STR("TC") && CALL_RULE(rule_type),
 		{
 			ut64 offset = 0;
-			if (!parse_non_neg_number(p, &offset)) {
+			if (!parse_non_neg_integer(p, &offset)) {
 				TRACE_RETURN_FAILURE();
 			}
 			if (!READ('_') || !CALL_RULE(rule_type)) {
@@ -1452,7 +1478,6 @@ bool rule_local_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	CTX_MUST_MATCH(0, CALL_RULE(rule_name));
 	CALL_RULE(rule_discriminator);
 	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(local_name);
 }
 
 bool rule_substitution(DemParser *p, const DemNode *parent, DemResult *r) {
@@ -1567,8 +1592,8 @@ bool rule_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		DemNode_dtor(result);
 		TRACE_RETURN_FAILURE();
 	}
-
-	RULE_FOOT(name);
+	DemNode_move(node, result);
+	TRACE_RETURN_SUCCESS;
 }
 
 static bool is_endswith_template_args(DemNode *node) {
@@ -1763,24 +1788,56 @@ bool rule_template_args(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(template_args);
 }
 
+bool rule_template_param_decl(DemParser *p, const DemNode *parent, DemResult *r) {
+	RULE_HEAD(template_param_decl);
+	if (!READ('T')) {
+		TRACE_RETURN_FAILURE();
+	}
+	// TODO: Handle different kinds of template parameters
+	RULE_FOOT(template_param_decl);
+}
+
 bool rule_unnamed_type_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(unnamed_type_name);
 	if (READ_STR("Ut")) {
 		ut64 tidx = 0;
-		if (!parse_non_neg_number(p, &tidx)) {
-			// No number means index 0
+		if (!parse_non_neg_integer(p, &tidx)) {
 			tidx = 0;
 		}
-		if (READ('_')) {
-			TRACE_RETURN_SUCCESS;
+		if (!READ('_')) {
+			TRACE_RETURN_FAILURE();
 		}
-	} else if (READ_STR("Ul")) {
-		ut64 number = 0;
-		MATCH_AND_DO(
-			CALL_MATCH_MANY(rule_type, "") && ((parse_non_neg_number(p, &number)) || true) && READ('E') && READ('_'),
-			{
-				// TODO:
-			});
+		TRACE_RETURN_SUCCESS;
+	}
+	if (READ_STR("Ul")) {
+		while (is_template_param_decl(p)) {
+			// TODO: Handle template_param_decl
+			DEM_UNREACHABLE;
+		}
+		if (READ('Q')) {
+			// TODO: Handle ConstraintExpr
+			DEM_UNREACHABLE;
+		}
+		DemNode *params = NULL;
+		if (!READ('v')) {
+			CALL_MANY1_N(params, rule_type, ", ");
+		}
+		if (READ('Q')) {
+			// TODO: Handle ConstraintExpr
+			DEM_UNREACHABLE;
+		}
+		if (!READ('E')) {
+			TRACE_RETURN_FAILURE();
+		}
+		if (!parse_number(p, &node->closure_ty_name.count, false)) {
+			TRACE_RETURN_FAILURE();
+		}
+		if (!READ('_')) {
+			TRACE_RETURN_FAILURE();
+		}
+		node->tag = CP_DEM_TYPE_KIND_closure_ty_name;
+		node->closure_ty_name.params = params;
+		TRACE_RETURN_SUCCESS;
 	}
 	RULE_FOOT(unnamed_type_name);
 }
@@ -1839,15 +1896,14 @@ bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 	// Parse function parameters using match_many to create a many node
 	// 'v' means void (no parameters), otherwise parse parameter list
 	if (!READ('v')) {
-		DemResult params_result = { 0 };
-		if (match_many(p, node, &params_result, rule_type, ", ") && params_result.output) {
-			// params_result.output is already a many node with sep=", "
-			node->fn_ty.params = params_result.output;
+		CALL_MANY1_N(node->fn_ty.params, rule_type, ", ");
+		if (!node->fn_ty.params) {
+			context_restore(0);
+			TRACE_RETURN_FAILURE();
 		}
 	}
 
 	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(encoding);
 }
 
 void DemContext_deinit(DemContext *ctx) {

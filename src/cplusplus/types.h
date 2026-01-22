@@ -110,11 +110,13 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_signature_type,
 	CP_DEM_TYPE_KIND_nested_name_with_substitution_only,
 	CP_DEM_TYPE_KIND_nv_digit,
+	CP_DEM_TYPE_KIND_template_param_decl,
 	CP_DEM_TYPE_KIND_non_neg_number,
 	CP_DEM_TYPE_KIND_fwd_template_ref,
 	CP_DEM_TYPE_KIND_many,
 	CP_DEM_TYPE_KIND_module_name,
 	CP_DEM_TYPE_KIND_name_with_template_args,
+	CP_DEM_TYPE_KIND_closure_ty_name,
 } CpDemTypeKind;
 
 typedef Vec(CpDemTypeKind) CpDemTypeKinds;
@@ -200,6 +202,12 @@ typedef struct {
 	PDemNode template_args;
 } NameWithTemplateArgs;
 
+typedef struct {
+	PDemNode template_params;
+	PDemNode params;
+	DemStringView count;
+} ClosureTyName;
+
 typedef struct DemNode_t {
 	struct DemNode_t *parent;
 	DemStringView val;
@@ -216,6 +224,7 @@ typedef struct DemNode_t {
 		ManyTy many_ty;
 		ModuleNameTy module_name_ty;
 		NameWithTemplateArgs name_with_template_args;
+		ClosureTyName closure_ty_name;
 	};
 } DemNode;
 

@@ -64,7 +64,6 @@ DECL_RULE(special_name);
 DECL_RULE(call_offset);
 DECL_RULE(nv_offset);
 DECL_RULE(v_offset);
-DECL_RULE(bare_function_type);
 
 DECL_RULE(unscoped_template_name);
 
