@@ -389,6 +389,7 @@ bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		if (IsInherited) {
 			MUST_MATCH(CALL_RULE(rule_name));
 		}
+		p->is_conversion_ctor_dtor = true;
 		TRACE_RETURN_SUCCESS;
 	}
 
@@ -398,6 +399,7 @@ bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		}
 		ADV();
 		AST_APPEND_STR("~");
+		p->is_conversion_ctor_dtor = true;
 		TRACE_RETURN_SUCCESS;
 	}
 	RULE_FOOT(ctor_dtor_name);
@@ -772,7 +774,7 @@ bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	const OperatorInfo *Op = parse_operator_info(p);
 	if (Op) {
 		if (Op->Kind == CCast) {
-			p->is_conversion_operator = true;
+			p->is_conversion_ctor_dtor = true;
 			bool old_not_parse = p->not_parse_template_args;
 			p->not_parse_template_args = true;
 			CTX_MUST_MATCH(rule, rule_type);
@@ -1228,24 +1230,32 @@ bool rule_function_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(function_type);
 	// This rule only handles F...E (bare function type)
 	// P prefix is handled in the type rule, which properly inserts * for function pointers
-	context_save(0);
-	MUST_MATCH(parse_cv_qualifiers(p, &node->fn_ty.cv_qualifiers));
+	parse_cv_qualifiers(p, &node->fn_ty.cv_qualifiers);
 	CALL_RULE_N(node->fn_ty.exception_spec, rule_exception_spec);
-	MUST_MATCH(((READ_STR("Dx")) || true) && READ('F') && ((READ('Y')) || true));
-	CALL_RULE_N(node->fn_ty.ret, rule_type);
 
-	DemResult param_result = { 0 };
-	if (!match_many(p, node, &param_result, rule_type, ", ")) {
+	READ_STR("Dx");
+	if (!READ('F')) {
+		TRACE_RETURN_FAILURE();
+	}
+	READ('Y');
+	CALL_RULE_N(node->fn_ty.ret, rule_type);
+	if (!node->fn_ty.ret) {
 		TRACE_RETURN_FAILURE();
 	}
 
-	MUST_MATCH(parse_ref_qualifiers(p, &node->fn_ty.ref_qualifiers));
+	DemResult param_result = { 0 };
+	if (!READ('v')) {
+		if (!match_many(p, node, &param_result, rule_type, ", ")) {
+			TRACE_RETURN_FAILURE();
+		}
+	}
+
+	parse_ref_qualifiers(p, &node->fn_ty.ref_qualifiers);
 	MUST_MATCH(READ('E'));
 
 	node->fn_ty.params = param_result.output;
 	AST_APPEND_TYPE;
 	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(function_type);
 }
 
 bool rule_function_param(DemParser *p, const DemNode *parent, DemResult *r) {
@@ -1655,15 +1665,6 @@ bool rule_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-static bool is_endswith_template_args(DemNode *node) {
-	if (!node) {
-		return false;
-	}
-	PDemNode *tail_ptr = VecF(PDemNode, len)(node->children) > 0 ? VecF(PDemNode, tail)(node->children) : NULL;
-	DemNode *tail_node = tail_ptr ? *tail_ptr : NULL;
-	return (tail_node && tail_node->tag == CP_DEM_TYPE_KIND_template_args);
-}
-
 bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(nested_name);
 	if (!READ('N')) {
@@ -1685,7 +1686,7 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 			if (ast_node == NULL) {
 				TRACE_RETURN_FAILURE();
 			}
-			if (is_endswith_template_args(ast_node)) {
+			if (ast_node->tag == CP_DEM_TYPE_KIND_name_with_template_args) {
 				goto fail;
 			}
 			DemNode *ta = NULL;
@@ -1945,8 +1946,7 @@ bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 		context_restore(0);
 		TRACE_RETURN_FAILURE();
 	}
-	bool has_template = is_endswith_template_args(node->fn_ty.name);
-	if (has_template && !p->is_conversion_operator) {
+	if (node->fn_ty.name->tag == CP_DEM_TYPE_KIND_name_with_template_args && !p->is_conversion_ctor_dtor) {
 		// Template functions must have an explicit return type
 		// Exception: conversion operators don't have explicit return types
 		CALL_RULE_N(node->fn_ty.ret, rule_type);

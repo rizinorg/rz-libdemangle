@@ -298,7 +298,7 @@ typedef struct DemParser {
 	VecT(PForwardTemplateRef) forward_template_refs;
 	bool is_ctor;
 	bool is_dtor;
-	bool is_conversion_operator;
+	bool is_conversion_ctor_dtor;
 	bool not_parse_template_args;
 	bool pack_expansion;
 	bool trace;
