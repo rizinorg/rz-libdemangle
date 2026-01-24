@@ -19,6 +19,11 @@
 #include <stdio.h>
 #include <string.h>
 
+// Forward declaration
+void ast_pp(DemNode *node, DemString *out);
+
+typedef void (*AST_PP_FN)(DemNode *, DemString *);
+
 static void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out) {
 	if (qualifiers.is_const) {
 		dem_string_append(out, " const");
@@ -46,44 +51,41 @@ bool pp_pack_expansion(DemNode *node, DemString *out) {
 
 // Helper function to extract the base class name from a ctor/dtor name
 // Recursively unwraps name_with_template_args and nested_name to get the final primitive name
-static PDemNode extract_base_class_name(PDemNode node) {
+static bool extract_base_class_name(PDemNode node, PDemNode *out_name) {
 	if (!node) {
-		return NULL;
+		return false;
 	}
 
 	switch (node->tag) {
 	case CP_DEM_TYPE_KIND_name_with_template_args:
 		// Unwrap template args to get the base name
 		if (node->name_with_template_args.name) {
-			return extract_base_class_name(node->name_with_template_args.name);
+			return extract_base_class_name(node->name_with_template_args.name, out_name);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_nested_name:
 		// Get the final name component (not the qualifier)
 		if (node->nested_name.name) {
-			return extract_base_class_name(node->nested_name.name);
+			return extract_base_class_name(node->nested_name.name, out_name);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_primitive_ty:
-		// This is the base name we want
-		return node;
-
 	default:
-		// For other node types, just return as-is
-		return node;
+		break;
 	}
 
-	return node;
+	// For other node types, just return as-is
+	if (out_name) {
+		*out_name = node;
+	}
+	return true;
 }
-
-// Forward declaration
-void ast_pp(DemNode *node, DemString *out);
 
 // Helper to check if a type node ultimately wraps a function type
 // This walks through type wrappers (pointer, reference, qualified) to find the innermost type
-static bool is_function_pointer_type(DemNode *node, DemNode **out_func_node) {
+static bool extract_function_pointer_type(DemNode *node, DemNode **out_func_node) {
 	if (!node) {
 		return false;
 	}
@@ -96,18 +98,64 @@ static bool is_function_pointer_type(DemNode *node, DemNode **out_func_node) {
 	}
 
 	if (node->tag == CP_DEM_TYPE_KIND_type && AST(0)) {
-		return is_function_pointer_type(AST(0), out_func_node);
+		return extract_function_pointer_type(AST(0), out_func_node);
 	}
 
 	if (node->tag == CP_DEM_TYPE_KIND_qualified_type && node->qualified_ty.inner_type) {
-		return is_function_pointer_type(node->qualified_ty.inner_type, out_func_node);
+		return extract_function_pointer_type(node->qualified_ty.inner_type, out_func_node);
 	}
 
 	return false;
 }
 
+static void pp_function_ty(DemNode *node, DemString *out, AST_PP_FN pp_name, DemNode *outer_node) {
+	if (!node) {
+		return;
+	}
+
+	const FunctionTy *ft = &node->fn_ty;
+
+	// Print return type
+	if (ft->ret) {
+		ast_pp(ft->ret, out);
+		dem_string_append(out, " ");
+	}
+
+	if (pp_name) {
+		dem_string_append(out, "(");
+	}
+	if (ft->name) {
+		ast_pp(ft->name, out);
+		if (pp_name) {
+			dem_string_append(out, " ");
+		}
+	}
+	if (pp_name) {
+		pp_name(outer_node, out);
+	}
+	if (pp_name) {
+		dem_string_append(out, ")");
+	}
+
+	// Print parameters
+	dem_string_append(out, "(");
+	if (ft->params) {
+		ast_pp(ft->params, out);
+	}
+	dem_string_append(out, ")");
+
+	// Print exception spec
+	if (ft->exception_spec) {
+		ast_pp(ft->exception_spec, out);
+	}
+
+	// Print cv and ref qualifiers
+	pp_cv_qualifiers(ft->cv_qualifiers, out);
+	pp_ref_qualifiers(ft->ref_qualifiers, out);
+}
+
 // Helper to print pointer/reference/qualifier decorators
-static void print_pointer_decorators(DemNode *node, DemString *out) {
+static void pp_function_ty_modifier_quals(DemNode *node, DemString *out) {
 	if (!node) {
 		return;
 	}
@@ -120,7 +168,7 @@ static void print_pointer_decorators(DemNode *node, DemString *out) {
 	if (node->tag == CP_DEM_TYPE_KIND_type) {
 		// Recurse first to get inner decorators
 		if (AST(0)) {
-			print_pointer_decorators(AST(0), out);
+			pp_function_ty_modifier_quals(AST(0), out);
 		}
 
 		// Then add our decorator
@@ -134,7 +182,7 @@ static void print_pointer_decorators(DemNode *node, DemString *out) {
 	} else if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
 		// Recurse first
 		if (node->qualified_ty.inner_type) {
-			print_pointer_decorators(node->qualified_ty.inner_type, out);
+			pp_function_ty_modifier_quals(node->qualified_ty.inner_type, out);
 		}
 
 		// Then add qualifiers
@@ -142,48 +190,11 @@ static void print_pointer_decorators(DemNode *node, DemString *out) {
 	}
 }
 
-// Helper to print function pointer declarators with proper nesting
-// Handles cases like (**func), (* const& func), etc.
-static void print_function_pointer_declarator(DemNode *node, DemString *out, DemNode *func_node) {
-	if (!node || !func_node) {
-		return;
+static void pp_function_ty_modifier_pointer_to_member_type(DemNode *node, DemString *out) {
+	if (node) {
+		ast_pp(node, out);
 	}
-
-	// First, print the return type
-	const FunctionTy *ft = &func_node->fn_ty;
-	if (ft->ret) {
-		ast_pp(ft->ret, out);
-		dem_string_append(out, " ");
-	}
-
-	// Now we need to collect all the pointer/reference/qualifier decorations
-	// and print them inside the parentheses
-	dem_string_append(out, "(");
-
-	// Print the function name first (if any)
-	if (ft->name) {
-		ast_pp(ft->name, out);
-		dem_string_append(out, " ");
-	}
-
-	// Recursively print pointer/reference/qualifiers
-	print_pointer_decorators(node, out);
-
-	dem_string_append(out, ")");
-
-	// Print parameters
-	dem_string_append(out, "(");
-	if (ft->params) {
-		ast_pp(ft->params, out);
-	}
-	dem_string_append(out, ")");
-
-	// Print exception spec and qualifiers
-	if (ft->exception_spec) {
-		ast_pp(ft->exception_spec, out);
-	}
-	pp_cv_qualifiers(ft->cv_qualifiers, out);
-	pp_ref_qualifiers(ft->ref_qualifiers, out);
+	dem_string_append(out, "::*");
 }
 
 void ast_pp(DemNode *node, DemString *out) {
@@ -200,21 +211,7 @@ void ast_pp(DemNode *node, DemString *out) {
 		break;
 
 	case CP_DEM_TYPE_KIND_function_type: {
-		// Check if return type is a function pointer
-		// Normal function - return type is not a function pointer
-		if (node->fn_ty.ret) {
-			ast_pp(node->fn_ty.ret, out);
-			dem_string_append(out, " ");
-		}
-		ast_pp(node->fn_ty.name, out);
-		dem_string_append(out, "(");
-		ast_pp(node->fn_ty.params, out);
-		dem_string_append(out, ")");
-		if (node->fn_ty.exception_spec) {
-			ast_pp(node->fn_ty.exception_spec, out);
-		}
-		pp_cv_qualifiers(node->fn_ty.cv_qualifiers, out);
-		pp_ref_qualifiers(node->fn_ty.ref_qualifiers, out);
+		pp_function_ty(node, out, NULL, NULL);
 		break;
 	}
 	case CP_DEM_TYPE_KIND_module_name:
@@ -300,11 +297,9 @@ void ast_pp(DemNode *node, DemString *out) {
 		}
 		// For constructor/destructor names, we only want the final class name,
 		// not the full qualified name or template arguments. Extract the base name.
-		if (node->ctor_dtor_name.name) {
-			PDemNode base_name = extract_base_class_name(node->ctor_dtor_name.name);
-			if (base_name) {
-				ast_pp(base_name, out);
-			}
+		PDemNode base_name = NULL;
+		if (node->ctor_dtor_name.name && extract_base_class_name(node->ctor_dtor_name.name, &base_name)) {
+			ast_pp(base_name, out);
 		}
 		break;
 
@@ -345,9 +340,9 @@ void ast_pp(DemNode *node, DemString *out) {
 	case CP_DEM_TYPE_KIND_type: {
 		// Check if this is a function pointer (or pointer/reference/qualified wrapping a function pointer)
 		DemNode *func_node = NULL;
-		if (is_function_pointer_type(node, &func_node)) {
+		if (extract_function_pointer_type(node, &func_node)) {
 			// This is a function pointer - use special formatting
-			print_function_pointer_declarator(node, out, func_node);
+			pp_function_ty(func_node, out, pp_function_ty_modifier_quals, node);
 		} else {
 			// Regular type - print children and add decorator
 			vec_foreach_ptr(node->children, child_ptr, {
@@ -372,28 +367,7 @@ void ast_pp(DemNode *node, DemString *out) {
 		// For member function pointers: return_type (Class::*)(params) cv-qualifiers ref-qualifiers
 		// For member data pointers: type Class::*
 		if (AST(1) && AST(1)->tag == CP_DEM_TYPE_KIND_function_type) {
-			// Member function pointer
-			const FunctionTy *ft = &AST(1)->fn_ty;
-			if (ft->ret) {
-				ast_pp(ft->ret, out);
-				dem_string_append(out, " ");
-			}
-			dem_string_append(out, "(");
-			if (AST(0)) {
-				ast_pp(AST(0), out);
-			}
-			dem_string_append(out, "::*");
-			dem_string_append(out, ")");
-			dem_string_append(out, "(");
-			if (ft->params) {
-				ast_pp(ft->params, out);
-			}
-			dem_string_append(out, ")");
-			if (ft->exception_spec) {
-				ast_pp(ft->exception_spec, out);
-			}
-			pp_cv_qualifiers(ft->cv_qualifiers, out);
-			pp_ref_qualifiers(ft->ref_qualifiers, out);
+			pp_function_ty(AST(1), out, pp_function_ty_modifier_pointer_to_member_type, AST(0));
 		} else {
 			// Member data pointer
 			if (AST(1)) {
