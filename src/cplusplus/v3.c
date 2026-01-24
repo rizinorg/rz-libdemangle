@@ -395,14 +395,23 @@ bool parse_seq_id(DemParser *p, DemNode **pp_out_node) {
 
 bool rule_vendor_specific_suffix(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(vendor_specific_suffix);
+	// Handle _ptr suffix (should be ignored, not output)
+	if (READ_STR("ptr")) {
+		// Consume but don't output anything
+		TRACE_RETURN_SUCCESS;
+	}
 	// Handle Apple/Objective-C block_invoke patterns
 	// These appear as suffixes after the main symbol
-	// Look for _block_invoke followed by optional number
+	// Look for block_invoke followed by optional number
 	if (READ_STR("block_invoke")) {
 		AST_APPEND_STR(" block_invoke");
 		if (READ('_')) {
 			AST_APPEND_STR("_");
-			CALL_RULE(rule_number);
+			DemStringView num_str = { 0 };
+			if (parse_number(p, &num_str, false)) {
+				// Append the number string as-is from the input
+				AST_APPEND_STRN(num_str.buf, num_str.len);
+			}
 		}
 		TRACE_RETURN_SUCCESS;
 	}
@@ -589,7 +598,7 @@ bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, bool 
 	}
 
 	if (!result || std_node) {
-		OK_OR_FAIL(PASSTHRU_RULE_VA(rule_unqualified_name, std_node, module));
+		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE_VA(rule_unqualified_name, std_node, module));
 	}
 	if (result) {
 		DemNode_move(node, result);
@@ -1392,16 +1401,19 @@ bool rule_class_enum_type(DemParser *p, const DemNode *parent, DemResult *r) {
 
 bool rule_mangled_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(mangled_name);
-	// Handle internal linkage prefix: _ZL is treated as _Z (L is ignored)
-	TRY_MATCH(READ_STR("_ZL") && (CALL_RULE(rule_encoding)) &&
-		(((READ('.') && (CALL_RULE(rule_vendor_specific_suffix))) ||
-			 (READ('_') && (CALL_RULE(rule_vendor_specific_suffix)))) ||
-			true));
-	TRY_MATCH(READ_STR("_Z") && (CALL_RULE(rule_encoding)) &&
-		(((READ('.') && (CALL_RULE(rule_vendor_specific_suffix))) ||
-			 (READ('_') && (CALL_RULE(rule_vendor_specific_suffix)))) ||
-			true));
-	RULE_FOOT(mangled_name);
+
+	if (!READ_STR("_Z")) {
+		TRACE_RETURN_FAILURE();
+	}
+
+	READ('L');
+	MUST_MATCH(CALL_RULE(rule_encoding));
+
+	// Try to match vendor-specific suffix
+	READ('.');
+	READ('_');
+	CALL_RULE(rule_vendor_specific_suffix);
+	TRACE_RETURN_SUCCESS;
 }
 
 bool rule_qualified_type(DemParser *p, const DemNode *parent, DemResult *r) {
@@ -1680,10 +1692,10 @@ bool rule_destructor_name(DemParser *p, const DemNode *parent, DemResult *r) {
 bool rule_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(name);
 	if (PEEK() == 'N') {
-		OK_OR_FAIL(PASSTHRU_RULE(rule_nested_name));
+		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_nested_name));
 	}
 	if (PEEK() == 'Z') {
-		OK_OR_FAIL(PASSTHRU_RULE(rule_local_name));
+		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_local_name));
 	}
 
 	DemNode *result = NULL;
@@ -1981,18 +1993,20 @@ bool is_end_of_encoding(const DemParser *p) {
 	// The set of chars that can potentially follow an <encoding> (none of which
 	// can start a <type>). Enumerating these allows us to avoid speculative
 	// parsing.
-	return PEEK() == 'E' || PEEK() == '.' || PEEK() == '_';
+	return REMAIN_SIZE() == 0 || PEEK() == 'E' || PEEK() == '.' || PEEK() == '_';
 };
 
 bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(encoding);
-	// Override tag to function_type since encoding produces function signatures
-	node->tag = CP_DEM_TYPE_KIND_function_type;
-	// Handle special names (G=guard variable, T=typeinfo)
+	// Handle special names (G=guard variable, T=typeinfo/vtable)
+	// These have different structure than function signatures
 	if (PEEK() == 'G' || PEEK() == 'T') {
+		node->tag = CP_DEM_TYPE_KIND_special_name;
 		MUST_MATCH(CALL_RULE(rule_special_name));
 		TRACE_RETURN_SUCCESS;
 	}
+	// Override tag to function_type since encoding produces function signatures
+	node->tag = CP_DEM_TYPE_KIND_function_type;
 	context_save(0);
 	// Parse: name, [return_type], parameters
 	CTX_MUST_MATCH(0, CALL_RULE_N(node->fn_ty.name, rule_name));

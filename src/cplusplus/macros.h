@@ -25,7 +25,8 @@
  */
 #define END() (p->end)
 
-#define P_SIZE() (size_t)(END() - BEG())
+#define P_SIZE()      (size_t)(END() - BEG())
+#define REMAIN_SIZE() (size_t)(END() - CUR())
 
 /**
  * \b Check whether the provided position is in range of readable address.
@@ -60,7 +61,7 @@
  * \b Read multiple characters in a string.
  */
 #define READ_STR(s) \
-	(IN_RANGE(CUR() + sizeof(s) - 1) ? (!strncmp(CUR(), s, sizeof(s) - 1) ? (ADV_BY(sizeof(s) - 1), 1) : 0) : 0)
+	(IN_RANGE(CUR() + sizeof(s)) ? (!strncmp(CUR(), s, sizeof(s) - 1) ? (ADV_BY(sizeof(s) - 1), 1) : 0) : 0)
 #define READ_STR_OPTIONAL(s) (READ_STR(s) || true)
 
 /**
@@ -189,7 +190,16 @@
 		return false; \
 	} while (0)
 
-#define OK_OR_FAIL(expr) \
+#define RETURN_SUCCESS_OR_FAIL(expr) \
+	do { \
+		if (expr) { \
+			TRACE_RETURN_SUCCESS; \
+		} else { \
+			TRACE_RETURN_FAILURE(); \
+		} \
+	} while (0)
+
+#define RETURN_SUCCESS_OR_FAIL(expr) \
 	do { \
 		if (expr) { \
 			TRACE_RETURN_SUCCESS; \
