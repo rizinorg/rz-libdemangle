@@ -7,6 +7,8 @@
 #include "dot_graph.h"
 #include "demangle.h"
 #include "demangler_util.h"
+#include "macros.h"
+
 #include <ctype.h>
 
 // Forward declaration for ast_pp function
@@ -745,9 +747,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		break;
 
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
-		if (node->fwd_template_ref && node->fwd_template_ref->node) {
-			dot_graph_traverse_ast(dot, node->fwd_template_ref->node, current_id, "resolved", "dashed");
-		}
+		DEM_UNREACHABLE;
 		break;
 
 	default:

@@ -78,6 +78,114 @@ static PDemNode extract_base_class_name(PDemNode node) {
 	return node;
 }
 
+// Forward declaration
+void ast_pp(DemNode *node, DemString *out);
+
+// Helper to check if a type node ultimately wraps a function type
+// This walks through type wrappers (pointer, reference, qualified) to find the innermost type
+static bool is_function_pointer_type(DemNode *node, DemNode **out_func_node) {
+	if (!node) {
+		return false;
+	}
+
+	if (node->tag == CP_DEM_TYPE_KIND_function_type) {
+		if (out_func_node) {
+			*out_func_node = node;
+		}
+		return true;
+	}
+
+	if (node->tag == CP_DEM_TYPE_KIND_type && AST(0)) {
+		return is_function_pointer_type(AST(0), out_func_node);
+	}
+
+	if (node->tag == CP_DEM_TYPE_KIND_qualified_type && node->qualified_ty.inner_type) {
+		return is_function_pointer_type(node->qualified_ty.inner_type, out_func_node);
+	}
+
+	return false;
+}
+
+// Helper to print pointer/reference/qualifier decorators
+static void print_pointer_decorators(DemNode *node, DemString *out) {
+	if (!node) {
+		return;
+	}
+
+	if (node->tag == CP_DEM_TYPE_KIND_function_type) {
+		// Reached the function type - stop recursion
+		return;
+	}
+
+	if (node->tag == CP_DEM_TYPE_KIND_type) {
+		// Recurse first to get inner decorators
+		if (AST(0)) {
+			print_pointer_decorators(AST(0), out);
+		}
+
+		// Then add our decorator
+		if (node->subtag == POINTER_TYPE) {
+			dem_string_append(out, "*");
+		} else if (node->subtag == REFERENCE_TYPE) {
+			dem_string_append(out, "&");
+		} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
+			dem_string_append(out, "&&");
+		}
+	} else if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
+		// Recurse first
+		if (node->qualified_ty.inner_type) {
+			print_pointer_decorators(node->qualified_ty.inner_type, out);
+		}
+
+		// Then add qualifiers
+		pp_cv_qualifiers(node->qualified_ty.qualifiers, out);
+	}
+}
+
+// Helper to print function pointer declarators with proper nesting
+// Handles cases like (**func), (* const& func), etc.
+static void print_function_pointer_declarator(DemNode *node, DemString *out, DemNode *func_node) {
+	if (!node || !func_node) {
+		return;
+	}
+
+	// First, print the return type
+	const FunctionTy *ft = &func_node->fn_ty;
+	if (ft->ret) {
+		ast_pp(ft->ret, out);
+		dem_string_append(out, " ");
+	}
+
+	// Now we need to collect all the pointer/reference/qualifier decorations
+	// and print them inside the parentheses
+	dem_string_append(out, "(");
+
+	// Print the function name first (if any)
+	if (ft->name) {
+		ast_pp(ft->name, out);
+		dem_string_append(out, " ");
+	}
+
+	// Recursively print pointer/reference/qualifiers
+	print_pointer_decorators(node, out);
+
+	dem_string_append(out, ")");
+
+	// Print parameters
+	dem_string_append(out, "(");
+	if (ft->params) {
+		ast_pp(ft->params, out);
+	}
+	dem_string_append(out, ")");
+
+	// Print exception spec and qualifiers
+	if (ft->exception_spec) {
+		ast_pp(ft->exception_spec, out);
+	}
+	pp_cv_qualifiers(ft->cv_qualifiers, out);
+	pp_ref_qualifiers(ft->ref_qualifiers, out);
+}
+
 void ast_pp(DemNode *node, DemString *out) {
 	if (!node || !out) {
 		return;
@@ -91,7 +199,9 @@ void ast_pp(DemNode *node, DemString *out) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_function_type:
+	case CP_DEM_TYPE_KIND_function_type: {
+		// Check if return type is a function pointer
+		// Normal function - return type is not a function pointer
 		if (node->fn_ty.ret) {
 			ast_pp(node->fn_ty.ret, out);
 			dem_string_append(out, " ");
@@ -106,6 +216,7 @@ void ast_pp(DemNode *node, DemString *out) {
 		pp_cv_qualifiers(node->fn_ty.cv_qualifiers, out);
 		pp_ref_qualifiers(node->fn_ty.ref_qualifiers, out);
 		break;
+	}
 	case CP_DEM_TYPE_KIND_module_name:
 		if (node->module_name_ty.pare) {
 			ast_pp(node->module_name_ty.pare, out);
@@ -231,35 +342,14 @@ void ast_pp(DemNode *node, DemString *out) {
 		dem_string_append(out, ">");
 		break;
 
-	case CP_DEM_TYPE_KIND_type:
-		if (AST(0) && AST(0)->tag == CP_DEM_TYPE_KIND_function_type) {
-			const FunctionTy *ft = &AST(0)->fn_ty;
-			if (ft->ret) {
-				ast_pp(ft->ret, out);
-				dem_string_append(out, " ");
-			}
-
-			dem_string_append(out, "(");
-			if (ft->name) {
-				ast_pp(ft->name, out);
-				dem_string_append(out, " ");
-			}
-			if (node->subtag == POINTER_TYPE) {
-				dem_string_append(out, "*");
-			} else if (node->subtag == REFERENCE_TYPE) {
-				dem_string_append(out, "&");
-			} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
-				dem_string_append(out, "&&");
-			}
-			dem_string_append(out, ")");
-
-			dem_string_append(out, "(");
-			ast_pp(ft->params, out);
-			dem_string_append(out, ")");
-			ast_pp(ft->exception_spec, out);
-			pp_cv_qualifiers(ft->cv_qualifiers, out);
-			pp_ref_qualifiers(ft->ref_qualifiers, out);
+	case CP_DEM_TYPE_KIND_type: {
+		// Check if this is a function pointer (or pointer/reference/qualified wrapping a function pointer)
+		DemNode *func_node = NULL;
+		if (is_function_pointer_type(node, &func_node)) {
+			// This is a function pointer - use special formatting
+			print_function_pointer_declarator(node, out, func_node);
 		} else {
+			// Regular type - print children and add decorator
 			vec_foreach_ptr(node->children, child_ptr, {
 				ast_pp(*child_ptr, out);
 			});
@@ -271,14 +361,52 @@ void ast_pp(DemNode *node, DemString *out) {
 				dem_string_append(out, "&&");
 			}
 		}
-
-		break;
+	} break;
 
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
-		if (node->fwd_template_ref) {
-			ast_pp(node->fwd_template_ref->node, out);
+		DEM_UNREACHABLE;
+		break;
+
+	case CP_DEM_TYPE_KIND_pointer_to_member_type:
+		// Member pointer: M <class-type> <member-type>
+		// For member function pointers: return_type (Class::*)(params) cv-qualifiers ref-qualifiers
+		// For member data pointers: type Class::*
+		if (AST(1) && AST(1)->tag == CP_DEM_TYPE_KIND_function_type) {
+			// Member function pointer
+			const FunctionTy *ft = &AST(1)->fn_ty;
+			if (ft->ret) {
+				ast_pp(ft->ret, out);
+				dem_string_append(out, " ");
+			}
+			dem_string_append(out, "(");
+			if (AST(0)) {
+				ast_pp(AST(0), out);
+			}
+			dem_string_append(out, "::*");
+			dem_string_append(out, ")");
+			dem_string_append(out, "(");
+			if (ft->params) {
+				ast_pp(ft->params, out);
+			}
+			dem_string_append(out, ")");
+			if (ft->exception_spec) {
+				ast_pp(ft->exception_spec, out);
+			}
+			pp_cv_qualifiers(ft->cv_qualifiers, out);
+			pp_ref_qualifiers(ft->ref_qualifiers, out);
+		} else {
+			// Member data pointer
+			if (AST(1)) {
+				ast_pp(AST(1), out);
+				dem_string_append(out, " ");
+			}
+			if (AST(0)) {
+				ast_pp(AST(0), out);
+			}
+			dem_string_append(out, "::*");
 		}
 		break;
+
 	default:
 		// For all other nodes with children, recursively print all children
 		if (node->children) {
@@ -1189,7 +1317,7 @@ bool rule_template_param(DemParser *p, const DemNode *parent, DemResult *r) {
 		// If substitution failed, create a forward reference
 		// Use a placeholder that will be resolved later
 		ForwardTemplateRef fwd_ref = {
-			.node = NULL,
+			.wrapper = node,
 			.level = level,
 			.index = index
 		};

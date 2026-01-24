@@ -141,7 +141,7 @@ struct DemNode_t;
 
 // Forward template reference: stores a reference to T_ that needs resolution later
 typedef struct ForwardTemplateRef {
-	struct DemNode_t *node; // The AST node
+	const struct DemNode_t *wrapper; // The DemNode that contains this fwd_template_ref
 	ut64 level; // Template parameter level
 	ut64 index; // Template parameter index
 } ForwardTemplateRef;
@@ -230,7 +230,7 @@ typedef struct DemNode_t {
 	struct Vec_t(PDemNode) * children; // Moved outside union, used by all types
 
 	union {
-		PForwardTemplateRef fwd_template_ref;
+		PForwardTemplateRef  fwd_template_ref;
 		PrimitiveTy primitive_ty;
 		QualifiedTy qualified_ty;
 		VendorExtQualifiedTy vendor_ext_qualified_ty;

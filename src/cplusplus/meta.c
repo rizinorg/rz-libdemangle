@@ -147,10 +147,24 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 		ut64 level = fwd_ref->level;
 		ut64 index = fwd_ref->index;
 
-		fwd_ref->node = template_param_get(p, level, index);
-		if (!fwd_ref->node) {
+		DemNode *ref_src = template_param_get(p, level, index);
+		if (!ref_src || !fwd_ref->wrapper) {
 			all_resolved = false;
+			continue;
 		}
+
+		// Copy the resolved node's content into the wrapper node
+		// This effectively replaces the fwd_template_ref with the actual type
+		DemNode *ref_dst = (DemNode *)fwd_ref->wrapper;
+		DemNode *parent = ref_dst->parent;
+
+		if (ref_dst->fwd_template_ref) {
+			ref_dst->fwd_template_ref = NULL;
+		}
+
+		DemNode_copy(ref_dst, ref_src);
+		// Restore parent pointer
+		ref_dst->parent = parent;
 	});
 
 	// Don't clear yet - we'll need the references for final string replacement
@@ -158,13 +172,6 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 	if (p->forward_template_refs.length <= 0 || !all_resolved) {
 		return all_resolved;
 	}
-	vec_foreach_ptr(&p->forward_template_refs, ppfwd_ref, {
-		ForwardTemplateRef *fwd_ref = *ppfwd_ref;
-		if (!fwd_ref->node) {
-			continue;
-		}
-		// TODO:
-	});
 
 	VecF(PForwardTemplateRef, deinit)(&p->forward_template_refs);
 	return true;
