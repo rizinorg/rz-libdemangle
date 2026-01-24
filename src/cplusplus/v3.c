@@ -1247,40 +1247,85 @@ bool rule_call_offset(DemParser *p, const DemNode *parent, DemResult *r) {
 */
 bool rule_special_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(special_name);
-	// TC <derived-type> <offset> _ <base-type>   # construction vtable
-	MATCH_AND_DO(
-		READ_STR("TC") && CALL_RULE(rule_type),
-		{
+	switch (PEEK()) {
+	case 'T':
+		ADV();
+		switch (PEEK()) {
+		case 'C':
+			// TC <derived-type> <offset> _ <base-type>   # construction vtable
+			ADV();
+			DemNode *base_ty = NULL;
+			DemNode *derived_ty = NULL;
+			MUST_MATCH(CALL_RULE_N(base_ty, rule_type));
 			ut64 offset = 0;
-			if (!parse_non_neg_integer(p, &offset)) {
-				TRACE_RETURN_FAILURE();
-			}
-			if (!READ('_') || !CALL_RULE(rule_type)) {
-				TRACE_RETURN_FAILURE();
-			}
+			MUST_MATCH(parse_non_neg_integer(p, &offset));
+			MUST_MATCH(READ('_') || CALL_RULE_N(derived_ty, rule_type));
 			AST_APPEND_STR("construction vtable for ");
-			// base class
-			AST_APPEND_STR("-in-");
-			// derived class
-		});
-	TRY_MATCH(READ_STR("Tc") && (CALL_RULE(rule_call_offset)) && (CALL_RULE(rule_call_offset)) && (CALL_RULE(rule_encoding)));
-	DemNode *child_node = NULL;
-	MATCH_AND_DO(
-		READ_STR("GR") && CALL_RULE(rule_name) && parse_seq_id(p, &child_node) && READ('_'),
-		{
-			AST_APPEND_NODE(DemNode_clone(child_node));
+			AST_APPEND_NODE(base_ty);
+			if (derived_ty) {
+				AST_APPEND_STR("-in-");
+				AST_APPEND_NODE(derived_ty);
+			}
+			break;
+		case 'c':
+			ADV();
+			RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_call_offset) && CALL_RULE(rule_call_offset) && CALL_RULE(rule_encoding));
+			break;
+		case 'V':
+			ADV();
+			MUST_MATCH(AST_APPEND_STR("vtable for ") && CALL_RULE(rule_type));
+			break;
+		case 'T':
+			ADV();
+			MUST_MATCH(AST_APPEND_STR("VTT structure for ") && CALL_RULE(rule_type));
+			break;
+		case 'I':
+			ADV();
+			MUST_MATCH(AST_APPEND_STR("typeinfo for ") && CALL_RULE(rule_type));
+			break;
+		case 'S':
+			ADV();
+			MUST_MATCH(AST_APPEND_STR("typeinfo name for ") && CALL_RULE(rule_type));
+			break;
+		case 'A':
+			ADV();
+			MUST_MATCH(AST_APPEND_STR("template parameter for ") && CALL_RULE(rule_template_arg));
+			break;
+		default:
+			MUST_MATCH(CALL_RULE(rule_call_offset) && CALL_RULE(rule_encoding));
+			break;
+		}
+		break;
+	case 'G':
+		ADV();
+		switch (PEEK()) {
+		case 'R':
+			ADV();
 			AST_APPEND_STR("reference temporary for ");
-		});
-	TRY_MATCH(READ('T') && (CALL_RULE(rule_call_offset)) && (CALL_RULE(rule_encoding)));
-	TRY_MATCH(READ_STR("GR") && AST_APPEND_STR("reference temporary for ") && (CALL_RULE(rule_name)) && READ('_'));
-	TRY_MATCH(READ_STR("TV") && AST_APPEND_STR("vtable for ") && (CALL_RULE(rule_type)));
-	TRY_MATCH(READ_STR("TT") && AST_APPEND_STR("VTT structure for ") && (CALL_RULE(rule_type)));
-	TRY_MATCH(READ_STR("TI") && AST_APPEND_STR("typeinfo for ") && (CALL_RULE(rule_type)));
-	TRY_MATCH(READ_STR("TS") && AST_APPEND_STR("typeinfo name for ") && (CALL_RULE(rule_type)));
-	TRY_MATCH(READ_STR("GV") && AST_APPEND_STR("guard variable for ") && (CALL_RULE(rule_name)));
-	TRY_MATCH(READ_STR("GTt") && (CALL_RULE(rule_encoding)));
-	// TODO: GI <module-name> v
-	RULE_FOOT(special_name);
+			MUST_MATCH(CALL_RULE(rule_name));
+			parse_seq_id(p, NULL);
+			MUST_MATCH(READ('_'));
+			break;
+		case 'V':
+			ADV();
+			MUST_MATCH(AST_APPEND_STR("guard variable for ") && CALL_RULE(rule_name));
+			break;
+		case 'A':
+			ADV();
+			MUST_MATCH(CALL_RULE(rule_encoding));
+			break;
+		case 'T':
+			ADV();
+			MUST_MATCH((READ('t') || READ('n')) && CALL_RULE(rule_encoding));
+			break;
+		default: break;
+		};
+		break;
+	default:
+		TRACE_RETURN_FAILURE();
+		break;
+	}
+	TRACE_RETURN_SUCCESS;
 }
 
 bool rule_function_type(DemParser *p, const DemNode *parent, DemResult *r) {
@@ -2001,9 +2046,7 @@ bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 	// Handle special names (G=guard variable, T=typeinfo/vtable)
 	// These have different structure than function signatures
 	if (PEEK() == 'G' || PEEK() == 'T') {
-		node->tag = CP_DEM_TYPE_KIND_special_name;
-		MUST_MATCH(CALL_RULE(rule_special_name));
-		TRACE_RETURN_SUCCESS;
+		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_special_name));
 	}
 	// Override tag to function_type since encoding produces function signatures
 	node->tag = CP_DEM_TYPE_KIND_function_type;
