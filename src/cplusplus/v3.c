@@ -425,7 +425,7 @@ void ast_pp(DemNode *node, DemString *out) {
 		if (AST(1) && AST(1)->tag == CP_DEM_TYPE_KIND_function_type) {
 			PPFnContext ctx = {
 				.pp_mod = pp_function_ty_mod_pointer_to_member_type,
-				.mod = node,
+				.mod = AST(0),
 				.fn = AST(1),
 			};
 			pp_function_ty(&ctx, out);
@@ -667,7 +667,7 @@ bool rule_module_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		if (!Sub) {
 			return true;
 		}
-		DemNode *sub_module = DemNode_ctor(CP_DEM_TYPE_KIND_module_name, save_pos_rule, CUR() - save_pos_rule);
+		DemNode *sub_module = DemNode_ctor(CP_DEM_TYPE_KIND_module_name, saved_pos_rule, CUR() - saved_pos_rule);
 		if (!sub_module) {
 			TRACE_RETURN_FAILURE();
 		}
@@ -766,7 +766,7 @@ bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, bool 
 
 	DemNode *std_node = NULL;
 	if (READ_STR("St")) {
-		std_node = make_primitive_type(CUR(), CUR(), "std", 5);
+		std_node = make_primitive_type(CUR(), CUR(), "std", 3);
 		if (!std_node) {
 			TRACE_RETURN_FAILURE();
 		}
@@ -1682,11 +1682,9 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (PASSTHRU_RULE(rule_builtin_type)) {
 		TRACE_RETURN_SUCCESS;
 	}
-	context_restore(rule);
 	if (PASSTHRU_RULE(rule_function_type)) {
 		goto beach;
 	}
-	context_restore(rule);
 	switch (PEEK()) {
 	case 'r':
 	case 'V':
@@ -1781,8 +1779,10 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 				node->name_with_template_args.name = result;
 				node->name_with_template_args.template_args = ta;
 			} else if (is_subst) {
-				DemNode_dtor(node);
-				node = result;
+				// Move result's content to node instead of replacing the pointer
+				// This avoids use-after-free in PASSTHRU mode where node == r->output
+				DemNode_move(node, result);
+				free(result); // Free the result container, but its content is now in node
 				TRACE_RETURN_SUCCESS;
 			}
 			break;
@@ -1795,7 +1795,7 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	}
 
 beach:
-	if (CUR() > save_pos_rule) {
+	if (CUR() > saved_pos_rule) {
 		AST_APPEND_TYPE;
 		TRACE_RETURN_SUCCESS;
 	}
@@ -2003,7 +2003,7 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 			}
 			DemNode *ta = NULL;
 			MUST_MATCH(CALL_RULE_N(ta, rule_template_args));
-			ast_node = make_name_with_template_args(save_pos_rule, CUR(), ast_node, ta);
+			ast_node = make_name_with_template_args(saved_pos_rule, CUR(), ast_node, ta);
 		} else if (PEEK() == 'D' && (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T')) {
 			if (ast_node != NULL) {
 				goto fail;

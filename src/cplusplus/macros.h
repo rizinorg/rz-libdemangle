@@ -82,16 +82,6 @@
 #define ADV_BY(n) (IN_RANGE(CUR() + n) ? (p->cur = p->cur + (n)) : NULL)
 
 /**
- * \b Save current read position.
- */
-#define SAVE_POS(I) __attribute__((unused)) const char *save_pos_##I = CUR();
-
-/**
- * \b Restore saved position.
- */
-#define RESTORE_POS(I) SEEK_TO(save_pos_##I);
-
-/**
  * Always evaluate to true, even if rule does not match.
  */
 #define OPTIONAL(x) ((x) || true)
@@ -138,21 +128,26 @@
 #define RULE_FOOT(X) TRACE_RETURN_FAILURE();
 
 #define context_save(N) \
-	SAVE_POS(N); \
-	__attribute__((unused)) DemNode saved_node_##N = *node; \
-	__attribute__((unused)) size_t saved_types_len_##N = VecPDemNode_len(&p->detected_types);
+	__attribute__((unused)) size_t saved_children_len_##N = node->children ? VecPDemNode_len(node->children) : 0; \
+	__attribute__((unused)) size_t saved_tag_##N = node->tag; \
+	__attribute__((unused)) size_t saved_types_len_##N = VecPDemNode_len(&p->detected_types); \
+	__attribute__((unused)) const char *saved_pos_##N = CUR();
 
 #define context_restore_node(N) \
-	if (node->children) { \
-		while (VecPDemNode_len(node->children) > VecPDemNode_len(saved_node_##N.children)) { \
-			PDemNode *node_ptr = VecPDemNode_pop(node->children); \
-			DemNode *child = node_ptr ? *node_ptr : NULL; \
-			if (child) { \
-				DemNode_dtor(child); \
+	do { \
+		if (node->children) { \
+			while (VecPDemNode_len(node->children) > saved_children_len_##N) { \
+				PDemNode *node_ptr = VecPDemNode_pop(node->children); \
+				DemNode *child = node_ptr ? *node_ptr : NULL; \
+				if (child) { \
+					DemNode_dtor(child); \
+				} \
 			} \
 		} \
-	} \
-	*node = saved_node_##N;
+		node->tag = saved_tag_##N; \
+		node->parent = (DemNode *)parent; \
+		node->val.buf = saved_pos_##N; \
+	} while (0)
 
 #define context_restore_parser(N) \
 	if (p) { \
@@ -170,7 +165,7 @@
 #define context_restore(N) \
 	context_restore_node(N); \
 	context_restore_parser(N); \
-	RESTORE_POS(N);
+	CUR() = saved_pos_##N;
 
 /* Macros for rules that use direct returns */
 #define TRACE_RETURN_SUCCESS \
@@ -194,7 +189,7 @@
 		} \
 		r->error = DEM_ERR_INVALID_SYNTAX; \
 		context_restore_parser(rule); \
-		RESTORE_POS(rule); \
+		CUR() = saved_pos_rule; \
 		return false; \
 	} while (0)
 
@@ -245,19 +240,11 @@
 
 #define PASSTHRU_RULE_VA(rule_fn, ...) \
 	({ \
-		DemNode *save_output = r->output; \
-		CpDemTypeKind save_tag = node->tag; \
 		r->output = node; \
 		bool _success = (rule_fn)(p, parent, r, __VA_ARGS__); \
 		if (!(_success)) { \
-			if (!save_output && node) { \
-				DemNode_deinit(node); \
-				DemNode_init(node); \
-				node->parent = (DemNode *)parent; \
-				node->val.buf = p->cur; \
-				node->tag = save_tag; \
-			} \
-			r->output = save_output; \
+			DemNode_deinit(node); \
+			DemNode_init(node); \
 			context_restore(rule); \
 		} \
 		_success; \
@@ -265,19 +252,11 @@
 
 #define PASSTHRU_RULE(rule_fn) \
 	({ \
-		DemNode *save_output = r->output; \
-		CpDemTypeKind save_tag = node->tag; \
 		r->output = node; \
 		bool _success = (rule_fn)(p, parent, r); \
 		if ((!_success)) { \
-			if (!save_output && node) { \
-				DemNode_deinit(node); \
-				DemNode_init(node); \
-				node->parent = (DemNode *)parent; \
-				node->val.buf = p->cur; \
-				node->tag = save_tag; \
-			} \
-			r->output = save_output; \
+			DemNode_deinit(node); \
+			DemNode_init(node); \
 			context_restore(rule); \
 		} \
 		_success; \
