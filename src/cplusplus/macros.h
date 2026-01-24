@@ -61,7 +61,14 @@
  * \b Read multiple characters in a string.
  */
 #define READ_STR(s) \
-	(IN_RANGE(CUR() + sizeof(s)) ? (!strncmp(CUR(), s, sizeof(s) - 1) ? (ADV_BY(sizeof(s) - 1), 1) : 0) : 0)
+	({ \
+		size_t s_sz = sizeof(s) - 1; \
+		bool read_success = REMAIN_SIZE() >= s_sz && strncmp(CUR(), s, s_sz) == 0; \
+		if (read_success) \
+			ADV_BY(s_sz); \
+		read_success; \
+	})
+
 #define READ_STR_OPTIONAL(s) (READ_STR(s) || true)
 
 /**
