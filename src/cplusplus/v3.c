@@ -400,7 +400,7 @@ void ast_pp(DemNode *node, DemString *out) {
 			};
 			pp_function_ty(&ctx, out);
 		} else if ((node->subtag == POINTER_TYPE || node->subtag == REFERENCE_TYPE || node->subtag == RVALUE_REFERENCE_TYPE) &&
-			AST(0) && (AST(0)->tag == CP_DEM_TYPE_KIND_array_type || (AST(0)->tag == CP_DEM_TYPE_KIND_type && AST(0)->subtag == ARRAY_TYPE))) {
+			AST(0) && AST(0)->tag == CP_DEM_TYPE_KIND_array_type) {
 			// Special case: pointer/reference to array
 			// Format as: element_type (*|&|&&) [dimension]
 			DemNode *array_node = AST(0);
@@ -1512,7 +1512,10 @@ bool rule_call_offset(DemParser *p, const DemNode *parent, DemResult *r) {
 		if (!parse_non_neg_integer(p, &x)) {
 			TRACE_RETURN_FAILURE();
 		}
-		AST_APPENDF("non-virtual thunk to %lz", x);
+		if (!READ('_')) {
+			TRACE_RETURN_FAILURE();
+		}
+		AST_APPEND_STR("non-virtual thunk to ");
 		TRACE_RETURN_SUCCESS;
 	}
 	if (READ('v')) {
