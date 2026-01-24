@@ -44,6 +44,40 @@ bool pp_pack_expansion(DemNode *node, DemString *out) {
 	return true;
 }
 
+// Helper function to extract the base class name from a ctor/dtor name
+// Recursively unwraps name_with_template_args and nested_name to get the final primitive name
+static PDemNode extract_base_class_name(PDemNode node) {
+	if (!node) {
+		return NULL;
+	}
+
+	switch (node->tag) {
+	case CP_DEM_TYPE_KIND_name_with_template_args:
+		// Unwrap template args to get the base name
+		if (node->name_with_template_args.name) {
+			return extract_base_class_name(node->name_with_template_args.name);
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_nested_name:
+		// Get the final name component (not the qualifier)
+		if (node->nested_name.name) {
+			return extract_base_class_name(node->nested_name.name);
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_primitive_ty:
+		// This is the base name we want
+		return node;
+
+	default:
+		// For other node types, just return as-is
+		return node;
+	}
+
+	return node;
+}
+
 void ast_pp(DemNode *node, DemString *out) {
 	if (!node || !out) {
 		return;
@@ -154,14 +188,11 @@ void ast_pp(DemNode *node, DemString *out) {
 			dem_string_append(out, "~");
 		}
 		// For constructor/destructor names, we only want the final class name,
-		// not the full qualified name. Extract the last component.
+		// not the full qualified name or template arguments. Extract the base name.
 		if (node->ctor_dtor_name.name) {
-			PDemNode name_node = node->ctor_dtor_name.name;
-			// If it's a nested_name, get the final name component
-			if (name_node->tag == CP_DEM_TYPE_KIND_nested_name && name_node->nested_name.name) {
-				ast_pp(name_node->nested_name.name, out);
-			} else {
-				ast_pp(name_node, out);
+			PDemNode base_name = extract_base_class_name(node->ctor_dtor_name.name);
+			if (base_name) {
+				ast_pp(base_name, out);
 			}
 		}
 		break;
@@ -881,6 +912,9 @@ bool rule_expr_primary(DemParser *p, const DemNode *parent, DemResult *r) {
 
 	// Non-type template parameter: L<type><value>E
 	// For bool: Lb0E -> false, Lb1E -> true
+	TRY_MATCH(READ_STR("b0E") && AST_APPEND_STR("false"));
+	TRY_MATCH(READ_STR("b1E") && AST_APPEND_STR("true"));
+
 	// For other types: L<type><number>E -> (<type>)<number> or just <number>
 	MUST_MATCH(CALL_RULE(rule_type));
 	TRY_MATCH(CALL_RULE(rule_number) && READ('E'));
@@ -1912,10 +1946,27 @@ bool rule_template_arg(DemParser *p, const DemNode *parent, DemResult *r) {
 }
 
 static bool is_tag_templates(const DemNode *node) {
-	if (!(node && node->parent)) {
+	if (!node) {
 		return false;
 	}
-	return node->tag == CP_DEM_TYPE_KIND_nested_name && node->parent->tag == CP_DEM_TYPE_KIND_function_type;
+
+	// Check if this template belongs to a function's name
+	// Case 1: Direct child of function_type
+	if (node->parent && node->parent->tag == CP_DEM_TYPE_KIND_function_type) {
+		return node->tag == CP_DEM_TYPE_KIND_name ||
+			node->tag == CP_DEM_TYPE_KIND_nested_name ||
+			node->tag == CP_DEM_TYPE_KIND_name_with_template_args;
+	}
+
+	// Case 2: Part of name_with_template_args which is part of function_type
+	if (node->parent &&
+		node->parent->tag == CP_DEM_TYPE_KIND_name_with_template_args &&
+		node->parent->parent &&
+		node->parent->parent->tag == CP_DEM_TYPE_KIND_function_type) {
+		return true;
+	}
+
+	return false;
 }
 
 bool rule_template_args(DemParser *p, const DemNode *parent, DemResult *r) {
