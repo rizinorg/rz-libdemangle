@@ -139,23 +139,24 @@
 
 #define context_save(N) \
 	SAVE_POS(N); \
-	__attribute__((unused)) size_t save_children_len_##N = node->children ? VecPDemNode_len(node->children) : 0; \
-	__attribute__((unused)) size_t save_types_len_##N = VecPDemNode_len(&p->detected_types);
+	__attribute__((unused)) DemNode saved_node_##N = *node; \
+	__attribute__((unused)) size_t saved_types_len_##N = VecPDemNode_len(&p->detected_types);
 
 #define context_restore_node(N) \
 	if (node->children) { \
-		while (VecPDemNode_len(node->children) > save_children_len_##N) { \
-			PDemNode *node_ptr = VecPDemNode_at(node->children, VecPDemNode_len(node->children) - 1); \
+		while (VecPDemNode_len(node->children) > VecPDemNode_len(saved_node_##N.children)) { \
+			PDemNode *node_ptr = VecPDemNode_pop(node->children); \
 			DemNode *child = node_ptr ? *node_ptr : NULL; \
 			if (child) { \
 				DemNode_dtor(child); \
 			} \
-			VecPDemNode_pop(node->children); \
 		} \
-	}
+	} \
+	*node = saved_node_##N;
+
 #define context_restore_parser(N) \
 	if (p) { \
-		while (VecPDemNode_len(&p->detected_types) > save_types_len_##N) { \
+		while (VecPDemNode_len(&p->detected_types) > saved_types_len_##N) { \
 			size_t last_idx = VecPDemNode_len(&p->detected_types) - 1; \
 			PDemNode *node_ptr = VecPDemNode_at(&p->detected_types, last_idx); \
 			DemNode *type_node = node_ptr ? *node_ptr : NULL; \

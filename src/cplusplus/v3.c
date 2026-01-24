@@ -22,7 +22,17 @@
 // Forward declaration
 void ast_pp(DemNode *node, DemString *out);
 
-typedef void (*AST_PP_FN)(DemNode *, DemString *);
+struct PPFnContext_t;
+
+typedef void (*AST_PP_FN)(struct PPFnContext_t *, DemString *);
+
+typedef struct PPFnContext_t {
+	DemNode *fn;
+	DemNode *mod;
+	AST_PP_FN pp_mod;
+	DemNode *quals;
+	AST_PP_FN pp_quals;
+} PPFnContext;
 
 static void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out) {
 	if (qualifiers.is_const) {
@@ -85,7 +95,7 @@ static bool extract_base_class_name(PDemNode node, PDemNode *out_name) {
 
 // Helper to check if a type node ultimately wraps a function type
 // This walks through type wrappers (pointer, reference, qualified) to find the innermost type
-static bool extract_function_pointer_type(DemNode *node, DemNode **out_func_node) {
+static bool extract_function_type(DemNode *node, DemNode **out_func_node) {
 	if (!node) {
 		return false;
 	}
@@ -98,42 +108,68 @@ static bool extract_function_pointer_type(DemNode *node, DemNode **out_func_node
 	}
 
 	if (node->tag == CP_DEM_TYPE_KIND_type && AST(0)) {
-		return extract_function_pointer_type(AST(0), out_func_node);
+		return extract_function_type(AST(0), out_func_node);
 	}
 
 	if (node->tag == CP_DEM_TYPE_KIND_qualified_type && node->qualified_ty.inner_type) {
-		return extract_function_pointer_type(node->qualified_ty.inner_type, out_func_node);
+		return extract_function_type(node->qualified_ty.inner_type, out_func_node);
 	}
 
 	return false;
 }
 
-static void pp_function_ty(DemNode *node, DemString *out, AST_PP_FN pp_name, DemNode *outer_node) {
-	if (!node) {
+static void pp_function_ty_mod_return_fn(PPFnContext *, DemString *);
+static void pp_function_ty_quals(PPFnContext *ctx, DemString *out);
+
+static void pp_function_ty(PPFnContext *ctx, DemString *out) {
+	if (!ctx || !ctx->fn || !out) {
 		return;
 	}
 
-	const FunctionTy *ft = &node->fn_ty;
+	DemNode *node = ctx->fn;
+	FunctionTy *ft = &node->fn_ty;
 
 	// Print return type
+	DemNode *ret_fn_ty = NULL;
+	if (ft->ret && extract_function_type(ft->ret, &ret_fn_ty)) {
+		DemNode *saved_ret = ft->ret;
+		ft->ret = NULL;
+		PPFnContext inner_ctx = {
+			.fn = ret_fn_ty,
+			.quals = saved_ret,
+			.pp_quals = pp_function_ty_quals,
+			.mod = node,
+			.pp_mod = pp_function_ty_mod_return_fn,
+		};
+		pp_function_ty(&inner_ctx, out);
+		ft->ret = saved_ret;
+		return;
+	}
+
 	if (ft->ret) {
 		ast_pp(ft->ret, out);
 		dem_string_append(out, " ");
 	}
 
-	if (pp_name) {
+	bool has_mod = ctx && ctx->mod && ctx->pp_mod;
+	bool has_quals = ctx && ctx->quals && ctx->pp_quals;
+	bool has_mod_or_quals = has_mod || has_quals;
+	if (has_mod_or_quals) {
 		dem_string_append(out, "(");
 	}
 	if (ft->name) {
 		ast_pp(ft->name, out);
-		if (pp_name) {
+		if (has_mod_or_quals) {
 			dem_string_append(out, " ");
 		}
 	}
-	if (pp_name) {
-		pp_name(outer_node, out);
+	if (has_quals) {
+		ctx->pp_quals(ctx, out);
 	}
-	if (pp_name) {
+	if (has_mod) {
+		ctx->pp_mod(ctx, out);
+	}
+	if (has_mod_or_quals) {
 		dem_string_append(out, ")");
 	}
 
@@ -154,11 +190,19 @@ static void pp_function_ty(DemNode *node, DemString *out, AST_PP_FN pp_name, Dem
 	pp_ref_qualifiers(ft->ref_qualifiers, out);
 }
 
+static void pp_function_ty_mod_return_fn(PPFnContext *ctx, DemString *out) {
+	PPFnContext inner_ctx = {
+		.fn = ctx->mod
+	};
+	pp_function_ty(&inner_ctx, out);
+}
+
 // Helper to print pointer/reference/qualifier decorators
-static void pp_function_ty_modifier_quals(DemNode *node, DemString *out) {
-	if (!node) {
+static void pp_function_ty_quals(PPFnContext *ctx, DemString *out) {
+	if (!ctx || !ctx->quals) {
 		return;
 	}
+	DemNode *node = ctx->quals;
 
 	if (node->tag == CP_DEM_TYPE_KIND_function_type) {
 		// Reached the function type - stop recursion
@@ -168,7 +212,9 @@ static void pp_function_ty_modifier_quals(DemNode *node, DemString *out) {
 	if (node->tag == CP_DEM_TYPE_KIND_type) {
 		// Recurse first to get inner decorators
 		if (AST(0)) {
-			pp_function_ty_modifier_quals(AST(0), out);
+			PPFnContext inner_ctx = *ctx;
+			inner_ctx.quals = AST(0);
+			pp_function_ty_quals(&inner_ctx, out);
 		}
 
 		// Then add our decorator
@@ -182,7 +228,9 @@ static void pp_function_ty_modifier_quals(DemNode *node, DemString *out) {
 	} else if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
 		// Recurse first
 		if (node->qualified_ty.inner_type) {
-			pp_function_ty_modifier_quals(node->qualified_ty.inner_type, out);
+			PPFnContext inner_ctx = *ctx;
+			inner_ctx.quals = node->qualified_ty.inner_type;
+			pp_function_ty_quals(&inner_ctx, out);
 		}
 
 		// Then add qualifiers
@@ -190,9 +238,9 @@ static void pp_function_ty_modifier_quals(DemNode *node, DemString *out) {
 	}
 }
 
-static void pp_function_ty_modifier_pointer_to_member_type(DemNode *node, DemString *out) {
-	if (node) {
-		ast_pp(node, out);
+static void pp_function_ty_mod_pointer_to_member_type(PPFnContext *ctx, DemString *out) {
+	if (ctx && ctx->mod) {
+		ast_pp(ctx->mod, out);
 	}
 	dem_string_append(out, "::*");
 }
@@ -211,7 +259,10 @@ void ast_pp(DemNode *node, DemString *out) {
 		break;
 
 	case CP_DEM_TYPE_KIND_function_type: {
-		pp_function_ty(node, out, NULL, NULL);
+		PPFnContext ctx = {
+			.fn = node,
+		};
+		pp_function_ty(&ctx, out);
 		break;
 	}
 	case CP_DEM_TYPE_KIND_module_name:
@@ -340,9 +391,14 @@ void ast_pp(DemNode *node, DemString *out) {
 	case CP_DEM_TYPE_KIND_type: {
 		// Check if this is a function pointer (or pointer/reference/qualified wrapping a function pointer)
 		DemNode *func_node = NULL;
-		if (extract_function_pointer_type(node, &func_node)) {
+		if (extract_function_type(node, &func_node)) {
 			// This is a function pointer - use special formatting
-			pp_function_ty(func_node, out, pp_function_ty_modifier_quals, node);
+			PPFnContext ctx = {
+				.fn = func_node,
+				.quals = node,
+				.pp_quals = pp_function_ty_quals,
+			};
+			pp_function_ty(&ctx, out);
 		} else {
 			// Regular type - print children and add decorator
 			vec_foreach_ptr(node->children, child_ptr, {
@@ -367,7 +423,12 @@ void ast_pp(DemNode *node, DemString *out) {
 		// For member function pointers: return_type (Class::*)(params) cv-qualifiers ref-qualifiers
 		// For member data pointers: type Class::*
 		if (AST(1) && AST(1)->tag == CP_DEM_TYPE_KIND_function_type) {
-			pp_function_ty(AST(1), out, pp_function_ty_modifier_pointer_to_member_type, AST(0));
+			PPFnContext ctx = {
+				.pp_mod = pp_function_ty_mod_pointer_to_member_type,
+				.mod = node,
+				.fn = AST(1),
+			};
+			pp_function_ty(&ctx, out);
 		} else {
 			// Member data pointer
 			if (AST(1)) {
@@ -1621,9 +1682,11 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (PASSTHRU_RULE(rule_builtin_type)) {
 		TRACE_RETURN_SUCCESS;
 	}
+	context_restore(rule);
 	if (PASSTHRU_RULE(rule_function_type)) {
 		goto beach;
 	}
+	context_restore(rule);
 	switch (PEEK()) {
 	case 'r':
 	case 'V':
@@ -2034,14 +2097,12 @@ bool rule_template_arg(DemParser *p, const DemNode *parent, DemResult *r) {
 	}
 	case 'T': {
 		if (!is_template_param_decl(p)) {
-			MUST_MATCH(CALL_RULE(rule_type));
-			TRACE_RETURN_SUCCESS;
+			RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_type));
 		}
 		DEM_UNREACHABLE;
 	}
 	default:
-		MUST_MATCH(CALL_RULE(rule_type));
-		TRACE_RETURN_SUCCESS;
+		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_type));
 		break;
 	}
 	RULE_FOOT(template_arg);
@@ -2089,11 +2150,11 @@ bool rule_template_args(DemParser *p, const DemNode *parent, DemResult *r) {
 			TRACE_RETURN_FAILURE();
 		}
 		if (tag_templates) {
-			DemNode *node_arg_cloned = (DemNode *)malloc(sizeof(DemNode));
+			DemNode *node_arg_cloned = DemNode_clone(child_r.output);
 			if (node_arg_cloned) {
-				DemNode_init(node_arg_cloned);
-				DemNode_copy(node_arg_cloned, child_r.output);
 				VecF(PDemNode, append)(p->outer_template_params, &node_arg_cloned);
+			} else {
+				TRACE_RETURN_FAILURE();
 			}
 		}
 		AST_APPEND_NODE(child_r.output);
@@ -2102,7 +2163,6 @@ bool rule_template_args(DemParser *p, const DemNode *parent, DemResult *r) {
 		}
 	}
 	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(template_args);
 }
 
 bool rule_template_param_decl(DemParser *p, const DemNode *parent, DemResult *r) {
@@ -2260,17 +2320,18 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 #endif
 	// Initialize DemParser
 	DemParser parser = { 0 };
-	DemParser_init(&parser, mangled);
+	DemParser *p = &parser;
+	DemParser_init(p, mangled);
 	parser.trace = trace;
 	DemResult dem_result = { 0 };
-	if (!rule(&parser, NULL, &dem_result)) {
+	if (!rule(p, NULL, &dem_result)) {
 		ctx->parser = parser;
 		ctx->result = dem_result;
 		return false;
 	}
-	if (parser.trace && VecPDemNode_len(&parser.detected_types) > 0) {
+	if (parser.trace && VecPDemNode_len(&p->detected_types) > 0) {
 		DemString buf = { 0 };
-		vec_foreach_ptr_i(&parser.detected_types, i, sub_ptr, {
+		vec_foreach_ptr_i(&p->detected_types, i, sub_ptr, {
 			DemNode *sub = sub_ptr ? *sub_ptr : NULL;
 			dem_string_appendf(&buf, "[%lu] = ", i);
 			ast_pp(sub, &buf);

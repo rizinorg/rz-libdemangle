@@ -104,6 +104,9 @@ bool append_type(DemParser *p, const DemNode *x) {
 	PDemNode *slot = VecF(PDemNode, append)(&p->detected_types, &new_node);
 	if (!slot) {
 		DemNode_dtor(new_node);
+		if (p->trace) {
+			fprintf(stderr, "[append_type] FAILED to append type\n");
+		}
 		return false;
 	}
 	return true;
