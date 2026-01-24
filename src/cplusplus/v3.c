@@ -399,6 +399,35 @@ void ast_pp(DemNode *node, DemString *out) {
 				.pp_quals = pp_function_ty_quals,
 			};
 			pp_function_ty(&ctx, out);
+		} else if ((node->subtag == POINTER_TYPE || node->subtag == REFERENCE_TYPE || node->subtag == RVALUE_REFERENCE_TYPE) &&
+			AST(0) && (AST(0)->tag == CP_DEM_TYPE_KIND_array_type || (AST(0)->tag == CP_DEM_TYPE_KIND_type && AST(0)->subtag == ARRAY_TYPE))) {
+			// Special case: pointer/reference to array
+			// Format as: element_type (*|&|&&) [dimension]
+			DemNode *array_node = AST(0);
+			// Print array element type (child 1 of array)
+			if (array_node->children && VecPDemNode_len(array_node->children) > 1) {
+				DemNode *element_type = *VecPDemNode_at(array_node->children, 1);
+				if (element_type) {
+					ast_pp(element_type, out);
+				}
+			}
+			dem_string_append(out, " (");
+			if (node->subtag == POINTER_TYPE) {
+				dem_string_append(out, "*");
+			} else if (node->subtag == REFERENCE_TYPE) {
+				dem_string_append(out, "&");
+			} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
+				dem_string_append(out, "&&");
+			}
+			dem_string_append(out, ") [");
+			// Print array dimension (child 0 of array)
+			if (array_node->children && VecPDemNode_len(array_node->children) > 0) {
+				DemNode *dimension = *VecPDemNode_at(array_node->children, 0);
+				if (dimension) {
+					ast_pp(dimension, out);
+				}
+			}
+			dem_string_append(out, "]");
 		} else {
 			// Regular type - print children and add decorator
 			vec_foreach_ptr(node->children, child_ptr, {
@@ -413,6 +442,19 @@ void ast_pp(DemNode *node, DemString *out) {
 			}
 		}
 	} break;
+
+	case CP_DEM_TYPE_KIND_array_type:
+		// Array type: element_type [dimension]
+		// Child 0: dimension (optional), Child 1: element type
+		if (AST(1)) {
+			ast_pp(AST(1), out);
+		}
+		dem_string_append(out, " [");
+		if (AST(0)) {
+			ast_pp(AST(0), out);
+		}
+		dem_string_append(out, "]");
+		break;
 
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		DEM_UNREACHABLE;
@@ -1078,6 +1120,67 @@ bool rule_expr_primary(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRY_MATCH(READ_STR("b0E") && AST_APPEND_STR("false"));
 	TRY_MATCH(READ_STR("b1E") && AST_APPEND_STR("true"));
 
+	// For simple builtin integer types, format as literal with suffix
+	// Examples: Lj4E -> 4u, Li5E -> 5, Lm6E -> 6ul
+	context_save(literal);
+	char type_code = PEEK();
+	const char *suffix = NULL;
+	bool is_literal_int = false;
+
+	switch (type_code) {
+	case 'i': // int
+		suffix = "";
+		is_literal_int = true;
+		break;
+	case 'j': // unsigned int
+		suffix = "u";
+		is_literal_int = true;
+		break;
+	case 'l': // long
+		suffix = "l";
+		is_literal_int = true;
+		break;
+	case 'm': // unsigned long
+		suffix = "ul";
+		is_literal_int = true;
+		break;
+	case 'x': // long long
+		suffix = "ll";
+		is_literal_int = true;
+		break;
+	case 'y': // unsigned long long
+		suffix = "ull";
+		is_literal_int = true;
+		break;
+	case 's': // short
+		suffix = "";
+		is_literal_int = true;
+		break;
+	case 't': // unsigned short
+		suffix = "u";
+		is_literal_int = true;
+		break;
+	default:
+		break;
+	}
+
+	if (is_literal_int) {
+		ADV(); // skip type code
+		bool is_negative = READ('n');
+		ut64 num = 0;
+		if (parse_non_neg_integer(p, &num) && READ('E')) {
+			// Format the number with suffix
+			char buf[64];
+			int len = snprintf(buf, sizeof(buf), "%s%llu%s",
+				is_negative ? "-" : "", (unsigned long long)num, suffix);
+			if (len > 0 && len < (int)sizeof(buf)) {
+				AST_APPEND_STRN(buf, len);
+				TRACE_RETURN_SUCCESS;
+			}
+		}
+	}
+	context_restore(literal);
+
 	// For other types: L<type><number>E -> (<type>)<number> or just <number>
 	MUST_MATCH(CALL_RULE(rule_type));
 	TRY_MATCH(CALL_RULE(rule_number) && READ('E'));
@@ -1690,14 +1793,14 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	case 'V':
 	case 'K':
 	case 'U': {
-		CALL_RULE(rule_qualified_type);
+		MUST_MATCH(PASSTHRU_RULE(rule_qualified_type));
 		break;
 	}
 	case 'M':
-		CALL_RULE(rule_pointer_to_member_type);
+		MUST_MATCH(PASSTHRU_RULE(rule_pointer_to_member_type));
 		break;
 	case 'A':
-		CALL_RULE(rule_array_type);
+		MUST_MATCH(PASSTHRU_RULE(rule_array_type));
 		break;
 	case 'C':
 		ADV();
@@ -1735,19 +1838,18 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	case 'D':
 		// Dp <type>       # pack expansion (C++0x)
 		if (PEEK_AT(1) == 'p') {
-			context_save(0);
 			ADV_BY(2);
-			CTX_MUST_MATCH(0, CALL_RULE(rule_type));
+			MUST_MATCH(PASSTHRU_RULE(rule_type));
 			break;
 		}
 		if (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T') {
-			MUST_MATCH(CALL_RULE(rule_decltype));
+			MUST_MATCH(PASSTHRU_RULE(rule_decltype));
 			break;
 		}
 		// fallthrough
 	case 'T': {
 		if (strchr("sue", PEEK_AT(1)) != NULL) {
-			MUST_MATCH(CALL_RULE(rule_class_enum_type));
+			MUST_MATCH(PASSTHRU_RULE(rule_class_enum_type));
 			break;
 		}
 		MUST_MATCH(CALL_RULE(rule_template_param));
@@ -1790,7 +1892,7 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 		// fallthrough
 	}
 	default:
-		CALL_RULE(rule_class_enum_type);
+		MUST_MATCH(PASSTHRU_RULE(rule_class_enum_type));
 		break;
 	}
 
