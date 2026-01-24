@@ -1181,11 +1181,31 @@ bool rule_expr_primary(DemParser *p, const DemNode *parent, DemResult *r) {
 	}
 	context_restore(literal);
 
-	// For other types: L<type><number>E -> (<type>)<number> or just <number>
-	MUST_MATCH(CALL_RULE(rule_type));
-	TRY_MATCH(CALL_RULE(rule_number) && READ('E'));
-	TRY_MATCH((CALL_RULE(rule_float)) && READ('_') && (CALL_RULE(rule_float)) && READ('E'));
-	TRY_MATCH((CALL_RULE(rule_float)) && READ('E'));
+	// For other types: L<type><number>E -> (<type>)<number>
+	// We need to append: "(" type ")" number
+	// First append "("
+	AST_APPEND_STR("(");
+	// Then parse and append the type
+	if (CALL_RULE(rule_type)) {
+		// Append ")"
+		AST_APPEND_STR(")");
+		// Now try to parse and append the number
+		bool is_negative = READ('n');
+		ut64 num = 0;
+		if (parse_non_neg_integer(p, &num) && READ('E')) {
+			// Format and append the number
+			char buf[64];
+			int len = snprintf(buf, sizeof(buf), "%s%llu",
+				is_negative ? "-" : "", (unsigned long long)num);
+			if (len > 0 && len < (int)sizeof(buf)) {
+				AST_APPEND_STRN(buf, len);
+			}
+			TRACE_RETURN_SUCCESS;
+		}
+		// If number parsing failed, try float
+		TRY_MATCH((CALL_RULE(rule_float)) && READ('E'));
+		TRY_MATCH((CALL_RULE(rule_float)) && READ('_') && (CALL_RULE(rule_float)) && READ('E'));
+	}
 	RULE_FOOT(expr_primary);
 }
 
