@@ -1817,9 +1817,7 @@ bool rule_qualified_type(DemParser *p, const DemNode *parent, DemResult *r) {
 		TRACE_RETURN_SUCCESS;
 	}
 
-	if (!parse_cv_qualifiers(p, &node->qualified_ty.qualifiers)) {
-		TRACE_RETURN_FAILURE();
-	}
+	parse_cv_qualifiers(p, &node->qualified_ty.qualifiers);
 	MUST_MATCH(CALL_RULE_N(node->qualified_ty.inner_type, rule_type));
 	TRACE_RETURN_SUCCESS;
 }
@@ -2431,8 +2429,7 @@ bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 	// Parse function parameters using match_many to create a many node
 	// 'v' means void (no parameters), otherwise parse parameter list
 	if (!READ('v')) {
-		CALL_MANY1_N(node->fn_ty.params, rule_type, ", ");
-		if (!node->fn_ty.params) {
+		if (!CALL_MANY1_N(node->fn_ty.params, rule_type, ", ")) {
 			TRACE_RETURN_FAILURE();
 		}
 	}
