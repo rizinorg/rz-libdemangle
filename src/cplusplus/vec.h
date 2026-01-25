@@ -216,7 +216,7 @@
 	__attribute__((unused)) static inline T *VecF(T, data)(Vec##T * self) { \
 		return self ? self->data : NULL; \
 	} \
-	__attribute__((unused)) static inline size_t VecF(T, len)(Vec##T * self) { \
+	__attribute__((unused)) static inline size_t VecF(T, len)(const Vec##T * self) { \
 		return self ? self->length : 0; \
 	} \
 	__attribute__((unused)) static inline size_t VecF(T, cap)(Vec##T * self) { \

@@ -683,7 +683,7 @@ bool rule_number(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r, PDemNode scope) {
+bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns, PDemNode scope) {
 	RULE_HEAD(ctor_dtor_name);
 
 	// NOTE: reference taken from https://github.com/rizinorg/rz-libdemangle/blob/c2847137398cf8d378d46a7510510aaefcffc8c6/src/cxx/cp-demangle.c#L2143
@@ -694,9 +694,11 @@ bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r, PDem
 		}
 		ADV();
 		if (IsInherited) {
-			MUST_MATCH(CALL_RULE(rule_name));
+			MUST_MATCH(CALL_RULE_VA(rule_name, ns));
 		}
-		p->is_conversion_ctor_dtor = true;
+		if (ns) {
+			ns->is_conversion_ctor_dtor = true;
+		}
 		node->ctor_dtor_name.name = scope;
 		TRACE_RETURN_SUCCESS;
 	}
@@ -706,7 +708,9 @@ bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r, PDem
 			TRACE_RETURN_FAILURE();
 		}
 		ADV();
-		p->is_conversion_ctor_dtor = true;
+		if (ns) {
+			ns->is_conversion_ctor_dtor = true;
+		}
 		node->ctor_dtor_name.is_dtor = true;
 		node->ctor_dtor_name.name = scope;
 		TRACE_RETURN_SUCCESS;
@@ -740,7 +744,7 @@ bool rule_module_name(DemParser *p, const DemNode *parent, DemResult *r) {
 }
 
 bool rule_unqualified_name(DemParser *p, const DemNode *parent, DemResult *r,
-	DemNode *scope, DemNode *module) {
+	NameState *ns, DemNode *scope, DemNode *module) {
 	RULE_HEAD(unqualified_name);
 
 	bool is_member_like_friend = scope && READ('F');
@@ -758,11 +762,11 @@ bool rule_unqualified_name(DemParser *p, const DemNode *parent, DemResult *r,
 		if (scope == NULL || module != NULL) {
 			TRACE_RETURN_FAILURE();
 		}
-		CALL_RULE_N_VA(result, rule_ctor_dtor_name, scope);
+		CALL_RULE_N_VA(result, rule_ctor_dtor_name, ns, scope);
 	} else if (isdigit(PEEK())) {
 		CALL_RULE_N(result, rule_source_name);
 	} else {
-		CALL_RULE_N(result, rule_operator_name);
+		CALL_RULE_N_VA(result, rule_operator_name, ns);
 	}
 
 	if (result && module) {
@@ -819,7 +823,7 @@ bool rule_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, bool *is_subst) {
+bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns, bool *is_subst) {
 	RULE_HEAD(unscoped_name);
 
 	DemNode *std_node = NULL;
@@ -850,7 +854,7 @@ bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, bool 
 	}
 
 	if (!result || std_node) {
-		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE_VA(rule_unqualified_name, std_node, module));
+		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE_VA(rule_unqualified_name, ns, std_node, module));
 	}
 	if (result) {
 		DemNode_move(node, result);
@@ -864,7 +868,6 @@ bool rule_unresolved_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRY_MATCH((CALL_RULE(rule_template_param)) && (((CALL_RULE(rule_template_args))) || true) && AST_APPEND_TYPE);
 	TRY_MATCH((CALL_RULE(rule_decltype)) && AST_APPEND_TYPE);
 	TRY_MATCH(CALL_RULE(rule_substitution));
-	TRY_MATCH(CALL_RULE(rule_name));
 	RULE_FOOT(unresolved_type);
 }
 
@@ -1093,7 +1096,7 @@ const char *opinfo_get_symbol(const OperatorInfo *opinfo) {
 	return opinfo->Name;
 }
 
-bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns) {
 	RULE_HEAD(operator_name);
 	const OperatorInfo *Op = parse_operator_info(p);
 	if (Op) {
@@ -1102,7 +1105,9 @@ bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r) {
 			p->not_parse_template_args = true;
 			MUST_MATCH(CALL_RULE_N(node->conv_op_ty.ty, rule_type));
 			p->not_parse_template_args = old_not_parse;
-			p->is_conversion_ctor_dtor = true;
+			if (ns) {
+				ns->is_conversion_ctor_dtor = true;
+			}
 			node->tag = CP_DEM_TYPE_KIND_conv_op_ty;
 			TRACE_RETURN_SUCCESS;
 		}
@@ -1371,7 +1376,7 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 		case Member: // dt/pt: expr.name / expr->name
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR(Op->Name);
-			MUST_MATCH(CALL_RULE(rule_base_unresolved_name));
+			MUST_MATCH(CALL_RULE(rule_expression));
 			TRACE_RETURN_SUCCESS;
 		case New: // nw/na
 		case Del: // dl/da
@@ -1658,13 +1663,13 @@ bool rule_special_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		case 'R':
 			ADV();
 			AST_APPEND_STR("reference temporary for ");
-			MUST_MATCH(CALL_RULE(rule_name));
+			MUST_MATCH(CALL_RULE_VA(rule_name, NULL));
 			parse_seq_id(p, NULL);
 			MUST_MATCH(READ('_'));
 			break;
 		case 'V':
 			ADV();
-			MUST_MATCH(AST_APPEND_STR("guard variable for ") && CALL_RULE(rule_name));
+			MUST_MATCH(AST_APPEND_STR("guard variable for ") && CALL_RULE_VA(rule_name, NULL));
 			break;
 		case 'A':
 			ADV();
@@ -1796,7 +1801,7 @@ bool rule_source_name(DemParser *p, const DemNode *parent, DemResult *r) {
 
 bool rule_class_enum_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(class_enum_type);
-	TRY_MATCH(((READ_STR("Ts") || READ_STR("Tu") || READ_STR("Te")) || true) && (CALL_RULE(rule_name)));
+	TRY_MATCH(((READ_STR("Ts") || READ_STR("Tu") || READ_STR("Te")) || true) && (CALL_RULE_VA(rule_name, NULL)));
 	RULE_FOOT(class_enum_type);
 }
 
@@ -1918,7 +1923,7 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 		if (PEEK_AT(1) != 't') {
 			bool is_subst = false;
 			DemNode *result = NULL;
-			CALL_RULE_N_VA(result, rule_unscoped_name, &is_subst);
+			CALL_RULE_N_VA(result, rule_unscoped_name, NULL, &is_subst);
 			if (!result) {
 				TRACE_RETURN_FAILURE();
 			}
@@ -1967,7 +1972,7 @@ bool rule_base_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r
 		TRACE_RETURN_SUCCESS;
 	}
 	READ_STR("on");
-	MUST_MATCH(CALL_RULE(rule_operator_name));
+	MUST_MATCH(CALL_RULE_VA(rule_operator_name, NULL));
 	if (PEEK() == 'I') {
 		MUST_MATCH(CALL_RULE(rule_template_args));
 	}
@@ -1975,7 +1980,7 @@ bool rule_base_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r
 	RULE_FOOT(base_unresolved_name);
 }
 
-bool rule_local_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_local_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns) {
 	RULE_HEAD(local_name);
 	if (!READ('Z')) {
 		TRACE_RETURN_FAILURE();
@@ -2002,13 +2007,13 @@ bool rule_local_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		if (!READ('_')) {
 			TRACE_RETURN_FAILURE();
 		}
-		CALL_RULE_N(node->local_name.entry, rule_name);
+		CALL_RULE_N_VA(node->local_name.entry, rule_name, ns);
 		if (!node->local_name.entry) {
 			TRACE_RETURN_FAILURE();
 		}
 		TRACE_RETURN_SUCCESS;
 	}
-	CALL_RULE_N(node->local_name.entry, rule_name);
+	CALL_RULE_N_VA(node->local_name.entry, rule_name, ns);
 	if (!node->local_name.entry) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -2090,18 +2095,18 @@ bool rule_destructor_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(destructor_name);
 }
 
-bool rule_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns) {
 	RULE_HEAD(name);
 	if (PEEK() == 'N') {
-		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_nested_name));
+		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE_VA(rule_nested_name, ns));
 	}
 	if (PEEK() == 'Z') {
-		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_local_name));
+		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE_VA(rule_local_name, ns));
 	}
 
 	DemNode *result = NULL;
 	bool is_subst = false;
-	CALL_RULE_N_VA(result, rule_unscoped_name, &is_subst);
+	CALL_RULE_N_VA(result, rule_unscoped_name, ns, &is_subst);
 	if (!result) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -2117,6 +2122,9 @@ bool rule_name(DemParser *p, const DemNode *parent, DemResult *r) {
 			DemNode_dtor(result);
 			TRACE_RETURN_FAILURE();
 		}
+		if (ns) {
+			ns->end_with_template_args = true;
+		}
 		node->tag = CP_DEM_TYPE_KIND_name_with_template_args;
 		node->name_with_template_args.name = result;
 		node->name_with_template_args.template_args = ta;
@@ -2130,7 +2138,7 @@ bool rule_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns) {
 	RULE_HEAD(nested_name);
 	if (!READ('N')) {
 		TRACE_RETURN_FAILURE();
@@ -2146,6 +2154,9 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 
 	DemNode *ast_node = NULL;
 	while (!READ('E')) {
+		if (ns) {
+			ns->end_with_template_args = false;
+		}
 		if (PEEK() == 'T') {
 			if (ast_node != NULL) {
 				goto fail;
@@ -2160,6 +2171,9 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 			}
 			DemNode *ta = NULL;
 			MUST_MATCH(CALL_RULE_N(ta, rule_template_args));
+			if (ns) {
+				ns->end_with_template_args = true;
+			}
 			ast_node = make_name_with_template_args(saved_pos_rule, CUR(), ast_node, ta);
 		} else if (PEEK() == 'D' && (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T')) {
 			if (ast_node != NULL) {
@@ -2192,7 +2206,7 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r) {
 				}
 			}
 			DemNode *qual_name = NULL;
-			CALL_RULE_N_VA(qual_name, rule_unqualified_name, ast_node, module);
+			CALL_RULE_N_VA(qual_name, rule_unqualified_name, ns, ast_node, module);
 			if (!qual_name) {
 				goto fail;
 			}
@@ -2421,7 +2435,9 @@ bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 	// Override tag to function_type since encoding produces function signatures
 	node->tag = CP_DEM_TYPE_KIND_function_type;
 	// Parse: name, [return_type], parameters
-	MUST_MATCH(CALL_RULE_N(node->fn_ty.name, rule_name));
+	NameState ns = { 0 };
+	NameState_init(&ns, p);
+	MUST_MATCH(CALL_RULE_N_VA(node->fn_ty.name, rule_name, &ns));
 	if (!resolve_forward_template_refs(p, node->fn_ty.name)) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -2433,7 +2449,7 @@ bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 		TRACE_RETURN_SUCCESS;
 	}
 
-	if (node->fn_ty.name->tag == CP_DEM_TYPE_KIND_name_with_template_args && !p->is_conversion_ctor_dtor) {
+	if (ns.end_with_template_args && !ns.is_conversion_ctor_dtor) {
 		// Template functions must have an explicit return type
 		// Exception: conversion operators don't have explicit return types
 		CALL_RULE_N(node->fn_ty.ret, rule_type);

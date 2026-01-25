@@ -276,6 +276,19 @@
 		_success; \
 	})
 
+#define CALL_RULE_VA(rule_fn, ...) \
+	({ \
+		DemResult _child_result = { 0 }; \
+		bool _success = (rule_fn)(p, node, &_child_result, __VA_ARGS__); \
+		if (_success && _child_result.output) { \
+			AST_APPEND_NODE(_child_result.output); \
+			_child_result.output = NULL; \
+		} else { \
+			DemResult_deinit(&_child_result); \
+		} \
+		_success; \
+	})
+
 #define CALL_RULE_N_VA(N, rule_fn, ...) \
 	({ \
 		DemResult _child_result = { 0 }; \

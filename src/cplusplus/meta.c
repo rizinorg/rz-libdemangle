@@ -81,6 +81,16 @@ void DemParser_deinit(DemParser *p) {
 	memset(p, 0, sizeof(DemParser));
 }
 
+void NameState_init(NameState *ns, const DemParser *p) {
+	if (!ns || !p) {
+		return;
+	}
+	memset(ns, 0, sizeof(NameState));
+	ns->is_conversion_ctor_dtor = false;
+	ns->end_with_template_args = false;
+	ns->fwd_template_ref_begin = VecPForwardTemplateRef_len(&p->forward_template_refs);
+}
+
 void DemResult_deinit(DemResult *r) {
 	if (!r) {
 		return;

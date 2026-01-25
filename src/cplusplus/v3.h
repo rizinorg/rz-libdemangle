@@ -12,11 +12,14 @@
 void ast_pp(DemNode *node, DemString *out);
 char *demangle_rule(const char *mangled, DemRule rule, CpDemOptions opts);
 
+bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns);
+bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns);
+bool rule_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns);
+bool rule_local_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns);
+
 // Rule declarations
 DECL_RULE(mangled_name);
 DECL_RULE(encoding);
-DECL_RULE(name);
-DECL_RULE(nested_name);
 DECL_RULE(template_param);
 DECL_RULE(decltype);
 DECL_RULE(template_prefix);
@@ -25,7 +28,6 @@ DECL_RULE(number);
 DECL_RULE(unnamed_type_name);
 DECL_RULE(abi_tag);
 DECL_RULE(abi_tags);
-DECL_RULE(operator_name);
 DECL_RULE(type);
 DECL_RULE(builtin_type);
 DECL_RULE(expression);
@@ -54,7 +56,6 @@ DECL_RULE(template_args);
 DECL_RULE(template_arg);
 DECL_RULE(substitution);
 DECL_RULE(seq_id);
-DECL_RULE(local_name);
 DECL_RULE(discriminator);
 DECL_RULE(vendor_specific_suffix);
 DECL_RULE(special_name);

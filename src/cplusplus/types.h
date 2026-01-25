@@ -310,11 +310,18 @@ typedef struct DemParser {
 	VecT(PForwardTemplateRef) forward_template_refs;
 	CvQualifiers cv_qualifiers;
 	RefQualifiers ref_qualifiers;
-	bool is_conversion_ctor_dtor;
-	bool not_parse_template_args;
 	bool pack_expansion;
+	bool not_parse_template_args;
 	bool trace;
 } DemParser;
+
+typedef struct {
+	bool is_conversion_ctor_dtor;
+	bool end_with_template_args;
+	size_t fwd_template_ref_begin;
+} NameState;
+
+void NameState_init(NameState *ns, const DemParser *p);
 
 /**
  * Error codes for parsing failures
