@@ -8,6 +8,8 @@
 #include "types.h"
 #include "vec.h"
 
+void ast_pp(DemNode *node, DemString *out);
+
 void NodeList_copy(NodeList *dst, const NodeList *src) {
 	if (!(src && dst && src != dst)) {
 		return;
@@ -165,6 +167,12 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 			ref_dst->fwd_template_ref = NULL;
 		}
 
+		if (p->trace) {
+			DemString buf = { 0 };
+			ast_pp(ref_src, &buf);
+			fprintf(stderr, "[resolve_fwd_ref] Resolved L%ld_%ld into node %p %s\n",
+				level, index, ref_dst, dem_string_drain_no_free(&buf));
+		}
 		DemNode_copy(ref_dst, ref_src);
 		// Restore parent pointer
 		ref_dst->parent = parent;

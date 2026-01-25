@@ -300,12 +300,19 @@ void ast_pp(DemNode *node, DemString *out) {
 			ast_pp(node->vendor_ext_qualified_ty.inner_type, out);
 			if (node->vendor_ext_qualified_ty.vendor_ext.buf) {
 				dem_string_append(out, " ");
-				dem_string_append(out, node->vendor_ext_qualified_ty.vendor_ext.buf);
+				dem_string_append_n(out,
+					node->vendor_ext_qualified_ty.vendor_ext.buf,
+					node->vendor_ext_qualified_ty.vendor_ext.len);
 			}
 			if (node->vendor_ext_qualified_ty.template_args) {
 				ast_pp(node->vendor_ext_qualified_ty.template_args, out);
 			}
 		}
+		break;
+
+	case CP_DEM_TYPE_KIND_conv_op_ty:
+		dem_string_append(out, "operator ");
+		ast_pp(node->conv_op_ty.ty, out);
 		break;
 
 	case CP_DEM_TYPE_KIND_many:
@@ -457,7 +464,11 @@ void ast_pp(DemNode *node, DemString *out) {
 		break;
 
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
-		DEM_UNREACHABLE;
+		if (node->fwd_template_ref) {
+			dem_string_appendf(out, "T_%d_%d", node->fwd_template_ref->level, node->fwd_template_ref->index);
+		} else {
+			dem_string_append(out, "T_?_?");
+		}
 		break;
 
 	case CP_DEM_TYPE_KIND_pointer_to_member_type:
@@ -1075,11 +1086,12 @@ bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	const OperatorInfo *Op = parse_operator_info(p);
 	if (Op) {
 		if (Op->Kind == CCast) {
-			p->is_conversion_ctor_dtor = true;
 			bool old_not_parse = p->not_parse_template_args;
 			p->not_parse_template_args = true;
-			CTX_MUST_MATCH(rule, rule_type);
+			MUST_MATCH(CALL_RULE_N(node->conv_op_ty.ty, rule_type));
 			p->not_parse_template_args = old_not_parse;
+			p->is_conversion_ctor_dtor = true;
+			node->tag = CP_DEM_TYPE_KIND_conv_op_ty;
 			TRACE_RETURN_SUCCESS;
 		}
 		if (Op->Kind >= Unnameable) {
@@ -1495,8 +1507,8 @@ bool rule_template_param(DemParser *p, const DemNode *parent, DemResult *r) {
 		node->tag = CP_DEM_TYPE_KIND_fwd_template_ref;
 		VecF(PForwardTemplateRef, append)(&p->forward_template_refs, &node->fwd_template_ref);
 		if (p->trace) {
-			fprintf(stderr, "[template_param] Created forward ref L%ld_%ld\n",
-				level, index);
+			fprintf(stderr, "[template_param] Created forward ref L%ld_%ld to %p\n",
+				level, index, (void *)node);
 		}
 	} else {
 		DemNode_copy(node, t);
@@ -1795,6 +1807,7 @@ bool rule_mangled_name(DemParser *p, const DemNode *parent, DemResult *r) {
 bool rule_qualified_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(qualified_type);
 	if (PEEK() == 'U') {
+		ADV();
 		MUST_MATCH(parse_base_source_name(p, &node->vendor_ext_qualified_ty.vendor_ext.buf, &node->vendor_ext_qualified_ty.vendor_ext.len));
 		if (PEEK() == 'I') {
 			MUST_MATCH(CALL_RULE_N(node->vendor_ext_qualified_ty.template_args, rule_template_args));
@@ -2396,11 +2409,9 @@ bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 	}
 	// Override tag to function_type since encoding produces function signatures
 	node->tag = CP_DEM_TYPE_KIND_function_type;
-	context_save(0);
 	// Parse: name, [return_type], parameters
-	CTX_MUST_MATCH(0, CALL_RULE_N(node->fn_ty.name, rule_name));
+	MUST_MATCH(CALL_RULE_N(node->fn_ty.name, rule_name));
 	if (!resolve_forward_template_refs(p, node->fn_ty.name)) {
-		context_restore(0);
 		TRACE_RETURN_FAILURE();
 	}
 
@@ -2422,7 +2433,6 @@ bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (!READ('v')) {
 		CALL_MANY1_N(node->fn_ty.params, rule_type, ", ");
 		if (!node->fn_ty.params) {
-			context_restore(0);
 			TRACE_RETURN_FAILURE();
 		}
 	}
@@ -2467,8 +2477,12 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 		vec_foreach_ptr_i(&p->detected_types, i, sub_ptr, {
 			DemNode *sub = sub_ptr ? *sub_ptr : NULL;
 			dem_string_appendf(&buf, "[%lu] = ", i);
-			ast_pp(sub, &buf);
-			dem_string_append(&buf, "\n");
+			if (sub) {
+				ast_pp(sub, &buf);
+				dem_string_append(&buf, "\n");
+			} else {
+				dem_string_append(&buf, "(null)\n");
+			}
 		});
 		char *buf_str = dem_string_drain_no_free(&buf);
 		fprintf(stderr, "# substitutions:\n%s\n", buf_str ? buf_str : "(null)");

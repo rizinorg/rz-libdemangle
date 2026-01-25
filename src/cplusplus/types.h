@@ -116,6 +116,7 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_module_name,
 	CP_DEM_TYPE_KIND_name_with_template_args,
 	CP_DEM_TYPE_KIND_closure_ty_name,
+	CP_DEM_TYPE_KIND_conv_op_ty,
 } CpDemTypeKind;
 
 typedef Vec(CpDemTypeKind) CpDemTypeKinds;
@@ -222,6 +223,10 @@ typedef struct {
 	bool is_dtor;
 } CtorDtorName;
 
+typedef struct {
+	PDemNode ty;
+} ConvOpTy;
+
 typedef struct DemNode_t {
 	struct DemNode_t *parent;
 	DemStringView val;
@@ -230,7 +235,7 @@ typedef struct DemNode_t {
 	struct Vec_t(PDemNode) * children; // Moved outside union, used by all types
 
 	union {
-		PForwardTemplateRef  fwd_template_ref;
+		PForwardTemplateRef fwd_template_ref;
 		PrimitiveTy primitive_ty;
 		QualifiedTy qualified_ty;
 		VendorExtQualifiedTy vendor_ext_qualified_ty;
@@ -242,6 +247,7 @@ typedef struct DemNode_t {
 		NestedName nested_name;
 		LocalName local_name;
 		CtorDtorName ctor_dtor_name;
+		ConvOpTy conv_op_ty;
 	};
 } DemNode;
 
