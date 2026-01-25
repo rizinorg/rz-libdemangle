@@ -659,11 +659,15 @@ bool rule_number(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (!(isdigit(PEEK()) || (PEEK() == 'n' && isdigit(PEEK_AT(1))))) {
 		TRACE_RETURN_FAILURE();
 	}
-	READ('n');
+	bool is_negative = READ('n');
 	ut64 num = 0;
 	if (!parse_non_neg_integer(p, &num)) {
 		TRACE_RETURN_FAILURE();
 	}
+	// Format and append the number
+	char buf[64];
+	snprintf(buf, sizeof(buf), "%s%llu", is_negative ? "-" : "", (unsigned long long)num);
+	AST_APPEND_STR(buf);
 	TRACE_RETURN_SUCCESS;
 	RULE_FOOT(number);
 }
@@ -781,7 +785,8 @@ bool rule_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (READ_STR("srN")) {
 		MATCH_AND_DO((CALL_RULE(rule_unresolved_type)) &&
 				(PEEK() == 'I' ? CALL_RULE(rule_template_args) : true) &&
-				CALL_MANY1(rule_unresolved_qualifier_level, "") && READ('E') &&
+				CALL_MANY1(rule_unresolved_qualifier_level, "::") && READ('E') &&
+				AST_APPEND_STR("::") &&
 				CALL_RULE(rule_base_unresolved_name),
 			{});
 	}
@@ -791,12 +796,14 @@ bool rule_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		TRACE_RETURN_SUCCESS
 	}
 	if (isdigit(PEEK())) {
-		MUST_MATCH(CALL_MANY1(rule_unresolved_qualifier_level, "") && READ('E'));
+		MUST_MATCH(CALL_MANY1(rule_unresolved_qualifier_level, "::") && READ('E'));
+		AST_APPEND_STR("::");
 	} else {
 		MUST_MATCH(CALL_RULE(rule_unresolved_type));
 		if (PEEK() == 'I') {
 			MUST_MATCH(CALL_RULE(rule_template_args) && READ('E'));
 		}
+		AST_APPEND_STR("::");
 	}
 	MUST_MATCH(CALL_RULE(rule_base_unresolved_name));
 	TRACE_RETURN_SUCCESS;
@@ -848,6 +855,7 @@ bool rule_unresolved_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRY_MATCH((CALL_RULE(rule_template_param)) && (((CALL_RULE(rule_template_args))) || true) && AST_APPEND_TYPE);
 	TRY_MATCH((CALL_RULE(rule_decltype)) && AST_APPEND_TYPE);
 	TRY_MATCH(CALL_RULE(rule_substitution));
+	TRY_MATCH(CALL_RULE(rule_name));
 	RULE_FOOT(unresolved_type);
 }
 
