@@ -15,6 +15,7 @@
 #include "types.h"
 #include "vec.h"
 #include <ctype.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -1081,6 +1082,20 @@ const OperatorInfo *parse_operator_info(DemParser *p) {
 	return &Ops[lower];
 }
 
+const char *opinfo_get_symbol(const OperatorInfo *opinfo) {
+	if (opinfo->Kind < Unnameable) {
+		if (strncmp(opinfo->Name, "operator", 8) != 0) {
+			DEM_UNREACHABLE;
+			return NULL;
+		}
+		if (*(opinfo->Name + 8) == ' ') {
+			return opinfo->Name + 9; // skip "operator "
+		}
+		return opinfo->Name + 8; // skip "operator"
+	}
+	return opinfo->Name;
+}
+
 bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(operator_name);
 	const OperatorInfo *Op = parse_operator_info(p);
@@ -1317,10 +1332,11 @@ bool rule_fold_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 
 bool rule_prefix_expression(DemParser *p, const DemNode *parent, DemResult *r, const OperatorInfo *op) {
 	RULE_HEAD(expression);
-	AST_APPEND_STR(op->Name);
-	AST_APPEND_STR("(");
-	MUST_MATCH(CALL_RULE(rule_expression));
-	AST_APPEND_STR(")");
+	PDemNode expr = NULL;
+	MUST_MATCH(CALL_RULE_N(expr, rule_expression));
+
+	AST_APPEND_STR(opinfo_get_symbol(op));
+	AST_APPEND_NODE(expr);
 	TRACE_RETURN_SUCCESS;
 }
 
