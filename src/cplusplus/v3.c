@@ -681,7 +681,6 @@ bool rule_number(DemParser *p, const DemNode *parent, DemResult *r) {
 	snprintf(buf, sizeof(buf), "%s%llu", is_negative ? "-" : "", (unsigned long long)num);
 	AST_APPEND_STR(buf);
 	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(number);
 }
 
 bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r, PDemNode scope) {
@@ -1575,7 +1574,7 @@ bool rule_call_offset(DemParser *p, const DemNode *parent, DemResult *r) {
 		TRACE_RETURN_SUCCESS;
 	}
 	if (READ('v')) {
-		MUST_MATCH(CALL_RULE(rule_number) && READ('_') && CALL_RULE(rule_number) && READ('_'));
+		MUST_MATCH(parse_number(p, NULL, true) && READ('_') && parse_number(p, NULL, true) && READ('_'));
 		AST_APPEND_STR("virtual thunk to ");
 		TRACE_RETURN_SUCCESS;
 	}
