@@ -794,16 +794,15 @@ bool rule_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(unresolved_name);
 	(void)READ_STR("gs");
 	if (READ_STR("srN")) {
-		MATCH_AND_DO((CALL_RULE(rule_unresolved_type)) &&
-				(PEEK() == 'I' ? CALL_RULE(rule_template_args) : true) &&
-				CALL_MANY1(rule_unresolved_qualifier_level, "::") && READ('E') &&
-				AST_APPEND_STR("::") &&
-				CALL_RULE(rule_base_unresolved_name),
-			{});
+		RETURN_SUCCESS_OR_FAIL((CALL_RULE(rule_unresolved_type)) &&
+			(PEEK() == 'I' ? CALL_RULE(rule_template_args) : true) &&
+			AST_APPEND_STR("::") &&
+			CALL_MANY1(rule_unresolved_qualifier_level, "::") && READ('E') &&
+			AST_APPEND_STR("::") &&
+			CALL_RULE(rule_base_unresolved_name));
 	}
 	if (!(READ_STR("sr"))) {
 		MUST_MATCH(CALL_RULE(rule_base_unresolved_name));
-
 		TRACE_RETURN_SUCCESS
 	}
 	if (isdigit(PEEK())) {
@@ -818,7 +817,6 @@ bool rule_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	}
 	MUST_MATCH(CALL_RULE(rule_base_unresolved_name));
 	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(unresolved_name);
 }
 
 bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, bool *is_subst) {
