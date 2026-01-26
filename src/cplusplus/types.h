@@ -118,6 +118,8 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_closure_ty_name,
 	CP_DEM_TYPE_KIND_conv_op_ty,
 	CP_DEM_TYPE_KIND_abi_tag_ty,
+	CP_DEM_TYPE_KIND_special_substitution,
+	CP_DEM_TYPE_KIND_expanded_special_substitution,
 } CpDemTypeKind;
 
 typedef Vec(CpDemTypeKind) CpDemTypeKinds;
@@ -130,12 +132,18 @@ typedef struct {
 struct Vec_t(DemNode);
 
 enum {
-	INVALID_TYPE,
+	SUB_TAG_INVALID,
 	POINTER_TYPE,
 	REFERENCE_TYPE,
 	RVALUE_REFERENCE_TYPE,
 	QUALIFIED_TYPE,
 	ARRAY_TYPE,
+	SPECIAL_SUBSTITUTION_ALLOCATOR,
+	SPECIAL_SUBSTITUTION_BASIC_STRING,
+	SPECIAL_SUBSTITUTION_STRING,
+	SPECIAL_SUBSTITUTION_ISTREAM,
+	SPECIAL_SUBSTITUTION_OSTREAM,
+	SPECIAL_SUBSTITUTION_IOSTREAM,
 };
 
 struct DemNode_t;

@@ -55,7 +55,7 @@ bool extract_pack_expansion(DemNode *node, PDemNode *outer_ty, PDemNode *inner_t
 
 	if (node->tag == CP_DEM_TYPE_KIND_parameter_pack_expansion && node->parameter_pack_expansion.ty && outer_ty) {
 		PDemNode ty = node->parameter_pack_expansion.ty;
-		if (ty->tag == CP_DEM_TYPE_KIND_type && ty->subtag != INVALID_TYPE) {
+		if (ty->tag == CP_DEM_TYPE_KIND_type && ty->subtag != SUB_TAG_INVALID) {
 			*outer_ty = ty;
 			return extract_pack_expansion(AST_(ty, 0), NULL, inner_ty);
 		}
@@ -69,7 +69,7 @@ bool extract_pack_expansion(DemNode *node, PDemNode *outer_ty, PDemNode *inner_t
 		*inner_ty = node;
 		return true;
 	}
-	if (node->tag == CP_DEM_TYPE_KIND_type && node->subtag != INVALID_TYPE) {
+	if (node->tag == CP_DEM_TYPE_KIND_type && node->subtag != SUB_TAG_INVALID) {
 		return extract_pack_expansion(AST_(node, 0), outer_ty, inner_ty);
 	}
 	if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
@@ -151,7 +151,7 @@ bool pp_pack_expansion(PPPackExpansionContext *ctx, DemString *out) {
 
 // Helper function to extract the base class name from a ctor/dtor name
 // Recursively unwraps name_with_template_args and nested_name to get the final primitive name
-static bool extract_base_class_name(PDemNode node, PDemNode *out_name) {
+static bool pp_base_class_name(PDemNode node, DemString *out) {
 	if (!node) {
 		return false;
 	}
@@ -160,22 +160,74 @@ static bool extract_base_class_name(PDemNode node, PDemNode *out_name) {
 	case CP_DEM_TYPE_KIND_abi_tag_ty:
 		// Unwrap abi_tag_ty to get the inner type
 		if (node->abi_tag_ty.ty) {
-			return extract_base_class_name(node->abi_tag_ty.ty, out_name);
+			return pp_base_class_name(node->abi_tag_ty.ty, out);
 		}
 		break;
 	case CP_DEM_TYPE_KIND_name_with_template_args:
 		// Unwrap template args to get the base name
 		if (node->name_with_template_args.name) {
-			return extract_base_class_name(node->name_with_template_args.name, out_name);
+			return pp_base_class_name(node->name_with_template_args.name, out);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_nested_name:
 		// Get the final name component (not the qualifier)
 		if (node->nested_name.name) {
-			return extract_base_class_name(node->nested_name.name, out_name);
+			return pp_base_class_name(node->nested_name.name, out);
 		}
 		break;
+
+	case CP_DEM_TYPE_KIND_expanded_special_substitution:
+		switch (node->subtag) {
+		case SPECIAL_SUBSTITUTION_ALLOCATOR:
+			dem_string_append(out, "allocator");
+			break;
+		case SPECIAL_SUBSTITUTION_BASIC_STRING:
+			dem_string_append(out, "basic_string");
+			break;
+		case SPECIAL_SUBSTITUTION_STRING:
+			dem_string_append(out, "basic_string");
+			break;
+		case SPECIAL_SUBSTITUTION_IOSTREAM:
+			dem_string_append(out, "basic_iostream");
+			break;
+		case SPECIAL_SUBSTITUTION_ISTREAM:
+			dem_string_append(out, "basic_istream");
+			break;
+		case SPECIAL_SUBSTITUTION_OSTREAM:
+			dem_string_append(out, "basic_ostream");
+			break;
+		default:
+			dem_string_append(out, "<unknown special substitution>");
+			break;
+		}
+		return true;
+
+	case CP_DEM_TYPE_KIND_special_substitution:
+		switch (node->subtag) {
+		case SPECIAL_SUBSTITUTION_ALLOCATOR:
+			dem_string_append(out, "allocator");
+			break;
+		case SPECIAL_SUBSTITUTION_BASIC_STRING:
+			dem_string_append(out, "basic_string");
+			break;
+		case SPECIAL_SUBSTITUTION_STRING:
+			dem_string_append(out, "string");
+			break;
+		case SPECIAL_SUBSTITUTION_IOSTREAM:
+			dem_string_append(out, "iostream");
+			break;
+		case SPECIAL_SUBSTITUTION_ISTREAM:
+			dem_string_append(out, "istream");
+			break;
+		case SPECIAL_SUBSTITUTION_OSTREAM:
+			dem_string_append(out, "ostream");
+			break;
+		default:
+			dem_string_append(out, "<unknown special substitution>");
+			break;
+		}
+		return true;
 
 	case CP_DEM_TYPE_KIND_primitive_ty:
 	default:
@@ -183,9 +235,7 @@ static bool extract_base_class_name(PDemNode node, PDemNode *out_name) {
 	}
 
 	// For other node types, just return as-is
-	if (out_name) {
-		*out_name = node;
-	}
+	ast_pp(node, out);
 	return true;
 }
 
@@ -320,6 +370,23 @@ static void pp_function_ty_mod_pointer_to_member_type(PPFnContext *ctx, DemStrin
 	dem_string_append(out, "::*");
 }
 
+void pp_expanded_special_substitution(DemNode *node, DemString *out) {
+	dem_string_append(out, "std::");
+	pp_base_class_name(node, out);
+	if (node->subtag >= SPECIAL_SUBSTITUTION_STRING) {
+		dem_string_append(out, "<char, std::char_traits<char>");
+		if (node->subtag == SPECIAL_SUBSTITUTION_STRING) {
+			dem_string_append(out, ", std::allocator<char>");
+		}
+		dem_string_append(out, ">");
+	}
+}
+
+void pp_special_substitution(DemNode *node, DemString *out) {
+	dem_string_append(out, "std::");
+	pp_base_class_name(node, out);
+}
+
 void ast_pp(DemNode *node, DemString *out) {
 	if (!node || !out) {
 		return;
@@ -331,6 +398,13 @@ void ast_pp(DemNode *node, DemString *out) {
 		if (node->primitive_ty.name.buf) {
 			dem_string_append(out, node->primitive_ty.name.buf);
 		}
+		break;
+
+	case CP_DEM_TYPE_KIND_special_substitution:
+		pp_special_substitution(node, out);
+		break;
+	case CP_DEM_TYPE_KIND_expanded_special_substitution:
+		pp_expanded_special_substitution(node, out);
 		break;
 
 	case CP_DEM_TYPE_KIND_abi_tag_ty:
@@ -439,9 +513,8 @@ void ast_pp(DemNode *node, DemString *out) {
 		}
 		// For constructor/destructor names, we only want the final class name,
 		// not the full qualified name or template arguments. Extract the base name.
-		PDemNode base_name = NULL;
-		if (node->ctor_dtor_name.name && extract_base_class_name(node->ctor_dtor_name.name, &base_name)) {
-			ast_pp(base_name, out);
+		if (node->ctor_dtor_name.name) {
+			pp_base_class_name(node->ctor_dtor_name.name, out);
 		}
 		break;
 
@@ -776,6 +849,10 @@ bool rule_number(DemParser *p, const DemNode *parent, DemResult *r) {
 
 bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns, PDemNode scope) {
 	RULE_HEAD(ctor_dtor_name);
+
+	if (scope && scope->tag == CP_DEM_TYPE_KIND_special_substitution) {
+		scope->tag = CP_DEM_TYPE_KIND_expanded_special_substitution;
+	}
 
 	// NOTE: reference taken from https://github.com/rizinorg/rz-libdemangle/blob/c2847137398cf8d378d46a7510510aaefcffc8c6/src/cxx/cp-demangle.c#L2143
 	if (READ('C')) {
@@ -2130,57 +2207,29 @@ bool rule_substitution(DemParser *p, const DemNode *parent, DemResult *r) {
 		TRACE_RETURN_FAILURE();
 	}
 
-	switch (PEEK()) {
-	case 't': {
-		ADV();
-		PRIMITIVE_TYPE("std");
-		TRACE_RETURN_SUCCESS;
-	}
-	case 'a': {
-		ADV();
-		PRIMITIVE_TYPE("std::allocator");
-		TRACE_RETURN_SUCCESS;
-	}
-	case 'b': {
-		ADV();
-		PRIMITIVE_TYPE("std::basic_string");
-		TRACE_RETURN_SUCCESS;
-	}
-	case 's': {
-		ADV();
-		if (PEEK() == 'C' || PEEK() == 'D') {
-			PRIMITIVE_TYPE("std::basic_string<char, std::char_traits<char>, std::allocator<char>>");
-		} else {
-			PRIMITIVE_TYPE("std::string");
+	if (PEEK() >= 'a' && PEEK() <= 'z') {
+		ut32 kind = 0;
+		switch (PEEK()) {
+		case 'a': kind = SPECIAL_SUBSTITUTION_ALLOCATOR; break;
+		case 'b': kind = SPECIAL_SUBSTITUTION_BASIC_STRING; break;
+		case 'd': kind = SPECIAL_SUBSTITUTION_IOSTREAM; break;
+		case 'i': kind = SPECIAL_SUBSTITUTION_ISTREAM; break;
+		case 'o': kind = SPECIAL_SUBSTITUTION_OSTREAM; break;
+		case 's': kind = SPECIAL_SUBSTITUTION_STRING; break;
+		default: TRACE_RETURN_FAILURE();
 		}
-		TRACE_RETURN_SUCCESS;
-	}
-	case 'i': {
 		ADV();
-		PRIMITIVE_TYPE("std::istream");
+		node->tag = CP_DEM_TYPE_KIND_special_substitution;
+		node->subtag = kind;
 		TRACE_RETURN_SUCCESS;
 	}
-	case 'o': {
-		ADV();
-		PRIMITIVE_TYPE("std::ostream");
-		TRACE_RETURN_SUCCESS;
+
+	DemNode *child_node = NULL;
+	if (!parse_seq_id(p, &child_node)) {
+		TRACE_RETURN_FAILURE();
 	}
-	case 'd': {
-		ADV();
-		PRIMITIVE_TYPE("std::iostream");
-		TRACE_RETURN_SUCCESS;
-	}
-	default: {
-		DemNode *child_node = NULL;
-		if (!parse_seq_id(p, &child_node)) {
-			TRACE_RETURN_FAILURE();
-		}
-		DemNode_copy(node, child_node);
-		TRACE_RETURN_SUCCESS;
-		break;
-	}
-	}
-	RULE_FOOT(substitution);
+	DemNode_copy(node, child_node);
+	TRACE_RETURN_SUCCESS;
 }
 
 bool rule_float(DemParser *p, const DemNode *parent, DemResult *r) {
