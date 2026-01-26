@@ -1425,7 +1425,7 @@ bool rule_binary_expression(DemParser *p, const DemNode *parent, DemResult *r, c
 	RULE_HEAD(expression);
 	AST_APPEND_STR("(");
 	MUST_MATCH(CALL_RULE(rule_expression));
-	AST_APPEND_STR(op->Name);
+	AST_APPEND_STR(opinfo_get_symbol(op));
 	MUST_MATCH(CALL_RULE(rule_expression));
 	AST_APPEND_STR(")");
 	TRACE_RETURN_SUCCESS;
