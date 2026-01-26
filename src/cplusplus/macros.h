@@ -138,9 +138,9 @@
 		if (node->children) { \
 			while (VecPDemNode_len(node->children) > saved_children_len_##N) { \
 				PDemNode *node_ptr = VecPDemNode_pop(node->children); \
-				DemNode *child = node_ptr ? *node_ptr : NULL; \
-				if (child) { \
-					DemNode_dtor(child); \
+				DemNode *child_##N = node_ptr ? *node_ptr : NULL; \
+				if (child_##N) { \
+					DemNode_dtor(child_##N); \
 				} \
 			} \
 		} \

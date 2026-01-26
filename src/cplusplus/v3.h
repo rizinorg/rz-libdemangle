@@ -9,7 +9,6 @@
 #include "demangle.h"
 #include "types.h"
 
-void ast_pp(DemNode *node, DemString *out);
 char *demangle_rule(const char *mangled, DemRule rule, CpDemOptions opts);
 
 bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns);
@@ -26,8 +25,6 @@ DECL_RULE(template_prefix);
 DECL_RULE(source_name);
 DECL_RULE(number);
 DECL_RULE(unnamed_type_name);
-DECL_RULE(abi_tag);
-DECL_RULE(abi_tags);
 DECL_RULE(type);
 DECL_RULE(builtin_type);
 DECL_RULE(expression);

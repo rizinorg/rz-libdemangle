@@ -8,11 +8,9 @@
 #include "demangle.h"
 #include "demangler_util.h"
 #include "macros.h"
+#include "v3_pp.h"
 
 #include <ctype.h>
-
-// Forward declaration for ast_pp function
-void ast_pp(DemNode *node, DemString *out);
 
 static const char *get_node_type_name(CpDemTypeKind tag) {
 	// Extract the type name without the CP_DEM_TYPE_KIND_ prefix
@@ -118,8 +116,6 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_simple_id: return "simple_id";
 
 	// ABI and special
-	case CP_DEM_TYPE_KIND_abi_tag: return "abi_tag";
-	case CP_DEM_TYPE_KIND_abi_tags: return "abi_tags";
 	case CP_DEM_TYPE_KIND_call_offset: return "call_offset";
 	case CP_DEM_TYPE_KIND_discriminator: return "discriminator";
 	case CP_DEM_TYPE_KIND_vendor_specific_suffix: return "vendor_specific_suffix";
@@ -244,8 +240,6 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_type: return "parallelogram";
 
 	// ABI and special - note/triangle
-	case CP_DEM_TYPE_KIND_abi_tag: return "note";
-	case CP_DEM_TYPE_KIND_abi_tags: return "note";
 	case CP_DEM_TYPE_KIND_call_offset: return "triangle";
 	case CP_DEM_TYPE_KIND_discriminator: return "triangle";
 	case CP_DEM_TYPE_KIND_vendor_specific_suffix: return "note";
@@ -368,8 +362,6 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_simple_id: return "salmon";
 
 	// ABI and special - gold/khaki
-	case CP_DEM_TYPE_KIND_abi_tag: return "gold";
-	case CP_DEM_TYPE_KIND_abi_tags: return "gold";
 	case CP_DEM_TYPE_KIND_call_offset: return "khaki";
 	case CP_DEM_TYPE_KIND_discriminator: return "khaki";
 	case CP_DEM_TYPE_KIND_vendor_specific_suffix: return "gold";
@@ -717,29 +709,6 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 				if (child_ptr && *child_ptr) {
 					char label[32];
 					snprintf(label, sizeof(label), "child%zu", i);
-					dot_graph_traverse_ast(dot, *child_ptr, current_id, label, "solid");
-				}
-			}
-		}
-		break;
-
-	case CP_DEM_TYPE_KIND_type:
-		// Type nodes use children vector, but may have subtag for pointers
-		if (node->children) {
-			size_t child_count = VecPDemNode_len(node->children);
-			for (size_t i = 0; i < child_count; i++) {
-				PDemNode *child_ptr = VecPDemNode_at(node->children, i);
-				if (child_ptr && *child_ptr) {
-					char label[32];
-					if (node->subtag == POINTER_TYPE) {
-						snprintf(label, sizeof(label), "*");
-					} else if (node->subtag == REFERENCE_TYPE) {
-						snprintf(label, sizeof(label), "&");
-					} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
-						snprintf(label, sizeof(label), "&&");
-					} else {
-						snprintf(label, sizeof(label), "child%zu", i);
-					}
 					dot_graph_traverse_ast(dot, *child_ptr, current_id, label, "solid");
 				}
 			}

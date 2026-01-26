@@ -7,6 +7,7 @@
  * - https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling
  */
 #include "v3.h"
+#include "v3_pp.h"
 #include "demangle.h"
 #include "demangler_util.h"
 #include "dot_graph.h"
@@ -20,10 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// Forward declaration
-void ast_pp(DemNode *node, DemString *out);
-
-static void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out) {
+void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out) {
 	if (qualifiers.is_const) {
 		dem_string_append(out, " const");
 	}
@@ -35,7 +33,7 @@ static void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out) {
 	}
 }
 
-static void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out) {
+void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out) {
 	if (qualifiers.is_l_value) {
 		dem_string_append(out, " &");
 	}
@@ -329,6 +327,15 @@ void ast_pp(DemNode *node, DemString *out) {
 		}
 		break;
 
+	case CP_DEM_TYPE_KIND_abi_tag_ty:
+		ast_pp(node->abi_tag_ty.ty, out);
+		dem_string_append(out, "[abi:");
+		dem_string_append_n(out,
+			node->abi_tag_ty.tag.buf,
+			node->abi_tag_ty.tag.len);
+		dem_string_append(out, "]");
+		break;
+
 	case CP_DEM_TYPE_KIND_function_type: {
 		PPFnContext ctx = {
 			.fn = node,
@@ -453,15 +460,8 @@ void ast_pp(DemNode *node, DemString *out) {
 
 	case CP_DEM_TYPE_KIND_template_args:
 		dem_string_append(out, "<");
-		{
-			bool first = true;
-			vec_foreach_ptr(node->children, child_ptr, {
-				if (!first) {
-					dem_string_append(out, ", ");
-				}
-				ast_pp(*child_ptr, out);
-				first = false;
-			});
+		if (AST(0)) {
+			ast_pp(AST(0), out);
 		}
 		dem_string_append(out, ">");
 		break;
@@ -828,6 +828,23 @@ bool rule_module_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
+PDemNode parse_abi_tags(DemParser *p, PDemNode node) {
+	while (READ('B')) {
+		DemStringView tag = { 0 };
+		if (!parse_base_source_name(p, &tag.buf, &tag.len)) {
+			return NULL;
+		}
+		PDemNode tagged = DemNode_ctor(CP_DEM_TYPE_KIND_abi_tag_ty, tag.buf, tag.len);
+		if (!tagged) {
+			return NULL;
+		}
+		tagged->abi_tag_ty.tag = tag;
+		tagged->abi_tag_ty.ty = node;
+		node = tagged;
+	}
+	return node;
+}
+
 bool rule_unqualified_name(DemParser *p, const DemNode *parent, DemResult *r,
 	NameState *ns, DemNode *scope, DemNode *module) {
 	RULE_HEAD(unqualified_name);
@@ -859,8 +876,7 @@ bool rule_unqualified_name(DemParser *p, const DemNode *parent, DemResult *r,
 		DEM_UNREACHABLE;
 	}
 	if (result) {
-		DemNode *abi_tags = NULL;
-		CALL_MANY1_N(abi_tags, rule_abi_tag, " ");
+		result = parse_abi_tags(p, result);
 	}
 	if (result && is_member_like_friend) {
 		// TODO: MemberLikeFriendName
@@ -1622,13 +1638,6 @@ bool rule_initializer(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(initializer);
 }
 
-bool rule_abi_tag(DemParser *p, const DemNode *parent, DemResult *r) {
-	RULE_HEAD(abi_tag);
-	// will generate "[abi:<source_name>]"
-	TRY_MATCH(READ('B') && AST_APPEND_STR("[abi:") && CALL_RULE(rule_source_name) && AST_APPEND_STR("]"));
-	RULE_FOOT(abi_tag);
-}
-
 bool rule_call_offset(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(call_offset);
 	if (READ('h')) {
@@ -2309,6 +2318,7 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r, NameSta
 		DemNode_dtor(*pop_node);
 	}
 	DemNode_move(node, ast_node);
+	free(ast_node);
 	TRACE_RETURN_SUCCESS;
 fail:
 	DemNode_dtor(ast_node);
@@ -2385,31 +2395,36 @@ bool rule_template_args(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (!READ('I')) {
 		TRACE_RETURN_FAILURE();
 	}
-	// TODO: Save and restore ctor/dtor flags to prevent them from leaking from template args
 	const bool tag_templates = is_tag_templates(parent);
 	if (tag_templates) {
 		VecPNodeList_clear(&p->template_params);
 		VecPNodeList_append(&p->template_params, &p->outer_template_params);
 		VecPDemNode_clear(p->outer_template_params);
 	}
+	PDemNode many_node = DemNode_ctor(CP_DEM_TYPE_KIND_many, saved_pos_rule, 1);
+	if (!many_node) {
+		TRACE_RETURN_FAILURE();
+	}
 	while (!READ('E')) {
-		DemResult child_r = { 0 };
-		if (!rule_template_arg(p, node, &child_r)) {
+		PDemNode child = NULL;
+		if (!CALL_RULE_N(child, rule_template_arg)) {
 			TRACE_RETURN_FAILURE();
 		}
 		if (tag_templates) {
-			DemNode *node_arg_cloned = DemNode_clone(child_r.output);
-			if (node_arg_cloned) {
-				VecF(PDemNode, append)(p->outer_template_params, &node_arg_cloned);
-			} else {
+			DemNode *node_arg_cloned = DemNode_clone(child);
+			if (!node_arg_cloned) {
 				TRACE_RETURN_FAILURE();
 			}
+			VecF(PDemNode, append)(p->outer_template_params, &node_arg_cloned);
 		}
-		AST_APPEND_NODE(child_r.output);
+		Node_append(many_node, child);
 		if (READ('Q')) {
 			DEM_UNREACHABLE;
 		}
 	}
+	many_node->many_ty.sep = ", ";
+	many_node->val.len = CUR() - many_node->val.buf;
+	AST_APPEND_NODE(many_node);
 	TRACE_RETURN_SUCCESS;
 }
 

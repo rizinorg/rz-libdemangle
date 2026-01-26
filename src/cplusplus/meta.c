@@ -7,8 +7,7 @@
 
 #include "types.h"
 #include "vec.h"
-
-void ast_pp(DemNode *node, DemString *out);
+#include "v3_pp.h"
 
 void NodeList_copy(NodeList *dst, const NodeList *src) {
 	if (!(src && dst && src != dst)) {

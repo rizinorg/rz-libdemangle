@@ -17,6 +17,7 @@
 
 #include "../src/cplusplus/types.h"
 #include "../src/cplusplus/v3.h"
+#include "../src/cplusplus/v3_pp.h"
 
 #include <stdio.h>
 #include <string.h>

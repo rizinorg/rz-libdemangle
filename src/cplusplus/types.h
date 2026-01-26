@@ -41,8 +41,6 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_source_name,
 	CP_DEM_TYPE_KIND_number,
 	CP_DEM_TYPE_KIND_unnamed_type_name,
-	CP_DEM_TYPE_KIND_abi_tag,
-	CP_DEM_TYPE_KIND_abi_tags,
 	CP_DEM_TYPE_KIND_operator_name,
 	CP_DEM_TYPE_KIND_type,
 	CP_DEM_TYPE_KIND_builtin_type,
@@ -119,6 +117,7 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_name_with_template_args,
 	CP_DEM_TYPE_KIND_closure_ty_name,
 	CP_DEM_TYPE_KIND_conv_op_ty,
+	CP_DEM_TYPE_KIND_abi_tag_ty,
 } CpDemTypeKind;
 
 typedef Vec(CpDemTypeKind) CpDemTypeKinds;
@@ -232,6 +231,11 @@ typedef struct {
 	PDemNode ty;
 } ParameterPackExpansion;
 
+typedef struct {
+	PDemNode ty;
+	DemStringView tag;
+} AbiTagTy;
+
 typedef struct DemNode_t {
 	struct DemNode_t *parent;
 	DemStringView val;
@@ -254,6 +258,7 @@ typedef struct DemNode_t {
 		CtorDtorName ctor_dtor_name;
 		ConvOpTy conv_op_ty;
 		ParameterPackExpansion parameter_pack_expansion;
+		AbiTagTy abi_tag_ty;
 	};
 } DemNode;
 
