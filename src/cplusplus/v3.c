@@ -1464,10 +1464,7 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 			}
 			AST_APPEND_STR(Op->Name);
 			if (Op->Kind == New) {
-				while (PEEK() != '_') {
-					AST_APPEND_STR(" ");
-					MUST_MATCH(CALL_RULE(rule_expression));
-				}
+				MUST_MATCH(CALL_MANY(rule_expression, " "));
 				MUST_MATCH(READ('_') && AST_APPEND_STR(" "));
 				MUST_MATCH(CALL_RULE(rule_type));
 				if (PEEK() != 'E') {
@@ -1482,12 +1479,7 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 		case Call: // cl: func(args)
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR("(");
-			while (PEEK() != 'E') {
-				if (node->children && VecPDemNode_len(node->children) > 1) {
-					AST_APPEND_STR(", ");
-				}
-				MUST_MATCH(CALL_RULE(rule_expression));
-			}
+			MUST_MATCH(CALL_MANY(rule_expression, ", "));
 			MUST_MATCH(READ('E'));
 			AST_APPEND_STR(")");
 			TRACE_RETURN_SUCCESS;
@@ -1497,12 +1489,7 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 			AST_APPEND_STR(")");
 			if (READ('_')) {
 				AST_APPEND_STR("(");
-				while (PEEK() != 'E') {
-					if (node->children && VecPDemNode_len(node->children) > 1) {
-						AST_APPEND_STR(", ");
-					}
-					MUST_MATCH(CALL_RULE(rule_expression));
-				}
+				MUST_MATCH(CALL_MANY(rule_expression, ", "));
 				MUST_MATCH(READ('E'));
 				AST_APPEND_STR(")");
 			} else {
@@ -1620,12 +1607,7 @@ bool rule_initializer(DemParser *p, const DemNode *parent, DemResult *r) {
 		TRACE_RETURN_FAILURE();
 	}
 	AST_APPEND_STR(" (");
-	while (PEEK() != 'E') {
-		if (node->children && VecPDemNode_len(node->children) > 0) {
-			AST_APPEND_STR(", ");
-		}
-		MUST_MATCH(CALL_RULE(rule_expression));
-	}
+	MUST_MATCH(CALL_MANY(rule_expression, ", "));
 	MUST_MATCH(READ('E'));
 	AST_APPEND_STR(")");
 	TRACE_RETURN_SUCCESS;
