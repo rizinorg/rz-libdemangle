@@ -74,8 +74,11 @@ bool extract_pack_expansion(DemNode *node, PDemNode *outer_ty, PDemNode *inner_t
 	if (node->tag == CP_DEM_TYPE_KIND_type && node->subtag != INVALID_TYPE) {
 		return extract_pack_expansion(AST_(node, 0), outer_ty, inner_ty);
 	}
+	if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
+		return extract_pack_expansion(node->qualified_ty.inner_type, outer_ty, inner_ty);
+	}
 
-	return false;
+	return true;
 }
 
 // Helper to print pointer/reference/qualifier decorators
@@ -122,6 +125,9 @@ bool pp_pack_expansion(PPPackExpansionContext *ctx, DemString *out) {
 	if (node->parameter_pack_expansion.ty) {
 		if (!extract_pack_expansion(node, &ctx->outer, &ctx->pack)) {
 			dem_string_append(out, "<expansion error>");
+			return true;
+		}
+		if (!ctx->pack) {
 			return true;
 		}
 		PDemNode many_node = AST_(ctx->pack, 0);
@@ -1164,8 +1170,7 @@ const OperatorInfo *parse_operator_info(DemParser *p) {
 const char *opinfo_get_symbol(const OperatorInfo *opinfo) {
 	if (opinfo->Kind < Unnameable) {
 		if (strncmp(opinfo->Name, "operator", 8) != 0) {
-			DEM_UNREACHABLE;
-			return NULL;
+			return opinfo->Name;
 		}
 		if (*(opinfo->Name + 8) == ' ') {
 			return opinfo->Name + 9; // skip "operator "
@@ -1387,7 +1392,7 @@ bool rule_fold_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (!Op) {
 		TRACE_RETURN_FAILURE();
 	}
-	if (!(Op->Kind == Binary || (Op->Kind == Member && Op->Name[strlen(Op->Name) - 1] == '*'))) {
+	if (!(Op->Kind == Binary || (Op->Kind == Member && *opinfo_get_symbol(Op) == '*'))) {
 		TRACE_RETURN_FAILURE();
 	}
 
@@ -1443,7 +1448,7 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 				return rule_prefix_expression(p, parent, r, Op);
 			}
 			MUST_MATCH(CALL_RULE(rule_expression));
-			AST_APPEND_STR(Op->Name);
+			AST_APPEND_STR(opinfo_get_symbol(Op));
 			TRACE_RETURN_SUCCESS;
 		case Binary: return rule_binary_expression(p, parent, r, Op);
 		case Array: // ix: arr[idx]
@@ -1454,7 +1459,7 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 			TRACE_RETURN_SUCCESS;
 		case Member: // dt/pt: expr.name / expr->name
 			MUST_MATCH(CALL_RULE(rule_expression));
-			AST_APPEND_STR(Op->Name);
+			AST_APPEND_STR(opinfo_get_symbol(Op));
 			MUST_MATCH(CALL_RULE(rule_expression));
 			TRACE_RETURN_SUCCESS;
 		case New: // nw/na
@@ -1462,7 +1467,7 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 			if (READ_STR("gs")) {
 				AST_APPEND_STR("::");
 			}
-			AST_APPEND_STR(Op->Name);
+			AST_APPEND_STR(opinfo_get_symbol(Op));
 			if (Op->Kind == New) {
 				MUST_MATCH(CALL_MANY(rule_expression, " "));
 				MUST_MATCH(READ('_') && AST_APPEND_STR(" "));
@@ -1506,7 +1511,7 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 		case NameOnly:
 			TRACE_RETURN_FAILURE();
 		case NamedCast: // dc/sc/cc/rc: cast<type>(expr)
-			AST_APPEND_STR(Op->Name);
+			AST_APPEND_STR(opinfo_get_symbol(Op));
 			AST_APPEND_STR("<");
 			MUST_MATCH(CALL_RULE(rule_type));
 			AST_APPEND_STR(">(");
@@ -1514,7 +1519,7 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 			AST_APPEND_STR(")");
 			TRACE_RETURN_SUCCESS;
 		case OfIdOp: // st/sz/at/az/ti/te: sizeof/alignof/typeid
-			AST_APPEND_STR(Op->Name);
+			AST_APPEND_STR(opinfo_get_symbol(Op));
 			AST_APPEND_STR("(");
 			if (Op->Flag) {
 				MUST_MATCH(CALL_RULE(rule_type));
