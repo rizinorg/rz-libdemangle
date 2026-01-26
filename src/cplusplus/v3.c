@@ -23,18 +23,6 @@
 // Forward declaration
 void ast_pp(DemNode *node, DemString *out);
 
-struct PPFnContext_t;
-
-typedef void (*AST_PP_FN)(struct PPFnContext_t *, DemString *);
-
-typedef struct PPFnContext_t {
-	DemNode *fn;
-	DemNode *mod;
-	AST_PP_FN pp_mod;
-	DemNode *quals;
-	AST_PP_FN pp_quals;
-} PPFnContext;
-
 static void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out) {
 	if (qualifiers.is_const) {
 		dem_string_append(out, " const");
@@ -56,7 +44,104 @@ static void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out) {
 	}
 }
 
-bool pp_pack_expansion(DemNode *node, DemString *out) {
+typedef struct PPPackExpansionContext_t {
+	DemNode *node;
+	DemNode *pack;
+	DemNode *outer;
+} PPPackExpansionContext;
+
+bool extract_pack_expansion(DemNode *node, PDemNode *outer_ty, PDemNode *inner_ty) {
+	if (!node || (!outer_ty && !inner_ty)) {
+		return false;
+	}
+
+	if (node->tag == CP_DEM_TYPE_KIND_parameter_pack_expansion && node->parameter_pack_expansion.ty && outer_ty) {
+		PDemNode ty = node->parameter_pack_expansion.ty;
+		if (ty->tag == CP_DEM_TYPE_KIND_type && ty->subtag != INVALID_TYPE) {
+			*outer_ty = ty;
+			return extract_pack_expansion(AST_(ty, 0), NULL, inner_ty);
+		}
+		if (ty->tag == CP_DEM_TYPE_KIND_qualified_type) {
+			*outer_ty = ty;
+			return extract_pack_expansion(ty->qualified_ty.inner_type, NULL, inner_ty);
+		}
+		return extract_pack_expansion(ty, outer_ty, inner_ty);
+	}
+	if (node->tag == CP_DEM_TYPE_KIND_template_parameter_pack && inner_ty) {
+		*inner_ty = node;
+		return true;
+	}
+	if (node->tag == CP_DEM_TYPE_KIND_type && node->subtag != INVALID_TYPE) {
+		return extract_pack_expansion(AST_(node, 0), outer_ty, inner_ty);
+	}
+
+	return false;
+}
+
+// Helper to print pointer/reference/qualifier decorators
+static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_tag) {
+	if (!node || !out) {
+		return;
+	}
+
+	if (node->tag == target_tag) {
+		// Reached the target type - stop recursion
+		return;
+	}
+
+	if (node->tag == CP_DEM_TYPE_KIND_type) {
+		// Recurse first to get inner decorators
+		if (AST(0)) {
+			pp_type_quals(AST(0), out, target_tag);
+		}
+
+		// Then add our decorator
+		if (node->subtag == POINTER_TYPE) {
+			dem_string_append(out, "*");
+		} else if (node->subtag == REFERENCE_TYPE) {
+			dem_string_append(out, "&");
+		} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
+			dem_string_append(out, "&&");
+		}
+	} else if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
+		// Recurse first
+		if (node->qualified_ty.inner_type) {
+			pp_type_quals(node->qualified_ty.inner_type, out, target_tag);
+		}
+
+		// Then add qualifiers
+		pp_cv_qualifiers(node->qualified_ty.qualifiers, out);
+	}
+}
+
+bool pp_pack_expansion(PPPackExpansionContext *ctx, DemString *out) {
+	if (!ctx || !ctx->node || !out) {
+		return false;
+	}
+	DemNode *node = ctx->node;
+	if (node->parameter_pack_expansion.ty) {
+		if (!extract_pack_expansion(node, &ctx->outer, &ctx->pack)) {
+			dem_string_append(out, "<expansion error>");
+			return true;
+		}
+		PDemNode many_node = AST_(ctx->pack, 0);
+		if (!many_node || many_node->tag != CP_DEM_TYPE_KIND_many) {
+			dem_string_append(out, "<expansion error>");
+			return true;
+		}
+		vec_foreach_ptr_i(many_node->children, idx, child, {
+			if (idx > 0) {
+				dem_string_append(out, many_node->many_ty.sep);
+			}
+			if (!child) {
+				continue;
+			}
+			ast_pp(*child, out);
+			pp_type_quals(ctx->outer, out, CP_DEM_TYPE_KIND_template_parameter_pack);
+		});
+	} else {
+		dem_string_append(out, "expansion(?)");
+	}
 	return true;
 }
 
@@ -96,6 +181,19 @@ static bool extract_base_class_name(PDemNode node, PDemNode *out_name) {
 
 // Helper to check if a type node ultimately wraps a function type
 // This walks through type wrappers (pointer, reference, qualified) to find the innermost type
+
+struct PPFnContext_t;
+
+typedef void (*AST_PP_FN)(struct PPFnContext_t *, DemString *);
+
+typedef struct PPFnContext_t {
+	DemNode *fn;
+	DemNode *mod;
+	AST_PP_FN pp_mod;
+	DemNode *quals;
+	AST_PP_FN pp_quals;
+} PPFnContext;
+
 static bool extract_function_type(DemNode *node, DemNode **out_func_node) {
 	if (!node) {
 		return false;
@@ -198,45 +296,11 @@ static void pp_function_ty_mod_return_fn(PPFnContext *ctx, DemString *out) {
 	pp_function_ty(&inner_ctx, out);
 }
 
-// Helper to print pointer/reference/qualifier decorators
 static void pp_function_ty_quals(PPFnContext *ctx, DemString *out) {
 	if (!ctx || !ctx->quals) {
 		return;
 	}
-	DemNode *node = ctx->quals;
-
-	if (node->tag == CP_DEM_TYPE_KIND_function_type) {
-		// Reached the function type - stop recursion
-		return;
-	}
-
-	if (node->tag == CP_DEM_TYPE_KIND_type) {
-		// Recurse first to get inner decorators
-		if (AST(0)) {
-			PPFnContext inner_ctx = *ctx;
-			inner_ctx.quals = AST(0);
-			pp_function_ty_quals(&inner_ctx, out);
-		}
-
-		// Then add our decorator
-		if (node->subtag == POINTER_TYPE) {
-			dem_string_append(out, "*");
-		} else if (node->subtag == REFERENCE_TYPE) {
-			dem_string_append(out, "&");
-		} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
-			dem_string_append(out, "&&");
-		}
-	} else if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
-		// Recurse first
-		if (node->qualified_ty.inner_type) {
-			PPFnContext inner_ctx = *ctx;
-			inner_ctx.quals = node->qualified_ty.inner_type;
-			pp_function_ty_quals(&inner_ctx, out);
-		}
-
-		// Then add qualifiers
-		pp_cv_qualifiers(node->qualified_ty.qualifiers, out);
-	}
+	pp_type_quals(ctx->quals, out, CP_DEM_TYPE_KIND_function_type);
 }
 
 static void pp_function_ty_mod_pointer_to_member_type(PPFnContext *ctx, DemString *out) {
@@ -469,26 +533,15 @@ void ast_pp(DemNode *node, DemString *out) {
 			ast_pp(AST(0), out);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
-		// Parameter pack expansion: Dp<type>
-		// If the type is a template parameter pack, expand all its elements
-		// If the type contains qualifiers/modifiers applied to a pack, those should
-		// be applied to each element (e.g., DpRKT_ should expand to T1 const&, T2 const&, ...)
-		//
-		// Current implementation: Simple expansion for direct pack references
-		// TODO: Handle type modifiers applied to pack elements (e.g., const&, *, etc.)
-		if (node->parameter_pack_expansion.ty) {
-			if (node->parameter_pack_expansion.ty->tag == CP_DEM_TYPE_KIND_template_parameter_pack) {
-				// Direct pack expansion - just expand the pack
-				ast_pp(node->parameter_pack_expansion.ty, out);
-			} else {
-				DEM_UNREACHABLE;
-			}
-		} else {
-			dem_string_append(out, "expansion(?)");
-			DEM_UNREACHABLE;
-		}
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion: {
+		PPPackExpansionContext ctx = {
+			.node = node,
+			.outer = NULL,
+			.pack = NULL
+		};
+		pp_pack_expansion(&ctx, out);
 		break;
+	}
 
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		if (node->fwd_template_ref) {
