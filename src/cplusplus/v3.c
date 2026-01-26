@@ -465,19 +465,28 @@ void ast_pp(DemNode *node, DemString *out) {
 		break;
 
 	case CP_DEM_TYPE_KIND_template_parameter_pack:
-		dem_string_append(out, "pack(");
 		if (AST(0)) {
 			ast_pp(AST(0), out);
 		}
-		dem_string_append(out, ")");
 		break;
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+		// Parameter pack expansion: Dp<type>
+		// If the type is a template parameter pack, expand all its elements
+		// If the type contains qualifiers/modifiers applied to a pack, those should
+		// be applied to each element (e.g., DpRKT_ should expand to T1 const&, T2 const&, ...)
+		//
+		// Current implementation: Simple expansion for direct pack references
+		// TODO: Handle type modifiers applied to pack elements (e.g., const&, *, etc.)
 		if (node->parameter_pack_expansion.ty) {
-			dem_string_append(out, "expansion(");
-			ast_pp(node->parameter_pack_expansion.ty, out);
-			dem_string_append(out, ")");
+			if (node->parameter_pack_expansion.ty->tag == CP_DEM_TYPE_KIND_template_parameter_pack) {
+				// Direct pack expansion - just expand the pack
+				ast_pp(node->parameter_pack_expansion.ty, out);
+			} else {
+				DEM_UNREACHABLE;
+			}
 		} else {
 			dem_string_append(out, "expansion(?)");
+			DEM_UNREACHABLE;
 		}
 		break;
 
@@ -2277,7 +2286,7 @@ bool rule_template_arg(DemParser *p, const DemNode *parent, DemResult *r) {
 	}
 	case 'J': {
 		ADV();
-		MUST_MATCH(CALL_MANY1(rule_template_arg, ", ") && READ('E'));
+		MUST_MATCH(CALL_MANY(rule_template_arg, ", ") && READ('E'));
 		node->tag = CP_DEM_TYPE_KIND_template_parameter_pack;
 		TRACE_RETURN_SUCCESS;
 	}

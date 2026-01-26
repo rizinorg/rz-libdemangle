@@ -45,6 +45,12 @@ DemNode *DemNode_ctor_inplace(DemNode *xs, CpDemTypeKind tag, const char *val_be
 		xs->name_with_template_args.name = NULL;
 		xs->name_with_template_args.template_args = NULL;
 		break;
+	case CP_DEM_TYPE_KIND_conv_op_ty:
+		xs->conv_op_ty.ty = NULL;
+		break;
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+		xs->parameter_pack_expansion.ty = NULL;
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		xs->many_ty.sep = NULL;
 		// Fall through
@@ -171,6 +177,16 @@ void DemNode_deinit(DemNode *xs) {
 		// which is owned by the parent nested_name node. Do not free it here.
 		// is_dtor is a bool, no need to free
 		break;
+	case CP_DEM_TYPE_KIND_conv_op_ty:
+		if (xs->conv_op_ty.ty) {
+			DemNode_dtor(xs->conv_op_ty.ty);
+		}
+		break;
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+		if (xs->parameter_pack_expansion.ty) {
+			DemNode_dtor(xs->parameter_pack_expansion.ty);
+		}
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -292,6 +308,18 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		dst->ctor_dtor_name.name = src->ctor_dtor_name.name;
 		dst->ctor_dtor_name.is_dtor = src->ctor_dtor_name.is_dtor;
 		// Do NOT set parent pointer since we don't own this node
+		break;
+	case CP_DEM_TYPE_KIND_conv_op_ty:
+		dst->conv_op_ty.ty = src->conv_op_ty.ty ? DemNode_clone(src->conv_op_ty.ty) : NULL;
+		if (dst->conv_op_ty.ty) {
+			dst->conv_op_ty.ty->parent = dst;
+		}
+		break;
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+		dst->parameter_pack_expansion.ty = src->parameter_pack_expansion.ty ? DemNode_clone(src->parameter_pack_expansion.ty) : NULL;
+		if (dst->parameter_pack_expansion.ty) {
+			dst->parameter_pack_expansion.ty->parent = dst;
+		}
 		break;
 	case CP_DEM_TYPE_KIND_many:
 		// Deep copy many type fields
