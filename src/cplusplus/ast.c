@@ -187,6 +187,12 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->parameter_pack_expansion.ty);
 		}
 		break;
+	case CP_DEM_TYPE_KIND_abi_tag_ty:
+		if (xs->abi_tag_ty.ty) {
+			DemNode_dtor(xs->abi_tag_ty.ty);
+		}
+		// tag is a DemStringView (not allocated), no need to free
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -319,6 +325,13 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		dst->parameter_pack_expansion.ty = src->parameter_pack_expansion.ty ? DemNode_clone(src->parameter_pack_expansion.ty) : NULL;
 		if (dst->parameter_pack_expansion.ty) {
 			dst->parameter_pack_expansion.ty->parent = dst;
+		}
+		break;
+	case CP_DEM_TYPE_KIND_abi_tag_ty:
+		dst->abi_tag_ty.ty = src->abi_tag_ty.ty ? DemNode_clone(src->abi_tag_ty.ty) : NULL;
+		dst->abi_tag_ty.tag = src->abi_tag_ty.tag; // DemStringView, shallow copy
+		if (dst->abi_tag_ty.ty) {
+			dst->abi_tag_ty.ty->parent = dst;
 		}
 		break;
 	case CP_DEM_TYPE_KIND_fwd_template_ref:

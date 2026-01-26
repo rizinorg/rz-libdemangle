@@ -157,6 +157,12 @@ static bool extract_base_class_name(PDemNode node, PDemNode *out_name) {
 	}
 
 	switch (node->tag) {
+	case CP_DEM_TYPE_KIND_abi_tag_ty:
+		// Unwrap abi_tag_ty to get the inner type
+		if (node->abi_tag_ty.ty) {
+			return extract_base_class_name(node->abi_tag_ty.ty, out_name);
+		}
+		break;
 	case CP_DEM_TYPE_KIND_name_with_template_args:
 		// Unwrap template args to get the base name
 		if (node->name_with_template_args.name) {
