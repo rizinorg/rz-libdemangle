@@ -1208,7 +1208,10 @@ bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r, NameS
 
 	if (READ_STR("li")) {
 		// ::= li <source-name>  # operator ""
-		CTX_MUST_MATCH(rule, rule_source_name);
+		PDemNode opname = NULL;
+		MUST_MATCH(CALL_RULE_N(opname, rule_source_name));
+		AST_APPEND_STR("operator\"\" ");
+		AST_APPEND_NODE(opname);
 		TRACE_RETURN_SUCCESS;
 	}
 
