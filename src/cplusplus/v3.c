@@ -986,9 +986,15 @@ bool rule_unresolved_qualifier_level(DemParser *p, const DemNode *parent, DemRes
 
 bool rule_decltype(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(decltype);
-	TRY_MATCH(READ_STR("Dt") && (CALL_RULE(rule_expression)) && READ('E'));
-	TRY_MATCH(READ_STR("DT") && (CALL_RULE(rule_expression)) && READ('E'));
-	RULE_FOOT(decltype);
+	if (!(READ_STR("Dt") || READ_STR("DT"))) {
+		TRACE_RETURN_FAILURE();
+	}
+	PDemNode expr = NULL;
+	MUST_MATCH(CALL_RULE_N(expr, rule_expression) && READ('E'));
+	AST_APPEND_STR("decltype (");
+	AST_APPEND_NODE(expr);
+	AST_APPEND_STR(")");
+	TRACE_RETURN_SUCCESS;
 }
 
 bool rule_exception_spec(DemParser *p, const DemNode *parent, DemResult *r) {
@@ -1258,8 +1264,7 @@ bool rule_expr_primary(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRY_MATCH(PEEK() == 'P' && AST_APPEND_STR("(") && (CALL_RULE(rule_type)) &&
 		AST_APPEND_STR(")") && READ('0') && AST_APPEND_STR("0") && READ('E'));
 	TRY_MATCH(READ_STR("_Z") && (CALL_RULE(rule_encoding)) && READ('E'));
-	TRY_MATCH(READ_STR("DnE") && AST_APPEND_STR("decltype(nullptr)0"));
-	TRY_MATCH(READ_STR("Dn0E") && AST_APPEND_STR("(decltype(nullptr))0"));
+	TRY_MATCH(READ_STR("Dn0E") && AST_APPEND_STR("nullptr"));
 
 	// Non-type template parameter: L<type><value>E
 	// For bool: Lb0E -> false, Lb1E -> true

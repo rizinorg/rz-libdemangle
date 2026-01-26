@@ -4,7 +4,7 @@
 #include "minunit.h"
 
 mu_demangle_tests(gpl,
-	mu_demangle_test("_ZNSt6vectorIN4dyld13RegisteredDOFESaIS1_EE5eraseEN9__gnu_cxx17__normal_iteratorIPS1_S3_EE", "std::vector<dyld::RegisteredDOF, std::allocator<dyld::RegisteredDOF>>::erase(__gnu_cxx::__normal_iterator<dyld::RegisteredDOF*, std::vector<dyld::RegisteredDOF, std::allocator<dyld::RegisteredDOF>> >)"),
+	mu_demangle_test("_ZNSt6vectorIN4dyld13RegisteredDOFESaIS1_EE5eraseEN9__gnu_cxx17__normal_iteratorIPS1_S3_EE", "std::vector<dyld::RegisteredDOF, std::allocator<dyld::RegisteredDOF>>::erase(__gnu_cxx::__normal_iterator<dyld::RegisteredDOF*, std::vector<dyld::RegisteredDOF, std::allocator<dyld::RegisteredDOF>>>)"),
 	mu_demangle_test("_ZNSt12_Vector_baseIPKcSaIS1_EED2Ev", "std::_Vector_base<char const*, std::allocator<char const*>>::~_Vector_base()"),
 	mu_demangle_test("_ZNSt6vectorIPKcSaIS1_EED2Ev", "std::vector<char const*, std::allocator<char const*>>::~vector()"),
 	mu_demangle_test("_ZNSt12_Vector_baseIN4dyld13RegisteredDOFESaIS1_EED2Ev", "std::_Vector_base<dyld::RegisteredDOF, std::allocator<dyld::RegisteredDOF>>::~_Vector_base()"),
