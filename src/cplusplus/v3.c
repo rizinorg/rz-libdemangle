@@ -387,6 +387,28 @@ void pp_special_substitution(DemNode *node, DemString *out) {
 	pp_base_class_name(node, out);
 }
 
+void pp_array_type(DemNode *node, DemString *out) {
+	if (!node || node->tag != CP_DEM_TYPE_KIND_array_type) {
+		return;
+	}
+	DemNode *type_node = node;
+	DemNode *size_node = node;
+	DemString array_parts = {0};
+	dem_string_init(&array_parts);
+	while (type_node->tag == CP_DEM_TYPE_KIND_array_type) {
+		DemNode *parent_node = type_node;
+		type_node = AST_(parent_node, 1);
+		size_node = AST_(parent_node, 0);
+		dem_string_appends(&array_parts, "[");
+		ast_pp(size_node, &array_parts);
+		dem_string_appends(&array_parts, "]");
+	}
+	ast_pp(type_node, out);
+	dem_string_append(out, " ");
+	dem_string_concat(out, &array_parts);
+	dem_string_deinit(&array_parts);
+}
+
 void ast_pp(DemNode *node, DemString *out) {
 	if (!node || !out) {
 		return;
@@ -603,14 +625,7 @@ void ast_pp(DemNode *node, DemString *out) {
 	case CP_DEM_TYPE_KIND_array_type:
 		// Array type: element_type [dimension]
 		// Child 0: dimension (optional), Child 1: element type
-		if (AST(1)) {
-			ast_pp(AST(1), out);
-		}
-		dem_string_append(out, " [");
-		if (AST(0)) {
-			ast_pp(AST(0), out);
-		}
-		dem_string_append(out, "]");
+		pp_array_type(node, out);
 		break;
 
 	case CP_DEM_TYPE_KIND_template_parameter_pack:
@@ -1082,24 +1097,6 @@ bool rule_exception_spec(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(exception_spec);
 }
 
-void pp_array_type(DemNode *node, DemString *out) {
-	if (!node || node->tag != CP_DEM_TYPE_KIND_array_type) {
-		return;
-	}
-	DemNode *type_node = node;
-	DemNode *size_node = node;
-	while (type_node->tag == CP_DEM_TYPE_KIND_array_type) {
-		DemNode *parent_node = type_node;
-		type_node = AST_(parent_node, 1);
-		size_node = AST_(parent_node, 0);
-		dem_string_appends(out, "[");
-		ast_pp(size_node, out);
-		dem_string_appends(out, "]");
-	}
-	dem_string_appends_prefix(out, " ");
-	ast_pp(type_node, out);
-}
-
 bool rule_array_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(array_type);
 	MUST_MATCH(READ('A'));
@@ -1115,7 +1112,6 @@ bool rule_array_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	MUST_MATCH(CALL_RULE(rule_type));
 	AST_APPEND_TYPE;
 	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(array_type);
 }
 
 typedef enum {
