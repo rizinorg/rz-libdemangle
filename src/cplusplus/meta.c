@@ -151,6 +151,76 @@ branch_fail:
 	return NULL;
 }
 
+// Recursively resolve forward template references in an AST node
+static void resolve_fwd_refs_in_node(DemParser *p, DemNode *node) {
+	if (!node) {
+		return;
+	}
+
+	// If this node is a forward template reference, resolve it
+	if (node->tag == CP_DEM_TYPE_KIND_fwd_template_ref && node->fwd_template_ref) {
+		ut64 level = node->fwd_template_ref->level;
+		ut64 index = node->fwd_template_ref->index;
+		DemNode *ref_src = template_param_get(p, level, index);
+
+		if (ref_src) {
+			DemNode *parent = node->parent;
+			if (p->trace) {
+				DemString buf = { 0 };
+				ast_pp(ref_src, &buf);
+				fprintf(stderr, "[resolve_fwd_ref_recursive] Resolved L%ld_%ld in node %p to %s\n",
+					level, index, node, dem_string_drain_no_free(&buf));
+			}
+			free(node->fwd_template_ref);
+			node->fwd_template_ref = NULL;
+			DemNode_copy(node, ref_src);
+			node->parent = parent;
+		}
+	}
+
+	// Recursively resolve in children
+	if (node->children) {
+		vec_foreach_ptr(node->children, pchild, {
+			resolve_fwd_refs_in_node(p, *pchild);
+		});
+	}
+
+	// Recursively resolve in type-specific fields
+	switch (node->tag) {
+	case CP_DEM_TYPE_KIND_function_type:
+	case CP_DEM_TYPE_KIND_encoding:
+		resolve_fwd_refs_in_node(p, node->fn_ty.name);
+		resolve_fwd_refs_in_node(p, node->fn_ty.ret);
+		resolve_fwd_refs_in_node(p, node->fn_ty.params);
+		resolve_fwd_refs_in_node(p, node->fn_ty.requires_node);
+		resolve_fwd_refs_in_node(p, node->fn_ty.exception_spec);
+		break;
+	case CP_DEM_TYPE_KIND_qualified_type:
+		resolve_fwd_refs_in_node(p, node->qualified_ty.inner_type);
+		break;
+	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type:
+		resolve_fwd_refs_in_node(p, node->vendor_ext_qualified_ty.inner_type);
+		resolve_fwd_refs_in_node(p, node->vendor_ext_qualified_ty.template_args);
+		break;
+	case CP_DEM_TYPE_KIND_conv_op_ty:
+		resolve_fwd_refs_in_node(p, node->conv_op_ty.ty);
+		break;
+	case CP_DEM_TYPE_KIND_nested_name:
+		resolve_fwd_refs_in_node(p, node->nested_name.qual);
+		resolve_fwd_refs_in_node(p, node->nested_name.name);
+		break;
+	case CP_DEM_TYPE_KIND_name_with_template_args:
+		resolve_fwd_refs_in_node(p, node->name_with_template_args.name);
+		resolve_fwd_refs_in_node(p, node->name_with_template_args.template_args);
+		break;
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+		resolve_fwd_refs_in_node(p, node->parameter_pack_expansion.ty);
+		break;
+	default:
+		break;
+	}
+}
+
 bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 	if (!p || p->forward_template_refs.length == 0 || !dan) {
 		return true;
@@ -174,6 +244,7 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 		DemNode *parent = ref_dst->parent;
 
 		if (ref_dst->fwd_template_ref) {
+			free(ref_dst->fwd_template_ref);
 			ref_dst->fwd_template_ref = NULL;
 		}
 
@@ -187,6 +258,20 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 		// Restore parent pointer
 		ref_dst->parent = parent;
 	});
+
+	// Also resolve forward references in substitution list (detected_types)
+	// This is important because substitutions are cloned before template args are resolved
+	vec_foreach_ptr(&p->detected_types, psub_node, {
+		if (psub_node && *psub_node) {
+			resolve_fwd_refs_in_node(p, *psub_node);
+		}
+	});
+
+	// Also recursively resolve forward references in the main AST tree
+	// Only do this if there were forward refs to resolve
+	if (all_resolved && dan) {
+		resolve_fwd_refs_in_node(p, dan);
+	}
 
 	// Don't clear yet - we'll need the references for final string replacement
 	// Replace placeholders in the final result string

@@ -321,6 +321,21 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 			dst->parameter_pack_expansion.ty->parent = dst;
 		}
 		break;
+	case CP_DEM_TYPE_KIND_fwd_template_ref:
+		// Deep copy forward template reference
+		if (src->fwd_template_ref) {
+			dst->fwd_template_ref = malloc(sizeof(ForwardTemplateRef));
+			if (dst->fwd_template_ref) {
+				dst->fwd_template_ref->level = src->fwd_template_ref->level;
+				dst->fwd_template_ref->index = src->fwd_template_ref->index;
+				// NOTE: wrapper pointer points to the original node, not the clone
+				// This is intentional as the wrapper should reference the node in the main AST
+				dst->fwd_template_ref->wrapper = dst;
+			}
+		} else {
+			dst->fwd_template_ref = NULL;
+		}
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// Deep copy many type fields
 		dst->many_ty.sep = src->many_ty.sep; // Separator is a string literal
