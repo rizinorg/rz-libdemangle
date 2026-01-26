@@ -274,12 +274,6 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 		}
 	});
 
-	// Also recursively resolve forward references in the main AST tree
-	// Only do this if there were forward refs to resolve
-	if (all_resolved && dan) {
-		resolve_fwd_refs_in_node(p, dan);
-	}
-
 	// Don't clear yet - we'll need the references for final string replacement
 	// Replace placeholders in the final result string
 	if (p->forward_template_refs.length <= 0 || !all_resolved) {

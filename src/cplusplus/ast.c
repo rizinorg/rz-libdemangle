@@ -364,6 +364,13 @@ void DemNode_move(DemNode *dst, DemNode *src) {
 	}
 	DemNode_deinit(dst);
 	memcpy(dst, src, sizeof(DemNode));
+	
+	// Update wrapper pointer if this is a forward template reference
+	// The wrapper should point to the new location (dst), not the old (src)
+	if (dst->tag == CP_DEM_TYPE_KIND_fwd_template_ref && dst->fwd_template_ref) {
+		dst->fwd_template_ref->wrapper = dst;
+	}
+	
 	memset(src, 0, sizeof(DemNode));
 }
 
