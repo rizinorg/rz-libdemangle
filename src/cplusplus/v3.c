@@ -464,6 +464,23 @@ void ast_pp(DemNode *node, DemString *out) {
 		dem_string_append(out, "]");
 		break;
 
+	case CP_DEM_TYPE_KIND_template_parameter_pack:
+		dem_string_append(out, "pack(");
+		if (AST(0)) {
+			ast_pp(AST(0), out);
+		}
+		dem_string_append(out, ")");
+		break;
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+		if (node->parameter_pack_expansion.ty) {
+			dem_string_append(out, "expansion(");
+			ast_pp(node->parameter_pack_expansion.ty, out);
+			dem_string_append(out, ")");
+		} else {
+			dem_string_append(out, "expansion(?)");
+		}
+		break;
+
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		if (node->fwd_template_ref) {
 			dem_string_appendf(out, "T_%d_%d", node->fwd_template_ref->level, node->fwd_template_ref->index);
@@ -1899,7 +1916,13 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 		// Dp <type>       # pack expansion (C++0x)
 		if (PEEK_AT(1) == 'p') {
 			ADV_BY(2);
-			MUST_MATCH(PASSTHRU_RULE(rule_type));
+			PDemNode ty = NULL;
+			MUST_MATCH(CALL_RULE_N(ty, rule_type));
+			if (!ty) {
+				TRACE_RETURN_FAILURE();
+			}
+			node->tag = CP_DEM_TYPE_KIND_parameter_pack_expansion;
+			node->parameter_pack_expansion.ty = ty;
 			break;
 		}
 		if (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T') {
@@ -1912,10 +1935,18 @@ bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
 			MUST_MATCH(PASSTHRU_RULE(rule_class_enum_type));
 			break;
 		}
-		MUST_MATCH(CALL_RULE(rule_template_param));
+		PDemNode template_param_node = NULL;
+		PDemNode template_args_node = NULL;
+		MUST_MATCH(CALL_RULE_N(template_param_node, rule_template_param));
 		if (PEEK() == 'I' && !p->not_parse_template_args) {
 			AST_APPEND_TYPE;
-			CALL_RULE(rule_template_args);
+			CALL_RULE_N(template_args_node, rule_template_args);
+			node->tag = CP_DEM_TYPE_KIND_name_with_template_args;
+			node->name_with_template_args.name = template_param_node;
+			node->name_with_template_args.template_args = template_args_node;
+		} else {
+			DemNode_move(node, template_param_node);
+			free(template_param_node); // Free the container, content is now in node
 		}
 		break;
 	}
@@ -2246,14 +2277,8 @@ bool rule_template_arg(DemParser *p, const DemNode *parent, DemResult *r) {
 	}
 	case 'J': {
 		ADV();
-		while (!READ('E')) {
-			DemResult child_r = { 0 };
-			if (!rule_template_arg(p, node, &child_r)) {
-				TRACE_RETURN_FAILURE();
-			}
-			AST_APPEND_NODE(child_r.output);
-		}
-		node->subtag = TEMPLATE_PARAMETER_PACK;
+		MUST_MATCH(CALL_MANY1(rule_template_arg, ", ") && READ('E'));
+		node->tag = CP_DEM_TYPE_KIND_template_parameter_pack;
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'L': {

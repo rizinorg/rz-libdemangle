@@ -110,6 +110,8 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_signature_type,
 	CP_DEM_TYPE_KIND_nv_digit,
 	CP_DEM_TYPE_KIND_template_param_decl,
+	CP_DEM_TYPE_KIND_template_parameter_pack,
+	CP_DEM_TYPE_KIND_parameter_pack_expansion,
 	CP_DEM_TYPE_KIND_non_neg_number,
 	CP_DEM_TYPE_KIND_fwd_template_ref,
 	CP_DEM_TYPE_KIND_many,
@@ -135,7 +137,6 @@ enum {
 	RVALUE_REFERENCE_TYPE,
 	QUALIFIED_TYPE,
 	ARRAY_TYPE,
-	TEMPLATE_PARAMETER_PACK,
 };
 
 struct DemNode_t;
@@ -227,6 +228,10 @@ typedef struct {
 	PDemNode ty;
 } ConvOpTy;
 
+typedef struct {
+	PDemNode ty;
+} ParameterPackExpansion;
+
 typedef struct DemNode_t {
 	struct DemNode_t *parent;
 	DemStringView val;
@@ -248,6 +253,7 @@ typedef struct DemNode_t {
 		LocalName local_name;
 		CtorDtorName ctor_dtor_name;
 		ConvOpTy conv_op_ty;
+		ParameterPackExpansion parameter_pack_expansion;
 	};
 } DemNode;
 
