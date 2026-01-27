@@ -393,7 +393,7 @@ void pp_array_type(DemNode *node, DemString *out) {
 	}
 	DemNode *type_node = node;
 	DemNode *size_node = node;
-	DemString array_parts = {0};
+	DemString array_parts = { 0 };
 	dem_string_init(&array_parts);
 	while (type_node->tag == CP_DEM_TYPE_KIND_array_type) {
 		DemNode *parent_node = type_node;
@@ -1782,12 +1782,13 @@ bool rule_special_name(DemParser *p, const DemNode *parent, DemResult *r) {
 			MUST_MATCH(CALL_RULE_N(base_ty, rule_type));
 			ut64 offset = 0;
 			MUST_MATCH(parse_non_neg_integer(p, &offset));
-			MUST_MATCH(READ('_') || CALL_RULE_N(derived_ty, rule_type));
 			AST_APPEND_STR("construction vtable for ");
-			AST_APPEND_NODE(base_ty);
-			if (derived_ty) {
-				AST_APPEND_STR("-in-");
+			if (READ('_') && CALL_RULE_N(derived_ty, rule_type)) {
 				AST_APPEND_NODE(derived_ty);
+				AST_APPEND_STR("-in-");
+				AST_APPEND_NODE(base_ty);
+			} else {
+				AST_APPEND_NODE(base_ty);
 			}
 			break;
 		case 'c':
@@ -2283,6 +2284,7 @@ bool rule_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns)
 		TRACE_RETURN_FAILURE();
 	}
 	DemNode_move(node, result);
+	free(result); // Free the container, content is now in node
 	TRACE_RETURN_SUCCESS;
 }
 
