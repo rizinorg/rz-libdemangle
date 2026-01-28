@@ -2603,6 +2603,9 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 			// TODO: Handle ConstraintExpr
 			DEM_UNREACHABLE;
 		}
+		if (!READ('E')) {
+			TRACE_RETURN_FAILURE();
+		}
 		if (!parse_number(p, &node->closure_ty_name.count, false)) {
 			TRACE_RETURN_FAILURE();
 		}
