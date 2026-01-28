@@ -1665,19 +1665,42 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 	}
 
 	// Non-operator expressions
-	TRY_MATCH(CALL_RULE(rule_expr_primary));
-	TRY_MATCH(CALL_RULE(rule_template_param));
-	TRY_MATCH(CALL_RULE(rule_function_param));
-	TRY_MATCH(CALL_RULE(rule_fold_expression));
-	TRY_MATCH(READ_STR("il") && CALL_MANY(rule_expression, "") && READ('E'));
-	TRY_MATCH(READ_STR("tl") && CALL_RULE(rule_type) && CALL_MANY(rule_braced_expression, "") && READ('E'));
-	TRY_MATCH(READ_STR("nx") && AST_APPEND_STR("noexcept(") && CALL_RULE(rule_expression) && AST_APPEND_STR(")"));
-	TRY_MATCH(READ_STR("tw") && AST_APPEND_STR("throw ") && CALL_RULE(rule_expression));
-	TRY_MATCH(READ_STR("tr") && AST_APPEND_STR("throw"));
-	TRY_MATCH(READ_STR("sZ") && AST_APPEND_STR("sizeof...(") && (CALL_RULE(rule_template_param) || CALL_RULE(rule_function_param)) && AST_APPEND_STR(")"));
-	TRY_MATCH(READ_STR("sP") && AST_APPEND_STR("sizeof...(") && CALL_MANY(rule_template_arg, "") && READ('E') && AST_APPEND_STR(")"));
-	TRY_MATCH(READ_STR("sp") && CALL_RULE(rule_expression));
-	// NOTE: fl and fr are fold expressions, handled by rule_fold_expression above
+	if (PEEK() == 'L') {
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_expr_primary));
+	}
+	if (PEEK() == 'T') {
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_template_param));
+	}
+	if (PEEK() == 'f') {
+		if (PEEK_AT(1) == 'p' || (PEEK_AT(1) == 'L' && isdigit(PEEK_AT(2)))) {
+			RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_function_param));
+		}
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_fold_expression));
+	}
+	if (READ_STR("il")) {
+		RETURN_SUCCESS_OR_FAIL(CALL_MANY(rule_expression, "") && READ('E'));
+	}
+	if (READ_STR("tl")) {
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_type) && CALL_MANY(rule_braced_expression, "") && READ('E'));
+	}
+	if (READ_STR("nx")) {
+		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("noexcept (") && CALL_RULE(rule_expression) && AST_APPEND_STR(")"));
+	}
+	if (READ_STR("tw")) {
+		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("throw ") && CALL_RULE(rule_expression));
+	}
+	if (READ_STR("tr")) {
+		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("throw"));
+	}
+	if (READ_STR("sZ")) {
+		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("sizeof...(") && (CALL_RULE(rule_template_param) || CALL_RULE(rule_function_param)) && AST_APPEND_STR(")"));
+	}
+	if (READ_STR("sP")) {
+		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("sizeof...(") && CALL_MANY(rule_template_arg, "") && READ('E') && AST_APPEND_STR(")"));
+	}
+	if (READ_STR("sp")) {
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_expression));
+	}
 	TRY_MATCH(CALL_RULE(rule_unresolved_name));
 
 	RULE_FOOT(expression);
@@ -1912,17 +1935,24 @@ bool rule_function_type(DemParser *p, const DemNode *parent, DemResult *r) {
 
 bool rule_function_param(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_HEAD(function_param);
+	if (READ_STR("PT")) {
+		TRACE_RETURN_SUCCESS;
+	}
+	if (READ_STR("fpT")) {
+		PRIMITIVE_TYPE("this");
+		TRACE_RETURN_SUCCESS;
+	}
+	MUST_MATCH(READ('f'));
 	CvQualifiers qualifiers = { 0 };
-	TRY_MATCH(READ_STR("fL") && (CALL_RULE(rule_number)) && READ('p') &&
-		parse_cv_qualifiers(p, &qualifiers) && AST_APPEND_STR(" ") && (CALL_RULE(rule_number)) &&
-		READ('_'));
-	TRY_MATCH(READ_STR("fL") && (CALL_RULE(rule_number)) && READ('p') &&
-		parse_cv_qualifiers(p, &qualifiers) && AST_APPEND_STR(" ") && READ('_'));
-	TRY_MATCH(READ_STR("fp") && parse_cv_qualifiers(p, &qualifiers) && AST_APPEND_STR(" ") &&
-		(CALL_RULE(rule_number)) && READ('_'));
-	TRY_MATCH(READ_STR("fp") && parse_cv_qualifiers(p, &qualifiers) && AST_APPEND_STR(" ") && READ('_'));
-	TRY_MATCH(READ_STR("fPT"));
-	RULE_FOOT(function_param);
+	if (READ('L')) {
+		MUST_MATCH(CALL_RULE(rule_number));
+	}
+	MUST_MATCH(READ('p'));
+	parse_cv_qualifiers(p, &qualifiers);
+	AST_APPEND_STR(" ");
+	CALL_RULE(rule_number);
+	READ('_');
+	TRACE_RETURN_SUCCESS;
 }
 
 bool rule_builtin_type(DemParser *p, const DemNode *parent, DemResult *r) {
