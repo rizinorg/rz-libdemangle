@@ -42,6 +42,123 @@ void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out) {
 	}
 }
 
+void pp_array_type_dimension(DemNode *node, DemString *out, PDemNode *pbase_ty) {
+	if (!node || node->tag != CP_DEM_TYPE_KIND_array_type) {
+		return;
+	}
+	size_t count = 0;
+	PDemNode base_ty = node;
+	do {
+		ArrayTy array_ty = base_ty->array_ty;
+		dem_string_appends(out, "[");
+		ast_pp(array_ty.dimension, out);
+		dem_string_appends(out, "]");
+		base_ty = array_ty.inner_ty;
+		count++;
+	} while (base_ty && base_ty->tag == CP_DEM_TYPE_KIND_array_type);
+	if (count == 0) {
+		dem_string_append(out, "[]");
+	}
+	if (pbase_ty) {
+		*pbase_ty = base_ty;
+	}
+}
+
+static void pp_array_type(PDemNode node, DemString *out) {
+	DemString dim_string = { 0 };
+	dem_string_init(&dim_string);
+	PDemNode base_node = NULL;
+	pp_array_type_dimension(node, &dim_string, &base_node);
+	ast_pp(base_node, out);
+	if (dem_string_non_empty(&dim_string)) {
+		dem_string_append(out, " ");
+		dem_string_concat(out, &dim_string);
+	}
+	dem_string_deinit(&dim_string);
+}
+
+// Helper to print pointer/reference/qualifier decorators
+static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_tag, PDemNode *pbase_ty) {
+	if (!node || !out) {
+		return;
+	}
+
+	if (node->tag == target_tag) {
+		// Reached the target type - stop recursion
+		if (pbase_ty) {
+			*pbase_ty = node;
+		}
+		return;
+	}
+
+	if (node->tag == CP_DEM_TYPE_KIND_type && node->subtag != SUB_TAG_INVALID) {
+		// Recurse first to get inner decorators
+		if (AST(0)) {
+			pp_type_quals(AST(0), out, target_tag, pbase_ty);
+		}
+
+		// Then add our decorator
+		switch (node->subtag) {
+		case POINTER_TYPE:
+			dem_string_append(out, "*");
+			break;
+		case REFERENCE_TYPE:
+			dem_string_append(out, "&");
+			break;
+		case RVALUE_REFERENCE_TYPE:
+			dem_string_append(out, "&&");
+			break;
+		default:
+			DEM_UNREACHABLE;
+			break;
+		}
+		return;
+	}
+	if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
+		if (node->qualified_ty.inner_type) {
+			pp_type_quals(node->qualified_ty.inner_type, out, target_tag, pbase_ty);
+		}
+		pp_cv_qualifiers(node->qualified_ty.qualifiers, out);
+		return;
+	}
+
+	if (pbase_ty) {
+		*pbase_ty = node;
+	}
+}
+
+static void pp_type_with_quals(PDemNode node, DemString *out) {
+	DemString qualifiers_string = { 0 };
+	dem_string_init(&qualifiers_string);
+	PDemNode base_node = NULL;
+	pp_type_quals(node, &qualifiers_string, CP_DEM_TYPE_KIND_unknown, &base_node);
+
+	if (base_node && base_node->tag == CP_DEM_TYPE_KIND_array_type) {
+		DemString array_dem_string = { 0 };
+		dem_string_init(&array_dem_string);
+		PDemNode array_inner_base = NULL;
+		pp_array_type_dimension(base_node, &array_dem_string, &array_inner_base);
+		ast_pp(array_inner_base, out);
+		if (dem_string_non_empty(&qualifiers_string)) {
+			dem_string_append(out, " (");
+			dem_string_concat(out, &qualifiers_string);
+			dem_string_append(out, ")");
+		}
+		if (dem_string_non_empty(&array_dem_string)) {
+			dem_string_append(out, " ");
+			dem_string_concat(out, &array_dem_string);
+		}
+		dem_string_deinit(&array_dem_string);
+	} else {
+		ast_pp(base_node, out);
+		if (dem_string_non_empty(&qualifiers_string)) {
+			dem_string_concat(out, &qualifiers_string);
+		}
+	}
+
+	dem_string_deinit(&qualifiers_string);
+}
+
 typedef struct PPPackExpansionContext_t {
 	DemNode *node;
 	DemNode *pack;
@@ -79,42 +196,6 @@ bool extract_pack_expansion(DemNode *node, PDemNode *outer_ty, PDemNode *inner_t
 	return true;
 }
 
-// Helper to print pointer/reference/qualifier decorators
-static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_tag) {
-	if (!node || !out) {
-		return;
-	}
-
-	if (node->tag == target_tag) {
-		// Reached the target type - stop recursion
-		return;
-	}
-
-	if (node->tag == CP_DEM_TYPE_KIND_type) {
-		// Recurse first to get inner decorators
-		if (AST(0)) {
-			pp_type_quals(AST(0), out, target_tag);
-		}
-
-		// Then add our decorator
-		if (node->subtag == POINTER_TYPE) {
-			dem_string_append(out, "*");
-		} else if (node->subtag == REFERENCE_TYPE) {
-			dem_string_append(out, "&");
-		} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
-			dem_string_append(out, "&&");
-		}
-	} else if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
-		// Recurse first
-		if (node->qualified_ty.inner_type) {
-			pp_type_quals(node->qualified_ty.inner_type, out, target_tag);
-		}
-
-		// Then add qualifiers
-		pp_cv_qualifiers(node->qualified_ty.qualifiers, out);
-	}
-}
-
 bool pp_pack_expansion(PPPackExpansionContext *ctx, DemString *out) {
 	if (!ctx || !ctx->node || !out) {
 		return false;
@@ -141,7 +222,7 @@ bool pp_pack_expansion(PPPackExpansionContext *ctx, DemString *out) {
 				continue;
 			}
 			ast_pp(*child, out);
-			pp_type_quals(ctx->outer, out, CP_DEM_TYPE_KIND_template_parameter_pack);
+			pp_type_quals(ctx->outer, out, CP_DEM_TYPE_KIND_template_parameter_pack, NULL);
 		});
 	} else {
 		dem_string_append(out, "expansion(?)");
@@ -360,7 +441,7 @@ static void pp_function_ty_quals(PPFnContext *ctx, DemString *out) {
 	if (!ctx || !ctx->quals) {
 		return;
 	}
-	pp_type_quals(ctx->quals, out, CP_DEM_TYPE_KIND_function_type);
+	pp_type_quals(ctx->quals, out, CP_DEM_TYPE_KIND_function_type, NULL);
 }
 
 static void pp_function_ty_mod_pointer_to_member_type(PPFnContext *ctx, DemString *out) {
@@ -385,28 +466,6 @@ void pp_expanded_special_substitution(DemNode *node, DemString *out) {
 void pp_special_substitution(DemNode *node, DemString *out) {
 	dem_string_append(out, "std::");
 	pp_base_class_name(node, out);
-}
-
-void pp_array_type(DemNode *node, DemString *out) {
-	if (!node || node->tag != CP_DEM_TYPE_KIND_array_type) {
-		return;
-	}
-	DemNode *type_node = node;
-	DemNode *size_node = node;
-	DemString array_parts = { 0 };
-	dem_string_init(&array_parts);
-	while (type_node->tag == CP_DEM_TYPE_KIND_array_type) {
-		DemNode *parent_node = type_node;
-		type_node = AST_(parent_node, 1);
-		size_node = AST_(parent_node, 0);
-		dem_string_appends(&array_parts, "[");
-		ast_pp(size_node, &array_parts);
-		dem_string_appends(&array_parts, "]");
-	}
-	ast_pp(type_node, out);
-	dem_string_append(out, " ");
-	dem_string_concat(out, &array_parts);
-	dem_string_deinit(&array_parts);
 }
 
 void ast_pp(DemNode *node, DemString *out) {
@@ -578,53 +637,17 @@ void ast_pp(DemNode *node, DemString *out) {
 				.pp_quals = pp_function_ty_quals,
 			};
 			pp_function_ty(&ctx, out);
-		} else if ((node->subtag == POINTER_TYPE || node->subtag == REFERENCE_TYPE || node->subtag == RVALUE_REFERENCE_TYPE) &&
-			AST(0) && AST(0)->tag == CP_DEM_TYPE_KIND_array_type) {
-			// Special case: pointer/reference to array
-			// Format as: element_type (*|&|&&) [dimension]
-			DemNode *array_node = AST(0);
-			// Print array element type (child 1 of array)
-			if (array_node->children && VecPDemNode_len(array_node->children) > 1) {
-				DemNode *element_type = *VecPDemNode_at(array_node->children, 1);
-				if (element_type) {
-					ast_pp(element_type, out);
-				}
-			}
-			dem_string_append(out, " (");
-			if (node->subtag == POINTER_TYPE) {
-				dem_string_append(out, "*");
-			} else if (node->subtag == REFERENCE_TYPE) {
-				dem_string_append(out, "&");
-			} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
-				dem_string_append(out, "&&");
-			}
-			dem_string_append(out, ") [");
-			// Print array dimension (child 0 of array)
-			if (array_node->children && VecPDemNode_len(array_node->children) > 0) {
-				DemNode *dimension = *VecPDemNode_at(array_node->children, 0);
-				if (dimension) {
-					ast_pp(dimension, out);
-				}
-			}
-			dem_string_append(out, "]");
+		} else if (node->subtag != SUB_TAG_INVALID && AST(0)) {
+			pp_type_with_quals(node, out);
 		} else {
 			// Regular type - print children and add decorator
 			vec_foreach_ptr(node->children, child_ptr, {
 				ast_pp(*child_ptr, out);
 			});
-			if (node->subtag == POINTER_TYPE) {
-				dem_string_append(out, "*");
-			} else if (node->subtag == REFERENCE_TYPE) {
-				dem_string_append(out, "&");
-			} else if (node->subtag == RVALUE_REFERENCE_TYPE) {
-				dem_string_append(out, "&&");
-			}
 		}
 	} break;
 
 	case CP_DEM_TYPE_KIND_array_type:
-		// Array type: element_type [dimension]
-		// Child 0: dimension (optional), Child 1: element type
 		pp_array_type(node, out);
 		break;
 
@@ -1104,12 +1127,14 @@ bool rule_array_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	if (PEEK() == '_') {
 		// Empty dimension: A_<type> - just consume the '_' without creating a size node
 		MUST_MATCH(READ('_'));
+		DemNode_dtor(node->array_ty.dimension);
+		node->array_ty.dimension = NULL;
 	} else if (isdigit(PEEK())) {
-		MUST_MATCH(CALL_RULE(rule_number) && READ('_'));
+		MUST_MATCH(CALL_RULE_N(node->array_ty.dimension, rule_number) && READ('_'));
 	} else {
-		MUST_MATCH(CALL_RULE(rule_expression) && READ('_'));
+		MUST_MATCH(CALL_RULE_N(node->array_ty.dimension, rule_expression) && READ('_'));
 	}
-	MUST_MATCH(CALL_RULE(rule_type));
+	MUST_MATCH(CALL_RULE_N(node->array_ty.inner_ty, rule_type));
 	AST_APPEND_TYPE;
 	TRACE_RETURN_SUCCESS;
 }

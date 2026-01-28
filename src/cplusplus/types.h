@@ -244,6 +244,11 @@ typedef struct {
 	DemStringView tag;
 } AbiTagTy;
 
+typedef struct {
+	PDemNode inner_ty;
+	PDemNode dimension;
+} ArrayTy;
+
 typedef struct DemNode_t {
 	struct DemNode_t *parent;
 	DemStringView val;
@@ -267,6 +272,7 @@ typedef struct DemNode_t {
 		ConvOpTy conv_op_ty;
 		ParameterPackExpansion parameter_pack_expansion;
 		AbiTagTy abi_tag_ty;
+		ArrayTy array_ty;
 	};
 } DemNode;
 
