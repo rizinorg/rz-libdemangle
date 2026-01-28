@@ -76,9 +76,7 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 
 	// Qualifiers
 	case CP_DEM_TYPE_KIND_qualified_type: return "qualified_type";
-	case CP_DEM_TYPE_KIND_cv_qualifiers: return "cv_qualifiers";
 	case CP_DEM_TYPE_KIND_qualifiers: return "qualifiers";
-	case CP_DEM_TYPE_KIND_ref_qualifier: return "ref_qualifier";
 	case CP_DEM_TYPE_KIND_top_level_cv_qualifiers: return "top_level_cv_qualifiers";
 	case CP_DEM_TYPE_KIND_extended_qualifier: return "extended_qualifier";
 	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type: return "vendor_ext_qualified";
@@ -197,9 +195,7 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 
 	// Qualifiers - house
 	case CP_DEM_TYPE_KIND_qualified_type: return "house";
-	case CP_DEM_TYPE_KIND_cv_qualifiers: return "house";
 	case CP_DEM_TYPE_KIND_qualifiers: return "house";
-	case CP_DEM_TYPE_KIND_ref_qualifier: return "house";
 	case CP_DEM_TYPE_KIND_top_level_cv_qualifiers: return "house";
 	case CP_DEM_TYPE_KIND_extended_qualifier: return "house";
 	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type: return "house";
@@ -322,9 +318,7 @@ static const char *get_node_color(CpDemTypeKind tag) {
 
 	// Qualifiers - brown
 	case CP_DEM_TYPE_KIND_qualified_type: return "brown";
-	case CP_DEM_TYPE_KIND_cv_qualifiers: return "brown";
 	case CP_DEM_TYPE_KIND_qualifiers: return "brown";
-	case CP_DEM_TYPE_KIND_ref_qualifier: return "brown";
 	case CP_DEM_TYPE_KIND_top_level_cv_qualifiers: return "brown";
 	case CP_DEM_TYPE_KIND_extended_qualifier: return "brown";
 	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type: return "brown";

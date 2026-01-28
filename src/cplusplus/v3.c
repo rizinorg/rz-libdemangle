@@ -468,6 +468,24 @@ void pp_special_substitution(DemNode *node, DemString *out) {
 	pp_base_class_name(node, out);
 }
 
+static inline void pp_as_operand_ex(DemNode *node, DemString *out, Prec prec, bool strictly_worse) {
+	if (!node || !out) {
+		return;
+	}
+	bool need_parens = (size_t)node->prec >= (size_t)prec + (size_t)strictly_worse;
+	if (need_parens) {
+		dem_string_append(out, "(");
+	}
+	ast_pp(node, out);
+	if (need_parens) {
+		dem_string_append(out, ")");
+	}
+}
+
+static inline void pp_as_operand(DemNode *node, DemString *out) {
+	pp_as_operand_ex(node, out, Default, false);
+}
+
 void ast_pp(DemNode *node, DemString *out) {
 	if (!node || !out) {
 		return;
@@ -1524,19 +1542,18 @@ bool rule_prefix_expression(DemParser *p, DemResult *r, const OperatorInfo *op) 
 	RULE_HEAD(expression);
 	PDemNode expr = NULL;
 	MUST_MATCH(CALL_RULE_N(expr, rule_expression));
-
 	AST_APPEND_STR(opinfo_get_symbol(op));
 	AST_APPEND_NODE(expr);
+	node->prec = op->Prec;
 	TRACE_RETURN_SUCCESS;
 }
 
 bool rule_binary_expression(DemParser *p, DemResult *r, const OperatorInfo *op) {
 	RULE_HEAD(expression);
-	AST_APPEND_STR("(");
 	MUST_MATCH(CALL_RULE(rule_expression));
 	AST_APPEND_STR(opinfo_get_symbol(op));
 	MUST_MATCH(CALL_RULE(rule_expression));
-	AST_APPEND_STR(")");
+	node->prec = op->Prec;
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -1553,6 +1570,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			}
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR(opinfo_get_symbol(Op));
+			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case Binary: return rule_binary_expression(p, r, Op);
 		case Array: // ix: arr[idx]
@@ -1560,13 +1578,13 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			AST_APPEND_STR("[");
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR("]");
+			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case Member: // dt/pt: expr.name / expr->name
-			AST_APPEND_STR("(");
 			MUST_MATCH(CALL_RULE(rule_expression));
-			AST_APPEND_STR(")");
 			AST_APPEND_STR(opinfo_get_symbol(Op));
 			MUST_MATCH(CALL_RULE(rule_expression));
+			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case New: // nw/na
 		case Del: // dl/da
@@ -1586,6 +1604,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 				AST_APPEND_STR(" ");
 				MUST_MATCH(CALL_RULE(rule_expression));
 			}
+			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case Call: // cl: func(args)
 			MUST_MATCH(CALL_RULE(rule_expression));
@@ -1593,6 +1612,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			MUST_MATCH(CALL_MANY(rule_expression, ", "));
 			MUST_MATCH(READ('E'));
 			AST_APPEND_STR(")");
+			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case CCast: // cv: (type)expr or (type)(args)
 			AST_APPEND_STR("(");
@@ -1606,6 +1626,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			} else {
 				MUST_MATCH(CALL_RULE(rule_expression));
 			}
+			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case Conditional: // qu: cond ? then : else
 			MUST_MATCH(CALL_RULE(rule_expression));
@@ -1613,6 +1634,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR(" : ");
 			MUST_MATCH(CALL_RULE(rule_expression));
+			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case NameOnly:
 			TRACE_RETURN_FAILURE();
@@ -1623,6 +1645,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			AST_APPEND_STR(">(");
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR(")");
+			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case OfIdOp: // st/sz/at/az/ti/te: sizeof/alignof/typeid
 			AST_APPEND_STR(opinfo_get_symbol(Op));
@@ -1633,6 +1656,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 				MUST_MATCH(CALL_RULE(rule_expression));
 			}
 			AST_APPEND_STR(")");
+			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case Unnameable:
 			TRACE_RETURN_FAILURE();
@@ -1745,7 +1769,6 @@ bool rule_initializer(DemParser *p, DemResult *r) {
 	MUST_MATCH(READ('E'));
 	AST_APPEND_STR(")");
 	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(initializer);
 }
 
 bool rule_call_offset(DemParser *p, DemResult *r) {
@@ -2187,7 +2210,6 @@ bool rule_base_unresolved_name(DemParser *p, DemResult *r) {
 		MUST_MATCH(CALL_RULE(rule_template_args));
 	}
 	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(base_unresolved_name);
 }
 
 bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
@@ -2564,7 +2586,6 @@ bool rule_pointer_to_member_type(DemParser *p, DemResult *r) {
 	CTX_MUST_MATCH(0, CALL_RULE(rule_type));
 	CTX_MUST_MATCH(0, CALL_RULE(rule_type));
 	TRACE_RETURN_SUCCESS;
-	RULE_FOOT(pointer_to_member_type);
 }
 
 // Helper function to parse reference qualifiers directly into a struct

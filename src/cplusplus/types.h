@@ -30,8 +30,6 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_name,
 	CP_DEM_TYPE_KIND_unscoped_name,
 	CP_DEM_TYPE_KIND_nested_name,
-	CP_DEM_TYPE_KIND_cv_qualifiers,
-	CP_DEM_TYPE_KIND_ref_qualifier,
 	CP_DEM_TYPE_KIND_template_param,
 	CP_DEM_TYPE_KIND_decltype,
 	CP_DEM_TYPE_KIND_unqualified_name,
@@ -271,11 +269,6 @@ typedef enum {
 	Comma,
 	Default,
 } Prec;
-
-typedef struct {
-	PDemNode e0;
-
-} Expr;
 
 typedef struct DemNode_t {
 	DemStringView val;
