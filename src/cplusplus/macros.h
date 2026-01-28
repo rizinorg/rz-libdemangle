@@ -57,19 +57,19 @@
 		} \
 	} while (0)
 
+static inline bool parse_string(DemParser *p, const char *s) {
+	size_t s_sz = strlen(s);
+	bool read_success = REMAIN_SIZE() >= s_sz && strncmp(CUR(), s, s_sz) == 0;
+	if (read_success) {
+		p->cur += s_sz;
+	}
+	return read_success;
+}
+
 /**
  * \b Read multiple characters in a string.
  */
-#define READ_STR(s) \
-	({ \
-		size_t s_sz = sizeof(s) - 1; \
-		bool read_success = REMAIN_SIZE() >= s_sz && strncmp(CUR(), s, s_sz) == 0; \
-		if (read_success) \
-			ADV_BY(s_sz); \
-		read_success; \
-	})
-
-#define READ_STR_OPTIONAL(s) (READ_STR(s) || true)
+#define READ_STR(s) parse_string(p, s)
 
 /**
  * \b Advance current read position by one character.
