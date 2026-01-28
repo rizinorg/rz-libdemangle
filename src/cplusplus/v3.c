@@ -1561,7 +1561,9 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 			AST_APPEND_STR("]");
 			TRACE_RETURN_SUCCESS;
 		case Member: // dt/pt: expr.name / expr->name
+			AST_APPEND_STR("(");
 			MUST_MATCH(CALL_RULE(rule_expression));
+			AST_APPEND_STR(")");
 			AST_APPEND_STR(opinfo_get_symbol(Op));
 			MUST_MATCH(CALL_RULE(rule_expression));
 			TRACE_RETURN_SUCCESS;
