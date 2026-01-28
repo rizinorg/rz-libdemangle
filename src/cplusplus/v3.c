@@ -716,11 +716,11 @@ void ast_pp(DemNode *node, DemString *out) {
 		dem_string_append_sv(out, node->member_expr.op);
 		pp_as_operand_ex(node->member_expr.rhs, out, node->prec, false);
 		break;
-	// case CP_DEM_TYPE_KIND_expression:
-	// case CP_DEM_TYPE_KIND_fold_expression:
-	// case CP_DEM_TYPE_KIND_braced_expression:
-	// case CP_DEM_TYPE_KIND_prefix_expression:
-	// case CP_DEM_TYPE_KIND_binary_expression:
+		// case CP_DEM_TYPE_KIND_expression:
+		// case CP_DEM_TYPE_KIND_fold_expression:
+		// case CP_DEM_TYPE_KIND_braced_expression:
+		// case CP_DEM_TYPE_KIND_prefix_expression:
+		// case CP_DEM_TYPE_KIND_binary_expression:
 
 	default:
 		// For all other nodes with children, recursively print all children
@@ -1041,7 +1041,6 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 
 bool rule_unresolved_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(unresolved_name);
-	(void)READ_STR("gs");
 	if (READ_STR("srN")) {
 		RETURN_SUCCESS_OR_FAIL((CALL_RULE(rule_unresolved_type)) &&
 			(PEEK() == 'I' ? CALL_RULE(rule_template_args) : true) &&
@@ -1129,7 +1128,7 @@ bool rule_decltype(DemParser *p, DemResult *r) {
 	}
 	PDemNode expr = NULL;
 	MUST_MATCH(CALL_RULE_N(expr, rule_expression) && READ('E'));
-	AST_APPEND_STR("decltype (");
+	AST_APPEND_STR("decltype(");
 	AST_APPEND_NODE(expr);
 	AST_APPEND_STR(")");
 	TRACE_RETURN_SUCCESS;
@@ -1565,6 +1564,7 @@ bool rule_binary_expression(DemParser *p, DemResult *r, const OperatorInfo *op) 
 bool rule_expression(DemParser *p, DemResult *r) {
 	RULE_HEAD(expression);
 
+	bool is_global = READ_STR("gs");
 	const OperatorInfo *Op = parse_operator_info(p);
 	if (Op) {
 		switch (Op->Kind) {
@@ -1593,23 +1593,26 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			node->tag = CP_DEM_TYPE_KIND_member_expression;
 			TRACE_RETURN_SUCCESS;
 		case New: // nw/na
-		case Del: // dl/da
-			if (READ_STR("gs")) {
+			if (is_global) {
 				AST_APPEND_STR("::");
 			}
 			AST_APPEND_STR(opinfo_get_symbol(Op));
-			if (Op->Kind == New) {
-				MUST_MATCH(CALL_MANY(rule_expression, " "));
-				MUST_MATCH(READ('_') && AST_APPEND_STR(" "));
-				MUST_MATCH(CALL_RULE(rule_type));
-				if (PEEK() != 'E') {
-					MUST_MATCH(CALL_RULE(rule_initializer));
-				}
-				MUST_MATCH(READ('E'));
-			} else {
-				AST_APPEND_STR(" ");
-				MUST_MATCH(CALL_RULE(rule_expression));
+			MUST_MATCH(CALL_MANY(rule_expression, " "));
+			MUST_MATCH(READ('_') && AST_APPEND_STR(" "));
+			MUST_MATCH(CALL_RULE(rule_type));
+			if (PEEK() != 'E') {
+				MUST_MATCH(CALL_RULE(rule_initializer));
 			}
+			MUST_MATCH(READ('E'));
+			node->prec = Op->Prec;
+			TRACE_RETURN_SUCCESS;
+		case Del: // dl/da
+			if (is_global) {
+				AST_APPEND_STR("::");
+			}
+			AST_APPEND_STR(opinfo_get_symbol(Op));
+			AST_APPEND_STR(" ");
+			MUST_MATCH(CALL_RULE(rule_expression));
 			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case Call: // cl: func(args)
