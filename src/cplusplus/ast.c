@@ -200,6 +200,15 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->array_ty.dimension);
 		}
 		break;
+	case CP_DEM_TYPE_KIND_member_expression:
+		if (xs->member_expr.lhs) {
+			DemNode_dtor(xs->member_expr.lhs);
+		}
+		if (xs->member_expr.rhs) {
+			DemNode_dtor(xs->member_expr.rhs);
+		}
+		// op is a DemStringView (not allocated), no need to free
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -303,6 +312,11 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 	case CP_DEM_TYPE_KIND_array_type:
 		dst->array_ty.inner_ty = src->array_ty.inner_ty ? DemNode_clone(src->array_ty.inner_ty) : NULL;
 		dst->array_ty.dimension = src->array_ty.dimension ? DemNode_clone(src->array_ty.dimension) : NULL;
+		break;
+	case CP_DEM_TYPE_KIND_member_expression:
+		dst->member_expr.lhs = src->member_expr.lhs ? DemNode_clone(src->member_expr.lhs) : NULL;
+		dst->member_expr.rhs = src->member_expr.rhs ? DemNode_clone(src->member_expr.rhs) : NULL;
+		dst->member_expr.op = src->member_expr.op; // DemStringView, shallow copy
 		break;
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		// Deep copy forward template reference

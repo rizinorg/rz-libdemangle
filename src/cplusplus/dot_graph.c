@@ -67,6 +67,9 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_expr_primary: return "expr_primary";
 	case CP_DEM_TYPE_KIND_braced_expression: return "braced_expression";
 	case CP_DEM_TYPE_KIND_fold_expression: return "fold_expression";
+	case CP_DEM_TYPE_KIND_prefix_expression: return "prefix_expression";
+	case CP_DEM_TYPE_KIND_binary_expression: return "binary_expression";
+	case CP_DEM_TYPE_KIND_member_expression: return "member_expression";
 	case CP_DEM_TYPE_KIND_index_expression: return "index_expression";
 	case CP_DEM_TYPE_KIND_range_begin_expression: return "range_begin_expression";
 	case CP_DEM_TYPE_KIND_range_end_expression: return "range_end_expression";
@@ -192,6 +195,9 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_expr_primary: return "diamond";
 	case CP_DEM_TYPE_KIND_braced_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_fold_expression: return "diamond";
+	case CP_DEM_TYPE_KIND_prefix_expression: return "diamond";
+	case CP_DEM_TYPE_KIND_binary_expression: return "diamond";
+	case CP_DEM_TYPE_KIND_member_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_index_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_range_begin_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_range_end_expression: return "diamond";
@@ -321,6 +327,9 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_expr_primary: return "pink";
 	case CP_DEM_TYPE_KIND_braced_expression: return "pink";
 	case CP_DEM_TYPE_KIND_fold_expression: return "pink";
+	case CP_DEM_TYPE_KIND_prefix_expression: return "pink";
+	case CP_DEM_TYPE_KIND_binary_expression: return "pink";
+	case CP_DEM_TYPE_KIND_member_expression: return "pink";
 	case CP_DEM_TYPE_KIND_index_expression: return "pink";
 	case CP_DEM_TYPE_KIND_range_begin_expression: return "pink";
 	case CP_DEM_TYPE_KIND_range_end_expression: return "pink";
@@ -583,6 +592,13 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 		}
 		break;
 
+	case CP_DEM_TYPE_KIND_member_expression:
+		if (node->member_expr.op.buf && node->member_expr.op.len > 0) {
+			len += snprintf(label + len, sizeof(label) - len, "\\nop: %.*s",
+				(int)node->member_expr.op.len, node->member_expr.op.buf);
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -748,6 +764,15 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		if (node->array_ty.dimension) {
 			dot_graph_traverse_ast(dot, node->array_ty.dimension, current_id, "dimension", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_member_expression:
+		if (node->member_expr.lhs) {
+			dot_graph_traverse_ast(dot, node->member_expr.lhs, current_id, "lhs", "solid");
+		}
+		if (node->member_expr.rhs) {
+			dot_graph_traverse_ast(dot, node->member_expr.rhs, current_id, "rhs", "solid");
 		}
 		break;
 

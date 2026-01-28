@@ -44,12 +44,17 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_builtin_type,
 	CP_DEM_TYPE_KIND_expression,
 	CP_DEM_TYPE_KIND_fold_expression,
+	CP_DEM_TYPE_KIND_braced_expression,
+	CP_DEM_TYPE_KIND_prefix_expression,
+	CP_DEM_TYPE_KIND_binary_expression,
+	CP_DEM_TYPE_KIND_member_expression,
+
 	CP_DEM_TYPE_KIND_unresolved_name,
 	CP_DEM_TYPE_KIND_function_param,
 	CP_DEM_TYPE_KIND_expr_primary,
 	CP_DEM_TYPE_KIND_float,
 	CP_DEM_TYPE_KIND_initializer,
-	CP_DEM_TYPE_KIND_braced_expression,
+
 	CP_DEM_TYPE_KIND_base_unresolved_name,
 	CP_DEM_TYPE_KIND_simple_id,
 	CP_DEM_TYPE_KIND_destructor_name,
@@ -126,6 +131,22 @@ typedef struct {
 	const char *buf;
 	size_t len;
 } DemStringView;
+
+static inline bool dem_string_append_sv(DemString *dst, const DemStringView src) {
+	if (!dst || !src.buf) {
+		return false;
+	}
+	return dem_string_append_n(dst, src.buf, src.len);
+}
+
+static inline bool sv_form_cstr(DemStringView *dst, const char *src) {
+	if (!dst || !src) {
+		return false;
+	}
+	dst->buf = src;
+	dst->len = strlen(src);
+	return true;
+}
 
 struct Vec_t(DemNode);
 
@@ -247,6 +268,12 @@ typedef struct {
 	PDemNode dimension;
 } ArrayTy;
 
+typedef struct {
+	PDemNode lhs;
+	DemStringView op;
+	PDemNode rhs;
+} MemberExpr;
+
 typedef enum {
 	Primary,
 	PPostfix,
@@ -294,6 +321,7 @@ typedef struct DemNode_t {
 		ParameterPackExpansion parameter_pack_expansion;
 		AbiTagTy abi_tag_ty;
 		ArrayTy array_ty;
+		MemberExpr member_expr;
 	};
 } DemNode;
 

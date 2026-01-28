@@ -482,10 +482,6 @@ static inline void pp_as_operand_ex(DemNode *node, DemString *out, Prec prec, bo
 	}
 }
 
-static inline void pp_as_operand(DemNode *node, DemString *out) {
-	pp_as_operand_ex(node, out, Default, false);
-}
-
 void ast_pp(DemNode *node, DemString *out) {
 	if (!node || !out) {
 		return;
@@ -715,6 +711,16 @@ void ast_pp(DemNode *node, DemString *out) {
 			dem_string_append(out, "::*");
 		}
 		break;
+	case CP_DEM_TYPE_KIND_member_expression:
+		pp_as_operand_ex(node->member_expr.lhs, out, node->prec, true);
+		dem_string_append_sv(out, node->member_expr.op);
+		pp_as_operand_ex(node->member_expr.rhs, out, node->prec, false);
+		break;
+	// case CP_DEM_TYPE_KIND_expression:
+	// case CP_DEM_TYPE_KIND_fold_expression:
+	// case CP_DEM_TYPE_KIND_braced_expression:
+	// case CP_DEM_TYPE_KIND_prefix_expression:
+	// case CP_DEM_TYPE_KIND_binary_expression:
 
 	default:
 		// For all other nodes with children, recursively print all children
@@ -1152,7 +1158,6 @@ bool rule_array_type(DemParser *p, DemResult *r) {
 		MUST_MATCH(CALL_RULE_N(node->array_ty.dimension, rule_expression) && READ('_'));
 	}
 	MUST_MATCH(CALL_RULE_N(node->array_ty.inner_ty, rule_type));
-	AST_APPEND_TYPE;
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -1539,7 +1544,7 @@ bool rule_fold_expression(DemParser *p, DemResult *r) {
 }
 
 bool rule_prefix_expression(DemParser *p, DemResult *r, const OperatorInfo *op) {
-	RULE_HEAD(expression);
+	RULE_HEAD(prefix_expression);
 	PDemNode expr = NULL;
 	MUST_MATCH(CALL_RULE_N(expr, rule_expression));
 	AST_APPEND_STR(opinfo_get_symbol(op));
@@ -1549,7 +1554,7 @@ bool rule_prefix_expression(DemParser *p, DemResult *r, const OperatorInfo *op) 
 }
 
 bool rule_binary_expression(DemParser *p, DemResult *r, const OperatorInfo *op) {
-	RULE_HEAD(expression);
+	RULE_HEAD(binary_expression);
 	MUST_MATCH(CALL_RULE(rule_expression));
 	AST_APPEND_STR(opinfo_get_symbol(op));
 	MUST_MATCH(CALL_RULE(rule_expression));
@@ -1581,10 +1586,11 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case Member: // dt/pt: expr.name / expr->name
-			MUST_MATCH(CALL_RULE(rule_expression));
-			AST_APPEND_STR(opinfo_get_symbol(Op));
-			MUST_MATCH(CALL_RULE(rule_expression));
+			MUST_MATCH(CALL_RULE_N(node->member_expr.lhs, rule_expression));
+			sv_form_cstr(&node->member_expr.op, opinfo_get_symbol(Op));
+			MUST_MATCH(CALL_RULE_N(node->member_expr.rhs, rule_expression));
 			node->prec = Op->Prec;
+			node->tag = CP_DEM_TYPE_KIND_member_expression;
 			TRACE_RETURN_SUCCESS;
 		case New: // nw/na
 		case Del: // dl/da
