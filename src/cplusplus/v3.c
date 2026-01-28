@@ -1402,12 +1402,12 @@ bool rule_expr_primary(DemParser *p, const DemNode *parent, DemResult *r) {
 		is_literal_int = true;
 		break;
 	case 's': // short
-		suffix = "";
-		is_literal_int = true;
+		// Use cast notation for short types
+		is_literal_int = false;
 		break;
 	case 't': // unsigned short
-		suffix = "u";
-		is_literal_int = true;
+		// Use cast notation for unsigned short types
+		is_literal_int = false;
 		break;
 	default:
 		break;
@@ -1676,7 +1676,7 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRY_MATCH(READ_STR("tr") && AST_APPEND_STR("throw"));
 	TRY_MATCH(READ_STR("sZ") && AST_APPEND_STR("sizeof...(") && (CALL_RULE(rule_template_param) || CALL_RULE(rule_function_param)) && AST_APPEND_STR(")"));
 	TRY_MATCH(READ_STR("sP") && AST_APPEND_STR("sizeof...(") && CALL_MANY(rule_template_arg, "") && READ('E') && AST_APPEND_STR(")"));
-	TRY_MATCH(READ_STR("sp") && CALL_RULE(rule_expression) && AST_APPEND_STR("..."));
+	TRY_MATCH(READ_STR("sp") && CALL_RULE(rule_expression));
 	// NOTE: fl and fr are fold expressions, handled by rule_fold_expression above
 	TRY_MATCH(CALL_RULE(rule_unresolved_name));
 
