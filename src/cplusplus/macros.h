@@ -312,10 +312,10 @@ static inline bool parse_string(DemParser *p, const char *s) {
 	})
 
 // Helper macro for match_many/match_many1 calls
-#define CALL_MANY(rule_fn, sep)       CALL_RULE_VA(match_many, rule_fn, sep)
-#define CALL_MANY1(rule_fn, sep)      CALL_RULE_VA(match_many1, rule_fn, sep)
-#define CALL_MANY_N(N, rule_fn, sep)  CALL_RULE_N_VA(N, match_many, rule_fn, sep)
-#define CALL_MANY1_N(N, rule_fn, sep) CALL_RULE_N_VA(N, match_many1, rule_fn, sep)
+#define CALL_MANY(rule_fn, sep, stop)       CALL_RULE_VA(match_many, rule_fn, sep, stop)
+#define CALL_MANY1(rule_fn, sep, stop)      CALL_RULE_VA(match_many1, rule_fn, sep, stop)
+#define CALL_MANY_N(N, rule_fn, sep, stop)  CALL_RULE_N_VA(N, match_many, rule_fn, sep, stop)
+#define CALL_MANY1_N(N, rule_fn, sep, stop) CALL_RULE_N_VA(N, match_many1, rule_fn, sep, stop)
 
 #define CTX_MUST_MATCH(I, rules) \
 	do { \

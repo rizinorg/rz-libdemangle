@@ -989,10 +989,7 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 
 	DemNode *result = NULL;
 	if (READ_STR("DC")) {
-		CALL_MANY1_N(result, rule_source_name, ", ");
-		if (!READ('E')) {
-			TRACE_RETURN_FAILURE();
-		}
+		CALL_MANY1_N(result, rule_source_name, ", ", 'E');
 	} else if (PEEK() == 'U') {
 		CALL_RULE_N(result, rule_unnamed_type_name);
 	} else if (PEEK() == 'D' || PEEK() == 'C') {
@@ -1036,7 +1033,7 @@ bool rule_unresolved_name(DemParser *p, DemResult *r) {
 		RETURN_SUCCESS_OR_FAIL((CALL_RULE(rule_unresolved_type)) &&
 			(PEEK() == 'I' ? CALL_RULE(rule_template_args) : true) &&
 			AST_APPEND_STR("::") &&
-			CALL_MANY1(rule_unresolved_qualifier_level, "::") && READ('E') &&
+			CALL_MANY(rule_unresolved_qualifier_level, "::", 'E') &&
 			AST_APPEND_STR("::") &&
 			CALL_RULE(rule_base_unresolved_name));
 	}
@@ -1045,7 +1042,7 @@ bool rule_unresolved_name(DemParser *p, DemResult *r) {
 		TRACE_RETURN_SUCCESS
 	}
 	if (isdigit(PEEK())) {
-		MUST_MATCH(CALL_MANY1(rule_unresolved_qualifier_level, "::") && READ('E'));
+		MUST_MATCH(CALL_MANY1(rule_unresolved_qualifier_level, "::", 'E'));
 		AST_APPEND_STR("::");
 	} else {
 		MUST_MATCH(CALL_RULE(rule_unresolved_type));
@@ -1546,7 +1543,9 @@ bool rule_prefix_expression(DemParser *p, DemResult *r, const OperatorInfo *op) 
 bool rule_binary_expression(DemParser *p, DemResult *r, const OperatorInfo *op) {
 	RULE_HEAD(binary_expression);
 	MUST_MATCH(CALL_RULE(rule_expression));
+	AST_APPEND_STR(" ");
 	AST_APPEND_STR(opinfo_get_symbol(op));
+	AST_APPEND_STR(" ");
 	MUST_MATCH(CALL_RULE(rule_expression));
 	node->prec = op->Prec;
 	TRACE_RETURN_SUCCESS;
@@ -1588,13 +1587,12 @@ bool rule_expression(DemParser *p, DemResult *r) {
 				AST_APPEND_STR("::");
 			}
 			AST_APPEND_STR(opinfo_get_symbol(Op));
-			MUST_MATCH(CALL_MANY(rule_expression, " "));
-			MUST_MATCH(READ('_') && AST_APPEND_STR(" "));
+			MUST_MATCH(CALL_MANY(rule_expression, " ", '_'));
+			AST_APPEND_STR(" ");
 			MUST_MATCH(CALL_RULE(rule_type));
 			if (PEEK() != 'E') {
 				MUST_MATCH(CALL_RULE(rule_initializer));
 			}
-			MUST_MATCH(READ('E'));
 			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
 		case Del: // dl/da
@@ -1609,8 +1607,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		case Call: // cl: func(args)
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR("(");
-			MUST_MATCH(CALL_MANY(rule_expression, ", "));
-			MUST_MATCH(READ('E'));
+			MUST_MATCH(CALL_MANY(rule_expression, ", ", 'E'));
 			AST_APPEND_STR(")");
 			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
@@ -1620,8 +1617,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			AST_APPEND_STR(")");
 			if (READ('_')) {
 				AST_APPEND_STR("(");
-				MUST_MATCH(CALL_MANY(rule_expression, ", "));
-				MUST_MATCH(READ('E'));
+				MUST_MATCH(CALL_MANY(rule_expression, ", ", 'E'));
 				AST_APPEND_STR(")");
 			} else {
 				MUST_MATCH(CALL_RULE(rule_expression));
@@ -1678,10 +1674,10 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_fold_expression));
 	}
 	if (READ_STR("il")) {
-		RETURN_SUCCESS_OR_FAIL(CALL_MANY(rule_expression, "") && READ('E'));
+		RETURN_SUCCESS_OR_FAIL(CALL_MANY(rule_expression, "", 'E'));
 	}
 	if (READ_STR("tl")) {
-		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_type) && CALL_MANY(rule_braced_expression, "") && READ('E'));
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_type) && CALL_MANY(rule_braced_expression, "", 'E'));
 	}
 	if (READ_STR("nx")) {
 		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("noexcept (") && CALL_RULE(rule_expression) && AST_APPEND_STR(")"));
@@ -1696,7 +1692,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("sizeof...(") && (CALL_RULE(rule_template_param) || CALL_RULE(rule_function_param)) && AST_APPEND_STR(")"));
 	}
 	if (READ_STR("sP")) {
-		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("sizeof...(") && CALL_MANY(rule_template_arg, "") && READ('E') && AST_APPEND_STR(")"));
+		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("sizeof...(") && CALL_MANY(rule_template_arg, "", 'E') && AST_APPEND_STR(")"));
 	}
 	if (READ_STR("sp")) {
 		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_expression));
@@ -1732,7 +1728,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			}
 			Node_append(args, uuid);
 		} else {
-			CALL_MANY_N(args, rule_template_arg, ", ");
+			CALL_MANY_N(args, rule_template_arg, ", ", '\0');
 		}
 		AST_APPEND_NODE(name);
 		AST_APPEND_STR("(");
@@ -1804,10 +1800,9 @@ bool rule_initializer(DemParser *p, DemResult *r) {
 	if (!READ_STR("pi")) {
 		TRACE_RETURN_FAILURE();
 	}
-	AST_APPEND_STR(" (");
-	MUST_MATCH(CALL_MANY(rule_expression, ", "));
-	MUST_MATCH(READ('E'));
-	AST_APPEND_STR(")");
+	AST_APPEND_STR("({");
+	MUST_MATCH(CALL_MANY(rule_expression, ", ", 'E'));
+	AST_APPEND_STR("})");
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -1971,14 +1966,12 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 	}
 
 	DemResult param_result = { 0 };
-	if (!READ('v')) {
-		if (!match_many(p, &param_result, rule_type, ", ")) {
-			TRACE_RETURN_FAILURE();
-		}
+	READ('v');
+	if (!match_many(p, &param_result, rule_type, ", ", 'E')) {
+		TRACE_RETURN_FAILURE();
 	}
 
 	parse_ref_qualifiers(p, &node->fn_ty.ref_qualifiers);
-	MUST_MATCH(READ('E'));
 
 	node->fn_ty.params = param_result.output;
 	TRACE_RETURN_SUCCESS;
@@ -2504,7 +2497,7 @@ bool rule_template_arg(DemParser *p, DemResult *r) {
 	}
 	case 'J': {
 		ADV();
-		MUST_MATCH(CALL_MANY(rule_template_arg, ", ") && READ('E'));
+		MUST_MATCH(CALL_MANY(rule_template_arg, ", ", 'E'));
 		node->tag = CP_DEM_TYPE_KIND_template_parameter_pack;
 		TRACE_RETURN_SUCCESS;
 	}
@@ -2604,14 +2597,11 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 		}
 		DemNode *params = NULL;
 		if (!READ('v')) {
-			CALL_MANY1_N(params, rule_type, ", ");
+			CALL_MANY1_N(params, rule_type, ", ", 'E');
 		}
 		if (READ('Q')) {
 			// TODO: Handle ConstraintExpr
 			DEM_UNREACHABLE;
-		}
-		if (!READ('E')) {
-			TRACE_RETURN_FAILURE();
 		}
 		if (!parse_number(p, &node->closure_ty_name.count, false)) {
 			TRACE_RETURN_FAILURE();
@@ -2693,7 +2683,7 @@ bool rule_encoding(DemParser *p, DemResult *r) {
 	// Parse function parameters using match_many to create a many node
 	// 'v' means void (no parameters), otherwise parse parameter list
 	if (!READ('v')) {
-		if (!CALL_MANY1_N(node->fn_ty.params, rule_type, ", ")) {
+		if (!CALL_MANY1_N(node->fn_ty.params, rule_type, ", ", '\0')) {
 			TRACE_RETURN_FAILURE();
 		}
 	}

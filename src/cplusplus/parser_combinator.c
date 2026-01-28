@@ -10,9 +10,10 @@ bool match_many1(
 	DemParser *p,
 	DemResult *r,
 	DemRule rule,
-	const char *sep) {
+	const char *sep,
+	const char stop) {
 	const char *saved_pos = p->cur;
-	if (!match_many(p, r, rule, sep)) {
+	if (!match_many(p, r, rule, sep, stop)) {
 		p->cur = saved_pos;
 		return false;
 	}
@@ -29,7 +30,8 @@ bool match_many(
 	DemParser *p,
 	DemResult *r,
 	DemRule rule,
-	const char *sep) {
+	const char *sep,
+	const char stop) {
 	if (!rule || !r || !p) {
 		r->error = DEM_ERR_INVALID_SYNTAX;
 		return false;
@@ -53,7 +55,7 @@ bool match_many(
 	}
 	many_node->many_ty.sep = sep ? sep : ""; // Use provided separator or default to empty
 
-	while (true) {
+	while (stop != '\0' ? !READ(stop) : true) {
 		DemResult child_result = { 0 };
 		const char *saved_pos = p->cur;
 		if (rule(p, &child_result)) {
