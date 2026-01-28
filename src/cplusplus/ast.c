@@ -193,6 +193,14 @@ void DemNode_deinit(DemNode *xs) {
 		}
 		// tag is a DemStringView (not allocated), no need to free
 		break;
+	case CP_DEM_TYPE_KIND_array_type:
+		if (xs->array_ty.inner_ty) {
+			DemNode_dtor(xs->array_ty.inner_ty);
+		}
+		if (xs->array_ty.dimension) {
+			DemNode_dtor(xs->array_ty.dimension);
+		}
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -334,6 +342,16 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 			dst->abi_tag_ty.ty->parent = dst;
 		}
 		break;
+	case CP_DEM_TYPE_KIND_array_type:
+		dst->array_ty.inner_ty = src->array_ty.inner_ty ? DemNode_clone(src->array_ty.inner_ty) : NULL;
+		dst->array_ty.dimension = src->array_ty.dimension ? DemNode_clone(src->array_ty.dimension) : NULL;
+		if (dst->array_ty.inner_ty) {
+			dst->array_ty.inner_ty->parent = dst;
+		}
+		if (dst->array_ty.dimension) {
+			dst->array_ty.dimension->parent = dst;
+		}
+		break;
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		// Deep copy forward template reference
 		if (src->fwd_template_ref) {
@@ -364,13 +382,13 @@ void DemNode_move(DemNode *dst, DemNode *src) {
 	}
 	DemNode_deinit(dst);
 	memcpy(dst, src, sizeof(DemNode));
-	
+
 	// Update wrapper pointer if this is a forward template reference
 	// The wrapper should point to the new location (dst), not the old (src)
 	if (dst->tag == CP_DEM_TYPE_KIND_fwd_template_ref && dst->fwd_template_ref) {
 		dst->fwd_template_ref->wrapper = dst;
 	}
-	
+
 	memset(src, 0, sizeof(DemNode));
 }
 
