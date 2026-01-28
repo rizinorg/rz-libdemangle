@@ -312,41 +312,10 @@
 	})
 
 // Helper macro for match_many/match_many1 calls
-#define CALL_MANY(rule_fn, sep) \
-	({ \
-		DemResult _child_result = { 0 }; \
-		bool _success = match_many(p, &_child_result, (rule_fn), (sep)); \
-		if (_success && _child_result.output) { \
-			AST_APPEND_NODE(_child_result.output); \
-		} else { \
-			DemResult_deinit(&_child_result); \
-		} \
-		_success; \
-	})
-
-#define CALL_MANY1(rule_fn, sep) \
-	({ \
-		DemResult _child_result = { 0 }; \
-		bool _success = match_many1(p, &_child_result, (rule_fn), (sep)); \
-		if (_success && _child_result.output) { \
-			AST_APPEND_NODE(_child_result.output); \
-		} else { \
-			DemResult_deinit(&_child_result); \
-		} \
-		_success; \
-	})
-
-#define CALL_MANY1_N(N, rule_fn, sep) \
-	({ \
-		DemResult _child_result = { 0 }; \
-		bool _success = match_many1(p, &_child_result, (rule_fn), (sep)); \
-		if (_success && _child_result.output) { \
-			N = _child_result.output; \
-		} else { \
-			DemResult_deinit(&_child_result); \
-		} \
-		_success; \
-	})
+#define CALL_MANY(rule_fn, sep)       CALL_RULE_VA(match_many, rule_fn, sep)
+#define CALL_MANY1(rule_fn, sep)      CALL_RULE_VA(match_many1, rule_fn, sep)
+#define CALL_MANY_N(N, rule_fn, sep)  CALL_RULE_N_VA(N, match_many, rule_fn, sep)
+#define CALL_MANY1_N(N, rule_fn, sep) CALL_RULE_N_VA(N, match_many1, rule_fn, sep)
 
 #define CTX_MUST_MATCH(I, rules) \
 	do { \

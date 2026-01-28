@@ -148,6 +148,13 @@ static inline bool sv_form_cstr(DemStringView *dst, const char *src) {
 	return true;
 }
 
+static inline bool sv_eq_cstr(DemStringView *dst, const char *src) {
+	if (!dst || !src) {
+		return false;
+	}
+	return dst->len == strlen(src) && strncmp(dst->buf, src, dst->len) == 0;
+}
+
 struct Vec_t(DemNode);
 
 enum {

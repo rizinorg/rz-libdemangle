@@ -232,7 +232,7 @@ bool pp_pack_expansion(PPPackExpansionContext *ctx, DemString *out) {
 
 // Helper function to extract the base class name from a ctor/dtor name
 // Recursively unwraps name_with_template_args and nested_name to get the final primitive name
-static bool pp_base_class_name(PDemNode node, DemString *out) {
+static bool node_base_name(PDemNode node, DemStringView *out) {
 	if (!node) {
 		return false;
 	}
@@ -241,88 +241,79 @@ static bool pp_base_class_name(PDemNode node, DemString *out) {
 	case CP_DEM_TYPE_KIND_abi_tag_ty:
 		// Unwrap abi_tag_ty to get the inner type
 		if (node->abi_tag_ty.ty) {
-			return pp_base_class_name(node->abi_tag_ty.ty, out);
+			return node_base_name(node->abi_tag_ty.ty, out);
 		}
 		break;
 	case CP_DEM_TYPE_KIND_name_with_template_args:
 		// Unwrap template args to get the base name
 		if (node->name_with_template_args.name) {
-			return pp_base_class_name(node->name_with_template_args.name, out);
+			return node_base_name(node->name_with_template_args.name, out);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_nested_name:
 		// Get the final name component (not the qualifier)
 		if (node->nested_name.name) {
-			return pp_base_class_name(node->nested_name.name, out);
+			return node_base_name(node->nested_name.name, out);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_expanded_special_substitution:
 		switch (node->subtag) {
 		case SPECIAL_SUBSTITUTION_ALLOCATOR:
-			dem_string_append(out, "allocator");
-			break;
+			return sv_form_cstr(out, "allocator");
 		case SPECIAL_SUBSTITUTION_BASIC_STRING:
-			dem_string_append(out, "basic_string");
-			break;
+			return sv_form_cstr(out, "basic_string");
 		case SPECIAL_SUBSTITUTION_STRING:
-			dem_string_append(out, "basic_string");
-			break;
+			return sv_form_cstr(out, "basic_string");
 		case SPECIAL_SUBSTITUTION_IOSTREAM:
-			dem_string_append(out, "basic_iostream");
-			break;
+			return sv_form_cstr(out, "basic_iostream");
 		case SPECIAL_SUBSTITUTION_ISTREAM:
-			dem_string_append(out, "basic_istream");
-			break;
+			return sv_form_cstr(out, "basic_istream");
 		case SPECIAL_SUBSTITUTION_OSTREAM:
-			dem_string_append(out, "basic_ostream");
-			break;
+			return sv_form_cstr(out, "basic_ostream");
 		default:
-			dem_string_append(out, "<unknown special substitution>");
-			break;
+			return sv_form_cstr(out, "<unknown special substitution>");
 		}
-		return true;
+		return false;
 
 	case CP_DEM_TYPE_KIND_special_substitution:
 		switch (node->subtag) {
 		case SPECIAL_SUBSTITUTION_ALLOCATOR:
-			dem_string_append(out, "allocator");
-			break;
+			return sv_form_cstr(out, "allocator");
 		case SPECIAL_SUBSTITUTION_BASIC_STRING:
-			dem_string_append(out, "basic_string");
-			break;
+			return sv_form_cstr(out, "basic_string");
 		case SPECIAL_SUBSTITUTION_STRING:
-			dem_string_append(out, "string");
-			break;
+			return sv_form_cstr(out, "string");
 		case SPECIAL_SUBSTITUTION_IOSTREAM:
-			dem_string_append(out, "iostream");
-			break;
+			return sv_form_cstr(out, "iostream");
 		case SPECIAL_SUBSTITUTION_ISTREAM:
-			dem_string_append(out, "istream");
-			break;
+			return sv_form_cstr(out, "istream");
 		case SPECIAL_SUBSTITUTION_OSTREAM:
-			dem_string_append(out, "ostream");
-			break;
+			return sv_form_cstr(out, "ostream");
 		default:
-			dem_string_append(out, "<unknown special substitution>");
-			break;
+			return sv_form_cstr(out, "<unknown special substitution>");
 		}
-		return true;
+		return false;
 
 	case CP_DEM_TYPE_KIND_primitive_ty:
+		return sv_form_cstr(out, node->primitive_ty.name.buf);
 	default:
-		break;
+		return node_base_name(node, out);
 	}
+	return false;
+}
 
-	// For other node types, just return as-is
-	ast_pp(node, out);
-	return true;
+static bool pp_base_name(PDemNode node, DemString *out) {
+	DemStringView base_name = { 0 };
+	if (!node_base_name(node, &base_name)) {
+		return false;
+	}
+	return dem_string_append_sv(out, base_name);
 }
 
 // Helper to check if a type node ultimately wraps a function type
 // This walks through type wrappers (pointer, reference, qualified) to find the innermost type
-
 struct PPFnContext_t;
 
 typedef void (*AST_PP_FN)(struct PPFnContext_t *, DemString *);
@@ -453,7 +444,7 @@ static void pp_function_ty_mod_pointer_to_member_type(PPFnContext *ctx, DemStrin
 
 void pp_expanded_special_substitution(DemNode *node, DemString *out) {
 	dem_string_append(out, "std::");
-	pp_base_class_name(node, out);
+	pp_base_name(node, out);
 	if (node->subtag >= SPECIAL_SUBSTITUTION_STRING) {
 		dem_string_append(out, "<char, std::char_traits<char>");
 		if (node->subtag == SPECIAL_SUBSTITUTION_STRING) {
@@ -465,7 +456,7 @@ void pp_expanded_special_substitution(DemNode *node, DemString *out) {
 
 void pp_special_substitution(DemNode *node, DemString *out) {
 	dem_string_append(out, "std::");
-	pp_base_class_name(node, out);
+	pp_base_name(node, out);
 }
 
 static inline void pp_as_operand_ex(DemNode *node, DemString *out, Prec prec, bool strictly_worse) {
@@ -609,7 +600,7 @@ void ast_pp(DemNode *node, DemString *out) {
 		// For constructor/destructor names, we only want the final class name,
 		// not the full qualified name or template arguments. Extract the base name.
 		if (node->ctor_dtor_name.name) {
-			pp_base_class_name(node->ctor_dtor_name.name, out);
+			pp_base_name(node->ctor_dtor_name.name, out);
 		}
 		break;
 
@@ -1710,6 +1701,46 @@ bool rule_expression(DemParser *p, DemResult *r) {
 	if (READ_STR("sp")) {
 		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_expression));
 	}
+	if (READ('u')) {
+		PDemNode name = NULL;
+		MUST_MATCH(CALL_RULE_N(name, rule_source_name));
+
+		bool is_uuid = false;
+		PDemNode uuid = NULL;
+		DemStringView base_name = { 0 };
+		if (!node_base_name(name, &base_name)) {
+			TRACE_RETURN_FAILURE();
+		}
+		if (sv_eq_cstr(&base_name, "__uuidof")) {
+			if (READ('t')) {
+				MUST_MATCH(CALL_RULE_N(uuid, rule_type));
+				is_uuid = true;
+			} else if (READ('z')) {
+				MUST_MATCH(CALL_RULE_N(uuid, rule_expression));
+				is_uuid = true;
+			}
+		}
+
+		PDemNode args = NULL;
+		if (is_uuid) {
+			if (!uuid) {
+				TRACE_RETURN_FAILURE();
+			}
+			args = DemNode_ctor(CP_DEM_TYPE_KIND_many, name->val.buf, CUR() - name->val.buf);
+			if (!args) {
+				TRACE_RETURN_FAILURE();
+			}
+			Node_append(args, uuid);
+		} else {
+			CALL_MANY_N(args, rule_template_arg, ", ");
+		}
+		AST_APPEND_NODE(name);
+		AST_APPEND_STR("(");
+		AST_APPEND_NODE(args);
+		AST_APPEND_STR(")");
+		TRACE_RETURN_SUCCESS;
+	}
+
 	TRY_MATCH(CALL_RULE(rule_unresolved_name));
 
 	RULE_FOOT(expression);
