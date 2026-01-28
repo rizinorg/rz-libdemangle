@@ -128,6 +128,12 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_module_name: return "module_name";
 	case CP_DEM_TYPE_KIND_class_enum_type: return "class_enum_type";
 	case CP_DEM_TYPE_KIND_decltype: return "decltype";
+	case CP_DEM_TYPE_KIND_conv_op_ty: return "conv_op_ty";
+	case CP_DEM_TYPE_KIND_abi_tag_ty: return "abi_tag_ty";
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion: return "parameter_pack_expansion";
+	case CP_DEM_TYPE_KIND_template_parameter_pack: return "template_parameter_pack";
+	case CP_DEM_TYPE_KIND_special_substitution: return "special_substitution";
+	case CP_DEM_TYPE_KIND_expanded_special_substitution: return "expanded_special_substitution";
 
 	default: return "unknown";
 	}
@@ -250,6 +256,12 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_module_name: return "folder";
 	case CP_DEM_TYPE_KIND_class_enum_type: return "oval";
 	case CP_DEM_TYPE_KIND_decltype: return "parallelogram";
+	case CP_DEM_TYPE_KIND_conv_op_ty: return "doubleoctagon";
+	case CP_DEM_TYPE_KIND_abi_tag_ty: return "tab";
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion: return "septagon";
+	case CP_DEM_TYPE_KIND_template_parameter_pack: return "septagon";
+	case CP_DEM_TYPE_KIND_special_substitution: return "invtriangle";
+	case CP_DEM_TYPE_KIND_expanded_special_substitution: return "invtrapezium";
 
 	default: return "ellipse";
 	}
@@ -370,6 +382,12 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_module_name: return "khaki";
 	case CP_DEM_TYPE_KIND_class_enum_type: return "lightblue";
 	case CP_DEM_TYPE_KIND_decltype: return "lightgray";
+	case CP_DEM_TYPE_KIND_conv_op_ty: return "mediumpurple";
+	case CP_DEM_TYPE_KIND_abi_tag_ty: return "plum";
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion: return "palegreen";
+	case CP_DEM_TYPE_KIND_template_parameter_pack: return "paleturquoise";
+	case CP_DEM_TYPE_KIND_special_substitution: return "orangered";
+	case CP_DEM_TYPE_KIND_expanded_special_substitution: return "tomato";
 
 	default: return "white";
 	}
@@ -558,6 +576,13 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 		}
 		break;
 
+	case CP_DEM_TYPE_KIND_abi_tag_ty:
+		if (node->abi_tag_ty.tag.buf && node->abi_tag_ty.tag.len > 0) {
+			len += snprintf(label + len, sizeof(label) - len, "\\ntag: %.*s",
+				(int)node->abi_tag_ty.tag.len, node->abi_tag_ty.tag.buf);
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -625,6 +650,12 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		if (node->fn_ty.params) {
 			dot_graph_traverse_ast(dot, node->fn_ty.params, current_id, "params", "solid");
 		}
+		if (node->fn_ty.requires_node) {
+			dot_graph_traverse_ast(dot, node->fn_ty.requires_node, current_id, "requires", "solid");
+		}
+		if (node->fn_ty.exception_spec) {
+			dot_graph_traverse_ast(dot, node->fn_ty.exception_spec, current_id, "exception_spec", "solid");
+		}
 		break;
 
 	case CP_DEM_TYPE_KIND_qualified_type:
@@ -690,6 +721,33 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 	case CP_DEM_TYPE_KIND_ctor_dtor_name:
 		if (node->ctor_dtor_name.name) {
 			dot_graph_traverse_ast(dot, node->ctor_dtor_name.name, current_id, "name", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_conv_op_ty:
+		if (node->conv_op_ty.ty) {
+			dot_graph_traverse_ast(dot, node->conv_op_ty.ty, current_id, "type", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+		if (node->parameter_pack_expansion.ty) {
+			dot_graph_traverse_ast(dot, node->parameter_pack_expansion.ty, current_id, "type", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_abi_tag_ty:
+		if (node->abi_tag_ty.ty) {
+			dot_graph_traverse_ast(dot, node->abi_tag_ty.ty, current_id, "type", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_array_type:
+		if (node->array_ty.inner_ty) {
+			dot_graph_traverse_ast(dot, node->array_ty.inner_ty, current_id, "inner_type", "solid");
+		}
+		if (node->array_ty.dimension) {
+			dot_graph_traverse_ast(dot, node->array_ty.dimension, current_id, "dimension", "solid");
 		}
 		break;
 
