@@ -1856,6 +1856,9 @@ bool rule_call_offset(DemParser *p, DemResult *r) {
 	  ::= Gr <resource name>
 	  ::= GTt <encoding>
 	  ::= GTn <encoding>
+
+	  ::= TW <object name> # Thread-local wrapper
+	  ::= TH <object name> # Thread-local initialization
 */
 bool rule_special_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(special_name);
@@ -1863,7 +1866,7 @@ bool rule_special_name(DemParser *p, DemResult *r) {
 	case 'T':
 		ADV();
 		switch (PEEK()) {
-		case 'C':
+		case 'C': {
 			// TC <derived-type> <offset> _ <base-type>   # construction vtable
 			ADV();
 			DemNode *base_ty = NULL;
@@ -1880,6 +1883,7 @@ bool rule_special_name(DemParser *p, DemResult *r) {
 				AST_APPEND_NODE(base_ty);
 			}
 			break;
+		}
 		case 'c':
 			ADV();
 			RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_call_offset) && CALL_RULE(rule_call_offset) && CALL_RULE(rule_encoding));
@@ -1903,6 +1907,14 @@ bool rule_special_name(DemParser *p, DemResult *r) {
 		case 'A':
 			ADV();
 			MUST_MATCH(AST_APPEND_STR("template parameter for ") && CALL_RULE(rule_template_arg));
+			break;
+		case 'W':
+			ADV();
+			MUST_MATCH(AST_APPEND_STR("thread-local wrapper routine for ") && CALL_RULE_VA(rule_name, NULL));
+			break;
+		case 'H':
+			ADV();
+			MUST_MATCH(AST_APPEND_STR("thread-local initialization routine for ") && CALL_RULE_VA(rule_name, NULL));
 			break;
 		default:
 			MUST_MATCH(CALL_RULE(rule_call_offset) && CALL_RULE(rule_encoding));
