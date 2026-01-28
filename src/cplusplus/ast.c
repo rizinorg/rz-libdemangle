@@ -174,7 +174,6 @@ void DemNode_deinit(DemNode *xs) {
 		break;
 	case CP_DEM_TYPE_KIND_ctor_dtor_name:
 		// NOTE: ctor_dtor_name.name is a non-owning pointer to the scope,
-		// which is owned by the parent nested_name node. Do not free it here.
 		// is_dtor is a bool, no need to free
 		break;
 	case CP_DEM_TYPE_KIND_conv_op_ty:
@@ -228,7 +227,6 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 	}
 	dst->val = src->val;
 	dst->tag = src->tag;
-	dst->parent = src->parent;
 	dst->subtag = src->subtag;
 	if (src->children) {
 		dst->children = VecF(PDemNode, ctor)();
@@ -268,89 +266,43 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		dst->module_name_ty.IsPartition = src->module_name_ty.IsPartition;
 		dst->module_name_ty.name = src->module_name_ty.name ? DemNode_clone(src->module_name_ty.name) : NULL;
 		dst->module_name_ty.pare = src->module_name_ty.pare ? DemNode_clone(src->module_name_ty.pare) : NULL;
-		if (dst->module_name_ty.name) {
-			dst->module_name_ty.name->parent = dst;
-		}
-		if (dst->module_name_ty.pare) {
-			dst->module_name_ty.pare->parent = dst;
-		}
 		break;
 	case CP_DEM_TYPE_KIND_name_with_template_args:
 		dst->name_with_template_args.name = src->name_with_template_args.name ? DemNode_clone(src->name_with_template_args.name) : NULL;
 		dst->name_with_template_args.template_args = src->name_with_template_args.template_args ? DemNode_clone(src->name_with_template_args.template_args) : NULL;
-		if (dst->name_with_template_args.name) {
-			dst->name_with_template_args.name->parent = dst;
-		}
-		if (dst->name_with_template_args.template_args) {
-			dst->name_with_template_args.template_args->parent = dst;
-		}
 		break;
 	case CP_DEM_TYPE_KIND_closure_ty_name:
 		dst->closure_ty_name.template_params = src->closure_ty_name.template_params ? DemNode_clone(src->closure_ty_name.template_params) : NULL;
 		dst->closure_ty_name.params = src->closure_ty_name.params ? DemNode_clone(src->closure_ty_name.params) : NULL;
 		dst->closure_ty_name.count = src->closure_ty_name.count; // DemStringView, shallow copy
-		if (dst->closure_ty_name.template_params) {
-			dst->closure_ty_name.template_params->parent = dst;
-		}
-		if (dst->closure_ty_name.params) {
-			dst->closure_ty_name.params->parent = dst;
-		}
 		break;
 	case CP_DEM_TYPE_KIND_nested_name:
 		dst->nested_name.qual = src->nested_name.qual ? DemNode_clone(src->nested_name.qual) : NULL;
 		dst->nested_name.name = src->nested_name.name ? DemNode_clone(src->nested_name.name) : NULL;
-		if (dst->nested_name.qual) {
-			dst->nested_name.qual->parent = dst;
-		}
-		if (dst->nested_name.name) {
-			dst->nested_name.name->parent = dst;
-		}
 		break;
 	case CP_DEM_TYPE_KIND_local_name:
 		dst->local_name.encoding = src->local_name.encoding ? DemNode_clone(src->local_name.encoding) : NULL;
 		dst->local_name.entry = src->local_name.entry ? DemNode_clone(src->local_name.entry) : NULL;
-		if (dst->local_name.encoding) {
-			dst->local_name.encoding->parent = dst;
-		}
-		if (dst->local_name.entry) {
-			dst->local_name.entry->parent = dst;
-		}
 		break;
 	case CP_DEM_TYPE_KIND_ctor_dtor_name:
 		// NOTE: ctor_dtor_name.name is a non-owning pointer.
 		// For shallow copy, just copy the pointer (don't clone).
 		dst->ctor_dtor_name.name = src->ctor_dtor_name.name;
 		dst->ctor_dtor_name.is_dtor = src->ctor_dtor_name.is_dtor;
-		// Do NOT set parent pointer since we don't own this node
 		break;
 	case CP_DEM_TYPE_KIND_conv_op_ty:
 		dst->conv_op_ty.ty = src->conv_op_ty.ty ? DemNode_clone(src->conv_op_ty.ty) : NULL;
-		if (dst->conv_op_ty.ty) {
-			dst->conv_op_ty.ty->parent = dst;
-		}
 		break;
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
 		dst->parameter_pack_expansion.ty = src->parameter_pack_expansion.ty ? DemNode_clone(src->parameter_pack_expansion.ty) : NULL;
-		if (dst->parameter_pack_expansion.ty) {
-			dst->parameter_pack_expansion.ty->parent = dst;
-		}
 		break;
 	case CP_DEM_TYPE_KIND_abi_tag_ty:
 		dst->abi_tag_ty.ty = src->abi_tag_ty.ty ? DemNode_clone(src->abi_tag_ty.ty) : NULL;
 		dst->abi_tag_ty.tag = src->abi_tag_ty.tag; // DemStringView, shallow copy
-		if (dst->abi_tag_ty.ty) {
-			dst->abi_tag_ty.ty->parent = dst;
-		}
 		break;
 	case CP_DEM_TYPE_KIND_array_type:
 		dst->array_ty.inner_ty = src->array_ty.inner_ty ? DemNode_clone(src->array_ty.inner_ty) : NULL;
 		dst->array_ty.dimension = src->array_ty.dimension ? DemNode_clone(src->array_ty.dimension) : NULL;
-		if (dst->array_ty.inner_ty) {
-			dst->array_ty.inner_ty->parent = dst;
-		}
-		if (dst->array_ty.dimension) {
-			dst->array_ty.dimension->parent = dst;
-		}
 		break;
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		// Deep copy forward template reference

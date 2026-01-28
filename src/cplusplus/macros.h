@@ -90,15 +90,15 @@
  * \b Declare a new rule.
  */
 #define DECL_RULE(x) \
-	bool rule_##x(DemParser *p, const DemNode *parent, DemResult *r)
+	bool rule_##x(DemParser *p, DemResult *r)
 #define DECL_RULE_STATIC(x) \
-	static inline bool rule_##x(DemParser *p, const DemNode *parent, DemResult *r)
+	static inline bool rule_##x(DemParser *p, DemResult *r)
 /**
  * \b Declare a rule alias x for rule y.
  */
 #define DECL_RULE_ALIAS(X, Y) \
 	DECL_RULE_STATIC(X) { \
-		return rule_##Y(p, parent, r); \
+		return rule_##Y(p, r); \
 	}
 
 #define RULE_HEAD(X) \
@@ -116,7 +116,6 @@
 			return false; \
 		} \
 		DemNode_init(node); \
-		node->parent = (DemNode *)parent; \
 		node->val.buf = p->cur; \
 	} else { \
 		is_PASSTHRU = true; \
@@ -145,7 +144,6 @@
 			} \
 		} \
 		node->tag = saved_tag_##N; \
-		node->parent = (DemNode *)parent; \
 		node->val.buf = saved_pos_##N; \
 	} while (0)
 
@@ -184,7 +182,7 @@
 			} \
 			r->output = NULL; \
 		} else { \
-			/* In PASSTHRU mode, node is owned by parent, but we still need to clean up children we added */ \
+			/* In PASSTHRU mode, we still need to clean up children we added */ \
 			context_restore_node(rule); \
 		} \
 		r->error = DEM_ERR_INVALID_SYNTAX; \
@@ -241,7 +239,7 @@
 #define PASSTHRU_RULE_VA(rule_fn, ...) \
 	({ \
 		r->output = node; \
-		bool _success = (rule_fn)(p, parent, r, __VA_ARGS__); \
+		bool _success = (rule_fn)(p, r, __VA_ARGS__); \
 		if (!(_success)) { \
 			DemNode_deinit(node); \
 			DemNode_init(node); \
@@ -253,7 +251,7 @@
 #define PASSTHRU_RULE(rule_fn) \
 	({ \
 		r->output = node; \
-		bool _success = (rule_fn)(p, parent, r); \
+		bool _success = (rule_fn)(p, r); \
 		if ((!_success)) { \
 			DemNode_deinit(node); \
 			DemNode_init(node); \
@@ -266,7 +264,7 @@
 #define CALL_RULE(rule_fn) \
 	({ \
 		DemResult _child_result = { 0 }; \
-		bool _success = (rule_fn)(p, node, &_child_result); \
+		bool _success = (rule_fn)(p, &_child_result); \
 		if (_success && _child_result.output) { \
 			AST_APPEND_NODE(_child_result.output); \
 			_child_result.output = NULL; \
@@ -279,7 +277,7 @@
 #define CALL_RULE_VA(rule_fn, ...) \
 	({ \
 		DemResult _child_result = { 0 }; \
-		bool _success = (rule_fn)(p, node, &_child_result, __VA_ARGS__); \
+		bool _success = (rule_fn)(p, &_child_result, __VA_ARGS__); \
 		if (_success && _child_result.output) { \
 			AST_APPEND_NODE(_child_result.output); \
 			_child_result.output = NULL; \
@@ -292,7 +290,7 @@
 #define CALL_RULE_N_VA(N, rule_fn, ...) \
 	({ \
 		DemResult _child_result = { 0 }; \
-		bool _success = (rule_fn)(p, node, &_child_result, __VA_ARGS__); \
+		bool _success = (rule_fn)(p, &_child_result, __VA_ARGS__); \
 		if (_success && _child_result.output) { \
 			N = _child_result.output; \
 		} else { \
@@ -304,7 +302,7 @@
 #define CALL_RULE_N(N, rule_fn) \
 	({ \
 		DemResult _child_result = { 0 }; \
-		bool _success = (rule_fn)(p, node, &_child_result); \
+		bool _success = (rule_fn)(p, &_child_result); \
 		if (_success && _child_result.output) { \
 			N = _child_result.output; \
 		} else { \
@@ -317,7 +315,7 @@
 #define CALL_MANY(rule_fn, sep) \
 	({ \
 		DemResult _child_result = { 0 }; \
-		bool _success = match_many(p, node, &_child_result, (rule_fn), (sep)); \
+		bool _success = match_many(p, &_child_result, (rule_fn), (sep)); \
 		if (_success && _child_result.output) { \
 			AST_APPEND_NODE(_child_result.output); \
 		} else { \
@@ -329,7 +327,7 @@
 #define CALL_MANY1(rule_fn, sep) \
 	({ \
 		DemResult _child_result = { 0 }; \
-		bool _success = match_many1(p, node, &_child_result, (rule_fn), (sep)); \
+		bool _success = match_many1(p, &_child_result, (rule_fn), (sep)); \
 		if (_success && _child_result.output) { \
 			AST_APPEND_NODE(_child_result.output); \
 		} else { \
@@ -341,7 +339,7 @@
 #define CALL_MANY1_N(N, rule_fn, sep) \
 	({ \
 		DemResult _child_result = { 0 }; \
-		bool _success = match_many1(p, node, &_child_result, (rule_fn), (sep)); \
+		bool _success = match_many1(p, &_child_result, (rule_fn), (sep)); \
 		if (_success && _child_result.output) { \
 			N = _child_result.output; \
 		} else { \

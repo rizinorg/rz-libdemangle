@@ -11,10 +11,11 @@
 
 char *demangle_rule(const char *mangled, DemRule rule, CpDemOptions opts);
 
-bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns);
-bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns);
-bool rule_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns);
-bool rule_local_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns);
+bool rule_operator_name(DemParser *p, DemResult *r, NameState *ns);
+bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns);
+bool rule_name(DemParser *p, DemResult *r, NameState *ns);
+bool rule_local_name(DemParser *p, DemResult *r, NameState *ns);
+bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates);
 
 // Rule declarations
 DECL_RULE(mangled_name);

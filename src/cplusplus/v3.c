@@ -513,7 +513,7 @@ void ast_pp(DemNode *node, DemString *out) {
 			ast_pp(node->module_name_ty.name, out);
 			if (node->module_name_ty.IsPartition) {
 				dem_string_append(out, ":");
-			} else if (node->parent && node->parent->tag == CP_DEM_TYPE_KIND_module_name) {
+			} else if (node->module_name_ty.pare && node->module_name_ty.pare->tag == CP_DEM_TYPE_KIND_module_name) {
 				dem_string_append(out, ".");
 			}
 		}
@@ -843,7 +843,7 @@ bool parse_seq_id(DemParser *p, DemNode **pp_out_node) {
 	return true;
 }
 
-bool rule_vendor_specific_suffix(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_vendor_specific_suffix(DemParser *p, DemResult *r) {
 	RULE_HEAD(vendor_specific_suffix);
 	// Handle _ptr suffix (should be ignored, not output)
 	if (READ_STR("ptr")) {
@@ -868,7 +868,7 @@ bool rule_vendor_specific_suffix(DemParser *p, const DemNode *parent, DemResult 
 	RULE_FOOT(vendor_specific_suffix);
 }
 
-bool rule_number(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_number(DemParser *p, DemResult *r) {
 	RULE_HEAD(number);
 	if (!(isdigit(PEEK()) || (PEEK() == 'n' && isdigit(PEEK_AT(1))))) {
 		TRACE_RETURN_FAILURE();
@@ -885,7 +885,7 @@ bool rule_number(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns, PDemNode scope) {
+bool rule_ctor_dtor_name(DemParser *p, DemResult *r, NameState *ns, PDemNode scope) {
 	RULE_HEAD(ctor_dtor_name);
 
 	if (scope && scope->tag == CP_DEM_TYPE_KIND_special_substitution) {
@@ -924,7 +924,7 @@ bool rule_ctor_dtor_name(DemParser *p, const DemNode *parent, DemResult *r, Name
 	RULE_FOOT(ctor_dtor_name);
 }
 
-bool rule_module_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_module_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(module_name);
 	DemNode *Module = NULL;
 	while (READ('W')) {
@@ -943,7 +943,6 @@ bool rule_module_name(DemParser *p, const DemNode *parent, DemResult *r) {
 		sub_module->module_name_ty.name = Sub;
 		Module = sub_module;
 		AST_APPEND_TYPE1(Module);
-		Module->parent = node;
 	}
 
 	TRACE_RETURN_SUCCESS;
@@ -966,7 +965,7 @@ PDemNode parse_abi_tags(DemParser *p, PDemNode node) {
 	return node;
 }
 
-bool rule_unqualified_name(DemParser *p, const DemNode *parent, DemResult *r,
+bool rule_unqualified_name(DemParser *p, DemResult *r,
 	NameState *ns, DemNode *scope, DemNode *module) {
 	RULE_HEAD(unqualified_name);
 
@@ -1016,7 +1015,7 @@ bool rule_unqualified_name(DemParser *p, const DemNode *parent, DemResult *r,
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_unresolved_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(unresolved_name);
 	(void)READ_STR("gs");
 	if (READ_STR("srN")) {
@@ -1045,7 +1044,7 @@ bool rule_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns, bool *is_subst) {
+bool rule_unscoped_name(DemParser *p, DemResult *r, NameState *ns, bool *is_subst) {
 	RULE_HEAD(unscoped_name);
 
 	DemNode *std_node = NULL;
@@ -1085,7 +1084,7 @@ bool rule_unscoped_name(DemParser *p, const DemNode *parent, DemResult *r, NameS
 	RULE_FOOT(unscoped_name);
 }
 
-bool rule_unresolved_type(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_unresolved_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(unresolved_type);
 	TRY_MATCH((CALL_RULE(rule_template_param)) && (((CALL_RULE(rule_template_args))) || true) && AST_APPEND_TYPE);
 	TRY_MATCH((CALL_RULE(rule_decltype)) && AST_APPEND_TYPE);
@@ -1093,13 +1092,13 @@ bool rule_unresolved_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(unresolved_type);
 }
 
-bool rule_unresolved_qualifier_level(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_unresolved_qualifier_level(DemParser *p, DemResult *r) {
 	RULE_HEAD(unresolved_qualifier_level);
 	TRY_MATCH(CALL_RULE(rule_simple_id));
 	RULE_FOOT(unresolved_qualifier_level);
 }
 
-bool rule_decltype(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_decltype(DemParser *p, DemResult *r) {
 	RULE_HEAD(decltype);
 	if (!(READ_STR("Dt") || READ_STR("DT"))) {
 		TRACE_RETURN_FAILURE();
@@ -1112,7 +1111,7 @@ bool rule_decltype(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_exception_spec(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_exception_spec(DemParser *p, DemResult *r) {
 	RULE_HEAD(exception_spec);
 	TRY_MATCH(READ_STR("DO") && (CALL_RULE(rule_expression)) && READ('E'));
 	TRY_MATCH(READ_STR("Dw") && (CALL_RULE(rule_type)) && READ('E'));
@@ -1120,7 +1119,7 @@ bool rule_exception_spec(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(exception_spec);
 }
 
-bool rule_array_type(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_array_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(array_type);
 	MUST_MATCH(READ('A'));
 	node->subtag = ARRAY_TYPE;
@@ -1156,29 +1155,6 @@ typedef enum {
 	OfIdOp, // alignof, sizeof, typeid
 	Unnameable,
 } OIKind;
-
-typedef enum {
-	Primary,
-	PPostfix,
-	Unary,
-	Cast,
-	PtrMem,
-	Multiplicative,
-	Additive,
-	Shift,
-	Spaceship,
-	Relational,
-	Equality,
-	And,
-	Xor,
-	Ior,
-	AndIf,
-	OrIf,
-	PConditional,
-	Assign,
-	Comma,
-	Default,
-} Prec;
 
 typedef struct {
 	char Enc[2]; // Encoding
@@ -1306,7 +1282,7 @@ const char *opinfo_get_symbol(const OperatorInfo *opinfo) {
 	return opinfo->Name;
 }
 
-bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns) {
+bool rule_operator_name(DemParser *p, DemResult *r, NameState *ns) {
 	RULE_HEAD(operator_name);
 	const OperatorInfo *Op = parse_operator_info(p);
 	if (Op) {
@@ -1354,7 +1330,7 @@ bool rule_operator_name(DemParser *p, const DemNode *parent, DemResult *r, NameS
 	RULE_FOOT(operator_name);
 }
 
-bool rule_expr_primary(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_expr_primary(DemParser *p, DemResult *r) {
 	RULE_HEAD(expr_primary);
 	if (!READ('L')) {
 		TRACE_RETURN_FAILURE();
@@ -1458,7 +1434,7 @@ bool rule_expr_primary(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(expr_primary);
 }
 
-bool rule_braced_expression(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_braced_expression(DemParser *p, DemResult *r) {
 	RULE_HEAD(braced_expression);
 	if (PEEK() == 'd') {
 		switch (PEEK_AT(1)) {
@@ -1492,7 +1468,7 @@ static void swap(void **a, void **b) {
 	*b = temp;
 }
 
-bool rule_fold_expression(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_fold_expression(DemParser *p, DemResult *r) {
 	RULE_HEAD(fold_expression);
 	if (!READ('f')) {
 		TRACE_RETURN_FAILURE();
@@ -1544,7 +1520,7 @@ bool rule_fold_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_prefix_expression(DemParser *p, const DemNode *parent, DemResult *r, const OperatorInfo *op) {
+bool rule_prefix_expression(DemParser *p, DemResult *r, const OperatorInfo *op) {
 	RULE_HEAD(expression);
 	PDemNode expr = NULL;
 	MUST_MATCH(CALL_RULE_N(expr, rule_expression));
@@ -1554,7 +1530,7 @@ bool rule_prefix_expression(DemParser *p, const DemNode *parent, DemResult *r, c
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_binary_expression(DemParser *p, const DemNode *parent, DemResult *r, const OperatorInfo *op) {
+bool rule_binary_expression(DemParser *p, DemResult *r, const OperatorInfo *op) {
 	RULE_HEAD(expression);
 	AST_APPEND_STR("(");
 	MUST_MATCH(CALL_RULE(rule_expression));
@@ -1564,21 +1540,21 @@ bool rule_binary_expression(DemParser *p, const DemNode *parent, DemResult *r, c
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_expression(DemParser *p, DemResult *r) {
 	RULE_HEAD(expression);
 
 	const OperatorInfo *Op = parse_operator_info(p);
 	if (Op) {
 		switch (Op->Kind) {
-		case Prefix: return rule_prefix_expression(p, parent, r, Op);
+		case Prefix: return rule_prefix_expression(p, r, Op);
 		case Postfix:
 			if (READ('_')) {
-				return rule_prefix_expression(p, parent, r, Op);
+				return rule_prefix_expression(p, r, Op);
 			}
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR(opinfo_get_symbol(Op));
 			TRACE_RETURN_SUCCESS;
-		case Binary: return rule_binary_expression(p, parent, r, Op);
+		case Binary: return rule_binary_expression(p, r, Op);
 		case Array: // ix: arr[idx]
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR("[");
@@ -1706,13 +1682,13 @@ bool rule_expression(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(expression);
 }
 
-bool rule_simple_id(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_simple_id(DemParser *p, DemResult *r) {
 	RULE_HEAD(simple_id);
 	TRY_MATCH((CALL_RULE(rule_source_name)) && (((CALL_RULE(rule_template_args))) || true));
 	RULE_FOOT(simple_id);
 }
 
-bool rule_template_param(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_template_param(DemParser *p, DemResult *r) {
 	RULE_HEAD(template_param);
 	if (!(READ('T'))) {
 		TRACE_RETURN_FAILURE();
@@ -1759,7 +1735,7 @@ bool rule_template_param(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_initializer(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_initializer(DemParser *p, DemResult *r) {
 	RULE_HEAD(initializer);
 	if (!READ_STR("pi")) {
 		TRACE_RETURN_FAILURE();
@@ -1772,7 +1748,7 @@ bool rule_initializer(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(initializer);
 }
 
-bool rule_call_offset(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_call_offset(DemParser *p, DemResult *r) {
 	RULE_HEAD(call_offset);
 	if (READ('h')) {
 		if (!READ('n')) {
@@ -1818,7 +1794,7 @@ bool rule_call_offset(DemParser *p, const DemNode *parent, DemResult *r) {
 	  ::= GTt <encoding>
 	  ::= GTn <encoding>
 */
-bool rule_special_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_special_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(special_name);
 	switch (PEEK()) {
 	case 'T':
@@ -1902,7 +1878,7 @@ bool rule_special_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_function_type(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_function_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(function_type);
 	// This rule only handles F...E (bare function type)
 	// P prefix is handled in the type rule, which properly inserts * for function pointers
@@ -1921,7 +1897,7 @@ bool rule_function_type(DemParser *p, const DemNode *parent, DemResult *r) {
 
 	DemResult param_result = { 0 };
 	if (!READ('v')) {
-		if (!match_many(p, node, &param_result, rule_type, ", ")) {
+		if (!match_many(p, &param_result, rule_type, ", ")) {
 			TRACE_RETURN_FAILURE();
 		}
 	}
@@ -1933,7 +1909,7 @@ bool rule_function_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_function_param(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_function_param(DemParser *p, DemResult *r) {
 	RULE_HEAD(function_param);
 	if (READ_STR("PT")) {
 		TRACE_RETURN_SUCCESS;
@@ -1955,7 +1931,7 @@ bool rule_function_param(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_builtin_type(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_builtin_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(builtin_type);
 	TRY_MATCH(READ_STR("DF") && AST_APPEND_STR("_Float") && (CALL_RULE(rule_number)) && READ('_'));
 	TRY_MATCH(READ_STR("DF") && AST_APPEND_STR("_Float") && (CALL_RULE(rule_number)) && READ('x') && AST_APPEND_STR("x"));
@@ -2003,7 +1979,7 @@ bool rule_builtin_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(builtin_type);
 }
 
-bool rule_source_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_source_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(source_name);
 	/* positive number providing length of name followed by it */
 	ut64 name_len = 0;
@@ -2019,13 +1995,13 @@ bool rule_source_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_class_enum_type(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_class_enum_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(class_enum_type);
 	TRY_MATCH(((READ_STR("Ts") || READ_STR("Tu") || READ_STR("Te")) || true) && (CALL_RULE_VA(rule_name, NULL)));
 	RULE_FOOT(class_enum_type);
 }
 
-bool rule_mangled_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_mangled_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(mangled_name);
 
 	if (!READ_STR("_Z")) {
@@ -2042,7 +2018,7 @@ bool rule_mangled_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_qualified_type(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_qualified_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(qualified_type);
 	if (PEEK() == 'U') {
 		ADV();
@@ -2060,7 +2036,7 @@ bool rule_qualified_type(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_type(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(type);
 	if (PASSTHRU_RULE(rule_builtin_type)) {
 		TRACE_RETURN_SUCCESS;
@@ -2198,7 +2174,7 @@ beach:
 	RULE_FOOT(type);
 }
 
-bool rule_base_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_base_unresolved_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(base_unresolved_name);
 	TRY_MATCH((CALL_RULE(rule_simple_id)));
 	if (READ_STR("dn")) {
@@ -2214,7 +2190,7 @@ bool rule_base_unresolved_name(DemParser *p, const DemNode *parent, DemResult *r
 	RULE_FOOT(base_unresolved_name);
 }
 
-bool rule_local_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns) {
+bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
 	RULE_HEAD(local_name);
 	if (!READ('Z')) {
 		TRACE_RETURN_FAILURE();
@@ -2255,7 +2231,7 @@ bool rule_local_name(DemParser *p, const DemNode *parent, DemResult *r, NameStat
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_substitution(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_substitution(DemParser *p, DemResult *r) {
 	RULE_HEAD(substitution);
 	if (!READ('S')) {
 		TRACE_RETURN_FAILURE();
@@ -2286,7 +2262,7 @@ bool rule_substitution(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_float(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_float(DemParser *p, DemResult *r) {
 	RULE_HEAD(float);
 	while (IS_DIGIT(PEEK()) || ('a' <= PEEK() && PEEK() <= 'f')) {
 		ADV();
@@ -2294,14 +2270,14 @@ bool rule_float(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(float);
 }
 
-bool rule_destructor_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_destructor_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(destructor_name);
 	TRY_MATCH(CALL_RULE(rule_unresolved_type));
 	TRY_MATCH(CALL_RULE(rule_simple_id));
 	RULE_FOOT(destructor_name);
 }
 
-bool rule_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns) {
+bool rule_name(DemParser *p, DemResult *r, NameState *ns) {
 	RULE_HEAD(name);
 	if (PEEK() == 'N') {
 		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE_VA(rule_nested_name, ns));
@@ -2323,7 +2299,7 @@ bool rule_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns)
 			AST_APPEND_TYPE1(result);
 		}
 		DemNode *ta = NULL;
-		CALL_RULE_N(ta, rule_template_args);
+		CALL_RULE_N_VA(ta, rule_template_args_ex, ns != NULL);
 		if (!ta) {
 			DemNode_dtor(result);
 			TRACE_RETURN_FAILURE();
@@ -2345,7 +2321,7 @@ bool rule_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns)
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r, NameState *ns) {
+bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 	RULE_HEAD(nested_name);
 	if (!READ('N')) {
 		TRACE_RETURN_FAILURE();
@@ -2377,7 +2353,7 @@ bool rule_nested_name(DemParser *p, const DemNode *parent, DemResult *r, NameSta
 				goto fail;
 			}
 			DemNode *ta = NULL;
-			MUST_MATCH(CALL_RULE_N(ta, rule_template_args));
+			MUST_MATCH(CALL_RULE_N_VA(ta, rule_template_args_ex, ns != NULL));
 			if (ns) {
 				ns->end_with_template_args = true;
 			}
@@ -2444,7 +2420,7 @@ bool is_template_param_decl(DemParser *p) {
 	return PEEK() == 'T' && strchr("yptnk", PEEK_AT(1)) != NULL;
 }
 
-bool rule_template_arg(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_template_arg(DemParser *p, DemResult *r) {
 	RULE_HEAD(template_arg);
 	switch (PEEK()) {
 	case 'X': {
@@ -2481,36 +2457,15 @@ bool rule_template_arg(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(template_arg);
 }
 
-static bool is_tag_templates(const DemNode *node) {
-	if (!node) {
-		return false;
-	}
-
-	// Check if this template belongs to a function's name
-	// Case 1: Direct child of function_type
-	if (node->parent && node->parent->tag == CP_DEM_TYPE_KIND_function_type) {
-		return node->tag == CP_DEM_TYPE_KIND_name ||
-			node->tag == CP_DEM_TYPE_KIND_nested_name ||
-			node->tag == CP_DEM_TYPE_KIND_name_with_template_args;
-	}
-
-	// Case 2: Part of name_with_template_args which is part of function_type
-	if (node->parent &&
-		node->parent->tag == CP_DEM_TYPE_KIND_name_with_template_args &&
-		node->parent->parent &&
-		node->parent->parent->tag == CP_DEM_TYPE_KIND_function_type) {
-		return true;
-	}
-
-	return false;
+bool rule_template_args(DemParser *p, DemResult *r) {
+	return rule_template_args_ex(p, r, false);
 }
 
-bool rule_template_args(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 	RULE_HEAD(template_args);
 	if (!READ('I')) {
 		TRACE_RETURN_FAILURE();
 	}
-	const bool tag_templates = is_tag_templates(parent);
 	if (tag_templates) {
 		VecPNodeList_clear(&p->template_params);
 		VecPNodeList_append(&p->template_params, &p->outer_template_params);
@@ -2543,7 +2498,7 @@ bool rule_template_args(DemParser *p, const DemNode *parent, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_template_param_decl(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_template_param_decl(DemParser *p, DemResult *r) {
 	RULE_HEAD(template_param_decl);
 	if (!READ('T')) {
 		TRACE_RETURN_FAILURE();
@@ -2552,7 +2507,7 @@ bool rule_template_param_decl(DemParser *p, const DemNode *parent, DemResult *r)
 	RULE_FOOT(template_param_decl);
 }
 
-bool rule_unnamed_type_name(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(unnamed_type_name);
 	if (READ_STR("Ut")) {
 		ut64 tidx = 0;
@@ -2597,7 +2552,7 @@ bool rule_unnamed_type_name(DemParser *p, const DemNode *parent, DemResult *r) {
 	RULE_FOOT(unnamed_type_name);
 }
 
-bool rule_pointer_to_member_type(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_pointer_to_member_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(pointer_to_member_type);
 	if (!READ('M')) {
 		TRACE_RETURN_FAILURE();
@@ -2632,7 +2587,7 @@ bool is_end_of_encoding(const DemParser *p) {
 	return REMAIN_SIZE() == 0 || PEEK() == 'E' || PEEK() == '.' || PEEK() == '_';
 };
 
-bool rule_encoding(DemParser *p, const DemNode *parent, DemResult *r) {
+bool rule_encoding(DemParser *p, DemResult *r) {
 	RULE_HEAD(encoding);
 	// Handle special names (G=guard variable, T=typeinfo/vtable)
 	// These have different structure than function signatures
@@ -2700,7 +2655,7 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 	DemParser_init(p, mangled);
 	parser.trace = trace;
 	DemResult dem_result = { 0 };
-	if (!rule(p, NULL, &dem_result)) {
+	if (!rule(p, &dem_result)) {
 		ctx->parser = parser;
 		ctx->result = dem_result;
 		return false;

@@ -194,7 +194,6 @@ static void resolve_fwd_refs_in_node(DemParser *p, DemNode *node) {
 			DemNode *ref_src = template_param_get(p, level, index);
 
 			if (ref_src) {
-				DemNode *parent = node->parent;
 				if (p->trace) {
 					DemString buf = { 0 };
 					ast_pp(ref_src, &buf);
@@ -203,7 +202,6 @@ static void resolve_fwd_refs_in_node(DemParser *p, DemNode *node) {
 				}
 				DemNode_deinit(node);
 				DemNode_copy(node, ref_src);
-				node->parent = parent;
 			}
 		}
 		break;
@@ -238,7 +236,6 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 		// Copy the resolved node's content into the wrapper node
 		// This effectively replaces the fwd_template_ref with the actual type
 		DemNode *ref_dst = (DemNode *)fwd_ref->wrapper;
-		DemNode *parent = ref_dst->parent;
 
 		if (ref_dst->tag != CP_DEM_TYPE_KIND_fwd_template_ref) {
 			if (p->trace) {
@@ -262,8 +259,6 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 				level, index, ref_dst, dem_string_drain_no_free(&buf));
 		}
 		DemNode_copy(ref_dst, ref_src);
-		// Restore parent pointer
-		ref_dst->parent = parent;
 	});
 
 	// Also resolve forward references in substitution list (detected_types)

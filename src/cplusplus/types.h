@@ -249,10 +249,38 @@ typedef struct {
 	PDemNode dimension;
 } ArrayTy;
 
+typedef enum {
+	Primary,
+	PPostfix,
+	Unary,
+	Cast,
+	PtrMem,
+	Multiplicative,
+	Additive,
+	Shift,
+	Spaceship,
+	Relational,
+	Equality,
+	And,
+	Xor,
+	Ior,
+	AndIf,
+	OrIf,
+	PConditional,
+	Assign,
+	Comma,
+	Default,
+} Prec;
+
+typedef struct {
+	PDemNode e0;
+
+} Expr;
+
 typedef struct DemNode_t {
-	struct DemNode_t *parent;
 	DemStringView val;
 	CpDemTypeKind tag;
+	Prec prec;
 	ut32 subtag;
 	struct Vec_t(PDemNode) * children; // Moved outside union, used by all types
 
@@ -379,11 +407,10 @@ void DemContext_deinit(DemContext *ctx);
 /**
  * Type of rules.
  * @param p Parser context
- * @param parent Parent node (read-only, can be NULL for root)
  * @param r Result structure to fill
  * @return true on success (r->output set), false on failure (r->error may be set)
  */
-typedef bool (*DemRule)(DemParser *p, const DemNode *parent, DemResult *r);
+typedef bool (*DemRule)(DemParser *p, DemResult *r);
 
 // DemParser helper functions
 void DemParser_init(DemParser *p, const char *input);

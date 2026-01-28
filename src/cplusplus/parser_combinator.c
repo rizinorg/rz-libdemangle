@@ -8,12 +8,11 @@
 
 bool match_many1(
 	DemParser *p,
-	const DemNode *parent,
 	DemResult *r,
 	DemRule rule,
 	const char *sep) {
 	const char *saved_pos = p->cur;
-	if (!match_many(p, parent, r, rule, sep)) {
+	if (!match_many(p, r, rule, sep)) {
 		p->cur = saved_pos;
 		return false;
 	}
@@ -28,7 +27,6 @@ bool match_many1(
 
 bool match_many(
 	DemParser *p,
-	const DemNode *parent,
 	DemResult *r,
 	DemRule rule,
 	const char *sep) {
@@ -44,7 +42,6 @@ bool match_many(
 		return false;
 	}
 	many_node->tag = CP_DEM_TYPE_KIND_many;
-	many_node->parent = (DemNode *)parent;
 	many_node->val.buf = p->cur;
 
 	// Allocate children vector
@@ -59,7 +56,7 @@ bool match_many(
 	while (true) {
 		DemResult child_result = { 0 };
 		const char *saved_pos = p->cur;
-		if (rule(p, many_node, &child_result)) {
+		if (rule(p, &child_result)) {
 			// Check if the rule advanced the pointer
 			if (p->cur == saved_pos) {
 				// Rule succeeded but didn't advance - must clean up output
