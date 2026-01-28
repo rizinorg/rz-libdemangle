@@ -68,6 +68,7 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_exception_spec,
 	CP_DEM_TYPE_KIND_class_enum_type,
 	CP_DEM_TYPE_KIND_array_type,
+	CP_DEM_TYPE_KIND_vector_type,
 	CP_DEM_TYPE_KIND_pointer_to_member_type,
 	CP_DEM_TYPE_KIND_template_template_param,
 	CP_DEM_TYPE_KIND_digit,

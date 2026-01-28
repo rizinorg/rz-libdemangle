@@ -85,6 +85,7 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type: return "vendor_ext_qualified";
 
 	// Array/Pointer types
+	case CP_DEM_TYPE_KIND_vector_type: return "vector_type";
 	case CP_DEM_TYPE_KIND_array_type: return "array_type";
 	case CP_DEM_TYPE_KIND_array_bound_number: return "array_bound_number";
 	case CP_DEM_TYPE_KIND_element_type: return "element_type";
@@ -758,6 +759,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
+	case CP_DEM_TYPE_KIND_vector_type:
 	case CP_DEM_TYPE_KIND_array_type:
 		if (node->array_ty.inner_ty) {
 			dot_graph_traverse_ast(dot, node->array_ty.inner_ty, current_id, "inner_type", "solid");

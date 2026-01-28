@@ -43,7 +43,7 @@ void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out) {
 }
 
 void pp_array_type_dimension(DemNode *node, DemString *out, PDemNode *pbase_ty) {
-	if (!node || node->tag != CP_DEM_TYPE_KIND_array_type) {
+	if (!node || !(node->tag == CP_DEM_TYPE_KIND_array_type || node->tag == CP_DEM_TYPE_KIND_vector_type)) {
 		return;
 	}
 	size_t count = 0;
@@ -55,7 +55,7 @@ void pp_array_type_dimension(DemNode *node, DemString *out, PDemNode *pbase_ty) 
 		dem_string_appends(out, "]");
 		base_ty = array_ty.inner_ty;
 		count++;
-	} while (base_ty && base_ty->tag == CP_DEM_TYPE_KIND_array_type);
+	} while (base_ty && (base_ty->tag == CP_DEM_TYPE_KIND_array_type || base_ty->tag == CP_DEM_TYPE_KIND_vector_type));
 	if (count == 0) {
 		dem_string_append(out, "[]");
 	}
@@ -656,6 +656,20 @@ void ast_pp(DemNode *node, DemString *out) {
 		pp_array_type(node, out);
 		break;
 
+	case CP_DEM_TYPE_KIND_vector_type: {
+		DemString dem = { 0 };
+		dem_string_init(&dem);
+		PDemNode inner_ty = NULL;
+		pp_array_type_dimension(node, &dem, &inner_ty);
+		if (inner_ty) {
+			ast_pp(inner_ty, out);
+			dem_string_append(out, " vector");
+			dem_string_concat(out, &dem);
+		}
+		dem_string_deinit(&dem);
+		break;
+	}
+
 	case CP_DEM_TYPE_KIND_template_parameter_pack:
 		if (AST(0)) {
 			ast_pp(AST(0), out);
@@ -1142,6 +1156,27 @@ bool rule_array_type(DemParser *p, DemResult *r) {
 	} else if (isdigit(PEEK())) {
 		MUST_MATCH(CALL_RULE_N(node->array_ty.dimension, rule_number) && READ('_'));
 	} else {
+		MUST_MATCH(CALL_RULE_N(node->array_ty.dimension, rule_expression) && READ('_'));
+	}
+	MUST_MATCH(CALL_RULE_N(node->array_ty.inner_ty, rule_type));
+	TRACE_RETURN_SUCCESS;
+}
+
+bool rule_vector_type(DemParser *p, DemResult *r) {
+	RULE_HEAD(vector_type);
+	MUST_MATCH(READ_STR("Dv"));
+	if (isdigit(PEEK())) {
+		MUST_MATCH(CALL_RULE_N(node->array_ty.dimension, rule_number) && READ('_'));
+		if (READ('p')) {
+			PDemNode dim = node->array_ty.dimension;
+			node->array_ty.dimension = NULL;
+			AST_APPEND_STR("pixel vector[");
+			AST_APPEND_NODE(dim);
+			AST_APPEND_STR("]");
+			node->tag = CP_DEM_TYPE_KIND_type;
+			TRACE_RETURN_SUCCESS;
+		}
+	} else if (!READ('_')) {
 		MUST_MATCH(CALL_RULE_N(node->array_ty.dimension, rule_expression) && READ('_'));
 	}
 	MUST_MATCH(CALL_RULE_N(node->array_ty.inner_ty, rule_type));
@@ -2170,6 +2205,10 @@ bool rule_type(DemParser *p, DemResult *r) {
 			}
 			node->tag = CP_DEM_TYPE_KIND_parameter_pack_expansion;
 			node->parameter_pack_expansion.ty = ty;
+			break;
+		}
+		if (PEEK_AT(1) == 'v') {
+			MUST_MATCH(PASSTHRU_RULE(rule_vector_type));
 			break;
 		}
 		if (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T') {

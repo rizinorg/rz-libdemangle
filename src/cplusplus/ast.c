@@ -192,6 +192,7 @@ void DemNode_deinit(DemNode *xs) {
 		}
 		// tag is a DemStringView (not allocated), no need to free
 		break;
+	case CP_DEM_TYPE_KIND_vector_type:
 	case CP_DEM_TYPE_KIND_array_type:
 		if (xs->array_ty.inner_ty) {
 			DemNode_dtor(xs->array_ty.inner_ty);
@@ -309,6 +310,7 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		dst->abi_tag_ty.ty = src->abi_tag_ty.ty ? DemNode_clone(src->abi_tag_ty.ty) : NULL;
 		dst->abi_tag_ty.tag = src->abi_tag_ty.tag; // DemStringView, shallow copy
 		break;
+	case CP_DEM_TYPE_KIND_vector_type:
 	case CP_DEM_TYPE_KIND_array_type:
 		dst->array_ty.inner_ty = src->array_ty.inner_ty ? DemNode_clone(src->array_ty.inner_ty) : NULL;
 		dst->array_ty.dimension = src->array_ty.dimension ? DemNode_clone(src->array_ty.dimension) : NULL;
