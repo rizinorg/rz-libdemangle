@@ -46,6 +46,7 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_fold_expression,
 	CP_DEM_TYPE_KIND_braced_expression,
 	CP_DEM_TYPE_KIND_braced_range_expression,
+	CP_DEM_TYPE_KIND_init_list_expression,
 	CP_DEM_TYPE_KIND_prefix_expression,
 	CP_DEM_TYPE_KIND_binary_expression,
 	CP_DEM_TYPE_KIND_member_expression,
@@ -298,6 +299,11 @@ typedef struct {
 	PDemNode first, last, init;
 } BracedRangeExpr;
 
+typedef struct {
+	PDemNode ty;
+	PDemNode inits; // many node
+} InitListExpr;
+
 typedef enum {
 	Primary,
 	PPostfix,
@@ -349,6 +355,7 @@ typedef struct DemNode_t {
 		FoldExpr fold_expr;
 		BracedExpr braced_expr;
 		BracedRangeExpr braced_range_expr;
+		InitListExpr init_list_expr;
 	};
 } DemNode;
 

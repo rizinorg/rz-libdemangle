@@ -834,7 +834,7 @@ void ast_pp(DemNode *node, DemString *out) {
 		dem_string_append_sv(out, node->member_expr.op);
 		pp_as_operand_ex(node->member_expr.rhs, out, node->prec, false);
 		break;
-	case CP_DEM_TYPE_KIND_fold_expression:
+	case CP_DEM_TYPE_KIND_fold_expression: {
 		dem_string_append(out, "(");
 		if (!node->fold_expr.is_left_fold || node->fold_expr.init) {
 			if (node->fold_expr.is_left_fold) {
@@ -863,7 +863,8 @@ void ast_pp(DemNode *node, DemString *out) {
 		}
 		dem_string_append(out, ")");
 		break;
-	case CP_DEM_TYPE_KIND_braced_expression:
+	}
+	case CP_DEM_TYPE_KIND_braced_expression: {
 		if (node->braced_expr.is_array) {
 			dem_string_append(out, "[");
 			ast_pp(node->braced_expr.elem, out);
@@ -877,7 +878,8 @@ void ast_pp(DemNode *node, DemString *out) {
 		}
 		ast_pp(node->braced_expr.init, out);
 		break;
-	case CP_DEM_TYPE_KIND_braced_range_expression:
+	}
+	case CP_DEM_TYPE_KIND_braced_range_expression: {
 		dem_string_append(out, "[");
 		ast_pp(node->braced_range_expr.first, out);
 		dem_string_append(out, "...");
@@ -888,6 +890,16 @@ void ast_pp(DemNode *node, DemString *out) {
 		}
 		ast_pp(node->braced_expr.init, out);
 		break;
+	}
+	case CP_DEM_TYPE_KIND_init_list_expression: {
+		if (node->init_list_expr.ty) {
+			ast_pp(node->init_list_expr.ty, out);
+		}
+		dem_string_append(out, "{");
+		ast_pp(node->init_list_expr.inits, out);
+		dem_string_append(out, "}");
+		break;
+	}
 		// case CP_DEM_TYPE_KIND_expression:
 		// case CP_DEM_TYPE_KIND_prefix_expression:
 		// case CP_DEM_TYPE_KIND_binary_expression:
@@ -1876,10 +1888,12 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_fold_expression));
 	}
 	if (READ_STR("il")) {
-		RETURN_SUCCESS_OR_FAIL(CALL_MANY(rule_expression, "", 'E'));
+		node->tag = CP_DEM_TYPE_KIND_init_list_expression;
+		RETURN_SUCCESS_OR_FAIL(CALL_MANY_N(node->init_list_expr.inits, rule_expression, ", ", 'E'));
 	}
 	if (READ_STR("tl")) {
-		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_type) && CALL_MANY(rule_braced_expression, "", 'E'));
+		node->tag = CP_DEM_TYPE_KIND_init_list_expression;
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE_N(node->init_list_expr.ty, rule_type) && CALL_MANY_N(node->init_list_expr.inits, rule_braced_expression, ", ", 'E'));
 	}
 	if (READ_STR("nx")) {
 		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("noexcept (") && CALL_RULE(rule_expression) && AST_APPEND_STR(")"));

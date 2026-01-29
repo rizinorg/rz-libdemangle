@@ -240,6 +240,14 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->braced_range_expr.init);
 		}
 		break;
+	case CP_DEM_TYPE_KIND_init_list_expression:
+		if (xs->init_list_expr.ty) {
+			DemNode_dtor(xs->init_list_expr.ty);
+		}
+		if (xs->init_list_expr.inits) {
+			DemNode_dtor(xs->init_list_expr.inits);
+		}
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -365,6 +373,10 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		dst->braced_range_expr.first = src->braced_range_expr.first ? DemNode_clone(src->braced_range_expr.first) : NULL;
 		dst->braced_range_expr.last = src->braced_range_expr.last ? DemNode_clone(src->braced_range_expr.last) : NULL;
 		dst->braced_range_expr.init = src->braced_range_expr.init ? DemNode_clone(src->braced_range_expr.init) : NULL;
+		break;
+	case CP_DEM_TYPE_KIND_init_list_expression:
+		dst->init_list_expr.ty = src->init_list_expr.ty ? DemNode_clone(src->init_list_expr.ty) : NULL;
+		dst->init_list_expr.inits = src->init_list_expr.inits ? DemNode_clone(src->init_list_expr.inits) : NULL;
 		break;
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		// Deep copy forward template reference
