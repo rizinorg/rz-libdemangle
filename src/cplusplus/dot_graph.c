@@ -66,6 +66,7 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_expression: return "expression";
 	case CP_DEM_TYPE_KIND_expr_primary: return "expr_primary";
 	case CP_DEM_TYPE_KIND_braced_expression: return "braced_expression";
+	case CP_DEM_TYPE_KIND_braced_range_expression: return "braced_range_expression";
 	case CP_DEM_TYPE_KIND_fold_expression: return "fold_expression";
 	case CP_DEM_TYPE_KIND_prefix_expression: return "prefix_expression";
 	case CP_DEM_TYPE_KIND_binary_expression: return "binary_expression";
@@ -195,6 +196,7 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_expr_primary: return "diamond";
 	case CP_DEM_TYPE_KIND_braced_expression: return "diamond";
+	case CP_DEM_TYPE_KIND_braced_range_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_fold_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_prefix_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_binary_expression: return "diamond";
@@ -327,6 +329,7 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_expression: return "pink";
 	case CP_DEM_TYPE_KIND_expr_primary: return "pink";
 	case CP_DEM_TYPE_KIND_braced_expression: return "pink";
+	case CP_DEM_TYPE_KIND_braced_range_expression: return "pink";
 	case CP_DEM_TYPE_KIND_fold_expression: return "pink";
 	case CP_DEM_TYPE_KIND_prefix_expression: return "pink";
 	case CP_DEM_TYPE_KIND_binary_expression: return "pink";
@@ -784,6 +787,27 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		if (node->fold_expr.init) {
 			dot_graph_traverse_ast(dot, node->fold_expr.init, current_id, "init", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_braced_expression:
+		if (node->braced_expr.elem) {
+			dot_graph_traverse_ast(dot, node->braced_expr.elem, current_id, "elem", "solid");
+		}
+		if (node->braced_expr.init) {
+			dot_graph_traverse_ast(dot, node->braced_expr.init, current_id, "init", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_braced_range_expression:
+		if (node->braced_range_expr.first) {
+			dot_graph_traverse_ast(dot, node->braced_range_expr.first, current_id, "first", "solid");
+		}
+		if (node->braced_range_expr.last) {
+			dot_graph_traverse_ast(dot, node->braced_range_expr.last, current_id, "last", "solid");
+		}
+		if (node->braced_range_expr.init) {
+			dot_graph_traverse_ast(dot, node->braced_range_expr.init, current_id, "init", "solid");
 		}
 		break;
 

@@ -863,8 +863,32 @@ void ast_pp(DemNode *node, DemString *out) {
 		}
 		dem_string_append(out, ")");
 		break;
+	case CP_DEM_TYPE_KIND_braced_expression:
+		if (node->braced_expr.is_array) {
+			dem_string_append(out, "[");
+			ast_pp(node->braced_expr.elem, out);
+			dem_string_append(out, "]");
+		} else {
+			dem_string_append(out, ".");
+			ast_pp(node->braced_expr.elem, out);
+		}
+		if (node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_expression && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_range_expression) {
+			dem_string_append(out, " = ");
+		}
+		ast_pp(node->braced_expr.init, out);
+		break;
+	case CP_DEM_TYPE_KIND_braced_range_expression:
+		dem_string_append(out, "[");
+		ast_pp(node->braced_range_expr.first, out);
+		dem_string_append(out, "...");
+		ast_pp(node->braced_range_expr.last, out);
+		dem_string_append(out, "]");
+		if (node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_expression && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_range_expression) {
+			dem_string_append(out, " = ");
+		}
+		ast_pp(node->braced_expr.init, out);
+		break;
 		// case CP_DEM_TYPE_KIND_expression:
-		// case CP_DEM_TYPE_KIND_braced_expression:
 		// case CP_DEM_TYPE_KIND_prefix_expression:
 		// case CP_DEM_TYPE_KIND_binary_expression:
 
@@ -1626,26 +1650,28 @@ bool rule_braced_expression(DemParser *p, DemResult *r) {
 		switch (PEEK_AT(1)) {
 		case 'X':
 			ADV_BY(2);
-			MUST_MATCH(CALL_RULE(rule_expression));
-			MUST_MATCH(CALL_RULE(rule_expression));
-			MUST_MATCH(CALL_RULE(rule_braced_expression));
+			node->tag = CP_DEM_TYPE_KIND_braced_range_expression;
+			MUST_MATCH(CALL_RULE_N(node->braced_range_expr.first, rule_expression));
+			MUST_MATCH(CALL_RULE_N(node->braced_range_expr.last, rule_expression));
+			MUST_MATCH(CALL_RULE_N(node->braced_range_expr.init, rule_braced_expression));
 			TRACE_RETURN_SUCCESS;
 		case 'i':
 			ADV_BY(2);
-			MUST_MATCH(CALL_RULE(rule_source_name));
-			MUST_MATCH(CALL_RULE(rule_braced_expression));
+			MUST_MATCH(CALL_RULE_N(node->braced_expr.elem, rule_source_name));
+			MUST_MATCH(CALL_RULE_N(node->braced_expr.init, rule_braced_expression));
+			node->braced_expr.is_array = false;
 			TRACE_RETURN_SUCCESS;
 		case 'x':
 			ADV_BY(2);
-			MUST_MATCH(CALL_RULE(rule_expression));
-			MUST_MATCH(CALL_RULE(rule_braced_expression));
+			MUST_MATCH(CALL_RULE_N(node->braced_expr.elem, rule_expression));
+			MUST_MATCH(CALL_RULE_N(node->braced_expr.init, rule_braced_expression));
+			node->braced_expr.is_array = true;
 			TRACE_RETURN_SUCCESS;
 		default:
 			break;
 		}
 	}
-	TRY_MATCH(CALL_RULE(rule_expression));
-	RULE_FOOT(braced_expression);
+	RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_expression));
 }
 
 static void swap(void **a, void **b) {

@@ -220,6 +220,26 @@ void DemNode_deinit(DemNode *xs) {
 		// op is a DemStringView (not allocated), no need to free
 		// is_left_fold is a bool, no need to free
 		break;
+	case CP_DEM_TYPE_KIND_braced_expression:
+		if (xs->braced_expr.elem) {
+			DemNode_dtor(xs->braced_expr.elem);
+		}
+		if (xs->braced_expr.init) {
+			DemNode_dtor(xs->braced_expr.init);
+		}
+		// is_array is a bool, no need to free
+		break;
+	case CP_DEM_TYPE_KIND_braced_range_expression:
+		if (xs->braced_range_expr.first) {
+			DemNode_dtor(xs->braced_range_expr.first);
+		}
+		if (xs->braced_range_expr.last) {
+			DemNode_dtor(xs->braced_range_expr.last);
+		}
+		if (xs->braced_range_expr.init) {
+			DemNode_dtor(xs->braced_range_expr.init);
+		}
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -335,6 +355,16 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		dst->fold_expr.init = src->fold_expr.init ? DemNode_clone(src->fold_expr.init) : NULL;
 		dst->fold_expr.op = src->fold_expr.op; // DemStringView, shallow copy
 		dst->fold_expr.is_left_fold = src->fold_expr.is_left_fold;
+		break;
+	case CP_DEM_TYPE_KIND_braced_expression:
+		dst->braced_expr.elem = src->braced_expr.elem ? DemNode_clone(src->braced_expr.elem) : NULL;
+		dst->braced_expr.init = src->braced_expr.init ? DemNode_clone(src->braced_expr.init) : NULL;
+		dst->braced_expr.is_array = src->braced_expr.is_array;
+		break;
+	case CP_DEM_TYPE_KIND_braced_range_expression:
+		dst->braced_range_expr.first = src->braced_range_expr.first ? DemNode_clone(src->braced_range_expr.first) : NULL;
+		dst->braced_range_expr.last = src->braced_range_expr.last ? DemNode_clone(src->braced_range_expr.last) : NULL;
+		dst->braced_range_expr.init = src->braced_range_expr.init ? DemNode_clone(src->braced_range_expr.init) : NULL;
 		break;
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		// Deep copy forward template reference
