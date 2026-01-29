@@ -115,6 +115,16 @@ static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_ta
 		return;
 	}
 	if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
+		// Check if this qualified type wraps an array - if so, stop here
+		// and return the qualified_type node as the base (qualifiers apply to array elements)
+		if (node->qualified_ty.inner_type &&
+			node->qualified_ty.inner_type->tag == CP_DEM_TYPE_KIND_array_type) {
+			if (pbase_ty) {
+				*pbase_ty = node;
+			}
+			return;
+		}
+
 		if (node->qualified_ty.inner_type) {
 			pp_type_quals(node->qualified_ty.inner_type, out, target_tag, pbase_ty);
 		}
@@ -125,6 +135,79 @@ static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_ta
 	if (pbase_ty) {
 		*pbase_ty = node;
 	}
+}
+
+// Helper to reorder qualifiers for array/function references
+// Transforms " const&" to "const &" for arrays, or "*const&" to "* const&" for function pointers
+static void reorder_qualifiers_for_array_fn_ref(DemString *quals) {
+	if (!quals || !quals->buf || quals->len < 2) {
+		return;
+	}
+
+	// Look for pattern: [*][ cv-qualifiers][&|&&]
+	// We need to move cv-qualifiers before & but after *, with proper spacing
+
+	char *ref_pos = NULL;
+	bool is_rvalue_ref = false;
+
+	// Find reference marker from the end
+	if (quals->len >= 2 && quals->buf[quals->len - 2] == '&' && quals->buf[quals->len - 1] == '&') {
+		ref_pos = &quals->buf[quals->len - 2];
+		is_rvalue_ref = true;
+	} else if (quals->len >= 1 && quals->buf[quals->len - 1] == '&') {
+		ref_pos = &quals->buf[quals->len - 1];
+	}
+
+	if (!ref_pos) {
+		return; // No reference found
+	}
+
+	// Find where cv-qualifiers start (after last * or from beginning)
+	char *cv_start = NULL;
+	char *ptr = quals->buf;
+	char *last_star = NULL;
+
+	while (ptr < ref_pos) {
+		if (*ptr == '*') {
+			last_star = ptr;
+		}
+		ptr++;
+	}
+
+	// Determine start of prefix and cv-qualifiers
+	char *prefix_end = last_star ? (last_star + 1) : quals->buf;
+	cv_start = prefix_end;
+	while (cv_start < ref_pos && *cv_start == ' ') {
+		cv_start++;
+	}
+
+	if (cv_start >= ref_pos) {
+		return; // No cv-qualifiers before reference
+	}
+
+	// Extract parts
+	size_t prefix_len = prefix_end - quals->buf;
+	size_t cv_len = ref_pos - cv_start;
+	size_t ref_len = is_rvalue_ref ? 2 : 1;
+
+	// Build reordered string: prefix + " " + cv-quals + ref (no space before ref for function pointers)
+	// For arrays: "const &", for function pointers: "* const&"
+	DemString reordered = { 0 };
+	dem_string_init(&reordered);
+
+	if (prefix_len > 0) {
+		dem_string_append_n(&reordered, quals->buf, prefix_len);
+		// Add space after * for function pointers
+		if (last_star && cv_start < ref_pos) {
+			dem_string_append(&reordered, " ");
+		}
+	}
+	dem_string_append_n(&reordered, cv_start, cv_len);
+	dem_string_append_n(&reordered, ref_pos, ref_len);
+
+	// Replace original
+	dem_string_deinit(quals);
+	*quals = reordered;
 }
 
 static void pp_type_with_quals(PDemNode node, DemString *out) {
@@ -140,6 +223,28 @@ static void pp_type_with_quals(PDemNode node, DemString *out) {
 		pp_array_type_dimension(base_node, &array_dem_string, &array_inner_base);
 		ast_pp(array_inner_base, out);
 		if (dem_string_non_empty(&qualifiers_string)) {
+			reorder_qualifiers_for_array_fn_ref(&qualifiers_string);
+			dem_string_append(out, " (");
+			dem_string_concat(out, &qualifiers_string);
+			dem_string_append(out, ")");
+		}
+		if (dem_string_non_empty(&array_dem_string)) {
+			dem_string_append(out, " ");
+			dem_string_concat(out, &array_dem_string);
+		}
+		dem_string_deinit(&array_dem_string);
+	} else if (base_node && base_node->tag == CP_DEM_TYPE_KIND_qualified_type &&
+		base_node->qualified_ty.inner_type &&
+		base_node->qualified_ty.inner_type->tag == CP_DEM_TYPE_KIND_array_type) {
+		// Handle qualified array: print element type with qualifiers, then ref, then array dimension
+		DemString array_dem_string = { 0 };
+		dem_string_init(&array_dem_string);
+		PDemNode array_inner_base = NULL;
+		pp_array_type_dimension(base_node->qualified_ty.inner_type, &array_dem_string, &array_inner_base);
+		ast_pp(array_inner_base, out);
+		pp_cv_qualifiers(base_node->qualified_ty.qualifiers, out);
+		if (dem_string_non_empty(&qualifiers_string)) {
+			reorder_qualifiers_for_array_fn_ref(&qualifiers_string);
 			dem_string_append(out, " (");
 			dem_string_concat(out, &qualifiers_string);
 			dem_string_append(out, ")");
@@ -432,7 +537,12 @@ static void pp_function_ty_quals(PPFnContext *ctx, DemString *out) {
 	if (!ctx || !ctx->quals) {
 		return;
 	}
-	pp_type_quals(ctx->quals, out, CP_DEM_TYPE_KIND_function_type, NULL);
+	DemString quals_str = { 0 };
+	dem_string_init(&quals_str);
+	pp_type_quals(ctx->quals, &quals_str, CP_DEM_TYPE_KIND_function_type, NULL);
+	reorder_qualifiers_for_array_fn_ref(&quals_str);
+	dem_string_concat(out, &quals_str);
+	dem_string_deinit(&quals_str);
 }
 
 static void pp_function_ty_mod_pointer_to_member_type(PPFnContext *ctx, DemString *out) {
