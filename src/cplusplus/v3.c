@@ -1221,12 +1221,19 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 bool rule_unresolved_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(unresolved_name);
 	if (READ_STR("srN")) {
-		RETURN_SUCCESS_OR_FAIL((CALL_RULE(rule_unresolved_type)) &&
-			(PEEK() == 'I' ? CALL_RULE(rule_template_args) : true) &&
-			AST_APPEND_STR("::") &&
-			CALL_MANY(rule_unresolved_qualifier_level, "::", 'E') &&
-			AST_APPEND_STR("::") &&
-			CALL_RULE(rule_base_unresolved_name));
+		MUST_MATCH((CALL_RULE(rule_unresolved_type)) &&
+			(PEEK() == 'I' ? CALL_RULE(rule_template_args) : true));
+
+		PDemNode qualifier_level = NULL;
+		CALL_MANY_N(qualifier_level, rule_unresolved_qualifier_level, "::", 'E');
+		if (qualifier_level && VecPDemNode_len(qualifier_level->children) > 0) {
+			AST_APPEND_STR("::");
+			AST_APPEND_NODE(qualifier_level);
+		}
+
+		AST_APPEND_STR("::");
+		MUST_MATCH(CALL_RULE(rule_base_unresolved_name));
+		TRACE_RETURN_SUCCESS;
 	}
 	if (!(READ_STR("sr"))) {
 		MUST_MATCH(CALL_RULE(rule_base_unresolved_name));
