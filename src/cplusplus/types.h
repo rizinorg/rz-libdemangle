@@ -285,6 +285,18 @@ typedef struct {
 } MemberExpr;
 
 typedef struct {
+	PDemNode lhs;
+	DemStringView op;
+	PDemNode rhs;
+} BinaryExpr;
+
+typedef struct {
+	DemStringView prefix;
+	PDemNode inner;
+} PrefixExpr;
+
+
+typedef struct {
 	PDemNode pack, init;
 	DemStringView op;
 	bool is_left_fold;
@@ -356,6 +368,8 @@ typedef struct DemNode_t {
 		BracedExpr braced_expr;
 		BracedRangeExpr braced_range_expr;
 		InitListExpr init_list_expr;
+		BinaryExpr binary_expr;
+		PrefixExpr prefix_expr;
 	};
 } DemNode;
 

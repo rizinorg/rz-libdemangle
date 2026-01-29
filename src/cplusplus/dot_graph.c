@@ -823,6 +823,21 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
+	case CP_DEM_TYPE_KIND_binary_expression:
+		if (node->binary_expr.lhs) {
+			dot_graph_traverse_ast(dot, node->binary_expr.lhs, current_id, "lhs", "solid");
+		}
+		if (node->binary_expr.rhs) {
+			dot_graph_traverse_ast(dot, node->binary_expr.rhs, current_id, "rhs", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_prefix_expression:
+		if (node->prefix_expr.inner) {
+			dot_graph_traverse_ast(dot, node->prefix_expr.inner, current_id, "inner", "solid");
+		}
+		break;
+
 	case CP_DEM_TYPE_KIND_many:
 	case CP_DEM_TYPE_KIND_template_args:
 		// These types use the generic children vector

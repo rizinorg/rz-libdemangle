@@ -900,9 +900,24 @@ void ast_pp(DemNode *node, DemString *out) {
 		dem_string_append(out, "}");
 		break;
 	}
-		// case CP_DEM_TYPE_KIND_expression:
-		// case CP_DEM_TYPE_KIND_prefix_expression:
-		// case CP_DEM_TYPE_KIND_binary_expression:
+
+	case CP_DEM_TYPE_KIND_binary_expression: {
+		bool is_assign = node->prec == Assign;
+		pp_as_operand_ex(node->binary_expr.lhs, out, is_assign ? OrIf : node->prec, !is_assign);
+		if (!sv_eq_cstr(&node->binary_expr.op, ",")) {
+			dem_string_append(out, " ");
+		}
+		dem_string_append_sv(out, node->binary_expr.op);
+		dem_string_append(out, " ");
+		pp_as_operand_ex(node->binary_expr.rhs, out, node->prec, is_assign);
+		break;
+	}
+	case CP_DEM_TYPE_KIND_prefix_expression: {
+		dem_string_append_sv(out, node->prefix_expr.prefix);
+		pp_as_operand_ex(node->prefix_expr.inner, out, node->prec, false);
+		break;
+	}
+	// case CP_DEM_TYPE_KIND_expression:
 
 	default:
 		// For all other nodes with children, recursively print all children
@@ -1751,21 +1766,17 @@ bool rule_fold_expression(DemParser *p, DemResult *r) {
 
 bool rule_prefix_expression(DemParser *p, DemResult *r, const OperatorInfo *op) {
 	RULE_HEAD(prefix_expression);
-	PDemNode expr = NULL;
-	MUST_MATCH(CALL_RULE_N(expr, rule_expression));
-	AST_APPEND_STR(opinfo_get_symbol(op));
-	AST_APPEND_NODE(expr);
+	MUST_MATCH(CALL_RULE_N(node->prefix_expr.inner, rule_expression));
+	sv_form_cstr(&node->prefix_expr.prefix, opinfo_get_symbol(op));
 	node->prec = op->Prec;
 	TRACE_RETURN_SUCCESS;
 }
 
 bool rule_binary_expression(DemParser *p, DemResult *r, const OperatorInfo *op) {
 	RULE_HEAD(binary_expression);
-	MUST_MATCH(CALL_RULE(rule_expression));
-	AST_APPEND_STR(" ");
-	AST_APPEND_STR(opinfo_get_symbol(op));
-	AST_APPEND_STR(" ");
-	MUST_MATCH(CALL_RULE(rule_expression));
+	MUST_MATCH(CALL_RULE_N(node->binary_expr.lhs, rule_expression));
+	sv_form_cstr(&node->binary_expr.op, opinfo_get_symbol(op));
+	MUST_MATCH(CALL_RULE_N(node->binary_expr.rhs, rule_expression));
 	node->prec = op->Prec;
 	TRACE_RETURN_SUCCESS;
 }

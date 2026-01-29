@@ -248,6 +248,21 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->init_list_expr.inits);
 		}
 		break;
+	case CP_DEM_TYPE_KIND_binary_expression:
+		if (xs->binary_expr.lhs) {
+			DemNode_dtor(xs->binary_expr.lhs);
+		}
+		if (xs->binary_expr.rhs) {
+			DemNode_dtor(xs->binary_expr.rhs);
+		}
+		// op is a DemStringView (not allocated), no need to free
+		break;
+	case CP_DEM_TYPE_KIND_prefix_expression:
+		if (xs->prefix_expr.inner) {
+			DemNode_dtor(xs->prefix_expr.inner);
+		}
+		// prefix is a DemStringView (not allocated), no need to free
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -377,6 +392,15 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 	case CP_DEM_TYPE_KIND_init_list_expression:
 		dst->init_list_expr.ty = src->init_list_expr.ty ? DemNode_clone(src->init_list_expr.ty) : NULL;
 		dst->init_list_expr.inits = src->init_list_expr.inits ? DemNode_clone(src->init_list_expr.inits) : NULL;
+		break;
+	case CP_DEM_TYPE_KIND_binary_expression:
+		dst->binary_expr.lhs = src->binary_expr.lhs ? DemNode_clone(src->binary_expr.lhs) : NULL;
+		dst->binary_expr.rhs = src->binary_expr.rhs ? DemNode_clone(src->binary_expr.rhs) : NULL;
+		dst->binary_expr.op = src->binary_expr.op; // DemStringView, shallow copy
+		break;
+	case CP_DEM_TYPE_KIND_prefix_expression:
+		dst->prefix_expr.inner = src->prefix_expr.inner ? DemNode_clone(src->prefix_expr.inner) : NULL;
+		dst->prefix_expr.prefix = src->prefix_expr.prefix; // DemStringView, shallow copy
 		break;
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		// Deep copy forward template reference
