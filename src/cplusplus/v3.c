@@ -2434,11 +2434,11 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 	}
 	CvQualifiers cv_quals = { 0 };
 	RefQualifiers ref_qual = { 0 };
-	if (parse_cv_qualifiers(p, &cv_quals)) {
-		p->cv_qualifiers = cv_quals;
+	if (parse_cv_qualifiers(p, &cv_quals) && ns) {
+		ns->cv_qualifiers = cv_quals;
 	}
-	if (parse_ref_qualifiers(p, &ref_qual)) {
-		p->ref_qualifiers = ref_qual;
+	if (parse_ref_qualifiers(p, &ref_qual) && ns) {
+		ns->ref_qualifiers = ref_qual;
 	}
 
 	DemNode *ast_node = NULL;
@@ -2730,8 +2730,8 @@ bool rule_encoding(DemParser *p, DemResult *r) {
 		}
 	}
 
-	node->fn_ty.cv_qualifiers = p->cv_qualifiers;
-	node->fn_ty.ref_qualifiers = p->ref_qualifiers;
+	node->fn_ty.cv_qualifiers = ns.cv_qualifiers;
+	node->fn_ty.ref_qualifiers = ns.ref_qualifiers;
 	TRACE_RETURN_SUCCESS;
 }
 
