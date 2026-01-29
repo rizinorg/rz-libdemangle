@@ -72,6 +72,7 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_prefix_expression: return "prefix_expression";
 	case CP_DEM_TYPE_KIND_binary_expression: return "binary_expression";
 	case CP_DEM_TYPE_KIND_member_expression: return "member_expression";
+	case CP_DEM_TYPE_KIND_new_expression: return "new_expression";
 	case CP_DEM_TYPE_KIND_index_expression: return "index_expression";
 	case CP_DEM_TYPE_KIND_range_begin_expression: return "range_begin_expression";
 	case CP_DEM_TYPE_KIND_range_end_expression: return "range_end_expression";
@@ -203,6 +204,7 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_prefix_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_binary_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_member_expression: return "diamond";
+	case CP_DEM_TYPE_KIND_new_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_index_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_range_begin_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_range_end_expression: return "diamond";
@@ -337,6 +339,7 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_prefix_expression: return "pink";
 	case CP_DEM_TYPE_KIND_binary_expression: return "pink";
 	case CP_DEM_TYPE_KIND_member_expression: return "pink";
+	case CP_DEM_TYPE_KIND_new_expression: return "pink";
 	case CP_DEM_TYPE_KIND_index_expression: return "pink";
 	case CP_DEM_TYPE_KIND_range_begin_expression: return "pink";
 	case CP_DEM_TYPE_KIND_range_end_expression: return "pink";
@@ -835,6 +838,18 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 	case CP_DEM_TYPE_KIND_prefix_expression:
 		if (node->prefix_expr.inner) {
 			dot_graph_traverse_ast(dot, node->prefix_expr.inner, current_id, "inner", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_new_expression:
+		if (node->new_expr.expr_list) {
+			dot_graph_traverse_ast(dot, node->new_expr.expr_list, current_id, "expr_list", "solid");
+		}
+		if (node->new_expr.ty) {
+			dot_graph_traverse_ast(dot, node->new_expr.ty, current_id, "ty", "solid");
+		}
+		if (node->new_expr.init_list) {
+			dot_graph_traverse_ast(dot, node->new_expr.init_list, current_id, "init_list", "solid");
 		}
 		break;
 

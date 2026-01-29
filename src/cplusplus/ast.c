@@ -263,6 +263,18 @@ void DemNode_deinit(DemNode *xs) {
 		}
 		// prefix is a DemStringView (not allocated), no need to free
 		break;
+	case CP_DEM_TYPE_KIND_new_expression:
+		if (xs->new_expr.expr_list) {
+			DemNode_dtor(xs->new_expr.expr_list);
+		}
+		if (xs->new_expr.ty) {
+			DemNode_dtor(xs->new_expr.ty);
+		}
+		if (xs->new_expr.init_list) {
+			DemNode_dtor(xs->new_expr.init_list);
+		}
+		// is_global is a bool, op is a DemStringView (not allocated), no need to free
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -401,6 +413,13 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 	case CP_DEM_TYPE_KIND_prefix_expression:
 		dst->prefix_expr.inner = src->prefix_expr.inner ? DemNode_clone(src->prefix_expr.inner) : NULL;
 		dst->prefix_expr.prefix = src->prefix_expr.prefix; // DemStringView, shallow copy
+		break;
+	case CP_DEM_TYPE_KIND_new_expression:
+		dst->new_expr.expr_list = src->new_expr.expr_list ? DemNode_clone(src->new_expr.expr_list) : NULL;
+		dst->new_expr.ty = src->new_expr.ty ? DemNode_clone(src->new_expr.ty) : NULL;
+		dst->new_expr.init_list = src->new_expr.init_list ? DemNode_clone(src->new_expr.init_list) : NULL;
+		dst->new_expr.is_global = src->new_expr.is_global; // bool, shallow copy
+		dst->new_expr.op = src->new_expr.op; // DemStringView, shallow copy
 		break;
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		// Deep copy forward template reference

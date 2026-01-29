@@ -50,6 +50,7 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_prefix_expression,
 	CP_DEM_TYPE_KIND_binary_expression,
 	CP_DEM_TYPE_KIND_member_expression,
+	CP_DEM_TYPE_KIND_new_expression,
 
 	CP_DEM_TYPE_KIND_unresolved_name,
 	CP_DEM_TYPE_KIND_function_param,
@@ -295,7 +296,6 @@ typedef struct {
 	PDemNode inner;
 } PrefixExpr;
 
-
 typedef struct {
 	PDemNode pack, init;
 	DemStringView op;
@@ -315,6 +315,12 @@ typedef struct {
 	PDemNode ty;
 	PDemNode inits; // many node
 } InitListExpr;
+
+typedef struct {
+	PDemNode expr_list, ty, init_list;
+	bool is_global;
+	DemStringView op;
+} NewExpr;
 
 typedef enum {
 	Primary,
@@ -370,6 +376,7 @@ typedef struct DemNode_t {
 		InitListExpr init_list_expr;
 		BinaryExpr binary_expr;
 		PrefixExpr prefix_expr;
+		NewExpr new_expr;
 	};
 } DemNode;
 

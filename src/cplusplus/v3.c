@@ -958,7 +958,27 @@ static void ast_pp_ctx(DemNode *node, DemString *out, PPContext *ctx) {
 		pp_as_operand_ex(node->prefix_expr.inner, out, node->prec, false, ctx);
 		break;
 	}
-		// case CP_DEM_TYPE_KIND_expression:
+	case CP_DEM_TYPE_KIND_new_expression: {
+		if (node->new_expr.is_global) {
+			dem_string_append(out, "::");
+		}
+		dem_string_append_sv(out, node->new_expr.op);
+		if (node->new_expr.expr_list && VecPDemNode_len(node->new_expr.expr_list->children) > 0) {
+			print_open(out, ctx);
+			ast_pp_ctx(node->new_expr.expr_list, out, ctx);
+			print_close(out, ctx);
+		}
+		dem_string_append(out, " ");
+		if (node->new_expr.ty) {
+			ast_pp_ctx(node->new_expr.ty, out, ctx);
+		}
+		if (node->new_expr.init_list && VecPDemNode_len(node->new_expr.init_list->children) > 0) {
+			print_open(out, ctx);
+			ast_pp_ctx(node->new_expr.init_list, out, ctx);
+			print_close(out, ctx);
+		}
+		break;
+	}
 
 	default:
 		// For all other nodes with children, recursively print all children
@@ -1854,17 +1874,20 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			node->tag = CP_DEM_TYPE_KIND_member_expression;
 			TRACE_RETURN_SUCCESS;
 		case New: // nw/na
-			if (is_global) {
-				AST_APPEND_STR("::");
-			}
-			AST_APPEND_STR(opinfo_get_symbol(Op));
-			MUST_MATCH(CALL_MANY(rule_expression, " ", '_'));
-			AST_APPEND_STR(" ");
-			MUST_MATCH(CALL_RULE(rule_type));
+			node->new_expr.is_global = is_global;
+			sv_form_cstr(&node->new_expr.op, opinfo_get_symbol(Op));
+			MUST_MATCH(CALL_MANY_N(node->new_expr.expr_list, rule_expression, ", ", '_'));
+			MUST_MATCH(CALL_RULE_N(node->new_expr.ty, rule_type));
+
+			bool has_inits = READ_STR("pi");
 			if (PEEK() != 'E') {
-				MUST_MATCH(CALL_RULE(rule_initializer));
+				if (!has_inits) {
+					TRACE_RETURN_FAILURE();
+				}
+				MUST_MATCH(CALL_MANY_N(node->new_expr.init_list, rule_expression, ", ", 'E'));
 			}
 			node->prec = Op->Prec;
+			node->tag = CP_DEM_TYPE_KIND_new_expression;
 			TRACE_RETURN_SUCCESS;
 		case Del: // dl/da
 			if (is_global) {
@@ -2067,17 +2090,6 @@ bool rule_template_param(DemParser *p, DemResult *r) {
 		DemNode_copy(node, t);
 	}
 
-	TRACE_RETURN_SUCCESS;
-}
-
-bool rule_initializer(DemParser *p, DemResult *r) {
-	RULE_HEAD(initializer);
-	if (!READ_STR("pi")) {
-		TRACE_RETURN_FAILURE();
-	}
-	AST_APPEND_STR("({");
-	MUST_MATCH(CALL_MANY(rule_expression, ", ", 'E'));
-	AST_APPEND_STR("})");
 	TRACE_RETURN_SUCCESS;
 }
 
