@@ -902,6 +902,11 @@ void ast_pp(DemNode *node, DemString *out) {
 	}
 
 	case CP_DEM_TYPE_KIND_binary_expression: {
+		bool paren_all =
+			(sv_eq_cstr(&node->binary_expr.op, ">") || sv_eq_cstr(&node->binary_expr.op, ">>"));
+		if (paren_all) {
+			dem_string_append(out, "(");
+		}
 		bool is_assign = node->prec == Assign;
 		pp_as_operand_ex(node->binary_expr.lhs, out, is_assign ? OrIf : node->prec, !is_assign);
 		if (!sv_eq_cstr(&node->binary_expr.op, ",")) {
@@ -910,6 +915,9 @@ void ast_pp(DemNode *node, DemString *out) {
 		dem_string_append_sv(out, node->binary_expr.op);
 		dem_string_append(out, " ");
 		pp_as_operand_ex(node->binary_expr.rhs, out, node->prec, is_assign);
+		if (paren_all) {
+			dem_string_append(out, ")");
+		}
 		break;
 	}
 	case CP_DEM_TYPE_KIND_prefix_expression: {
@@ -917,7 +925,7 @@ void ast_pp(DemNode *node, DemString *out) {
 		pp_as_operand_ex(node->prefix_expr.inner, out, node->prec, false);
 		break;
 	}
-	// case CP_DEM_TYPE_KIND_expression:
+		// case CP_DEM_TYPE_KIND_expression:
 
 	default:
 		// For all other nodes with children, recursively print all children
@@ -2730,7 +2738,7 @@ bool rule_template_arg(DemParser *p, DemResult *r) {
 	switch (PEEK()) {
 	case 'X': {
 		ADV();
-		MUST_MATCH(CALL_RULE(rule_expression) && READ('E'));
+		MUST_MATCH(PASSTHRU_RULE(rule_expression) && READ('E'));
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'J': {
@@ -2742,10 +2750,10 @@ bool rule_template_arg(DemParser *p, DemResult *r) {
 	case 'L': {
 		if (PEEK_AT(1) == 'Z') {
 			ADV_BY(2);
-			MUST_MATCH(CALL_RULE(rule_encoding) && READ('E'));
+			MUST_MATCH(PASSTHRU_RULE(rule_encoding) && READ('E'));
 			TRACE_RETURN_SUCCESS;
 		}
-		MUST_MATCH(CALL_RULE(rule_expr_primary));
+		MUST_MATCH(PASSTHRU_RULE(rule_expr_primary));
 		TRACE_RETURN_SUCCESS;
 		break;
 	}
