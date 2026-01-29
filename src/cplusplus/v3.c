@@ -466,7 +466,7 @@ static bool extract_function_type(DemNode *node, DemNode **out_func_node) {
 static void pp_function_ty_mod_return_fn(PPFnContext *, DemString *);
 static void pp_function_ty_quals(PPFnContext *ctx, DemString *out);
 
-static void pp_function_ty(PPFnContext *ctx, DemString *out) {
+static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out) {
 	if (!ctx || !ctx->fn || !out) {
 		return;
 	}
@@ -486,7 +486,7 @@ static void pp_function_ty(PPFnContext *ctx, DemString *out) {
 			.mod = node,
 			.pp_mod = pp_function_ty_mod_return_fn,
 		};
-		pp_function_ty(&inner_ctx, out);
+		pp_function_ty_with_context(&inner_ctx, out);
 		ft->ret = saved_ret;
 		return;
 	}
@@ -525,21 +525,27 @@ static void pp_function_ty(PPFnContext *ctx, DemString *out) {
 	}
 	dem_string_append(out, ")");
 
+	// Print cv and ref qualifiers
+	pp_cv_qualifiers(ft->cv_qualifiers, out);
+	pp_ref_qualifiers(ft->ref_qualifiers, out);
+
 	// Print exception spec
 	if (ft->exception_spec) {
 		ast_pp(ft->exception_spec, out);
 	}
+}
 
-	// Print cv and ref qualifiers
-	pp_cv_qualifiers(ft->cv_qualifiers, out);
-	pp_ref_qualifiers(ft->ref_qualifiers, out);
+static void pp_function_ty(PDemNode node, DemString *out) {
+	PPFnContext ctx = { 0 };
+	ctx.fn = node;
+	pp_function_ty_with_context(&ctx, out);
 }
 
 static void pp_function_ty_mod_return_fn(PPFnContext *ctx, DemString *out) {
 	PPFnContext inner_ctx = {
 		.fn = ctx->mod
 	};
-	pp_function_ty(&inner_ctx, out);
+	pp_function_ty_with_context(&inner_ctx, out);
 }
 
 static void pp_function_ty_quals(PPFnContext *ctx, DemString *out) {
@@ -622,10 +628,7 @@ void ast_pp(DemNode *node, DemString *out) {
 		break;
 
 	case CP_DEM_TYPE_KIND_function_type: {
-		PPFnContext ctx = {
-			.fn = node,
-		};
-		pp_function_ty(&ctx, out);
+		pp_function_ty(node, out);
 		break;
 	}
 	case CP_DEM_TYPE_KIND_module_name:
@@ -760,7 +763,7 @@ void ast_pp(DemNode *node, DemString *out) {
 				.quals = node,
 				.pp_quals = pp_function_ty_quals,
 			};
-			pp_function_ty(&ctx, out);
+			pp_function_ty_with_context(&ctx, out);
 		} else if (node->subtag != SUB_TAG_INVALID && AST(0)) {
 			pp_type_with_quals(node, out);
 		} else {
@@ -816,7 +819,7 @@ void ast_pp(DemNode *node, DemString *out) {
 				.mod = AST(0),
 				.fn = AST(1),
 			};
-			pp_function_ty(&ctx, out);
+			pp_function_ty_with_context(&ctx, out);
 		} else {
 			// Member data pointer
 			if (AST(1)) {
@@ -2198,24 +2201,35 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 	CALL_RULE_N(node->fn_ty.exception_spec, rule_exception_spec);
 
 	READ_STR("Dx");
-	if (!READ('F')) {
-		TRACE_RETURN_FAILURE();
-	}
+	MUST_MATCH(READ('F'));
 	READ('Y');
-	CALL_RULE_N(node->fn_ty.ret, rule_type);
-	if (!node->fn_ty.ret) {
+	MUST_MATCH(CALL_RULE_N(node->fn_ty.ret, rule_type));
+
+	node->fn_ty.params = DemNode_ctor(CP_DEM_TYPE_KIND_many, CUR(), 0);
+	if (!node->fn_ty.params) {
 		TRACE_RETURN_FAILURE();
 	}
-
-	DemResult param_result = { 0 };
-	READ('v');
-	if (!match_many(p, &param_result, rule_type, ", ", 'E')) {
-		TRACE_RETURN_FAILURE();
+	node->fn_ty.params->many_ty.sep = ", ";
+	while (true) {
+		if (READ('E')) {
+			break;
+		}
+		if (READ('v')) {
+			continue;
+		}
+		if (READ_STR("RE")) {
+			node->fn_ty.ref_qualifiers.is_l_value = true;
+			break;
+		}
+		if (READ_STR("OE")) {
+			node->fn_ty.ref_qualifiers.is_r_value = true;
+			break;
+		}
+		PDemNode param = NULL;
+		MUST_MATCH(CALL_RULE_N(param, rule_type));
+		Node_append(node->fn_ty.params, param);
 	}
-
-	parse_ref_qualifiers(p, &node->fn_ty.ref_qualifiers);
-
-	node->fn_ty.params = param_result.output;
+	node->fn_ty.params->val.len = CUR() - node->fn_ty.params->val.buf;
 	TRACE_RETURN_SUCCESS;
 }
 
