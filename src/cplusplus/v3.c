@@ -584,21 +584,46 @@ void pp_special_substitution(DemNode *node, DemString *out) {
 	pp_base_name(node, out);
 }
 
-static inline void pp_as_operand_ex(DemNode *node, DemString *out, Prec prec, bool strictly_worse) {
+// Pretty-print context to track formatting state
+typedef struct {
+	int paren_depth; // Current parenthesis nesting depth
+	bool inside_template; // Whether we're inside template arguments
+} PPContext;
+
+// Helper functions for printing parentheses with depth tracking
+static inline void print_open(DemString *out, PPContext *ctx) {
+	dem_string_append(out, "(");
+	ctx->paren_depth++;
+}
+
+static inline void print_close(DemString *out, PPContext *ctx) {
+	dem_string_append(out, ")");
+	ctx->paren_depth--;
+}
+
+// Internal pretty-print function with context
+static void ast_pp_ctx(DemNode *node, DemString *out, PPContext *ctx);
+
+static inline void pp_as_operand_ex(DemNode *node, DemString *out, Prec prec, bool strictly_worse, PPContext *ctx) {
 	if (!node || !out) {
 		return;
 	}
 	bool need_parens = (size_t)node->prec >= (size_t)prec + (size_t)strictly_worse;
 	if (need_parens) {
-		dem_string_append(out, "(");
+		print_open(out, ctx);
 	}
-	ast_pp(node, out);
+	ast_pp_ctx(node, out, ctx);
 	if (need_parens) {
-		dem_string_append(out, ")");
+		print_close(out, ctx);
 	}
 }
 
 void ast_pp(DemNode *node, DemString *out) {
+	PPContext ctx = { .paren_depth = 0, .inside_template = false };
+	ast_pp_ctx(node, out, &ctx);
+}
+
+static void ast_pp_ctx(DemNode *node, DemString *out, PPContext *ctx) {
 	if (!node || !out) {
 		return;
 	}
@@ -619,7 +644,7 @@ void ast_pp(DemNode *node, DemString *out) {
 		break;
 
 	case CP_DEM_TYPE_KIND_abi_tag_ty:
-		ast_pp(node->abi_tag_ty.ty, out);
+		ast_pp_ctx(node->abi_tag_ty.ty, out, ctx);
 		dem_string_append(out, "[abi:");
 		dem_string_append_n(out,
 			node->abi_tag_ty.tag.buf,
@@ -633,11 +658,11 @@ void ast_pp(DemNode *node, DemString *out) {
 	}
 	case CP_DEM_TYPE_KIND_module_name:
 		if (node->module_name_ty.pare) {
-			ast_pp(node->module_name_ty.pare, out);
+			ast_pp_ctx(node->module_name_ty.pare, out, ctx);
 			dem_string_append(out, ".");
 		}
 		if (node->module_name_ty.name) {
-			ast_pp(node->module_name_ty.name, out);
+			ast_pp_ctx(node->module_name_ty.name, out, ctx);
 			if (node->module_name_ty.IsPartition) {
 				dem_string_append(out, ":");
 			} else if (node->module_name_ty.pare && node->module_name_ty.pare->tag == CP_DEM_TYPE_KIND_module_name) {
@@ -647,23 +672,23 @@ void ast_pp(DemNode *node, DemString *out) {
 		break;
 	case CP_DEM_TYPE_KIND_name_with_template_args:
 		if (node->name_with_template_args.name) {
-			ast_pp(node->name_with_template_args.name, out);
+			ast_pp_ctx(node->name_with_template_args.name, out, ctx);
 		}
 		if (node->name_with_template_args.template_args) {
-			ast_pp(node->name_with_template_args.template_args, out);
+			ast_pp_ctx(node->name_with_template_args.template_args, out, ctx);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_qualified_type:
 		if (node->qualified_ty.inner_type) {
-			ast_pp(node->qualified_ty.inner_type, out);
+			ast_pp_ctx(node->qualified_ty.inner_type, out, ctx);
 			pp_cv_qualifiers(node->qualified_ty.qualifiers, out);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type:
 		if (node->vendor_ext_qualified_ty.inner_type) {
-			ast_pp(node->vendor_ext_qualified_ty.inner_type, out);
+			ast_pp_ctx(node->vendor_ext_qualified_ty.inner_type, out, ctx);
 			if (node->vendor_ext_qualified_ty.vendor_ext.buf) {
 				dem_string_append(out, " ");
 				dem_string_append_n(out,
@@ -671,14 +696,14 @@ void ast_pp(DemNode *node, DemString *out) {
 					node->vendor_ext_qualified_ty.vendor_ext.len);
 			}
 			if (node->vendor_ext_qualified_ty.template_args) {
-				ast_pp(node->vendor_ext_qualified_ty.template_args, out);
+				ast_pp_ctx(node->vendor_ext_qualified_ty.template_args, out, ctx);
 			}
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_conv_op_ty:
 		dem_string_append(out, "operator ");
-		ast_pp(node->conv_op_ty.ty, out);
+		ast_pp_ctx(node->conv_op_ty.ty, out, ctx);
 		break;
 
 	case CP_DEM_TYPE_KIND_many:
@@ -691,7 +716,7 @@ void ast_pp(DemNode *node, DemString *out) {
 					if (!first && node->many_ty.sep) {
 						dem_string_append(out, node->many_ty.sep);
 					}
-					ast_pp(child, out);
+					ast_pp_ctx(child, out, ctx);
 					first = false;
 				}
 			});
@@ -701,18 +726,18 @@ void ast_pp(DemNode *node, DemString *out) {
 	case CP_DEM_TYPE_KIND_nested_name:
 		// Nested names are separated by "::"
 		if (node->nested_name.qual) {
-			ast_pp(node->nested_name.qual, out);
+			ast_pp_ctx(node->nested_name.qual, out, ctx);
 			dem_string_append(out, "::");
 		}
 		if (node->nested_name.name) {
-			ast_pp(node->nested_name.name, out);
+			ast_pp_ctx(node->nested_name.name, out, ctx);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_local_name:
-		ast_pp(node->local_name.encoding, out);
+		ast_pp_ctx(node->local_name.encoding, out, ctx);
 		dem_string_append(out, "::");
-		ast_pp(node->local_name.entry, out);
+		ast_pp_ctx(node->local_name.entry, out, ctx);
 		break;
 
 	case CP_DEM_TYPE_KIND_ctor_dtor_name:
@@ -731,12 +756,12 @@ void ast_pp(DemNode *node, DemString *out) {
 		dem_string_append(out, "'lambda");
 		if (node->closure_ty_name.template_params) {
 			dem_string_append(out, "<");
-			ast_pp(node->closure_ty_name.template_params, out);
+			ast_pp_ctx(node->closure_ty_name.template_params, out, ctx);
 			dem_string_append(out, ">");
 		}
 		dem_string_append(out, "'(");
 		if (node->closure_ty_name.params) {
-			ast_pp(node->closure_ty_name.params, out);
+			ast_pp_ctx(node->closure_ty_name.params, out, ctx);
 		}
 		dem_string_append(out, ")");
 		if (node->closure_ty_name.count.buf && node->closure_ty_name.count.len > 0) {
@@ -748,7 +773,11 @@ void ast_pp(DemNode *node, DemString *out) {
 	case CP_DEM_TYPE_KIND_template_args:
 		dem_string_append(out, "<");
 		if (AST(0)) {
-			ast_pp(AST(0), out);
+			// Set inside_template flag when printing template arguments
+			bool old_inside_template = ctx->inside_template;
+			ctx->inside_template = true;
+			ast_pp_ctx(AST(0), out, ctx);
+			ctx->inside_template = old_inside_template;
 		}
 		dem_string_append(out, ">");
 		break;
@@ -758,18 +787,18 @@ void ast_pp(DemNode *node, DemString *out) {
 		DemNode *func_node = NULL;
 		if (extract_function_type(node, &func_node)) {
 			// This is a function pointer - use special formatting
-			PPFnContext ctx = {
+			PPFnContext pp_fn_context = {
 				.fn = func_node,
 				.quals = node,
 				.pp_quals = pp_function_ty_quals,
 			};
-			pp_function_ty_with_context(&ctx, out);
+			pp_function_ty_with_context(&pp_fn_context, out);
 		} else if (node->subtag != SUB_TAG_INVALID && AST(0)) {
 			pp_type_with_quals(node, out);
 		} else {
 			// Regular type - print children and add decorator
 			vec_foreach_ptr(node->children, child_ptr, {
-				ast_pp(*child_ptr, out);
+				ast_pp_ctx(*child_ptr, out, ctx);
 			});
 		}
 	} break;
@@ -784,7 +813,7 @@ void ast_pp(DemNode *node, DemString *out) {
 		PDemNode inner_ty = NULL;
 		pp_array_type_dimension(node, &dem, &inner_ty);
 		if (inner_ty) {
-			ast_pp(inner_ty, out);
+			ast_pp_ctx(inner_ty, out, ctx);
 			dem_string_append(out, " vector");
 			dem_string_concat(out, &dem);
 		}
@@ -794,7 +823,7 @@ void ast_pp(DemNode *node, DemString *out) {
 
 	case CP_DEM_TYPE_KIND_template_parameter_pack:
 		if (AST(0)) {
-			ast_pp(AST(0), out);
+			ast_pp_ctx(AST(0), out, ctx);
 		}
 		break;
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
@@ -814,38 +843,38 @@ void ast_pp(DemNode *node, DemString *out) {
 		// For member function pointers: return_type (Class::*)(params) cv-qualifiers ref-qualifiers
 		// For member data pointers: type Class::*
 		if (AST(1) && AST(1)->tag == CP_DEM_TYPE_KIND_function_type) {
-			PPFnContext ctx = {
+			PPFnContext pp_fn_context = {
 				.pp_mod = pp_function_ty_mod_pointer_to_member_type,
 				.mod = AST(0),
 				.fn = AST(1),
 			};
-			pp_function_ty_with_context(&ctx, out);
+			pp_function_ty_with_context(&pp_fn_context, out);
 		} else {
 			// Member data pointer
 			if (AST(1)) {
-				ast_pp(AST(1), out);
+				ast_pp_ctx(AST(1), out, ctx);
 				dem_string_append(out, " ");
 			}
 			if (AST(0)) {
-				ast_pp(AST(0), out);
+				ast_pp_ctx(AST(0), out, ctx);
 			}
 			dem_string_append(out, "::*");
 		}
 		break;
 	case CP_DEM_TYPE_KIND_member_expression:
-		pp_as_operand_ex(node->member_expr.lhs, out, node->prec, true);
+		pp_as_operand_ex(node->member_expr.lhs, out, node->prec, true, ctx);
 		dem_string_append_sv(out, node->member_expr.op);
-		pp_as_operand_ex(node->member_expr.rhs, out, node->prec, false);
+		pp_as_operand_ex(node->member_expr.rhs, out, node->prec, false, ctx);
 		break;
 	case CP_DEM_TYPE_KIND_fold_expression: {
-		dem_string_append(out, "(");
+		print_open(out, ctx);
 		if (!node->fold_expr.is_left_fold || node->fold_expr.init) {
 			if (node->fold_expr.is_left_fold) {
-				pp_as_operand_ex(node->fold_expr.init, out, Cast, true);
+				pp_as_operand_ex(node->fold_expr.init, out, Cast, true, ctx);
 			} else {
-				dem_string_append(out, "(");
-				ast_pp(node->fold_expr.pack, out);
-				dem_string_append(out, ")");
+				print_open(out, ctx);
+				ast_pp_ctx(node->fold_expr.pack, out, ctx);
+				print_close(out, ctx);
 			}
 			dem_string_append(out, " ");
 			dem_string_append_sv(out, node->fold_expr.op);
@@ -857,75 +886,76 @@ void ast_pp(DemNode *node, DemString *out) {
 			dem_string_append_sv(out, node->fold_expr.op);
 			dem_string_append(out, " ");
 			if (node->fold_expr.is_left_fold) {
-				dem_string_append(out, "(");
-				ast_pp(node->fold_expr.pack, out);
-				dem_string_append(out, ")");
+				print_open(out, ctx);
+				ast_pp_ctx(node->fold_expr.pack, out, ctx);
+				print_close(out, ctx);
 			} else {
-				pp_as_operand_ex(node->fold_expr.init, out, Cast, true);
+				pp_as_operand_ex(node->fold_expr.init, out, Cast, true, ctx);
 			}
 		}
-		dem_string_append(out, ")");
+		print_close(out, ctx);
 		break;
 	}
 	case CP_DEM_TYPE_KIND_braced_expression: {
 		if (node->braced_expr.is_array) {
 			dem_string_append(out, "[");
-			ast_pp(node->braced_expr.elem, out);
+			ast_pp_ctx(node->braced_expr.elem, out, ctx);
 			dem_string_append(out, "]");
 		} else {
 			dem_string_append(out, ".");
-			ast_pp(node->braced_expr.elem, out);
+			ast_pp_ctx(node->braced_expr.elem, out, ctx);
 		}
 		if (node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_expression && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_range_expression) {
 			dem_string_append(out, " = ");
 		}
-		ast_pp(node->braced_expr.init, out);
+		ast_pp_ctx(node->braced_expr.init, out, ctx);
 		break;
 	}
 	case CP_DEM_TYPE_KIND_braced_range_expression: {
 		dem_string_append(out, "[");
-		ast_pp(node->braced_range_expr.first, out);
+		ast_pp_ctx(node->braced_range_expr.first, out, ctx);
 		dem_string_append(out, "...");
-		ast_pp(node->braced_range_expr.last, out);
+		ast_pp_ctx(node->braced_range_expr.last, out, ctx);
 		dem_string_append(out, "]");
 		if (node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_expression && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_range_expression) {
 			dem_string_append(out, " = ");
 		}
-		ast_pp(node->braced_expr.init, out);
+		ast_pp_ctx(node->braced_expr.init, out, ctx);
 		break;
 	}
 	case CP_DEM_TYPE_KIND_init_list_expression: {
 		if (node->init_list_expr.ty) {
-			ast_pp(node->init_list_expr.ty, out);
+			ast_pp_ctx(node->init_list_expr.ty, out, ctx);
 		}
 		dem_string_append(out, "{");
-		ast_pp(node->init_list_expr.inits, out);
+		ast_pp_ctx(node->init_list_expr.inits, out, ctx);
 		dem_string_append(out, "}");
 		break;
 	}
 
 	case CP_DEM_TYPE_KIND_binary_expression: {
-		bool paren_all =
+		// Don't add parentheses around > or >> when we're already inside template arguments
+		bool paren_all = ctx->paren_depth <= 0 &&
 			(sv_eq_cstr(&node->binary_expr.op, ">") || sv_eq_cstr(&node->binary_expr.op, ">>"));
 		if (paren_all) {
-			dem_string_append(out, "(");
+			print_open(out, ctx);
 		}
 		bool is_assign = node->prec == Assign;
-		pp_as_operand_ex(node->binary_expr.lhs, out, is_assign ? OrIf : node->prec, !is_assign);
+		pp_as_operand_ex(node->binary_expr.lhs, out, is_assign ? OrIf : node->prec, !is_assign, ctx);
 		if (!sv_eq_cstr(&node->binary_expr.op, ",")) {
 			dem_string_append(out, " ");
 		}
 		dem_string_append_sv(out, node->binary_expr.op);
 		dem_string_append(out, " ");
-		pp_as_operand_ex(node->binary_expr.rhs, out, node->prec, is_assign);
+		pp_as_operand_ex(node->binary_expr.rhs, out, node->prec, is_assign, ctx);
 		if (paren_all) {
-			dem_string_append(out, ")");
+			print_close(out, ctx);
 		}
 		break;
 	}
 	case CP_DEM_TYPE_KIND_prefix_expression: {
 		dem_string_append_sv(out, node->prefix_expr.prefix);
-		pp_as_operand_ex(node->prefix_expr.inner, out, node->prec, false);
+		pp_as_operand_ex(node->prefix_expr.inner, out, node->prec, false, ctx);
 		break;
 	}
 		// case CP_DEM_TYPE_KIND_expression:
@@ -936,7 +966,7 @@ void ast_pp(DemNode *node, DemString *out) {
 			vec_foreach_ptr(node->children, child_ptr, {
 				DemNode *child = child_ptr ? *child_ptr : NULL;
 				if (child) {
-					ast_pp(child, out);
+					ast_pp_ctx(child, out, ctx);
 				}
 			});
 		}
