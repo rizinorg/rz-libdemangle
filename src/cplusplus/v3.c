@@ -301,7 +301,7 @@ bool extract_pack_expansion(DemNode *node, PDemNode *outer_ty, PDemNode *inner_t
 	return true;
 }
 
-bool pp_pack_expansion(PPPackExpansionContext *ctx, DemString *out) {
+bool pp_pack_expansion_with_context(PPPackExpansionContext *ctx, DemString *out) {
 	if (!ctx || !ctx->node || !out) {
 		return false;
 	}
@@ -333,6 +333,15 @@ bool pp_pack_expansion(PPPackExpansionContext *ctx, DemString *out) {
 		dem_string_append(out, "expansion(?)");
 	}
 	return true;
+}
+
+bool pp_pack_expansion(PDemNode node, DemString *out) {
+	PPPackExpansionContext ctx = {
+		.node = node,
+		.pack = NULL,
+		.outer = NULL,
+	};
+	return pp_pack_expansion_with_context(&ctx, out);
 }
 
 // Helper function to extract the base class name from a ctor/dtor name
@@ -785,15 +794,9 @@ void ast_pp(DemNode *node, DemString *out) {
 			ast_pp(AST(0), out);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion: {
-		PPPackExpansionContext ctx = {
-			.node = node,
-			.outer = NULL,
-			.pack = NULL
-		};
-		pp_pack_expansion(&ctx, out);
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+		pp_pack_expansion(node, out);
 		break;
-	}
 
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		if (node->fwd_template_ref) {
@@ -831,8 +834,36 @@ void ast_pp(DemNode *node, DemString *out) {
 		dem_string_append_sv(out, node->member_expr.op);
 		pp_as_operand_ex(node->member_expr.rhs, out, node->prec, false);
 		break;
+	case CP_DEM_TYPE_KIND_fold_expression:
+		dem_string_append(out, "(");
+		if (!node->fold_expr.is_left_fold || node->fold_expr.init) {
+			if (node->fold_expr.is_left_fold) {
+				pp_as_operand_ex(node->fold_expr.init, out, Cast, true);
+			} else {
+				dem_string_append(out, "(");
+				ast_pp(node->fold_expr.pack, out);
+				dem_string_append(out, ")");
+			}
+			dem_string_append(out, " ");
+			dem_string_append_sv(out, node->fold_expr.op);
+			dem_string_append(out, " ");
+		}
+		dem_string_append(out, "...");
+		if (node->fold_expr.is_left_fold || node->fold_expr.init) {
+			dem_string_append(out, " ");
+			dem_string_append_sv(out, node->fold_expr.op);
+			dem_string_append(out, " ");
+			if (node->fold_expr.is_left_fold) {
+				dem_string_append(out, "(");
+				ast_pp(node->fold_expr.pack, out);
+				dem_string_append(out, ")");
+			} else {
+				pp_as_operand_ex(node->fold_expr.init, out, Cast, true);
+			}
+		}
+		dem_string_append(out, ")");
+		break;
 		// case CP_DEM_TYPE_KIND_expression:
-		// case CP_DEM_TYPE_KIND_fold_expression:
 		// case CP_DEM_TYPE_KIND_braced_expression:
 		// case CP_DEM_TYPE_KIND_prefix_expression:
 		// case CP_DEM_TYPE_KIND_binary_expression:
@@ -1656,22 +1687,20 @@ bool rule_fold_expression(DemParser *p, DemResult *r) {
 	}
 
 	DemNode *Pack = NULL;
-	CALL_RULE_N(Pack, rule_expression);
-	if (!Pack) {
-		TRACE_RETURN_FAILURE();
-	}
+	MUST_MATCH(CALL_RULE_N(Pack, rule_expression));
 
 	DemNode *init = NULL;
 	if (HasInitializer) {
-		CALL_RULE_N(init, rule_expression);
-		if (!init) {
-			TRACE_RETURN_FAILURE();
-		}
+		MUST_MATCH(CALL_RULE_N(init, rule_expression));
 	}
 	if (init && IsLeftFold) {
 		swap((void **)&Pack, (void **)&init);
 	}
 
+	node->fold_expr.pack = Pack;
+	node->fold_expr.init = init;
+	node->fold_expr.is_left_fold = IsLeftFold;
+	sv_form_cstr(&node->fold_expr.op, opinfo_get_symbol(Op));
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -1809,10 +1838,10 @@ bool rule_expression(DemParser *p, DemResult *r) {
 
 	// Non-operator expressions
 	if (PEEK() == 'L') {
-		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_expr_primary));
+		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_expr_primary));
 	}
 	if (PEEK() == 'T') {
-		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_template_param));
+		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_template_param));
 	}
 	if (PEEK() == 'f') {
 		if (PEEK_AT(1) == 'p' || (PEEK_AT(1) == 'L' && isdigit(PEEK_AT(2)))) {
@@ -1842,7 +1871,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("sizeof...(") && CALL_MANY(rule_template_arg, "", 'E') && AST_APPEND_STR(")"));
 	}
 	if (READ_STR("sp")) {
-		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_expression));
+		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_expression));
 	}
 	if (READ('u')) {
 		PDemNode name = NULL;
@@ -1884,7 +1913,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		TRACE_RETURN_SUCCESS;
 	}
 
-	TRY_MATCH(CALL_RULE(rule_unresolved_name));
+	TRY_MATCH(PASSTHRU_RULE(rule_unresolved_name));
 
 	RULE_FOOT(expression);
 }

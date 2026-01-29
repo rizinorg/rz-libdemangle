@@ -210,6 +210,16 @@ void DemNode_deinit(DemNode *xs) {
 		}
 		// op is a DemStringView (not allocated), no need to free
 		break;
+	case CP_DEM_TYPE_KIND_fold_expression:
+		if (xs->fold_expr.pack) {
+			DemNode_dtor(xs->fold_expr.pack);
+		}
+		if (xs->fold_expr.init) {
+			DemNode_dtor(xs->fold_expr.init);
+		}
+		// op is a DemStringView (not allocated), no need to free
+		// is_left_fold is a bool, no need to free
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -319,6 +329,12 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		dst->member_expr.lhs = src->member_expr.lhs ? DemNode_clone(src->member_expr.lhs) : NULL;
 		dst->member_expr.rhs = src->member_expr.rhs ? DemNode_clone(src->member_expr.rhs) : NULL;
 		dst->member_expr.op = src->member_expr.op; // DemStringView, shallow copy
+		break;
+	case CP_DEM_TYPE_KIND_fold_expression:
+		dst->fold_expr.pack = src->fold_expr.pack ? DemNode_clone(src->fold_expr.pack) : NULL;
+		dst->fold_expr.init = src->fold_expr.init ? DemNode_clone(src->fold_expr.init) : NULL;
+		dst->fold_expr.op = src->fold_expr.op; // DemStringView, shallow copy
+		dst->fold_expr.is_left_fold = src->fold_expr.is_left_fold;
 		break;
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		// Deep copy forward template reference

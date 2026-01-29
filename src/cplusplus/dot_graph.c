@@ -778,6 +778,15 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
+	case CP_DEM_TYPE_KIND_fold_expression:
+		if (node->fold_expr.pack) {
+			dot_graph_traverse_ast(dot, node->fold_expr.pack, current_id, "pack", "solid");
+		}
+		if (node->fold_expr.init) {
+			dot_graph_traverse_ast(dot, node->fold_expr.init, current_id, "init", "solid");
+		}
+		break;
+
 	case CP_DEM_TYPE_KIND_many:
 	case CP_DEM_TYPE_KIND_template_args:
 		// These types use the generic children vector

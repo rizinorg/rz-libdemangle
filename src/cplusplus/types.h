@@ -282,6 +282,12 @@ typedef struct {
 	PDemNode rhs;
 } MemberExpr;
 
+typedef struct {
+	PDemNode pack, init;
+	DemStringView op;
+	bool is_left_fold;
+} FoldExpr;
+
 typedef enum {
 	Primary,
 	PPostfix,
@@ -330,6 +336,7 @@ typedef struct DemNode_t {
 		AbiTagTy abi_tag_ty;
 		ArrayTy array_ty;
 		MemberExpr member_expr;
+		FoldExpr fold_expr;
 	};
 } DemNode;
 
