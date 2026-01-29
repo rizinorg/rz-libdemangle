@@ -1765,7 +1765,9 @@ bool rule_expression(DemParser *p, DemResult *r) {
 				MUST_MATCH(CALL_MANY(rule_expression, ", ", 'E'));
 				AST_APPEND_STR(")");
 			} else {
+				AST_APPEND_STR("(");
 				MUST_MATCH(CALL_RULE(rule_expression));
+				AST_APPEND_STR(")");
 			}
 			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
