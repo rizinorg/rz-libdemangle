@@ -1291,6 +1291,7 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 		TRACE_RETURN_FAILURE();
 	}
 	DemNode_move(node, result);
+	free(result);
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -1305,6 +1306,8 @@ bool rule_unresolved_name(DemParser *p, DemResult *r) {
 		if (qualifier_level && VecPDemNode_len(qualifier_level->children) > 0) {
 			AST_APPEND_STR("::");
 			AST_APPEND_NODE(qualifier_level);
+		} else {
+			DemNode_dtor(qualifier_level);
 		}
 
 		AST_APPEND_STR("::");
@@ -1342,8 +1345,8 @@ bool rule_unscoped_name(DemParser *p, DemResult *r, NameState *ns, bool *is_subs
 
 	DemNode *result = NULL;
 	DemNode *module = NULL;
-	DemNode *subst = NULL;
 	if (PEEK() == 'S') {
+		DemNode *subst = NULL;
 		MUST_MATCH(CALL_RULE_N(subst, rule_substitution));
 		if (subst->tag == CP_DEM_TYPE_KIND_module_name) {
 			module = subst;
@@ -1364,6 +1367,7 @@ bool rule_unscoped_name(DemParser *p, DemResult *r, NameState *ns, bool *is_subs
 	}
 	if (result) {
 		DemNode_move(node, result);
+		free(result);
 		TRACE_RETURN_SUCCESS;
 	}
 	RULE_FOOT(unscoped_name);
@@ -1849,16 +1853,16 @@ bool rule_expression(DemParser *p, DemResult *r) {
 	const OperatorInfo *Op = parse_operator_info(p);
 	if (Op) {
 		switch (Op->Kind) {
-		case Prefix: return rule_prefix_expression(p, r, Op);
+		case Prefix: return PASSTHRU_RULE_VA(rule_prefix_expression, Op);
 		case Postfix:
 			if (READ('_')) {
-				return rule_prefix_expression(p, r, Op);
+				return PASSTHRU_RULE_VA(rule_prefix_expression, Op);
 			}
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR(opinfo_get_symbol(Op));
 			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
-		case Binary: return rule_binary_expression(p, r, Op);
+		case Binary: return PASSTHRU_RULE_VA(rule_binary_expression, Op);
 		case Array: // ix: arr[idx]
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR("[");
@@ -2035,9 +2039,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		TRACE_RETURN_SUCCESS;
 	}
 
-	TRY_MATCH(PASSTHRU_RULE(rule_unresolved_name));
-
-	RULE_FOOT(expression);
+	RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_unresolved_name));
 }
 
 bool rule_simple_id(DemParser *p, DemResult *r) {

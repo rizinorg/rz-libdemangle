@@ -71,6 +71,7 @@ static int check_subs(const char *input, const char *expected_output, const char
 			printf("    Got:      %s\n", buf.buf);
 			goto beach;
 		}
+		dem_string_deinit(&buf);
 	}
 	result = 1;
 beach:
