@@ -302,6 +302,7 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 	}
 	dst->val = src->val;
 	dst->tag = src->tag;
+	dst->prec = src->prec;
 	dst->subtag = src->subtag;
 	if (src->children) {
 		dst->children = VecF(PDemNode, ctor)();
