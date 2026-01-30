@@ -832,7 +832,7 @@ static void ast_pp_ctx(DemNode *node, DemString *out, PPContext *ctx) {
 
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		if (node->fwd_template_ref) {
-			dem_string_appendf(out, "T_%d_%d", node->fwd_template_ref->level, node->fwd_template_ref->index);
+			ast_pp_ctx((PDemNode)node->fwd_template_ref->ref, out, ctx);
 		} else {
 			dem_string_append(out, "T_?_?");
 		}
@@ -2072,18 +2072,21 @@ bool rule_template_param(DemParser *p, DemResult *r) {
 	if (!t) {
 		// If substitution failed, create a forward reference
 		// Use a placeholder that will be resolved later
-		ForwardTemplateRef fwd_ref = {
-			.wrapper = node,
-			.level = level,
-			.index = index
-		};
-		node->fwd_template_ref = malloc(sizeof(ForwardTemplateRef));
-		if (!node->fwd_template_ref) {
+		PForwardTemplateRef fwd = calloc(sizeof(ForwardTemplateRef), 1);
+		if (!fwd) {
 			TRACE_RETURN_FAILURE();
 		}
-		*(node->fwd_template_ref) = fwd_ref;
+		fwd->level = level;
+		fwd->index = index;
+		PForwardTemplateRef *pfwd = VecF(PForwardTemplateRef, append)(&p->forward_template_refs, &fwd);
+		if (!pfwd) {
+			free(fwd);
+			TRACE_RETURN_FAILURE();
+		}
+
+		node->fwd_template_ref = fwd;
 		node->tag = CP_DEM_TYPE_KIND_fwd_template_ref;
-		VecF(PForwardTemplateRef, append)(&p->forward_template_refs, &node->fwd_template_ref);
+
 		if (p->trace) {
 			fprintf(stderr, "[template_param] Created forward ref L%ld_%ld to %p\n",
 				level, index, (void *)node);

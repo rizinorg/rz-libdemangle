@@ -423,19 +423,7 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		dst->new_expr.op = src->new_expr.op; // DemStringView, shallow copy
 		break;
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
-		// Deep copy forward template reference
-		if (src->fwd_template_ref) {
-			dst->fwd_template_ref = malloc(sizeof(ForwardTemplateRef));
-			if (dst->fwd_template_ref) {
-				dst->fwd_template_ref->level = src->fwd_template_ref->level;
-				dst->fwd_template_ref->index = src->fwd_template_ref->index;
-				// NOTE: wrapper pointer points to the original node, not the clone
-				// This is intentional as the wrapper should reference the node in the main AST
-				dst->fwd_template_ref->wrapper = dst;
-			}
-		} else {
-			dst->fwd_template_ref = NULL;
-		}
+		dst->fwd_template_ref = src->fwd_template_ref;
 		break;
 	case CP_DEM_TYPE_KIND_many:
 		// Deep copy many type fields
@@ -452,13 +440,6 @@ void DemNode_move(DemNode *dst, DemNode *src) {
 	}
 	DemNode_deinit(dst);
 	memcpy(dst, src, sizeof(DemNode));
-
-	// Update wrapper pointer if this is a forward template reference
-	// The wrapper should point to the new location (dst), not the old (src)
-	if (dst->tag == CP_DEM_TYPE_KIND_fwd_template_ref && dst->fwd_template_ref) {
-		dst->fwd_template_ref->wrapper = dst;
-	}
-
 	memset(src, 0, sizeof(DemNode));
 }
 

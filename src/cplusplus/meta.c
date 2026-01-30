@@ -150,131 +150,34 @@ branch_fail:
 	return NULL;
 }
 
-// Recursively resolve forward template references in an AST node
-static void resolve_fwd_refs_in_node(DemParser *p, DemNode *node) {
-	if (!node) {
-		return;
-	}
-
-	// Recursively resolve in type-specific fields
-	switch (node->tag) {
-	case CP_DEM_TYPE_KIND_function_type:
-		resolve_fwd_refs_in_node(p, node->fn_ty.name);
-		resolve_fwd_refs_in_node(p, node->fn_ty.ret);
-		resolve_fwd_refs_in_node(p, node->fn_ty.params);
-		resolve_fwd_refs_in_node(p, node->fn_ty.requires_node);
-		resolve_fwd_refs_in_node(p, node->fn_ty.exception_spec);
-		break;
-	case CP_DEM_TYPE_KIND_qualified_type:
-		resolve_fwd_refs_in_node(p, node->qualified_ty.inner_type);
-		break;
-	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type:
-		resolve_fwd_refs_in_node(p, node->vendor_ext_qualified_ty.inner_type);
-		resolve_fwd_refs_in_node(p, node->vendor_ext_qualified_ty.template_args);
-		break;
-	case CP_DEM_TYPE_KIND_conv_op_ty:
-		resolve_fwd_refs_in_node(p, node->conv_op_ty.ty);
-		break;
-	case CP_DEM_TYPE_KIND_nested_name:
-		resolve_fwd_refs_in_node(p, node->nested_name.qual);
-		resolve_fwd_refs_in_node(p, node->nested_name.name);
-		break;
-	case CP_DEM_TYPE_KIND_name_with_template_args:
-		resolve_fwd_refs_in_node(p, node->name_with_template_args.name);
-		resolve_fwd_refs_in_node(p, node->name_with_template_args.template_args);
-		break;
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
-		resolve_fwd_refs_in_node(p, node->parameter_pack_expansion.ty);
-		break;
-	case CP_DEM_TYPE_KIND_fwd_template_ref:
-		// If this node is a forward template reference, resolve it
-		if (node->fwd_template_ref) {
-			ut64 level = node->fwd_template_ref->level;
-			ut64 index = node->fwd_template_ref->index;
-			DemNode *ref_src = template_param_get(p, level, index);
-
-			if (ref_src) {
-				if (p->trace) {
-					DemString buf = { 0 };
-					ast_pp(ref_src, &buf);
-					fprintf(stderr, "[resolve_fwd_ref_recursive] Resolved L%ld_%ld in node %p to %s\n",
-						level, index, node, dem_string_drain_no_free(&buf));
-				}
-				DemNode_deinit(node);
-				DemNode_copy(node, ref_src);
-			}
-		}
-		break;
-	default:
-		// Recursively resolve in children
-		if (node->children) {
-			vec_foreach_ptr(node->children, pchild, {
-				resolve_fwd_refs_in_node(p, *pchild);
-			});
-		}
-		break;
-	}
-}
-
 bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 	if (!p || p->forward_template_refs.length == 0 || !dan) {
 		return true;
 	}
 
 	bool all_resolved = true;
-	vec_foreach_ptr(&p->forward_template_refs, ppfwd_ref, {
-		ForwardTemplateRef *fwd_ref = *ppfwd_ref;
+	vec_foreach(&p->forward_template_refs, fwd_ref, {
 		ut64 level = fwd_ref->level;
 		ut64 index = fwd_ref->index;
 
 		DemNode *ref_src = template_param_get(p, level, index);
-		if (!ref_src || !fwd_ref->wrapper) {
+		if (!ref_src) {
 			all_resolved = false;
 			continue;
 		}
 
-		// Copy the resolved node's content into the wrapper node
-		// This effectively replaces the fwd_template_ref with the actual type
-		DemNode *ref_dst = (DemNode *)fwd_ref->wrapper;
-
-		if (ref_dst->tag != CP_DEM_TYPE_KIND_fwd_template_ref) {
-			if (p->trace) {
-				DemString buf = { 0 };
-				ast_pp(ref_dst, &buf);
-				fprintf(stderr, "[resolve_fwd_ref] WARNING: L%ld_%ld wrapper %p is not a fwd_template_ref but %s\n",
-					level, index, ref_dst, dem_string_drain_no_free(&buf));
-			}
-			continue;
-		}
-
-		if (ref_dst->fwd_template_ref) {
-			free(ref_dst->fwd_template_ref);
-			ref_dst->fwd_template_ref = NULL;
-		}
+		fwd_ref->ref = ref_src;
 
 		if (p->trace) {
 			DemString buf = { 0 };
 			ast_pp(ref_src, &buf);
-			fprintf(stderr, "[resolve_fwd_ref] Resolved L%ld_%ld into node %p %s\n",
-				level, index, ref_dst, dem_string_drain_no_free(&buf));
-		}
-		DemNode_copy(ref_dst, ref_src);
-	});
-
-	// Also resolve forward references in substitution list (detected_types)
-	// This is important because substitutions are cloned before template args are resolved
-	vec_foreach_ptr(&p->detected_types, psub_node, {
-		if (psub_node && *psub_node) {
-			resolve_fwd_refs_in_node(p, *psub_node);
+			fprintf(stderr, "[resolve_fwd_ref] Resolved L%ld_%ld into node %s\n",
+				level, index, dem_string_drain_no_free(&buf));
 		}
 	});
 
-	// Don't clear yet - we'll need the references for final string replacement
-	// Replace placeholders in the final result string
 	if (p->forward_template_refs.length <= 0 || !all_resolved) {
 		return all_resolved;
 	}
-
-	VecF(PForwardTemplateRef, deinit)(&p->forward_template_refs);
 	return true;
 }
