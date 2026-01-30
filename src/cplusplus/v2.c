@@ -1184,7 +1184,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 	logic_intersection_between_case_n_and_t:
 		/* get type index to copy here */
 		READ_NUMBER(typeidx);
-		if (typeidx < 0 || typeidx > dem->func_params.length) {
+		if (typeidx < 0 || (ut64)typeidx > dem->func_params.length) {
 			param_deinit(&param);
 			return NULL;
 		}
@@ -1217,7 +1217,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		/* refer back to param list */
 		if (base_typename && (typeidx == 0)) {
 			/* the very first type is name of function itself, it should be considered at index 0 */
-			for (ut64 r = 0; r < num_reps; r++) {
+			for (ut64 r = 0; r < (ut64)num_reps; r++) {
 				Param p = { 0 };
 				param_init(&p);
 
@@ -1243,7 +1243,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 			}
 
 			/* for each rep, make clone of a type at previous index and put it at the end in the param vec */
-			for (ut64 r = 0; r < num_reps; r++) {
+			for (ut64 r = 0; r < (ut64)num_reps; r++) {
 				Param p = { 0 };
 				param_init_clone(&p, vec_ptr_at(params, typeidx));
 
