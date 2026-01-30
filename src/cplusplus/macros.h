@@ -109,6 +109,7 @@ static inline bool parse_string(DemParser *p, const char *s) {
 	} \
 	DemNode *node = NULL; \
 	bool is_PASSTHRU = false; \
+	DECLARE_MACRO_HELPERS(); \
 	if (!r->output) { \
 		node = (DemNode *)malloc(sizeof(DemNode)); \
 		if (!node) { \
@@ -236,6 +237,55 @@ static inline bool parse_string(DemParser *p, const char *s) {
 		} \
 	} while (0)
 
+// MSVC does not support statement expressions ({ ... })
+// We need macro-based workarounds. The trick is to use the fact that
+// these macros are always used in boolean context, so we can return the
+// success value using the comma operator.
+#ifdef _MSC_VER
+
+// Declare helper variables that the macros will use
+#define DECLARE_MACRO_HELPERS() \
+	DemResult _child_result_macro = { 0 }; \
+	bool _macro_result = false
+
+#define PASSTHRU_RULE_VA(rule_fn, ...) \
+	(r->output = node, \
+		_macro_result = (rule_fn)(p, r, __VA_ARGS__), \
+		(_macro_result ? (void)0 : (DemNode_deinit(node), DemNode_init(node), context_restore(rule))), \
+		_macro_result)
+
+#define PASSTHRU_RULE(rule_fn) \
+	(r->output = node, \
+		_macro_result = (rule_fn)(p, r), \
+		(_macro_result ? (void)0 : (DemNode_deinit(node), DemNode_init(node), context_restore(rule))), \
+		_macro_result)
+
+#define CALL_RULE(rule_fn) \
+	(_child_result_macro = (DemResult){ 0 }, \
+		_macro_result = (rule_fn)(p, &_child_result_macro), \
+		(_macro_result && _child_result_macro.output ? (AST_APPEND_NODE(_child_result_macro.output), _child_result_macro.output = NULL) : DemResult_deinit(&_child_result_macro)), \
+		_macro_result)
+
+#define CALL_RULE_VA(rule_fn, ...) \
+	(_child_result_macro = (DemResult){ 0 }, \
+		_macro_result = (rule_fn)(p, &_child_result_macro, __VA_ARGS__), \
+		(_macro_result && _child_result_macro.output ? (AST_APPEND_NODE(_child_result_macro.output), _child_result_macro.output = NULL) : DemResult_deinit(&_child_result_macro)), \
+		_macro_result)
+
+#define CALL_RULE_N_VA(N, rule_fn, ...) \
+	(_child_result_macro = (DemResult){ 0 }, \
+		_macro_result = (rule_fn)(p, &_child_result_macro, __VA_ARGS__), \
+		(_macro_result && _child_result_macro.output ? (N = _child_result_macro.output, (void)0) : DemResult_deinit(&_child_result_macro)), \
+		_macro_result)
+
+#define CALL_RULE_N(N, rule_fn) \
+	(_child_result_macro = (DemResult){ 0 }, \
+		_macro_result = (rule_fn)(p, &_child_result_macro), \
+		(_macro_result && _child_result_macro.output ? (N = _child_result_macro.output, (void)0) : DemResult_deinit(&_child_result_macro)), \
+		_macro_result)
+
+#else // GCC/Clang with statement expression support
+
 #define PASSTHRU_RULE_VA(rule_fn, ...) \
 	({ \
 		r->output = node; \
@@ -310,6 +360,10 @@ static inline bool parse_string(DemParser *p, const char *s) {
 		} \
 		_success; \
 	})
+
+#define DECLARE_MACRO_HELPERS() ((void)0)
+
+#endif // _MSC_VER
 
 // Helper macro for match_many/match_many1 calls
 #define CALL_MANY(rule_fn, sep, stop)       CALL_RULE_VA(match_many, rule_fn, sep, stop)
