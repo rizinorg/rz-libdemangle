@@ -109,8 +109,19 @@ libdemangle = both_libraries(
     include_directories : include_directories(['include', 'src']),
 )
 
+# When used as a subproject with default_library=static (e.g., Rizin),
+# prefer the static library. Otherwise, use the shared library by default.
+if get_option('default_library') == 'static'
+    libdemangle_link = libdemangle.get_static_lib()
+elif get_option('default_library') == 'shared'
+    libdemangle_link = libdemangle.get_shared_lib()
+else
+    # For 'both', prefer static for better compatibility as a subproject
+    libdemangle_link = libdemangle.get_static_lib()
+endif
+
 libdemangle_dep = declare_dependency(
-    link_with : libdemangle,
+    link_with : libdemangle_link,
     dependencies : [],
     include_directories : include_directories('include'),
 )
