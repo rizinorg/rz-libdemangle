@@ -21,20 +21,6 @@ jobs:
         ninja -C build test
         ./test/test-cli.sh ./build/demangle
 
-  Normal-No-GPL:
-    runs-on: ubuntu-24.04
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - name: Install meson and ninja
-      run: pip3 install --user meson ninja
-    - name: Run Unit Tests
-      run: |
-        export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=release -Denable_cli=true -Duse_gpl=false build-nogpl
-        ninja -C build-nogpl test
-        ./test/test-cli.sh ./build-nogpl/demangle
-
   Normal-Minimal:
     runs-on: ubuntu-24.04
     steps:
@@ -45,7 +31,7 @@ jobs:
     - name: Run Unit Tests
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=release -Denable_cli=true -Duse_gpl=false -Duse_swift_demangler=false build-no-min
+        meson -Dbuildtype=release -Denable_cli=true -Duse_swift_demangler=false build-no-min
         ninja -C build-no-min test
         ./test/test-cli.sh ./build-no-min/demangle
 
