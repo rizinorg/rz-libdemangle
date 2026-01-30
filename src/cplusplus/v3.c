@@ -1216,7 +1216,7 @@ bool rule_module_name(DemParser *p, DemResult *r) {
 		if (!Sub) {
 			return true;
 		}
-		DemNode *sub_module = DemNode_ctor(CP_DEM_TYPE_KIND_module_name, saved_pos_rule, CUR() - saved_pos_rule);
+		DemNode *sub_module = DemNode_ctor(CP_DEM_TYPE_KIND_module_name, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
 		if (!sub_module) {
 			TRACE_RETURN_FAILURE();
 		}
@@ -2542,7 +2542,7 @@ bool rule_type(DemParser *p, DemResult *r) {
 	}
 
 beach:
-	if (CUR() > saved_pos_rule) {
+	if (CUR() > saved_ctx_rule.saved_pos) {
 		AST_APPEND_TYPE;
 		TRACE_RETURN_SUCCESS;
 	}
@@ -2731,7 +2731,7 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 			if (ns) {
 				ns->end_with_template_args = true;
 			}
-			ast_node = make_name_with_template_args(saved_pos_rule, CUR(), ast_node, ta);
+			ast_node = make_name_with_template_args(saved_ctx_rule.saved_pos, CUR(), ast_node, ta);
 		} else if (PEEK() == 'D' && (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T')) {
 			if (ast_node != NULL) {
 				goto fail;
@@ -2845,7 +2845,7 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 		VecPNodeList_append(&p->template_params, &p->outer_template_params);
 		VecPDemNode_clear(p->outer_template_params);
 	}
-	PDemNode many_node = DemNode_ctor(CP_DEM_TYPE_KIND_many, saved_pos_rule, 1);
+	PDemNode many_node = DemNode_ctor(CP_DEM_TYPE_KIND_many, saved_ctx_rule.saved_pos, 1);
 	if (!many_node) {
 		TRACE_RETURN_FAILURE();
 	}

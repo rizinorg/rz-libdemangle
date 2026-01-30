@@ -127,44 +127,76 @@ static inline bool parse_string(DemParser *p, const char *s) {
 
 #define RULE_FOOT(X) TRACE_RETURN_FAILURE();
 
+// Parse context structure to hold saved state
+typedef struct ParseContext {
+	size_t saved_children_len;
+	size_t saved_tag;
+	size_t saved_types_len;
+	const char *saved_pos;
+} ParseContext;
+
+// Save current parsing context
+static inline ParseContext context_save_inline(DemParser *p, DemNode *node) {
+	ParseContext ctx;
+	ctx.saved_children_len = node->children ? VecPDemNode_len(node->children) : 0;
+	ctx.saved_tag = node->tag;
+	ctx.saved_types_len = VecPDemNode_len(&p->detected_types);
+	ctx.saved_pos = p->cur;
+	return ctx;
+}
+
+// Restore node context
+static inline void context_restore_node_inline(DemNode *node, const ParseContext *ctx) {
+	if (node) {
+		if (node->children) {
+			while (VecPDemNode_len(node->children) > ctx->saved_children_len) {
+				PDemNode *node_ptr = VecPDemNode_pop(node->children);
+				DemNode *child = node_ptr ? *node_ptr : NULL;
+				if (child) {
+					DemNode_dtor(child);
+				}
+			}
+		}
+		node->tag = ctx->saved_tag;
+		node->val.buf = ctx->saved_pos;
+	}
+}
+
+// Restore parser context
+static inline void context_restore_parser_inline(DemParser *p, const ParseContext *ctx) {
+	if (!p) {
+		return;
+	}
+	while (VecPDemNode_len(&p->detected_types) > ctx->saved_types_len) {
+		size_t last_idx = VecPDemNode_len(&p->detected_types) - 1;
+		PDemNode *node_ptr = VecPDemNode_at(&p->detected_types, last_idx);
+		DemNode *type_node = node_ptr ? *node_ptr : NULL;
+		if (type_node) {
+			DemNode_dtor(type_node);
+		}
+		VecPDemNode_pop(&p->detected_types);
+	}
+	p->cur = ctx->saved_pos;
+}
+
+// Full context restore
+static inline void context_restore_inline(DemParser *p, DemNode *node, const ParseContext *ctx) {
+	context_restore_node_inline(node, ctx);
+	context_restore_parser_inline(p, ctx);
+}
+
+// Macro versions for compatibility
 #define context_save(N) \
-	__attribute__((unused)) size_t saved_children_len_##N = node->children ? VecPDemNode_len(node->children) : 0; \
-	__attribute__((unused)) size_t saved_tag_##N = node->tag; \
-	__attribute__((unused)) size_t saved_types_len_##N = VecPDemNode_len(&p->detected_types); \
-	__attribute__((unused)) const char *saved_pos_##N = CUR();
+	__attribute__((unused)) ParseContext saved_ctx_##N = context_save_inline(p, node)
 
 #define context_restore_node(N) \
-	do { \
-		if (node->children) { \
-			while (VecPDemNode_len(node->children) > saved_children_len_##N) { \
-				PDemNode *node_ptr = VecPDemNode_pop(node->children); \
-				DemNode *child_##N = node_ptr ? *node_ptr : NULL; \
-				if (child_##N) { \
-					DemNode_dtor(child_##N); \
-				} \
-			} \
-		} \
-		node->tag = saved_tag_##N; \
-		node->val.buf = saved_pos_##N; \
-	} while (0)
+	context_restore_node_inline(node, &saved_ctx_##N)
 
 #define context_restore_parser(N) \
-	if (p) { \
-		while (VecPDemNode_len(&p->detected_types) > saved_types_len_##N) { \
-			size_t last_idx = VecPDemNode_len(&p->detected_types) - 1; \
-			PDemNode *node_ptr = VecPDemNode_at(&p->detected_types, last_idx); \
-			DemNode *type_node = node_ptr ? *node_ptr : NULL; \
-			if (type_node) { \
-				DemNode_dtor(type_node); \
-			} \
-			VecPDemNode_pop(&p->detected_types); \
-		} \
-	}
+	context_restore_parser_inline(p, &saved_ctx_##N)
 
 #define context_restore(N) \
-	context_restore_node(N); \
-	context_restore_parser(N); \
-	CUR() = saved_pos_##N;
+	context_restore_inline(p, node, &saved_ctx_##N)
 
 /* Macros for rules that use direct returns */
 #define TRACE_RETURN_SUCCESS \
@@ -188,7 +220,6 @@ static inline bool parse_string(DemParser *p, const char *s) {
 		} \
 		r->error = DEM_ERR_INVALID_SYNTAX; \
 		context_restore_parser(rule); \
-		CUR() = saved_pos_rule; \
 		return false; \
 	} while (0)
 
@@ -237,27 +268,28 @@ static inline bool parse_string(DemParser *p, const char *s) {
 		} \
 	} while (0)
 
-// MSVC does not support statement expressions ({ ... })
-// We need macro-based workarounds. The trick is to use the fact that
-// these macros are always used in boolean context, so we can return the
-// success value using the comma operator.
-#ifdef _MSC_VER
-
 // Declare helper variables that the macros will use
 #define DECLARE_MACRO_HELPERS() \
-	DemResult _child_result_macro = { 0 }; \
-	bool _macro_result = false
+	__attribute__((unused)) DemResult _child_result_macro = { 0 }; \
+	__attribute__((unused)) bool _macro_result = false
+
+// Helper for PASSTHRU restore that also reinits the node
+static inline void passthru_restore_inline(DemParser *p, DemNode *node, const ParseContext *ctx) {
+	DemNode_deinit(node);
+	DemNode_init(node);
+	context_restore_inline(p, node, ctx);
+}
 
 #define PASSTHRU_RULE_VA(rule_fn, ...) \
 	(r->output = node, \
 		_macro_result = (rule_fn)(p, r, __VA_ARGS__), \
-		(_macro_result ? (void)0 : (DemNode_deinit(node), DemNode_init(node), context_restore(rule))), \
+		(_macro_result ? (void)0 : passthru_restore_inline(p, node, &saved_ctx_rule)), \
 		_macro_result)
 
 #define PASSTHRU_RULE(rule_fn) \
 	(r->output = node, \
 		_macro_result = (rule_fn)(p, r), \
-		(_macro_result ? (void)0 : (DemNode_deinit(node), DemNode_init(node), context_restore(rule))), \
+		(_macro_result ? (void)0 : passthru_restore_inline(p, node, &saved_ctx_rule)), \
 		_macro_result)
 
 #define CALL_RULE(rule_fn) \
@@ -283,87 +315,6 @@ static inline bool parse_string(DemParser *p, const char *s) {
 		_macro_result = (rule_fn)(p, &_child_result_macro), \
 		(_macro_result && _child_result_macro.output ? (N = _child_result_macro.output, (void)0) : DemResult_deinit(&_child_result_macro)), \
 		_macro_result)
-
-#else // GCC/Clang with statement expression support
-
-#define PASSTHRU_RULE_VA(rule_fn, ...) \
-	({ \
-		r->output = node; \
-		bool _success = (rule_fn)(p, r, __VA_ARGS__); \
-		if (!(_success)) { \
-			DemNode_deinit(node); \
-			DemNode_init(node); \
-			context_restore(rule); \
-		} \
-		_success; \
-	})
-
-#define PASSTHRU_RULE(rule_fn) \
-	({ \
-		r->output = node; \
-		bool _success = (rule_fn)(p, r); \
-		if ((!_success)) { \
-			DemNode_deinit(node); \
-			DemNode_init(node); \
-			context_restore(rule); \
-		} \
-		_success; \
-	})
-
-// Helper macro to call a rule and append its output as a child
-#define CALL_RULE(rule_fn) \
-	({ \
-		DemResult _child_result = { 0 }; \
-		bool _success = (rule_fn)(p, &_child_result); \
-		if (_success && _child_result.output) { \
-			AST_APPEND_NODE(_child_result.output); \
-			_child_result.output = NULL; \
-		} else { \
-			DemResult_deinit(&_child_result); \
-		} \
-		_success; \
-	})
-
-#define CALL_RULE_VA(rule_fn, ...) \
-	({ \
-		DemResult _child_result = { 0 }; \
-		bool _success = (rule_fn)(p, &_child_result, __VA_ARGS__); \
-		if (_success && _child_result.output) { \
-			AST_APPEND_NODE(_child_result.output); \
-			_child_result.output = NULL; \
-		} else { \
-			DemResult_deinit(&_child_result); \
-		} \
-		_success; \
-	})
-
-#define CALL_RULE_N_VA(N, rule_fn, ...) \
-	({ \
-		DemResult _child_result = { 0 }; \
-		bool _success = (rule_fn)(p, &_child_result, __VA_ARGS__); \
-		if (_success && _child_result.output) { \
-			N = _child_result.output; \
-		} else { \
-			DemResult_deinit(&_child_result); \
-		} \
-		_success; \
-	})
-
-#define CALL_RULE_N(N, rule_fn) \
-	({ \
-		DemResult _child_result = { 0 }; \
-		bool _success = (rule_fn)(p, &_child_result); \
-		if (_success && _child_result.output) { \
-			N = _child_result.output; \
-		} else { \
-			DemResult_deinit(&_child_result); \
-		} \
-		_success; \
-	})
-
-#define DECLARE_MACRO_HELPERS() ((void)0)
-
-#endif // _MSC_VER
 
 // Helper macro for match_many/match_many1 calls
 #define CALL_MANY(rule_fn, sep, stop)       CALL_RULE_VA(match_many, rule_fn, sep, stop)
