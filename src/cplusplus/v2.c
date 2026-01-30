@@ -4,6 +4,16 @@
 
 #include <stdio.h>
 
+// Suppress GCC-specific warnings from macros in vec.h and param.h
+// These warnings are triggered when macros check addresses of stack-allocated variables
+#ifdef __GNUC__
+#ifndef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress"
+#pragma GCC diagnostic ignored "-Wunused-value"
+#endif
+#endif
+
 #include "cplusplus/common.h"
 
 // See issue :
@@ -1516,3 +1526,10 @@ cleanup_and_return:
 	param_vec_deinit(&tparams);
 	return NULL;
 }
+
+// Restore GCC diagnostic settings
+#ifdef __GNUC__
+#ifndef __clang__
+#pragma GCC diagnostic pop
+#endif
+#endif
