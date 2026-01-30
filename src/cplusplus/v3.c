@@ -6,6 +6,13 @@
  * Documentation for used grammar can be found at either of
  * - https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling
  */
+
+// Disable unused-value warning for the macros in this file
+// The CALL_RULE* macros use comma expressions where intermediate results are intentionally discarded
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunused-value"
+#endif
+
 #include "v3.h"
 #include "v3_pp.h"
 #include "demangle.h"

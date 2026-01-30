@@ -84,7 +84,7 @@ char *dem_str_ndup(const char *ptr, int len) {
 	if (!out) {
 		return NULL;
 	}
-	strncpy(out, ptr, len);
+	memcpy(out, ptr, len);
 	out[len] = 0;
 	return out;
 }
@@ -129,7 +129,7 @@ char *dem_str_append(char *ptr, const char *string) {
 	return ptr;
 }
 
-bool dem_str_equals(char *str, const char *other){
+bool dem_str_equals(char *str, const char *other) {
 	if (!str && !other) {
 		return true;
 	}
@@ -340,12 +340,12 @@ bool dem_string_concat(DemString *dst, DemString *src) {
 	return true;
 }
 
-bool dem_string_equals(DemString *ds, DemString *other){
+bool dem_string_equals(DemString *ds, DemString *other) {
 	dem_return_val_if_fail(ds && other, false);
-	if(!ds->buf && !other->buf) {
+	if (!ds->buf && !other->buf) {
 		return true;
 	}
-	if(!ds->buf || !other->buf) {
+	if (!ds->buf || !other->buf) {
 		return false;
 	}
 	if (ds->len != other->len) {
@@ -354,7 +354,7 @@ bool dem_string_equals(DemString *ds, DemString *other){
 	return strncmp(ds->buf, other->buf, ds->len) == 0;
 }
 
-bool dem_string_empty(const DemString *ds){
+bool dem_string_empty(const DemString *ds) {
 	dem_return_val_if_fail(ds, true);
 	return ds->len == 0 || !ds->buf || ds->buf[0] == 0;
 }

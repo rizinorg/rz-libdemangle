@@ -295,25 +295,25 @@ static inline void passthru_restore_inline(DemParser *p, DemNode *node, const Pa
 #define CALL_RULE(rule_fn) \
 	(_child_result_macro = (DemResult){ 0 }, \
 		_macro_result = (rule_fn)(p, &_child_result_macro), \
-		(void)(_macro_result && _child_result_macro.output ? (AST_APPEND_NODE(_child_result_macro.output), _child_result_macro.output = NULL, 0) : (DemResult_deinit(&_child_result_macro), 0)), \
+		(_macro_result && _child_result_macro.output ? (AST_APPEND_NODE(_child_result_macro.output), _child_result_macro.output = NULL, (void)0) : (DemResult_deinit(&_child_result_macro), (void)0)), \
 		_macro_result)
 
 #define CALL_RULE_VA(rule_fn, ...) \
 	(_child_result_macro = (DemResult){ 0 }, \
 		_macro_result = (rule_fn)(p, &_child_result_macro, __VA_ARGS__), \
-		(void)(_macro_result && _child_result_macro.output ? (AST_APPEND_NODE(_child_result_macro.output), _child_result_macro.output = NULL, 0) : (DemResult_deinit(&_child_result_macro), 0)), \
+		(_macro_result && _child_result_macro.output ? (AST_APPEND_NODE(_child_result_macro.output), _child_result_macro.output = NULL, (void)0) : (DemResult_deinit(&_child_result_macro), (void)0)), \
 		_macro_result)
 
 #define CALL_RULE_N_VA(N, rule_fn, ...) \
 	(_child_result_macro = (DemResult){ 0 }, \
 		_macro_result = (rule_fn)(p, &_child_result_macro, __VA_ARGS__), \
-		(void)(_macro_result && _child_result_macro.output ? (N = _child_result_macro.output, 0) : (DemResult_deinit(&_child_result_macro), 0)), \
+		(_macro_result && _child_result_macro.output ? (N = _child_result_macro.output) : (DemResult_deinit(&_child_result_macro), N = NULL)), \
 		_macro_result)
 
 #define CALL_RULE_N(N, rule_fn) \
 	(_child_result_macro = (DemResult){ 0 }, \
 		_macro_result = (rule_fn)(p, &_child_result_macro), \
-		(void)(_macro_result && _child_result_macro.output ? (N = _child_result_macro.output, 0) : (DemResult_deinit(&_child_result_macro), 0)), \
+		(_macro_result && _child_result_macro.output ? (N = _child_result_macro.output) : (DemResult_deinit(&_child_result_macro), N = NULL)), \
 		_macro_result)
 
 // Helper macro for match_many/match_many1 calls
