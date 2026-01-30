@@ -497,15 +497,19 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 	const char *color = get_node_color(node->tag);
 	const char *type_name = get_node_type_name(node->tag);
 
-	// Create label with type-specific field information
-	char label[1024] = { 0 };
-	int len = snprintf(label, sizeof(label), "%s", type_name);
+	// Create label with type-specific field information using DemString
+	DemString label;
+	dem_string_init(&label);
+	dem_string_append(&label, type_name);
+
+	// Add node value if present
 	if (node->val.buf && node->val.len > 0) {
-		const int max_len = 256;
-		int copy_len = node->val.len < max_len ? node->val.len : max_len;
-		len += snprintf(label + len, sizeof(label) - len, "\\n%.*s", copy_len, node->val.buf);
+		const size_t max_len = 256;
+		size_t copy_len = node->val.len < max_len ? node->val.len : max_len;
+		dem_string_append(&label, "\\n");
+		dem_string_append_n(&label, node->val.buf, copy_len);
 		if (node->val.len > max_len) {
-			len += snprintf(label + len, sizeof(label) - len, "...");
+			dem_string_append(&label, "...");
 		}
 	}
 
@@ -514,24 +518,19 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 	dem_string_init(&pp_output);
 	ast_pp(node, &pp_output);
 	if (pp_output.buf && pp_output.len > 0) {
-		// Escape special characters and limit length
-		len += snprintf(label + len, sizeof(label) - len, "\\n=> ");
-		size_t remaining = sizeof(label) - len;
-		size_t pp_len = pp_output.len < remaining - 1 ? pp_output.len : remaining - 1;
-		for (size_t i = 0; i < pp_len && len < sizeof(label) - 1; i++) {
+		dem_string_append(&label, "\\n=> ");
+		// Escape special DOT characters
+		for (size_t i = 0; i < pp_output.len; i++) {
 			char ch = pp_output.buf[i];
-			// Escape special DOT characters
 			if (ch == '"' || ch == '\\' || ch == '\n') {
-				if (len < sizeof(label) - 2) {
-					label[len++] = '\\';
-					label[len++] = (ch == '\n') ? 'n' : ch;
-				}
-			} else if (ch >= 32 && ch < 127) { // Only printable ASCII
-				label[len++] = ch;
+				dem_string_append_n(&label, "\\", 1);
+				dem_string_append_n(&label, (ch == '\n') ? "n" : &ch, 1);
+			} else if (ch >= 32 && ch < 127) {
+				dem_string_append_n(&label, &ch, 1);
 			}
 		}
 	} else {
-		len += snprintf(label + len, sizeof(label) - len, "\\n: <empty>");
+		dem_string_append(&label, "\\n: <empty>");
 	}
 	dem_string_deinit(&pp_output);
 
@@ -539,73 +538,78 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 	switch (node->tag) {
 	case CP_DEM_TYPE_KIND_primitive_ty:
 		if (node->primitive_ty.name.buf) {
-			len += snprintf(label + len, sizeof(label) - len, "\\n%s", node->primitive_ty.name.buf);
+			dem_string_append(&label, "\\n");
+			dem_string_append(&label, node->primitive_ty.name.buf);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_function_type:
 		if (node->fn_ty.cv_qualifiers.is_const) {
-			len += snprintf(label + len, sizeof(label) - len, "\\nconst");
+			dem_string_append(&label, "\\nconst");
 		}
 		if (node->fn_ty.ref_qualifiers.is_l_value) {
-			len += snprintf(label + len, sizeof(label) - len, "\\n&");
+			dem_string_append(&label, "\\n&");
 		}
 		if (node->fn_ty.ref_qualifiers.is_r_value) {
-			len += snprintf(label + len, sizeof(label) - len, "\\n&&");
+			dem_string_append(&label, "\\n&&");
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_qualified_type:
 		if (node->qualified_ty.qualifiers.is_const) {
-			len += snprintf(label + len, sizeof(label) - len, "\\nconst");
+			dem_string_append(&label, "\\nconst");
 		}
 		if (node->qualified_ty.qualifiers.is_volatile) {
-			len += snprintf(label + len, sizeof(label) - len, "\\nvolatile");
+			dem_string_append(&label, "\\nvolatile");
 		}
 		if (node->qualified_ty.qualifiers.is_restrict) {
-			len += snprintf(label + len, sizeof(label) - len, "\\nrestrict");
+			dem_string_append(&label, "\\nrestrict");
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type:
 		if (node->vendor_ext_qualified_ty.vendor_ext.buf) {
-			len += snprintf(label + len, sizeof(label) - len, "\\n%s", node->vendor_ext_qualified_ty.vendor_ext.buf);
+			dem_string_append(&label, "\\n");
+			dem_string_append(&label, node->vendor_ext_qualified_ty.vendor_ext.buf);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_many:
 		if (node->many_ty.sep) {
-			len += snprintf(label + len, sizeof(label) - len, "\\nsep: %s", node->many_ty.sep);
+			dem_string_append(&label, "\\nsep: ");
+			dem_string_append(&label, node->many_ty.sep);
 		}
 		if (node->children) {
-			len += snprintf(label + len, sizeof(label) - len, "\\nchildren: %zu", VecPDemNode_len(node->children));
+			char buf[32];
+			snprintf(buf, sizeof(buf), "\\nchildren: %zu", VecPDemNode_len(node->children));
+			dem_string_append(&label, buf);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_closure_ty_name:
 		if (node->closure_ty_name.count.buf && node->closure_ty_name.count.len > 0) {
-			len += snprintf(label + len, sizeof(label) - len, "\\ncount: %.*s",
-				(int)node->closure_ty_name.count.len, node->closure_ty_name.count.buf);
+			dem_string_append(&label, "\\ncount: ");
+			dem_string_append_n(&label, node->closure_ty_name.count.buf, node->closure_ty_name.count.len);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_module_name:
 		if (node->module_name_ty.IsPartition) {
-			len += snprintf(label + len, sizeof(label) - len, "\\npartition");
+			dem_string_append(&label, "\\npartition");
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_abi_tag_ty:
 		if (node->abi_tag_ty.tag.buf && node->abi_tag_ty.tag.len > 0) {
-			len += snprintf(label + len, sizeof(label) - len, "\\ntag: %.*s",
-				(int)node->abi_tag_ty.tag.len, node->abi_tag_ty.tag.buf);
+			dem_string_append(&label, "\\ntag: ");
+			dem_string_append_n(&label, node->abi_tag_ty.tag.buf, node->abi_tag_ty.tag.len);
 		}
 		break;
 
 	case CP_DEM_TYPE_KIND_member_expression:
 		if (node->member_expr.op.buf && node->member_expr.op.len > 0) {
-			len += snprintf(label + len, sizeof(label) - len, "\\nop: %.*s",
-				(int)node->member_expr.op.len, node->member_expr.op.buf);
+			dem_string_append(&label, "\\nop: ");
+			dem_string_append_n(&label, node->member_expr.op.buf, node->member_expr.op.len);
 		}
 		break;
 
@@ -615,7 +619,9 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 
 	// Write node to DOT file
 	fprintf(dot->file, "\tnode%d [shape=%s, style=filled, fillcolor=%s, label=\"%s\"];\n",
-		node_id, shape, color, label);
+		node_id, shape, color, label.buf ? label.buf : "");
+
+	dem_string_deinit(&label);
 }
 
 void dot_graph_add_edge(DotGraph *dot, int parent_id, int child_id, const char *label, const char *style) {
