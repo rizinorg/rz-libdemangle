@@ -1083,7 +1083,7 @@ bool parse_discriminator(DemParser *p) {
 	return true;
 }
 
-bool parse_base_source_name(DemParser *p, const char **pout, ut64 *plen) {
+bool parse_base_source_name(DemParser *p, const char **pout, size_t *plen) {
 	ut64 num = 0;
 	if (!parse_non_neg_integer(p, &num)) {
 		return false;
@@ -1097,7 +1097,7 @@ bool parse_base_source_name(DemParser *p, const char **pout, ut64 *plen) {
 		*pout = CUR();
 	}
 	if (plen) {
-		*plen = num;
+		*plen = (size_t)num;
 	}
 	CUR() += num;
 	return true;
@@ -2353,7 +2353,7 @@ bool rule_builtin_type(DemParser *p, DemResult *r) {
 bool rule_source_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(source_name);
 	/* positive number providing length of name followed by it */
-	ut64 name_len = 0;
+	size_t name_len = 0;
 	const char *name = NULL;
 	if (!parse_base_source_name(p, &name, &name_len)) {
 		TRACE_RETURN_FAILURE();
