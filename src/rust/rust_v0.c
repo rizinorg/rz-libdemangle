@@ -215,6 +215,7 @@ static bool rust_v0_parse_basic_type(rust_v0_t *v0, char tag) {
 	}
 	return true;
 }
+
 static uint64_t rust_v0_parse_base10(rust_v0_t *v0) {
 	char digit = rust_v0_look(v0);
 	if (!IS_DIGIT(digit)) {
@@ -310,7 +311,7 @@ static void rust_v0_print_lifetime(rust_v0_t *v0, uint64_t lifetime) {
 		rust_v0_putc(v0, ch);
 	} else {
 		uint64_t z = depth - 26 + 1;
-		rust_v0_printf(v0, "z%" PFMT64u, z);
+		rust_v0_printf(v0, "z%" PRIu64, z);
 	}
 }
 
@@ -517,7 +518,7 @@ static void rust_v0_parse_const_signed(rust_v0_t *v0) {
 	}
 
 	if (hex.size <= 16) {
-		rust_v0_printf(v0, "%" PFMT64u, numeric);
+		rust_v0_printf(v0, "%" PRIu64, numeric);
 	} else {
 		rust_v0_print(v0, "0x");
 		rust_v0_print_substr(v0, &hex);
@@ -791,7 +792,7 @@ static bool rust_v0_parse_path(rust_v0_t *v0, bool is_type, bool no_trail) {
 		rust_v0_print_substr(v0, &crate);
 		if (!v0->hide_disambiguator && disambiguator) {
 			// https://doc.rust-lang.org/rustc/symbol-mangling/v0.html#path-crate-root
-			rust_v0_printf(v0, "[%" PFMT64x "]", disambiguator);
+			rust_v0_printf(v0, "[%" PRIx64 "]", disambiguator);
 		}
 		break;
 	}
@@ -848,7 +849,7 @@ static bool rust_v0_parse_path(rust_v0_t *v0, bool is_type, bool no_trail) {
 				rust_v0_putc(v0, ':');
 				rust_v0_print_substr(v0, &ident);
 			}
-			rust_v0_printf(v0, "#%" PFMT64u "}", disambiguator);
+			rust_v0_printf(v0, "#%" PRIu64 "}", disambiguator);
 		} else if (!rust_substr_is_empty(&ident)) {
 			// internal namespaces.
 			rust_v0_print(v0, "::");

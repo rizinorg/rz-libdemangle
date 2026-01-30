@@ -9,10 +9,15 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <inttypes.h>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
 typedef SSIZE_T ssize_t;
+
+// MSVC compatibility: POSIX functions
+#define strdup  _strdup
+
 #endif
 
 #define RZ_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -48,16 +53,6 @@ typedef long long st64;
 #define IS_PRINTABLE(x)   ((x) >= ' ' && (x) <= '~')
 #define RZ_MIN(x, y)      (((x) > (y)) ? (y) : (x))
 #define RZ_STR_ISEMPTY(x) (!(x) || !*(x))
-
-#if __WINDOWS__
-#define PFMT64x "I64x"
-#define PFMT64u "I64u"
-#define PFMTSZu "Iu"
-#else
-#define PFMT64x "llx"
-#define PFMT64u "llu"
-#define PFMTSZu "zu"
-#endif
 
 char *dem_str_ndup(const char *ptr, int len);
 char *dem_str_newf(const char *fmt, ...);

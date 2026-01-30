@@ -145,7 +145,7 @@ DemNode *template_param_get(DemParser *p, ut64 level, ut64 index) {
 
 branch_fail:
 	if (p->trace) {
-		fprintf(stderr, "[get_tparam] FAILED L%ld_%ld\n", level, index);
+		fprintf(stderr, "[get_tparam] FAILED L%" PRIu64 "_%" PRIu64 "\n", level, index);
 	}
 	return NULL;
 }
@@ -171,7 +171,7 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 		if (p->trace) {
 			DemString buf = { 0 };
 			ast_pp(ref_src, &buf);
-			fprintf(stderr, "[resolve_fwd_ref] Resolved L%ld_%ld into node %s\n",
+			fprintf(stderr, "[resolve_fwd_ref] Resolved L%" PRIu64 "_%" PRIu64 " into node %s\n",
 				level, index, dem_string_drain_no_free(&buf));
 		}
 	});

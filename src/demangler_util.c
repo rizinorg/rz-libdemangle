@@ -288,7 +288,7 @@ bool dem_string_append(DemString *ds, const char *string) {
 	if (string > ds->buf + ds->cap || string + len < ds->buf) {
 		return dem_string_append_n(ds, string, len);
 	}
-	char *string_copy = strndup(string, len);
+	char *string_copy = dem_str_ndup(string, len);
 	bool result = dem_string_append_n(ds, string_copy, len);
 	free(string_copy);
 	return result;

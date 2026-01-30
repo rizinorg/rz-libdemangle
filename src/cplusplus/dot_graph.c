@@ -435,7 +435,7 @@ __attribute__((unused)) static char *sanitize_label(const char *str, size_t len)
 
 		// Limit label length to avoid huge graphs
 		if (j > 100) {
-			strcpy(escaped + j, "...\"");
+			memcpy(escaped + j, "...\"", 5);
 			return escaped;
 		}
 	}
@@ -468,7 +468,14 @@ void dot_graph_init(DotGraph *dot, const char *mangled_name) {
 		dot->filename = strdup("demangle_trace.dot");
 	}
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4996) // 'fopen': This function or variable may be unsafe
+#endif
 	dot->file = fopen(dot->filename, "w");
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 	if (!dot->file) {
 		fprintf(stderr, "[DOT] Failed to create file: %s\n", dot->filename);
 		dot->enabled = false;

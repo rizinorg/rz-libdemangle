@@ -1008,7 +1008,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 				return NULL;
 			}
 
-			const char *val_str = dem_str_newf("%" PFMT64u, arrsz + 1);
+			const char *val_str = dem_str_newf("%" PRIu64, arrsz + 1);
 
 			/* add array length */
 			param_append_to(&param, suffix, "[");
@@ -1220,7 +1220,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 			tname.buf[--tname.len] = 0;
 			tname.buf[--tname.len] = 0;
 
-			base_typename = strndup(tname.buf, tname.len);
+			base_typename = dem_str_ndup(tname.buf, tname.len);
 			dem_string_deinit(&tname);
 		}
 

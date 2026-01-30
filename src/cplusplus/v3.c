@@ -2088,7 +2088,7 @@ bool rule_template_param(DemParser *p, DemResult *r) {
 		node->tag = CP_DEM_TYPE_KIND_fwd_template_ref;
 
 		if (p->trace) {
-			fprintf(stderr, "[template_param] Created forward ref L%ld_%ld to %p\n",
+			fprintf(stderr, "[template_param] Created forward ref L%" PRIu64 "_%" PRIu64 " to %p\n",
 				level, index, (void *)node);
 		}
 	} else {
@@ -3019,7 +3019,14 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 #ifdef ENABLE_GRAPHVIZ_TRACE
 	bool trace = true;
 #else
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4996) // 'getenv': This function or variable may be unsafe
+#endif
 	bool trace = (getenv("DEMANGLE_TRACE") != NULL);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 #endif
 	// Initialize DemParser
 	DemParser parser = { 0 };
