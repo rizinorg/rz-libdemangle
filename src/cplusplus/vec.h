@@ -6,6 +6,11 @@
 #ifndef CPDEM_VEC_H
 #define CPDEM_VEC_H
 
+// MSVC compatibility: __attribute__ is not supported
+#if defined(_MSC_VER)
+#define __attribute__(x)
+#endif
+
 #define UNUSED(xpr) ((void)(xpr))
 
 #define nearest_power_of_two(v) \
@@ -216,7 +221,7 @@
 	__attribute__((unused)) static inline T *VecF(T, data)(Vec##T * self) { \
 		return self ? self->data : NULL; \
 	} \
-	__attribute__((unused)) static inline size_t VecF(T, len)(const Vec##T * self) { \
+	__attribute__((unused)) static inline size_t VecF(T, len)(const Vec##T *self) { \
 		return self ? self->length : 0; \
 	} \
 	__attribute__((unused)) static inline size_t VecF(T, cap)(Vec##T * self) { \
