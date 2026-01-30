@@ -130,8 +130,9 @@ if get_option('enable_cli')
     bin_demangle = [
         'bin' / 'demangle.c',
     ]
+    # Use 'rz-demangle' to avoid name conflicts with the library on MSVC
     executable(
-        'demangle',
+        'rz-demangle',
         bin_demangle,
         c_args : common_c_args,
         dependencies : [libdemangle_dep],

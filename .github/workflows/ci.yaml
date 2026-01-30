@@ -21,7 +21,7 @@ jobs:
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
         meson -Dbuildtype=release -Denable_cli=true --werror build
         ninja -C build test
-        ./test/test-cli.sh ./build/demangle
+        ./test/test-cli.sh ./build/rz-demangle
 
   Normal-Minimal:
     runs-on: ubuntu-24.04
@@ -37,7 +37,7 @@ jobs:
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
         meson -Dbuildtype=release -Denable_cli=true -Duse_swift_demangler=false --werror build-no-min
         ninja -C build-no-min test
-        ./test/test-cli.sh ./build-no-min/demangle
+        ./test/test-cli.sh ./build-no-min/rz-demangle
 
   Asan:
     runs-on: ubuntu-24.04
@@ -55,4 +55,4 @@ jobs:
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
         meson -Dbuildtype=debugoptimized -Denable_cli=true -Db_sanitize=address,undefined --werror build-asan
         ninja -C build-asan test
-        ./test/test-cli.sh ./build-asan/demangle
+        ./test/test-cli.sh ./build-asan/rz-demangle
