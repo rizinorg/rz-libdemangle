@@ -71,4 +71,4 @@ test_script:
   - cmd: if %builder% == vs2022_64_dynamic ( call "%VSVARSALLPATH2022%" x64 )
   - cmd: if %builder% == clang_cl_64 ( call "%VSVARSALLPATH2019%" x64 )
   - cmd: "%PYTHON%\\Scripts\\meson test -C build --print-errorlogs"
-  - cmd: if %ENABLE_CLI% == true ( test\test-cli.sh build\demangle )
+  - cmd: if %ENABLE_CLI% == true ( test\test-cli.sh build\rz-demangle )
