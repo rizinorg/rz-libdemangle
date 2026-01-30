@@ -317,17 +317,6 @@ static inline bool parse_string(DemParser *p, const char *s) {
 #define CALL_MANY_N(N, rule_fn, sep, stop)  CALL_RULE_N_VA(N, match_many, rule_fn, sep, stop)
 #define CALL_MANY1_N(N, rule_fn, sep, stop) CALL_RULE_N_VA(N, match_many1, rule_fn, sep, stop)
 
-#define CTX_MUST_MATCH(I, rules) \
-	do { \
-		if ((rules)) { \
-			node->val.len = p->cur - node->val.buf; \
-		} else { \
-			context_restore(I); \
-			r->error = DEM_ERR_INVALID_SYNTAX; \
-			TRACE_RETURN_FAILURE(); \
-		} \
-	} while (0)
-
 static inline DemNode *Node_append(DemNode *node, DemNode *x) {
 	if (!(node && x && node != x)) {
 		return NULL;

@@ -1632,7 +1632,7 @@ bool rule_operator_name(DemParser *p, DemResult *r, NameState *ns) {
 		if (!parse_non_neg_integer(p, &num)) {
 			TRACE_RETURN_FAILURE();
 		}
-		CTX_MUST_MATCH(rule, rule_source_name);
+		MUST_MATCH(CALL_RULE(rule_source_name));
 		TRACE_RETURN_SUCCESS;
 	}
 
@@ -2931,12 +2931,11 @@ bool rule_pointer_to_member_type(DemParser *p, DemResult *r) {
 	if (!READ('M')) {
 		TRACE_RETURN_FAILURE();
 	}
-	context_save(0);
 	// Grammar: M <class-type> <member-type>
 	// For member function pointers: M <class> <function-type>
 	// For member data pointers: M <class> <data-type>
-	CTX_MUST_MATCH(0, CALL_RULE(rule_type));
-	CTX_MUST_MATCH(0, CALL_RULE(rule_type));
+	MUST_MATCH(CALL_RULE(rule_type));
+	MUST_MATCH(CALL_RULE(rule_type));
 	TRACE_RETURN_SUCCESS;
 }
 
