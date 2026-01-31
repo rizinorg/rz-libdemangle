@@ -56,3 +56,28 @@ jobs:
         meson -Dbuildtype=debugoptimized -Denable_cli=true -Db_sanitize=address,undefined --werror build-asan
         ninja -C build-asan test
         ./test/test-cli.sh ./build-asan/rz-demangle
+
+  Asan-Trace:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        pip3 install --user meson ninja
+        sudo apt-get update
+        sudo apt-get install -y graphviz
+      env:
+        PIP_BREAK_SYSTEM_PACKAGES: 1
+    - name: Run Unit Tests with ASAN and DEMANGLE_TRACE
+      env:
+        ASAN_OPTIONS: detect_leaks=1,detect_odr_violation=0,allocator_may_return_null=1
+        DEMANGLE_TRACE: 1
+        DEMANGLE_TRACE_SVG: 1
+      run: |
+        export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
+        meson -Dbuildtype=debugoptimized -Denable_cli=true -Db_sanitize=address,undefined --werror build-asan-trace
+        ninja -C build-asan-trace test
+        # Clean up generated DOT and SVG files to save space
+        find build-asan-trace -name "*.dot" -delete
+        find build-asan-trace -name "*.svg" -delete
