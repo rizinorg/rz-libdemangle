@@ -17,6 +17,7 @@ typedef SSIZE_T ssize_t;
 
 // MSVC compatibility: POSIX functions
 #define strdup  _strdup
+#define strndup dem_str_ndup
 
 #endif
 
@@ -54,7 +55,7 @@ typedef long long st64;
 #define RZ_MIN(x, y)      (((x) > (y)) ? (y) : (x))
 #define RZ_STR_ISEMPTY(x) (!(x) || !*(x))
 
-char *dem_str_ndup(const char *ptr, int len);
+char *dem_str_ndup(const char *ptr, size_t len);
 char *dem_str_newf(const char *fmt, ...);
 char *dem_str_append(char *ptr, const char *string);
 void dem_str_replace_char(char *string, size_t size, char ch, char rp);

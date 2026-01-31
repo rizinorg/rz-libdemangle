@@ -76,10 +76,7 @@ char *dem_str_replace(char *str, const char *key, const char *val, int g) {
 	return str;
 }
 
-char *dem_str_ndup(const char *ptr, int len) {
-	if (len < 0) {
-		return NULL;
-	}
+char *dem_str_ndup(const char *ptr, size_t len) {
 	char *out = malloc(len + 1);
 	if (!out) {
 		return NULL;

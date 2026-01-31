@@ -414,13 +414,13 @@ static const char *get_node_color(CpDemTypeKind tag) {
 
 __attribute__((unused)) static char *sanitize_label(const char *str, size_t len) {
 	if (!str || len == 0) {
-		return strdup("\"\"");
+		return dem_str_ndup("\"\"", 2);
 	}
 
 	// Allocate buffer for escaped string (worst case: every char needs escaping)
 	char *escaped = malloc(len * 2 + 3); // +2 for quotes, +1 for null terminator
 	if (!escaped) {
-		return strdup("\"\"");
+		return dem_str_ndup("\"\"", 2);
 	}
 
 	int j = 0;
@@ -484,14 +484,14 @@ void dot_graph_init(DotGraph *dot, const char *mangled_name, const char *demangl
 
 	dot->filename = malloc(total_len);
 	if (!dot->filename) {
-		dot->filename = strdup("demangle.dot");
+		dot->filename = dem_str_ndup("demangle.dot", 12);
 		dot->enabled = false;
 		return;
 	}
 
 	// Copy and sanitize mangled name
-	char *safe_mangled = strndup(mangled_name, safe_mangled_len);
-	char *safe_demangled = demangled_name ? strndup(demangled_name, safe_demangled_len) : strdup("unknown");
+	char *safe_mangled = dem_str_ndup(mangled_name, safe_mangled_len);
+	char *safe_demangled = demangled_name ? dem_str_ndup(demangled_name, safe_demangled_len) : dem_str_ndup("unknown", 7);
 
 	if (safe_mangled && safe_demangled) {
 		sanitize_filename(safe_mangled);
