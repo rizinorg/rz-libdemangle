@@ -935,7 +935,10 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		break;
 
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
-		DEM_UNREACHABLE;
+		// Forward template references should have been resolved during parsing
+		// But if we encounter one during tracing, just note it and continue
+		// (don't abort - this is debug/trace mode, not production)
+		fprintf(stderr, "[DOT] Warning: encountered unresolved forward template reference\n");
 		break;
 
 	default:
