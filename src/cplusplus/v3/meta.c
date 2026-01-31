@@ -172,7 +172,8 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 			DemString buf = { 0 };
 			ast_pp(ref_src, &buf);
 			fprintf(stderr, "[resolve_fwd_ref] Resolved L%" PRIu64 "_%" PRIu64 " into node %s\n",
-				level, index, dem_string_drain_no_free(&buf));
+				level, index, buf.buf ? buf.buf : "");
+			dem_string_deinit(&buf);
 		}
 	});
 
