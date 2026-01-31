@@ -6,7 +6,7 @@
 #define CPDEM_COMMON_H
 
 #include "cplusplus/demangle.h"
-#include "cplusplus/param.h"
+#include "cplusplus/v2/param.h"
 #include "cplusplus/vec.h"
 #include "demangler_util.h"
 

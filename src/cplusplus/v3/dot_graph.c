@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "dot_graph.h"
-#include "demangle.h"
+#include "../demangle.h"
 #include "demangler_util.h"
 #include "macros.h"
 #include "v3_pp.h"

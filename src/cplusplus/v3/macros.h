@@ -6,9 +6,9 @@
 #ifndef V3_IMPL_MACROS_H
 #define V3_IMPL_MACROS_H
 
-#include "../demangler_util.h"
+#include "../../demangler_util.h"
 #include "types.h"
-#include "vec.h"
+#include "../vec.h"
 
 /**
  * \b Give current read position.

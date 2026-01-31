@@ -14,7 +14,7 @@
 #endif
 #endif
 
-#include "cplusplus/common.h"
+#include "cplusplus/v2/common.h"
 
 // See issue :
 //   https://github.com/rizinorg/rz-libdemangle/issues/8

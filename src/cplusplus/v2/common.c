@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2025 Siddharth Mishra <admin@brightprogrammer.in>
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "cplusplus/common.h"
+#include "common.h"
 
 CpDem *cpdem_init(CpDem *dem, const char *mangled, CpDemOptions opts) {
 	if (!dem || !mangled) {

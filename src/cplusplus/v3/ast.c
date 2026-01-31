@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Billow <billow.fun@gmail.com>
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "cplusplus/vec.h"
+#include "../vec.h"
 #include "types.h"
 
 DemNode *DemNode_new() {

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "rz-minunit.h"
-#include "../../src/cplusplus/v3.h"
+#include "../../src/cplusplus/v3/v3.h"
 
 int all_tests() {
 

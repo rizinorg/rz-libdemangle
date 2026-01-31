@@ -15,13 +15,13 @@
 
 #include "v3.h"
 #include "v3_pp.h"
-#include "demangle.h"
+#include "../demangle.h"
 #include "demangler_util.h"
 #include "dot_graph.h"
 #include "macros.h"
 #include "parser_combinator.h"
 #include "types.h"
-#include "vec.h"
+#include "../vec.h"
 #include <ctype.h>
 #include <math.h>
 #include <stddef.h>

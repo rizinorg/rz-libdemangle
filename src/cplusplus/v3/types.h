@@ -6,9 +6,9 @@
 #ifndef V3_IMPL_TYPES_H
 #define V3_IMPL_TYPES_H
 
-#include "../demangler_util.h"
-#include "demangle.h"
-#include "vec.h"
+#include "../../demangler_util.h"
+#include "../demangle.h"
+#include "../vec.h"
 
 #define DBG_PRINT_DETECTED_TYPES   0
 #define DBG_PRINT_DETECTED_TPARAMS 0

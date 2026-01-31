@@ -6,7 +6,7 @@
 #include <time.h>
 
 #include "types.h"
-#include "vec.h"
+#include "../vec.h"
 #include "v3_pp.h"
 
 void NodeList_copy(NodeList *dst, const NodeList *src) {

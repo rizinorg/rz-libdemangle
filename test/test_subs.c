@@ -15,9 +15,9 @@
  * Unlike mu_demangle_tests, these tests check EACH substitution table entry
  */
 
-#include "../src/cplusplus/types.h"
-#include "../src/cplusplus/v3.h"
-#include "../src/cplusplus/v3_pp.h"
+#include "../src/cplusplus/v3/types.h"
+#include "../src/cplusplus/v3/v3.h"
+#include "../src/cplusplus/v3/v3_pp.h"
 
 #include <stdio.h>
 #include <string.h>

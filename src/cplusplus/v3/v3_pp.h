@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2025 Billow <billow.fun@gmail.com>
 // SPDX-License-Identifier: LGPL-3.0-only
 
-
 #ifndef RZ_LIBDEMANGLE_V3_PP_H
 #define RZ_LIBDEMANGLE_V3_PP_H
 #include "types.h"
