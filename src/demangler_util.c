@@ -284,14 +284,7 @@ char *dem_string_drain(DemString *ds) {
 
 bool dem_string_append(DemString *ds, const char *string) {
 	dem_return_val_if_fail(ds && string, false);
-	size_t len = strlen(string);
-	if (string > ds->buf + ds->cap || string + len < ds->buf) {
-		return dem_string_append_n(ds, string, len);
-	}
-	char *string_copy = dem_str_ndup(string, len);
-	bool result = dem_string_append_n(ds, string_copy, len);
-	free(string_copy);
-	return result;
+	return dem_string_append_n(ds, string, strlen(string));
 }
 
 bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size) {
@@ -315,13 +308,33 @@ bool dem_string_append_n(DemString *ds, const char *string, size_t size) {
 	if (!size) {
 		return true;
 	}
+
+	// Check if we need to reallocate AND string points into our buffer
+	// If both are true, we must copy first because realloc may move ds->buf
+	bool needs_realloc = !dem_string_has_enough_capacity(ds, size);
+	bool string_in_buffer = ds->buf && string >= ds->buf && string < ds->buf + ds->len;
+
+	char *string_copy = NULL;
+	if (needs_realloc && string_in_buffer) {
+		// Must copy before realloc to avoid use-after-free
+		string_copy = dem_str_ndup(string, size);
+		if (!string_copy) {
+			return false;
+		}
+		string = string_copy; // Use the copy instead
+	}
+
+	// Safe to proceed: either no realloc needed, or string is now external (copy)
 	if (!dem_string_increase_capacity(ds, size)) {
+		free(string_copy);
 		return false;
 	}
 
 	memcpy(ds->buf + ds->len, string, size);
 	ds->len += size;
 	ds->buf[ds->len] = 0;
+
+	free(string_copy); // No-op if NULL
 	return true;
 }
 
