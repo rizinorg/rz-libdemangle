@@ -15,7 +15,7 @@ typedef struct DotGraph {
 	FILE *file;
 	int node_counter;
 	bool enabled;
-	char *filename;
+	char filename[256]; // Max filename length (255 + null terminator)
 } DotGraph;
 
 /**

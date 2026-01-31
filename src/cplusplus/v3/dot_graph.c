@@ -471,34 +471,50 @@ void dot_graph_init(DotGraph *dot, const char *mangled_name, const char *demangl
 	dot->node_counter = 0;
 	dot->enabled = true;
 
-	// Generate filename: <mangled>-<demangled>.dot
-	// Limit length to avoid excessively long filenames (max 200 chars total)
-	size_t mangled_len = strlen(mangled_name);
-	size_t demangled_len = demangled_name ? strlen(demangled_name) : 0;
+	// Build filename: <mangled>-<demangled>.dot (or just <mangled>.dot if no demangled)
+	// Maximum filename length is 254 chars (255 bytes including null terminator)
 
-	// Limit each part: mangled to 80 chars, demangled to 100 chars
-	size_t safe_mangled_len = mangled_len > 80 ? 80 : mangled_len;
-	size_t safe_demangled_len = demangled_len > 100 ? 100 : demangled_len;
-
-	size_t total_len = safe_mangled_len + safe_demangled_len + 10; // +10 for "-" and ".dot\0"
-
-	dot->filename = malloc(total_len);
-	if (!dot->filename) {
-		dot->filename = dem_str_ndup("demangle.dot", 12);
+	// Copy and sanitize the mangled name
+	char *safe_mangled = strdup(mangled_name);
+	if (!safe_mangled) {
+		snprintf(dot->filename, sizeof(dot->filename), "demangle.dot");
 		dot->enabled = false;
 		return;
 	}
+	sanitize_filename(safe_mangled);
 
-	// Copy and sanitize mangled name
-	char *safe_mangled = dem_str_ndup(mangled_name, safe_mangled_len);
-	char *safe_demangled = demangled_name ? dem_str_ndup(demangled_name, safe_demangled_len) : dem_str_ndup("unknown", 7);
+	// Copy and sanitize the demangled name if present
+	char *safe_demangled = NULL;
+	if (demangled_name && demangled_name[0] != '\0') {
+		safe_demangled = strdup(demangled_name);
+		if (safe_demangled) {
+			sanitize_filename(safe_demangled);
+		}
+	}
 
-	if (safe_mangled && safe_demangled) {
-		sanitize_filename(safe_mangled);
-		sanitize_filename(safe_demangled);
-		snprintf(dot->filename, total_len, "%s-%s.dot", safe_mangled, safe_demangled);
+	// Build filename using snprintf, which handles truncation automatically
+	// Maximum filename is 255 bytes (including null), so 254 visible chars
+	int ret;
+	if (safe_demangled) {
+		// Try full format first
+		ret = snprintf(dot->filename, sizeof(dot->filename), "%s-%s.dot", safe_mangled, safe_demangled);
+
+		// If truncated, use precision specifiers to fit within limit
+		// Format: "mangled-demangled.dot" should be <= 254 chars
+		// Reserve 5 chars for "-.dot", leaving 249 for the two names
+		if (ret >= (int)sizeof(dot->filename)) {
+			// Split 249 chars evenly: 124 + 125 = 249
+			snprintf(dot->filename, sizeof(dot->filename), "%.124s-%.125s.dot", safe_mangled, safe_demangled);
+		}
 	} else {
-		snprintf(dot->filename, total_len, "demangle.dot");
+		// Only mangled name: format is "mangled.dot"
+		ret = snprintf(dot->filename, sizeof(dot->filename), "%s.dot", safe_mangled);
+
+		// If truncated, limit mangled name to fit
+		// Reserve 4 chars for ".dot", leaving 250 for the name
+		if (ret >= (int)sizeof(dot->filename)) {
+			snprintf(dot->filename, sizeof(dot->filename), "%.250s.dot", safe_mangled);
+		}
 	}
 
 	free(safe_mangled);
@@ -961,19 +977,25 @@ void dot_graph_finish(DotGraph *dot) {
 
 	fprintf(stderr, "[DOT] AST graph saved to: %s\n", dot->filename);
 
-	// Convert DOT to SVG using 'dot -Tsvg -O' which auto-generates output filename
-	// This will create <filename>.svg automatically
-	char cmd[512];
-	snprintf(cmd, sizeof(cmd), "dot -Tsvg -O \"%s\" 2>/dev/null", dot->filename);
+	// Only convert to SVG if DEMANGLE_TRACE_SVG environment variable is set
+	if (getenv("DEMANGLE_TRACE_SVG")) {
+		// Filename is guaranteed to be <= 255 chars by dot_graph_init()
+		// Command format: "dot -Tsvg -O \"<filename>\" 2>/dev/null"
+		// Max length: 30 + 255 = 285 bytes (well within safe limits)
+		char cmd[512];
+		snprintf(cmd, sizeof(cmd), "dot -Tsvg -O \"%s\" 2>/dev/null", dot->filename);
 
-	fprintf(stderr, "[DOT] Converting to SVG...\n");
-	int ret = system(cmd);
+		fprintf(stderr, "[DOT] Converting to SVG...\n");
+		int ret = system(cmd);
 
-	if (ret == 0) {
-		fprintf(stderr, "[DOT] Successfully converted to: %s.svg\n", dot->filename);
+		if (ret == 0) {
+			fprintf(stderr, "[DOT] Successfully converted to: %s.svg\n", dot->filename);
+		} else {
+			fprintf(stderr, "[DOT] Failed to convert to SVG (is 'dot' installed?)\n");
+			fprintf(stderr, "[DOT] Manual conversion: dot -Tsvg -O \"%s\"\n", dot->filename);
+		}
 	} else {
-		fprintf(stderr, "[DOT] Failed to convert to SVG (is 'dot' installed?)\n");
-		fprintf(stderr, "[DOT] Manual conversion: dot -Tsvg -O %s\n", dot->filename);
+		fprintf(stderr, "[DOT] SVG conversion skipped (set DEMANGLE_TRACE_SVG=1 to enable)\n");
 	}
 }
 
@@ -986,11 +1008,9 @@ void dot_graph_cleanup(DotGraph *dot) {
 		fclose(dot->file);
 	}
 
-	if (dot->filename) {
-		free(dot->filename);
-	}
+	// filename is now a stack array, no need to free
+	dot->filename[0] = '\0';
 
 	dot->file = NULL;
-	dot->filename = NULL;
 	dot->enabled = false;
 }
