@@ -446,7 +446,24 @@ __attribute__((unused)) static char *sanitize_label(const char *str, size_t len)
 	return escaped;
 }
 
-void dot_graph_init(DotGraph *dot, const char *mangled_name) {
+// Helper function to sanitize filename - replace invalid characters with underscore
+static void sanitize_filename(char *str) {
+	if (!str) {
+		return;
+	}
+	for (char *p = str; *p; p++) {
+		// Replace filesystem-unsafe and problematic characters
+		if (*p == '/' || *p == '\\' || *p == ':' || *p == '*' ||
+			*p == '?' || *p == '"' || *p == '<' || *p == '>' ||
+			*p == '|' || *p == '\n' || *p == '\r' || *p == '\t' ||
+			*p == ' ' || *p == '(' || *p == ')' || *p == ',' ||
+			*p == '[' || *p == ']' || *p == '{' || *p == '}') {
+			*p = '_';
+		}
+	}
+}
+
+void dot_graph_init(DotGraph *dot, const char *mangled_name, const char *demangled_name) {
 	if (!dot || !mangled_name) {
 		return;
 	}
@@ -454,19 +471,38 @@ void dot_graph_init(DotGraph *dot, const char *mangled_name) {
 	dot->node_counter = 0;
 	dot->enabled = true;
 
-	// Generate filename with timestamp and mangled name hash
-	time_t now = time(NULL);
-	unsigned int hash = 0;
-	for (const char *p = mangled_name; *p; p++) {
-		hash = hash * 31 + *p;
+	// Generate filename: <mangled>-<demangled>.dot
+	// Limit length to avoid excessively long filenames (max 200 chars total)
+	size_t mangled_len = strlen(mangled_name);
+	size_t demangled_len = demangled_name ? strlen(demangled_name) : 0;
+
+	// Limit each part: mangled to 80 chars, demangled to 100 chars
+	size_t safe_mangled_len = mangled_len > 80 ? 80 : mangled_len;
+	size_t safe_demangled_len = demangled_len > 100 ? 100 : demangled_len;
+
+	size_t total_len = safe_mangled_len + safe_demangled_len + 10; // +10 for "-" and ".dot\0"
+
+	dot->filename = malloc(total_len);
+	if (!dot->filename) {
+		dot->filename = strdup("demangle.dot");
+		dot->enabled = false;
+		return;
 	}
 
-	dot->filename = malloc(256);
-	if (dot->filename) {
-		snprintf(dot->filename, 256, "demangle_trace_%ld_%u.dot", (long)now, hash);
+	// Copy and sanitize mangled name
+	char *safe_mangled = strndup(mangled_name, safe_mangled_len);
+	char *safe_demangled = demangled_name ? strndup(demangled_name, safe_demangled_len) : strdup("unknown");
+
+	if (safe_mangled && safe_demangled) {
+		sanitize_filename(safe_mangled);
+		sanitize_filename(safe_demangled);
+		snprintf(dot->filename, total_len, "%s-%s.dot", safe_mangled, safe_demangled);
 	} else {
-		dot->filename = strdup("demangle_trace.dot");
+		snprintf(dot->filename, total_len, "demangle.dot");
 	}
+
+	free(safe_mangled);
+	free(safe_demangled);
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -924,7 +960,21 @@ void dot_graph_finish(DotGraph *dot) {
 	dot->file = NULL;
 
 	fprintf(stderr, "[DOT] AST graph saved to: %s\n", dot->filename);
-	fprintf(stderr, "[DOT] Convert to image:\ndot -Tpng %s -o ast.png\n\n", dot->filename);
+
+	// Convert DOT to SVG using 'dot -Tsvg -O' which auto-generates output filename
+	// This will create <filename>.svg automatically
+	char cmd[512];
+	snprintf(cmd, sizeof(cmd), "dot -Tsvg -O \"%s\" 2>/dev/null", dot->filename);
+
+	fprintf(stderr, "[DOT] Converting to SVG...\n");
+	int ret = system(cmd);
+
+	if (ret == 0) {
+		fprintf(stderr, "[DOT] Successfully converted to: %s.svg\n", dot->filename);
+	} else {
+		fprintf(stderr, "[DOT] Failed to convert to SVG (is 'dot' installed?)\n");
+		fprintf(stderr, "[DOT] Manual conversion: dot -Tsvg -O %s\n", dot->filename);
+	}
 }
 
 void dot_graph_cleanup(DotGraph *dot) {

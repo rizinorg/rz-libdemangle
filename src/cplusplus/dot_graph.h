@@ -12,18 +12,19 @@
 #include <string.h>
 
 typedef struct DotGraph {
-    FILE *file;
-    int node_counter;
-    bool enabled;
-    char *filename;
+	FILE *file;
+	int node_counter;
+	bool enabled;
+	char *filename;
 } DotGraph;
 
 /**
  * Initialize a DOT graph for AST visualization
  * @param dot DotGraph structure to initialize
- * @param mangled_name The mangled symbol name (used for filename generation)
+ * @param mangled_name The mangled symbol name (input)
+ * @param demangled_name The demangled symbol name (output)
  */
-void dot_graph_init(DotGraph *dot, const char *mangled_name);
+void dot_graph_init(DotGraph *dot, const char *mangled_name, const char *demangled_name);
 
 /**
  * Add a node to the DOT graph

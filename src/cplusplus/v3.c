@@ -3070,7 +3070,9 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 	// Generate DOT graph if tracing is enabled
 	if (trace && dem_result.output) {
 		DotGraph dot_graph = { 0 };
-		dot_graph_init(&dot_graph, mangled);
+		// Use mangled name as input and demangled result (ctx->output) as output
+		const char *demangled = ctx->output.buf ? ctx->output.buf : "unknown";
+		dot_graph_init(&dot_graph, mangled, demangled);
 		if (dot_graph.enabled) {
 			dot_graph_generate(&dot_graph, dem_result.output);
 			dot_graph_finish(&dot_graph);
