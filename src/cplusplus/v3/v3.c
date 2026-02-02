@@ -585,7 +585,6 @@ void pp_expanded_special_substitution(DemNode *node, DemString *out, PPContext *
 	dem_string_append(out, "std::");
 	pp_base_name(node, out);
 	if (ctx && ctx->opts & DEM_OPT_SIMPLE) {
-		dem_string_append(out, "<...>");
 		return;
 	}
 	if (node->subtag >= SPECIAL_SUBSTITUTION_STRING) {
