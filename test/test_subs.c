@@ -35,7 +35,7 @@ static int tests_passed = 0;
 static int check_subs(const char *input, const char *expected_output, const char **expected_subs, size_t expected_count) {
 	DemContext _ctx = { 0 };
 	DemContext *ctx = &_ctx;
-	CpDemOptions opt = { 0 };
+	CpDemOptions opt = DEM_OPT_ALL;
 	int result = 0;
 	if (!parse_rule(ctx, input, rule_mangled_name, opt)) {
 		printf(TBOLD TRED "  Demangling FAILED\n" TRESET);

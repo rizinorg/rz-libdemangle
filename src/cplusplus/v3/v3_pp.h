@@ -13,7 +13,7 @@ typedef struct {
 } PPContext;
 
 void ast_pp(DemNode *node, DemString *out, PPContext *ctx);
-void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out);
-void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out);
+void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out, PPContext *ctx);
+void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out, PPContext *ctx);
 
 #endif // RZ_LIBDEMANGLE_V3_PP_H

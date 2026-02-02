@@ -28,7 +28,10 @@
 #include <stdio.h>
 #include <string.h>
 
-void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out) {
+void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out, PPContext *ctx) {
+	if (ctx && !(ctx->opts & DEM_OPT_ANSI)) {
+		return;
+	}
 	if (qualifiers.is_const) {
 		dem_string_append(out, " const");
 	}
@@ -40,7 +43,7 @@ void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out) {
 	}
 }
 
-void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out) {
+void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out, PPContext *ctx) {
 	if (qualifiers.is_l_value) {
 		dem_string_append(out, " &");
 	}
@@ -85,7 +88,7 @@ static void pp_array_type(PDemNode node, DemString *out, PPContext *ctx) {
 }
 
 // Helper to print pointer/reference/qualifier decorators
-static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_tag, PDemNode *pbase_ty) {
+static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_tag, PDemNode *pbase_ty, PPContext *ctx) {
 	if (!node || !out) {
 		return;
 	}
@@ -101,7 +104,7 @@ static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_ta
 	if (node->tag == CP_DEM_TYPE_KIND_type && node->subtag != SUB_TAG_INVALID) {
 		// Recurse first to get inner decorators
 		if (AST(0)) {
-			pp_type_quals(AST(0), out, target_tag, pbase_ty);
+			pp_type_quals(AST(0), out, target_tag, pbase_ty, ctx);
 		}
 
 		// Then add our decorator
@@ -133,9 +136,9 @@ static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_ta
 		}
 
 		if (node->qualified_ty.inner_type) {
-			pp_type_quals(node->qualified_ty.inner_type, out, target_tag, pbase_ty);
+			pp_type_quals(node->qualified_ty.inner_type, out, target_tag, pbase_ty, ctx);
 		}
-		pp_cv_qualifiers(node->qualified_ty.qualifiers, out);
+		pp_cv_qualifiers(node->qualified_ty.qualifiers, out, ctx);
 		return;
 	}
 
@@ -221,7 +224,7 @@ static void pp_type_with_quals(PDemNode node, DemString *out, PPContext *ctx) {
 	DemString qualifiers_string = { 0 };
 	dem_string_init(&qualifiers_string);
 	PDemNode base_node = NULL;
-	pp_type_quals(node, &qualifiers_string, CP_DEM_TYPE_KIND_unknown, &base_node);
+	pp_type_quals(node, &qualifiers_string, CP_DEM_TYPE_KIND_unknown, &base_node, ctx);
 
 	if (base_node && base_node->tag == CP_DEM_TYPE_KIND_array_type) {
 		DemString array_dem_string = { 0 };
@@ -249,7 +252,7 @@ static void pp_type_with_quals(PDemNode node, DemString *out, PPContext *ctx) {
 		PDemNode array_inner_base = NULL;
 		pp_array_type_dimension(base_node->qualified_ty.inner_type, &array_dem_string, &array_inner_base, ctx);
 		ast_pp(array_inner_base, out, ctx);
-		pp_cv_qualifiers(base_node->qualified_ty.qualifiers, out);
+		pp_cv_qualifiers(base_node->qualified_ty.qualifiers, out, ctx);
 		if (dem_string_non_empty(&qualifiers_string)) {
 			reorder_qualifiers_for_array_fn_ref(&qualifiers_string);
 			dem_string_append(out, " (");
@@ -334,7 +337,7 @@ bool pp_pack_expansion_with_context(PPPackExpansionContext *ctx, DemString *out,
 				continue;
 			}
 			ast_pp(*child, out, pp_ctx);
-			pp_type_quals(ctx->outer, out, CP_DEM_TYPE_KIND_template_parameter_pack, NULL);
+			pp_type_quals(ctx->outer, out, CP_DEM_TYPE_KIND_template_parameter_pack, NULL, pp_ctx);
 		});
 	} else {
 		dem_string_append(out, "expansion(?)");
@@ -474,7 +477,7 @@ static bool extract_function_type(DemNode *node, DemNode **out_func_node) {
 static void pp_function_ty_mod_return_fn(PPFnContext *, DemString *);
 static void pp_function_ty_quals(PPFnContext *ctx, DemString *out);
 
-static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out, PPContext *pp_ctx) {
+static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out) {
 	if (!ctx || !ctx->fn || !out) {
 		return;
 	}
@@ -493,15 +496,15 @@ static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out, PPCont
 			.pp_quals = pp_function_ty_quals,
 			.mod = node,
 			.pp_mod = pp_function_ty_mod_return_fn,
-			.pp_ctx = pp_ctx,
+			.pp_ctx = ctx->pp_ctx,
 		};
-		pp_function_ty_with_context(&inner_ctx, out, pp_ctx);
+		pp_function_ty_with_context(&inner_ctx, out);
 		ft->ret = saved_ret;
 		return;
 	}
 
 	if (ft->ret) {
-		ast_pp(ft->ret, out, pp_ctx);
+		ast_pp(ft->ret, out, ctx->pp_ctx);
 		dem_string_append(out, " ");
 	}
 
@@ -512,7 +515,7 @@ static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out, PPCont
 		dem_string_append(out, "(");
 	}
 	if (ft->name) {
-		ast_pp(ft->name, out, pp_ctx);
+		ast_pp(ft->name, out, ctx->pp_ctx);
 		if (has_mod_or_quals) {
 			dem_string_append(out, " ");
 		}
@@ -530,17 +533,17 @@ static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out, PPCont
 	// Print parameters
 	dem_string_append(out, "(");
 	if (ft->params) {
-		ast_pp(ft->params, out, pp_ctx);
+		ast_pp(ft->params, out, ctx->pp_ctx);
 	}
 	dem_string_append(out, ")");
 
 	// Print cv and ref qualifiers
-	pp_cv_qualifiers(ft->cv_qualifiers, out);
-	pp_ref_qualifiers(ft->ref_qualifiers, out);
+	pp_cv_qualifiers(ft->cv_qualifiers, out, ctx->pp_ctx);
+	pp_ref_qualifiers(ft->ref_qualifiers, out, ctx->pp_ctx);
 
 	// Print exception spec
 	if (ft->exception_spec) {
-		ast_pp(ft->exception_spec, out, pp_ctx);
+		ast_pp(ft->exception_spec, out, ctx->pp_ctx);
 	}
 }
 
@@ -548,7 +551,7 @@ static void pp_function_ty(PDemNode node, DemString *out, PPContext *pp_ctx) {
 	PPFnContext ctx = { 0 };
 	ctx.fn = node;
 	ctx.pp_ctx = pp_ctx;
-	pp_function_ty_with_context(&ctx, out, pp_ctx);
+	pp_function_ty_with_context(&ctx, out);
 }
 
 static void pp_function_ty_mod_return_fn(PPFnContext *ctx, DemString *out) {
@@ -556,7 +559,7 @@ static void pp_function_ty_mod_return_fn(PPFnContext *ctx, DemString *out) {
 		.fn = ctx->mod,
 		.pp_ctx = ctx->pp_ctx
 	};
-	pp_function_ty_with_context(&inner_ctx, out, ctx->pp_ctx);
+	pp_function_ty_with_context(&inner_ctx, out);
 }
 
 static void pp_function_ty_quals(PPFnContext *ctx, DemString *out) {
@@ -565,7 +568,7 @@ static void pp_function_ty_quals(PPFnContext *ctx, DemString *out) {
 	}
 	DemString quals_str = { 0 };
 	dem_string_init(&quals_str);
-	pp_type_quals(ctx->quals, &quals_str, CP_DEM_TYPE_KIND_function_type, NULL);
+	pp_type_quals(ctx->quals, &quals_str, CP_DEM_TYPE_KIND_function_type, NULL, ctx->pp_ctx);
 	reorder_qualifiers_for_array_fn_ref(&quals_str);
 	dem_string_concat(out, &quals_str);
 	dem_string_deinit(&quals_str);
@@ -679,7 +682,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 	case CP_DEM_TYPE_KIND_qualified_type:
 		if (node->qualified_ty.inner_type) {
 			ast_pp(node->qualified_ty.inner_type, out, ctx);
-			pp_cv_qualifiers(node->qualified_ty.qualifiers, out);
+			pp_cv_qualifiers(node->qualified_ty.qualifiers, out, ctx);
 		}
 		break;
 
@@ -790,7 +793,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 				.pp_quals = pp_function_ty_quals,
 				.pp_ctx = ctx,
 			};
-			pp_function_ty_with_context(&pp_fn_context, out, ctx);
+			pp_function_ty_with_context(&pp_fn_context, out);
 		} else if (node->subtag != SUB_TAG_INVALID && AST(0)) {
 			pp_type_with_quals(node, out, ctx);
 		} else {
@@ -847,7 +850,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 				.fn = AST(1),
 				.pp_ctx = ctx,
 			};
-			pp_function_ty_with_context(&pp_fn_context, out, ctx);
+			pp_function_ty_with_context(&pp_fn_context, out);
 		} else {
 			// Member data pointer
 			if (AST(1)) {
