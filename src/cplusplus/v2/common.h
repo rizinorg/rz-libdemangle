@@ -51,18 +51,20 @@ void cpdem_fini(CpDem *dem);
 #define CUR() (dem->original.cur)
 
 /**
- * \b Give position where string begins. 
+ * \b Give position where string begins.
  *
  * \return const char pointer to beginning of mangled string.
  */
 #define BEG() (dem->original.beg)
 
 /**
- * \b Give position of NULL terminator. 
+ * \b Give position of NULL terminator.
  *
  * \return const char pointer to end of mangled string.
  */
 #define END() (dem->original.end)
+
+#define REMAIN_SIZE() (size_t)(END() - CUR())
 
 /**
  * \b Check whether the provided position is in range of readable address.
@@ -70,7 +72,7 @@ void cpdem_fini(CpDem *dem);
  * \p read_pos : char pointer to check for range.
  *
  * \return 1 if in range.
- * \return 0 otherwise. 
+ * \return 0 otherwise.
  */
 #define IN_RANGE(read_pos) ((read_pos) >= BEG() && (read_pos) < END())
 
@@ -152,5 +154,17 @@ void cpdem_fini(CpDem *dem);
 		} \
 		SEEK_TO(end); \
 	} while (0)
+
+static inline bool parse_string(CpDem *dem, const char *s) {
+	if (!dem || !s) {
+		return false;
+	}
+	size_t s_sz = strlen(s);
+	bool read_success = REMAIN_SIZE() >= s_sz && strncmp(CUR(), s, s_sz) == 0;
+	if (read_success) {
+		CUR() += s_sz;
+	}
+	return read_success;
+}
 
 #endif // CPDEM_COMMON_H
