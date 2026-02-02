@@ -132,4 +132,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZNSbIiED1Ev", "std::basic_string<int>::~basic_string()"),
 	mu_demangle_test("_ZN1SB8ctor_tagC2Ev", "S[abi:ctor_tag]::S()"),
 	mu_demangle_test("_ZN1SB8ctor_tagD2Ev", "S[abi:ctor_tag]::~S()"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

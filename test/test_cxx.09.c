@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN5clang17ObjCContainerDeclD0Ev", "clang::ObjCContainerDecl::~ObjCContainerDecl()"),
 	mu_demangle_test("_ZN5clang16ObjCPropertyDeclD1Ev", "clang::ObjCPropertyDecl::~ObjCPropertyDecl()"),
 	mu_demangle_test("_ZN5clang16ObjCPropertyDeclD0Ev", "clang::ObjCPropertyDecl::~ObjCPropertyDecl()"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

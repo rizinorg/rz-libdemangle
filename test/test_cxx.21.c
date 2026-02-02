@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZNK4llvm15error_condition7messageEv", "llvm::error_condition::message() const"),
 	mu_demangle_test("_ZNK4llvm10error_code7messageEv", "llvm::error_code::message() const"),
 	mu_demangle_test("_ZNK4llvm22_system_error_category7messageEi", "llvm::_system_error_category::message(int) const"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

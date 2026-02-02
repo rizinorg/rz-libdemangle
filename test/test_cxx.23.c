@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZTVN4llvm3X869VR64ClassE", "vtable for llvm::X86::VR64Class"),
 	mu_demangle_test("_ZTVN4llvm19X86_32TargetMachineE", "vtable for llvm::X86_32TargetMachine"),
 	mu_demangle_test("_ZTVN4llvm19X86_64TargetMachineE", "vtable for llvm::X86_64TargetMachine"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

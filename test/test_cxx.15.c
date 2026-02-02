@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN4llvm12MachineInstrC1EPNS_17MachineBasicBlockENS_8DebugLocERKNS_15TargetInstrDescE", "llvm::MachineInstr::MachineInstr(llvm::MachineBasicBlock*, llvm::DebugLoc, llvm::TargetInstrDesc const&)"),
 	mu_demangle_test("_ZN4llvm12MachineInstrC2EPNS_17MachineBasicBlockENS_8DebugLocERKNS_15TargetInstrDescE", "llvm::MachineInstr::MachineInstr(llvm::MachineBasicBlock*, llvm::DebugLoc, llvm::TargetInstrDesc const&)"),
 	mu_demangle_test("_ZN4llvm12MachineInstrC1ERNS_15MachineFunctionERKS0_", "llvm::MachineInstr::MachineInstr(llvm::MachineFunction&, llvm::MachineInstr const&)"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

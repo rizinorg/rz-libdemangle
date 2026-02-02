@@ -19,6 +19,8 @@
 #define RZ_API
 #include "rz_libdemangle.h"
 
+static const RzDemangleOpts default_opts = 0;
+
 typedef struct mu_demangling_test_s {
 	int line;
 	const char *input;

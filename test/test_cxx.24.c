@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN4llvm12_GLOBAL__N_1L12FP0_OverlapsE", "llvm::(anonymous namespace)::FP0_Overlaps"),
 	mu_demangle_test("_ZN4llvm12_GLOBAL__N_1L12FP1_OverlapsE", "llvm::(anonymous namespace)::FP1_Overlaps"),
 	mu_demangle_test("_ZN4llvm12_GLOBAL__N_1L12FP2_OverlapsE", "llvm::(anonymous namespace)::FP2_Overlaps"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

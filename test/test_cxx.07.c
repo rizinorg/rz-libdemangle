@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN5clang4ento14MemSpaceRegionD0Ev", "clang::ento::MemSpaceRegion::~MemSpaceRegion()"),
 	mu_demangle_test("_ZNK5clang4ento14MemSpaceRegion19getMemRegionManagerEv", "clang::ento::MemSpaceRegion::getMemRegionManager() const"),
 	mu_demangle_test("_ZNK5clang4ento14MemSpaceRegion11isBoundableEv", "clang::ento::MemSpaceRegion::isBoundable() const"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

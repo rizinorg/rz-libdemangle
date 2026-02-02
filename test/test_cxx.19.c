@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN12_GLOBAL__N_116GetCFGOnlyPasses13passEnumerateEPKN4llvm8PassInfoE", "(anonymous namespace)::GetCFGOnlyPasses::passEnumerate(llvm::PassInfo const*)"),
 	mu_demangle_test("_ZN4llvm4Pass17assignPassManagerERNS_7PMStackENS_15PassManagerTypeE", "llvm::Pass::assignPassManager(llvm::PMStack&, llvm::PassManagerType)"),
 	mu_demangle_test("_ZN4llvm14BasicBlockPassD1Ev", "llvm::BasicBlockPass::~BasicBlockPass()"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

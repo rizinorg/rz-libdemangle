@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZNK4llvm14TargetLowering20getTypeToTransformToERNS_11LLVMContextENS_3EVTE", "llvm::TargetLowering::getTypeToTransformTo(llvm::LLVMContext&, llvm::EVT) const"),
 	mu_demangle_test("_ZNK4llvm14TargetLowering15getRegisterTypeERNS_11LLVMContextENS_3EVTE", "llvm::TargetLowering::getRegisterType(llvm::LLVMContext&, llvm::EVT) const"),
 	mu_demangle_test("_ZNK4llvm14TargetLowering15getNumRegistersERNS_11LLVMContextENS_3EVTE", "llvm::TargetLowering::getNumRegisters(llvm::LLVMContext&, llvm::EVT) const"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

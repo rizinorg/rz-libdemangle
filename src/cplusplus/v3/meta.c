@@ -45,7 +45,7 @@ NodeList *NodeList_make(NodeList *self, ut64 from, ut64 to) {
 // DemParser functions
 // ============================================================================
 
-void DemParser_init(DemParser *p, const char *input) {
+void DemParser_init(DemParser *p,CpDemOptions options, const char *input) {
 	if (!p) {
 		return;
 	}
@@ -56,6 +56,7 @@ void DemParser_init(DemParser *p, const char *input) {
 	p->beg = input;
 	p->cur = input;
 	p->end = input ? (input + strlen(input)) : NULL;
+	p->options = options;
 
 	// Initialize metadata fields
 	p->outer_template_params = VecF(PDemNode, ctor)();

@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN5clang4Sema24ConvertPropertyForLValueERPNS_4ExprES3_RNS_8QualTypeE", "clang::Sema::ConvertPropertyForLValue(clang::Expr*&, clang::Expr*&, clang::QualType&)"),
 	mu_demangle_test("_ZN5clang4Sema24DiagnoseAssignmentResultENS0_17AssignConvertTypeENS_14SourceLocationENS_8QualTypeES3_PNS_4ExprENS0_16AssignmentActionEPb", "clang::Sema::DiagnoseAssignmentResult(clang::Sema::AssignConvertType, clang::SourceLocation, clang::QualType, clang::QualType, clang::Expr*, clang::Sema::AssignmentAction, bool*)"),
 	mu_demangle_test("_ZN5clang4Sema18CreateBuiltinBinOpENS_14SourceLocationENS_18BinaryOperatorKindEPNS_4ExprES4_", "clang::Sema::CreateBuiltinBinOp(clang::SourceLocation, clang::BinaryOperatorKind, clang::Expr*, clang::Expr*)"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

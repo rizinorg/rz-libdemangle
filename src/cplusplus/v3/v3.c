@@ -532,7 +532,7 @@ static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out) {
 
 	// Print parameters
 	dem_string_append(out, "(");
-	if (ft->params) {
+	if (ft->params && (ctx->pp_ctx->opts & DEM_OPT_PARAMS)) {
 		ast_pp(ft->params, out, ctx->pp_ctx);
 	}
 	dem_string_append(out, ")");
@@ -581,9 +581,13 @@ static void pp_function_ty_mod_pointer_to_member_type(PPFnContext *ctx, DemStrin
 	dem_string_append(out, "::*");
 }
 
-void pp_expanded_special_substitution(DemNode *node, DemString *out) {
+void pp_expanded_special_substitution(DemNode *node, DemString *out, PPContext *ctx) {
 	dem_string_append(out, "std::");
 	pp_base_name(node, out);
+	if (ctx && ctx->opts & DEM_OPT_SIMPLE) {
+		dem_string_append(out, "<...>");
+		return;
+	}
 	if (node->subtag >= SPECIAL_SUBSTITUTION_STRING) {
 		dem_string_append(out, "<char, std::char_traits<char>");
 		if (node->subtag == SPECIAL_SUBSTITUTION_STRING) {
@@ -640,7 +644,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		pp_special_substitution(node, out);
 		break;
 	case CP_DEM_TYPE_KIND_expanded_special_substitution:
-		pp_expanded_special_substitution(node, out);
+		pp_expanded_special_substitution(node, out, ctx);
 		break;
 
 	case CP_DEM_TYPE_KIND_abi_tag_ty:
@@ -2328,8 +2332,13 @@ bool rule_builtin_type(DemParser *p, DemResult *r) {
 	TRY_MATCH(READ('j') && AST_APPEND_STR("unsigned int"));
 	TRY_MATCH(READ('l') && AST_APPEND_STR("long"));
 	TRY_MATCH(READ('m') && AST_APPEND_STR("unsigned long"));
-	TRY_MATCH(READ('x') && AST_APPEND_STR("long long"));
-	TRY_MATCH(READ('y') && AST_APPEND_STR("unsigned long long"));
+	if (p->options & DEM_OPT_SIMPLE) {
+		TRY_MATCH(READ('x') && AST_APPEND_STR("int64_t"));
+		TRY_MATCH(READ('y') && AST_APPEND_STR("uint64_t"));
+	} else {
+		TRY_MATCH(READ('x') && AST_APPEND_STR("long long"));
+		TRY_MATCH(READ('y') && AST_APPEND_STR("unsigned long long"));
+	}
 	TRY_MATCH(READ('n') && AST_APPEND_STR("__int128"));
 	TRY_MATCH(READ('o') && AST_APPEND_STR("unsigned __int128"));
 	TRY_MATCH(READ('f') && AST_APPEND_STR("float"));
@@ -3033,7 +3042,7 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 	// Initialize DemParser
 	DemParser parser = { 0 };
 	DemParser *p = &parser;
-	DemParser_init(p, mangled);
+	DemParser_init(p, opts, mangled);
 	parser.trace = trace;
 	DemResult dem_result = { 0 };
 	if (!rule(p, &dem_result)) {

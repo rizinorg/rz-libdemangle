@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZNK4llvm7IVUsers9getStrideERKNS_11IVStrideUseEPKNS_4LoopE", "llvm::IVUsers::getStride(llvm::IVStrideUse const&, llvm::Loop const*) const"),
 	mu_demangle_test("_Z17findAddRecForLoopPKN4llvm4SCEVEPKNS_4LoopE", "findAddRecForLoop(llvm::SCEV const*, llvm::Loop const*)"),
 	mu_demangle_test("_ZN4llvm11IVStrideUse18transformToPostIncEPKNS_4LoopE", "llvm::IVStrideUse::transformToPostInc(llvm::Loop const*)"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

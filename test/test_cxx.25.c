@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN4llvmL14OperandInfo253E", "llvm::OperandInfo253"),
 	mu_demangle_test("_ZN4llvmL14OperandInfo254E", "llvm::OperandInfo254"),
 	mu_demangle_test("_ZN4llvmL14OperandInfo255E", "llvm::OperandInfo255"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

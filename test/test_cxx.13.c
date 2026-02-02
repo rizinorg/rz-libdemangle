@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN12_GLOBAL__N_111DAGCombiner14PromoteOperandEN4llvm7SDValueENS1_3EVTERb", "(anonymous namespace)::DAGCombiner::PromoteOperand(llvm::SDValue, llvm::EVT, bool&)"),
 	mu_demangle_test("_ZN12_GLOBAL__N_111DAGCombiner27ReplaceLoadWithPromotedLoadEPN4llvm6SDNodeES3_", "(anonymous namespace)::DAGCombiner::ReplaceLoadWithPromotedLoad(llvm::SDNode*, llvm::SDNode*)"),
 	mu_demangle_test("_ZN12_GLOBAL__N_111DAGCombiner8visitXOREPN4llvm6SDNodeE", "(anonymous namespace)::DAGCombiner::visitXOR(llvm::SDNode*)"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

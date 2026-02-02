@@ -429,6 +429,8 @@ typedef struct DemParser {
 	VecT(PForwardTemplateRef) forward_template_refs;
 	bool not_parse_template_args;
 	bool trace;
+
+	CpDemOptions options;
 } DemParser;
 
 typedef struct {
@@ -478,7 +480,7 @@ void DemContext_deinit(DemContext *ctx);
 typedef bool (*DemRule)(DemParser *p, DemResult *r);
 
 // DemParser helper functions
-void DemParser_init(DemParser *p, const char *input);
+void DemParser_init(DemParser *p, CpDemOptions options, const char *input);
 void DemParser_deinit(DemParser *p);
 void DemResult_deinit(DemResult *r);
 bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions opts);

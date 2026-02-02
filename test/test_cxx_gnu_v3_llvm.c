@@ -298,4 +298,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN5clang16CompilerInstance23createDefaultOutputFileEbN4llvm9StringRefES2_", "clang::CompilerInstance::createDefaultOutputFile(bool, llvm::StringRef, llvm::StringRef)"),
 );
 
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

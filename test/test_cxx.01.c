@@ -728,4 +728,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZNSs4_Rep20_S_empty_rep_storageE", "std::string::_Rep::_S_empty_rep_storage"),
 	mu_demangle_test("_ZZN23ImageLoaderMachOClassic26bindIndirectSymbolPointersERKN11ImageLoader11LinkContextEbbE13alreadyWarned", "ImageLoaderMachOClassic::bindIndirectSymbolPointers(ImageLoader::LinkContext const&, bool, bool)::alreadyWarned"),
 	mu_demangle_test("_ZN12_GLOBAL__N_115emergency_mutexE", "(anonymous namespace)::emergency_mutex"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

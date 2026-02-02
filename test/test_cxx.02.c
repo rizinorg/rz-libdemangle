@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN5clang13TypeLocReader25VisitMemberPointerTypeLocENS_20MemberPointerTypeLocE", "clang::TypeLocReader::VisitMemberPointerTypeLoc(clang::MemberPointerTypeLoc)"),
 	mu_demangle_test("_ZN5clang13TypeLocReader17VisitArrayTypeLocENS_12ArrayTypeLocE", "clang::TypeLocReader::VisitArrayTypeLoc(clang::ArrayTypeLoc)"),
 	mu_demangle_test("_ZN5clang13TypeLocReader25VisitConstantArrayTypeLocENS_20ConstantArrayTypeLocE", "clang::TypeLocReader::VisitConstantArrayTypeLoc(clang::ConstantArrayTypeLoc)"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

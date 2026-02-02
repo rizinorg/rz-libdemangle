@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN12_GLOBAL__N_116MachObjectWriterD0Ev", "(anonymous namespace)::MachObjectWriter::~MachObjectWriter()"),
 	mu_demangle_test("_ZN12_GLOBAL__N_116MachObjectWriter24ExecutePostLayoutBindingERN4llvm11MCAssemblerERKNS1_11MCAsmLayoutE", "(anonymous namespace)::MachObjectWriter::ExecutePostLayoutBinding(llvm::MCAssembler&, llvm::MCAsmLayout const&)"),
 	mu_demangle_test("_ZN12_GLOBAL__N_116MachObjectWriter16RecordRelocationERKN4llvm11MCAssemblerERKNS1_11MCAsmLayoutEPKNS1_10MCFragmentERKNS1_7MCFixupENS1_7MCValueERy", "(anonymous namespace)::MachObjectWriter::RecordRelocation(llvm::MCAssembler const&, llvm::MCAsmLayout const&, llvm::MCFragment const*, llvm::MCFixup const&, llvm::MCValue, unsigned long long&)"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

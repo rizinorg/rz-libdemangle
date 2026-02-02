@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_Z12scan_deallocPN5clang4StmtENS_8SelectorE", "scan_dealloc(clang::Stmt*, clang::Selector)"),
 	mu_demangle_test("_Z17scan_ivar_releasePN5clang4StmtEPNS_12ObjCIvarDeclEPKNS_16ObjCPropertyDeclENS_8SelectorEPNS_14IdentifierInfoERNS_10ASTContextE", "scan_ivar_release(clang::Stmt*, clang::ObjCIvarDecl*, clang::ObjCPropertyDecl const*, clang::Selector, clang::IdentifierInfo*, clang::ASTContext&)"),
 	mu_demangle_test("_ZN5clang4ento26CheckObjCInstMethSignatureEPKNS_22ObjCImplementationDeclERNS0_11BugReporterE", "clang::ento::CheckObjCInstMethSignature(clang::ObjCImplementationDecl const*, clang::ento::BugReporter&)"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

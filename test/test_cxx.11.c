@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZN12_GLOBAL__N_17PruneEH8runOnSCCERN4llvm12CallGraphSCCE", "(anonymous namespace)::PruneEH::runOnSCC(llvm::CallGraphSCC&)"),
 	mu_demangle_test("_ZN12_GLOBAL__N_17PruneEH16SimplifyFunctionEPN4llvm8FunctionE", "(anonymous namespace)::PruneEH::SimplifyFunction(llvm::Function*)"),
 	mu_demangle_test("_ZN12_GLOBAL__N_17PruneEH16DeleteBasicBlockEPN4llvm10BasicBlockE", "(anonymous namespace)::PruneEH::DeleteBasicBlock(llvm::BasicBlock*)"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

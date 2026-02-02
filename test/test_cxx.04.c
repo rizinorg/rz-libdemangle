@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZZN5clang6Parser31ParseObjCClassInstanceVariablesEPNS_4DeclENS_3tok15ObjCKeywordKindENS_14SourceLocationEEN16ObjCIvarCallbackD1Ev", "clang::Parser::ParseObjCClassInstanceVariables(clang::Decl*, clang::tok::ObjCKeywordKind, clang::SourceLocation)::ObjCIvarCallback::~ObjCIvarCallback()"),
 	mu_demangle_test("_ZN5clang6Parser24FinishPendingObjCActionsEv", "clang::Parser::FinishPendingObjCActions()"),
 	mu_demangle_test("_ZN5clang6Parser18ParseObjCThrowStmtENS_14SourceLocationE", "clang::Parser::ParseObjCThrowStmt(clang::SourceLocation)"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);

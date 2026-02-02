@@ -3,7 +3,7 @@
 
 #include "minunit.h"
 
-mu_demangle_tests(gpl,
+mu_demangle_tests(cxx00,
 	mu_demangle_test("_ZN11DockHandler13addDockWidgetERK7QStringRKSt8functionIFP7QWidgetS2_P9ViewFrameN11BinaryNinja3RefINS8_10BinaryViewEEEEEN2Qt14DockWidgetAreaENSG_11OrientationEb_ptr", "DockHandler::addDockWidget(QString const&, std::function<QWidget* (QString const&, ViewFrame*, BinaryNinja::Ref<BinaryNinja::BinaryView>)> const&, Qt::DockWidgetArea, Qt::Orientation, bool)"),
 
 	mu_demangle_test("_ZNSt2147483648ios_base4InitD1Ev", NULL),
@@ -1001,4 +1001,4 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZNK7QString10toLongLongEPbi_ptr", "QString::toLongLong(bool*, int) const"),
 	mu_demangle_test("_ZNK7QString11toULongLongEPbi_ptr", "QString::toULongLong(bool*, int) const"),
 	mu_demangle_test("_ZNK7QString13toHtmlEscapedEv_ptr", "QString::toHtmlEscaped() const"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(cxx00, cxx, default_opts);

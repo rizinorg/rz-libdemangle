@@ -1005,4 +1005,4 @@ mu_demangle_tests(gpl,
 	// mangled names can include type manglings too, which don't start with _Z:
 	// attribute abi_tag
 	mu_demangle_test("_Z1fB3foov", "f[abi:foo]()"), );
-mu_main(gpl, cxx, RZ_DEMANGLE_OPT_ENABLE_ALL);
+mu_main(gpl, cxx, default_opts);
