@@ -365,9 +365,7 @@ CpDem *cpdem_public_name(CpDem *dem) {
 				SEEK_TO(trial_start_pos);
 				/* continue parsing from beginning */
 			}
-		} else if (IN_RANGE(CUR() + 10) && !strncmp(CUR(), "GLOBAL_$", 8)) {
-			ADV_BY(8); /* skip GLOBAL_$ */
-
+		} else if (parse_string(dem, "GLOBAL_$") || parse_string(dem, "_GLOBAL__")) {
 			if (PEEK() == 'I') {
 				ADV_BY(2); /* skip I$ */
 				dem_string_append(&dem->prefix, "global constructors keyed to");

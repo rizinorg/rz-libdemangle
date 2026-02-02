@@ -4,6 +4,8 @@
 #include "minunit.h"
 
 mu_demangle_tests(gnu_v2,
+	mu_demangle_test("__GLOBAL__I_main", "global constructors keyed to main"),
+
 	// fuzzed strings
 	mu_demangle_test("_ITM_deregisterTMCCCCCCCCCCCCCCCCCCCtart__5555555555555555CloneTable", NULL),
 	// normal
