@@ -10,18 +10,6 @@
 #include "../demangle.h"
 #include "../vec.h"
 
-#define DBG_PRINT_DETECTED_TYPES   0
-#define DBG_PRINT_DETECTED_TPARAMS 0
-
-/**
- * \b String iterator
- **/
-typedef struct StrIter {
-	const char *beg; /**< \b Beginning position of string. */
-	const char *end; /**< \b Ending of string (usually points to the null-terminator char). */
-	const char *cur; /**< \b Current read position. */
-} StrIter;
-
 typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_unknown,
 	CP_DEM_TYPE_KIND_primitive_ty,

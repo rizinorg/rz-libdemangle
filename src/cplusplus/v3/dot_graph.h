@@ -5,6 +5,8 @@
 #define DOT_GRAPH_H
 
 #include "types.h"
+#include "v3_pp.h"
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
@@ -16,15 +18,18 @@ typedef struct DotGraph {
 	int node_counter;
 	bool enabled;
 	char filename[256]; // Max filename length (255 + null terminator)
+
+	PPContext pp_ctx;
 } DotGraph;
 
 /**
  * Initialize a DOT graph for AST visualization
  * @param dot DotGraph structure to initialize
+ * @param pp_context Pretty-printing context
  * @param mangled_name The mangled symbol name (input)
  * @param demangled_name The demangled symbol name (output)
  */
-void dot_graph_init(DotGraph *dot, const char *mangled_name, const char *demangled_name);
+void dot_graph_init(DotGraph *dot, PPContext pp_context, const char *mangled_name, const char *demangled_name);
 
 /**
  * Add a node to the DOT graph

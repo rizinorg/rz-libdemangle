@@ -5,7 +5,14 @@
 #define RZ_LIBDEMANGLE_V3_PP_H
 #include "types.h"
 
-void ast_pp(DemNode *node, DemString *out);
+// Pretty-print context to track formatting state
+typedef struct {
+	CpDemOptions opts;
+	int paren_depth; // Current parenthesis nesting depth
+	bool inside_template; // Whether we're inside template arguments
+} PPContext;
+
+void ast_pp(DemNode *node, DemString *out, PPContext *ctx);
 void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out);
 void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out);
 

@@ -64,7 +64,8 @@ static int check_subs(const char *input, const char *expected_output, const char
 		}
 		DemNode *sub_node = *psub_node;
 		DemString buf = { 0 };
-		ast_pp(sub_node, &buf);
+		PPContext pp_ctx = { .opts = opt, .paren_depth = 0, .inside_template = false };
+		ast_pp(sub_node, &buf, &pp_ctx);
 		if (strcmp(buf.buf, expected_subs[i]) != 0) {
 			printf(TBOLD TRED "  Substitution [%zu] mismatch:\n" TRESET, i);
 			printf("    Expected: %s\n", expected_subs[i]);

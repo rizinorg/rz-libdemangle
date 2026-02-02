@@ -463,13 +463,14 @@ static void sanitize_filename(char *str) {
 	}
 }
 
-void dot_graph_init(DotGraph *dot, const char *mangled_name, const char *demangled_name) {
+void dot_graph_init(DotGraph *dot, PPContext pp_context, const char *mangled_name, const char *demangled_name) {
 	if (!dot || !mangled_name) {
 		return;
 	}
 
 	dot->node_counter = 0;
 	dot->enabled = true;
+	dot->pp_ctx = pp_context;
 
 	// Build filename: <mangled>-<demangled>.dot (or just <mangled>.dot if no demangled)
 	// Maximum filename length is 254 chars (255 bytes including null terminator)
@@ -573,9 +574,11 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 	}
 
 	// Add ast_pp output to show the pretty-printed representation
-	DemString pp_output;
+	DemString pp_output = { 0 };
 	dem_string_init(&pp_output);
-	ast_pp(node, &pp_output);
+	dot->pp_ctx.inside_template = false;
+	dot->pp_ctx.paren_depth = 0;
+	ast_pp(node, &pp_output, &dot->pp_ctx);
 	if (pp_output.buf && pp_output.len > 0) {
 		dem_string_append(&label, "\\n=> ");
 		// Escape special DOT characters
