@@ -3,49 +3,49 @@
 
 #include "minunit.h"
 
-mu_demangle_tests(gpl,
-	// <builtin-type> ::= v	# void
-	//                ::= w	# wchar_t
-	//                ::= b	# bool
-	//                ::= c	# char
-	//                ::= a	# signed char
-	//                ::= h	# unsigned char
-	//                ::= s	# short
-	//                ::= t	# unsigned short
-	//                ::= i	# int
-	//                ::= j	# unsigned int
-	//                ::= l	# long
-	//                ::= m	# unsigned long
-	//                ::= x	# long long, __int64
-	//                ::= y	# unsigned long long, __int64
-	//                ::= n	# __int128
-	//                ::= o	# unsigned __int128
-	//                ::= f	# float
-	//                ::= d	# double
-	//                ::= e	# long double, __float80
-	//                ::= g	# __float128
-	//                ::= z	# ellipsis
-	//                ::= Dd # IEEE 754r decimal floating point (64 bits)
-	//                ::= De # IEEE 754r decimal floating point (128 bits)
-	//                ::= Df # IEEE 754r decimal floating point (32 bits)
-	//                ::= Dh # IEEE 754r half-precision floating point (16 bits)
-	//                ::= DF <number> _ # ISO/IEC TS 18661 binary floating point type _FloatN (N bits), C++23 std::floatN_t
-	//                ::= DF <number> x # IEEE extended precision formats, C23 _FloatNx (N bits)
-	//                ::= DF16b # C++23 std::bfloat16_t
-	//                ::= DB <number> _        # C23 signed _BitInt(N)
-	//                ::= DB <instantiation-dependent expression> _ # C23 signed _BitInt(N)
-	//                ::= DU <number> _        # C23 unsigned _BitInt(N)
-	//                ::= DU <instantiation-dependent expression> _ # C23 unsigned _BitInt(N)
-	//                ::= Di # char32_t
-	//                ::= Ds # char16_t
-	//                ::= Du # char8_t
-	//                ::= Da # auto
-	//                ::= Dc # decltype(auto)
-	//                ::= Dn # std::nullptr_t (i.e., decltype(nullptr))
-	//                ::= [DS] DA  # N1169 fixed-point [_Sat] T _Accum
-	//                ::= [DS] DR  # N1169 fixed-point [_Sat] T _Fract
-	//                ::= u <source-name> [<template-args>] # vendor extended type
+// <builtin-type> ::= v	# void
+//                ::= w	# wchar_t
+//                ::= b	# bool
+//                ::= c	# char
+//                ::= a	# signed char
+//                ::= h	# unsigned char
+//                ::= s	# short
+//                ::= t	# unsigned short
+//                ::= i	# int
+//                ::= j	# unsigned int
+//                ::= l	# long
+//                ::= m	# unsigned long
+//                ::= x	# long long, __int64
+//                ::= y	# unsigned long long, __int64
+//                ::= n	# __int128
+//                ::= o	# unsigned __int128
+//                ::= f	# float
+//                ::= d	# double
+//                ::= e	# long double, __float80
+//                ::= g	# __float128
+//                ::= z	# ellipsis
+//                ::= Dd # IEEE 754r decimal floating point (64 bits)
+//                ::= De # IEEE 754r decimal floating point (128 bits)
+//                ::= Df # IEEE 754r decimal floating point (32 bits)
+//                ::= Dh # IEEE 754r half-precision floating point (16 bits)
+//                ::= DF <number> _ # ISO/IEC TS 18661 binary floating point type _FloatN (N bits), C++23 std::floatN_t
+//                ::= DF <number> x # IEEE extended precision formats, C23 _FloatNx (N bits)
+//                ::= DF16b # C++23 std::bfloat16_t
+//                ::= DB <number> _        # C23 signed _BitInt(N)
+//                ::= DB <instantiation-dependent expression> _ # C23 signed _BitInt(N)
+//                ::= DU <number> _        # C23 unsigned _BitInt(N)
+//                ::= DU <instantiation-dependent expression> _ # C23 unsigned _BitInt(N)
+//                ::= Di # char32_t
+//                ::= Ds # char16_t
+//                ::= Du # char8_t
+//                ::= Da # auto
+//                ::= Dc # decltype(auto)
+//                ::= Dn # std::nullptr_t (i.e., decltype(nullptr))
+//                ::= [DS] DA  # N1169 fixed-point [_Sat] T _Accum
+//                ::= [DS] DR  # N1169 fixed-point [_Sat] T _Fract
+//                ::= u <source-name> [<template-args>] # vendor extended type
 
+mu_demangle_tests(base_type,
 	mu_demangle_test("_ZTSv", "typeinfo name for void"),
 	mu_demangle_test("_ZTSw", "typeinfo name for wchar_t"),
 	mu_demangle_test("_ZTSb", "typeinfo name for bool"),
@@ -58,8 +58,8 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZTSj", "typeinfo name for unsigned int"),
 	mu_demangle_test("_ZTSl", "typeinfo name for long"),
 	mu_demangle_test("_ZTSm", "typeinfo name for unsigned long"),
-	mu_demangle_test("_ZTSx", "typeinfo name for long long"),
-	mu_demangle_test("_ZTSy", "typeinfo name for unsigned long long"),
+	mu_demangle_test("_ZTSx", "typeinfo name for int64_t"),
+	mu_demangle_test("_ZTSy", "typeinfo name for uint64_t"),
 	mu_demangle_test("_ZTSn", "typeinfo name for __int128"),
 	mu_demangle_test("_ZTSo", "typeinfo name for unsigned __int128"),
 	mu_demangle_test("_ZTSf", "typeinfo name for float"),
@@ -86,6 +86,8 @@ mu_demangle_tests(gpl,
 	mu_demangle_test("_ZTSU4_farrVKPi", "typeinfo name for int* const volatile restrict _far"),
 
 	//
+	mu_demangle_test("_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc", "std::ostream& std::operator<<<std::char_traits<char>>(std::ostream&, char const*)")
+
 );
 
-mu_main(gpl, cxx, default_opts);
+mu_main(base_type, cxx, default_opts | RZ_DEMANGLE_OPT_SIMPLIFY);

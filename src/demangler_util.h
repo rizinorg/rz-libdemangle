@@ -91,6 +91,7 @@ bool dem_string_empty(const DemString *ds);
 #define dem_string_appends_prefix(d, s) dem_string_append_prefix_n(d, s, strlen(s))
 
 void dem_string_replace_char(DemString *ds, char ch, char rp);
+bool dem_string_replace_all(DemString *ds, const char *a, size_t alen, const char *b, size_t blen);
 
 typedef void (*DemListFree)(void *ptr);
 

@@ -584,9 +584,6 @@ static void pp_function_ty_mod_pointer_to_member_type(PPFnContext *ctx, DemStrin
 void pp_expanded_special_substitution(DemNode *node, DemString *out, PPContext *ctx) {
 	dem_string_append(out, "std::");
 	pp_base_name(node, out);
-	if (ctx && ctx->opts & DEM_OPT_SIMPLE) {
-		return;
-	}
 	if (node->subtag >= SPECIAL_SUBSTITUTION_STRING) {
 		dem_string_append(out, "<char, std::char_traits<char>");
 		if (node->subtag == SPECIAL_SUBSTITUTION_STRING) {
@@ -996,6 +993,35 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			});
 		}
 		break;
+	}
+}
+
+typedef struct {
+	const char *a;
+	const char *b;
+} DemSimpleEntry;
+
+static const DemSimpleEntry simple_entries[] = {
+	{ "basic_string<char, std::char_traits<char>, std::allocator<char>>", "string" },
+	{ "basic_iostream<char, std::char_traits<char>, std::allocator<char>>", "iostream" },
+	{ "basic_istream<char, std::char_traits<char>, std::allocator<char>>", "istream" },
+	{ "basic_ostream<char, std::char_traits<char>, std::allocator<char>>", "ostream" },
+	{ "basic_string<char, std::char_traits<char>>", "string" },
+	{ "basic_iostream<char, std::char_traits<char>>", "iostream" },
+	{ "basic_istream<char, std::char_traits<char>>", "istream" },
+	{ "basic_ostream<char, std::char_traits<char>>", "ostream" },
+	{ "unsigned long long", "uint64_t" },
+	{ "long long", "int64_t" },
+};
+
+static void dem_simplify(DemString *out) {
+	for (size_t i = 0; i < sizeof(simple_entries) / sizeof(simple_entries[0]); i++) {
+		dem_string_replace_all(
+			out,
+			&simple_entries[i].a[0],
+			strlen(simple_entries[i].a),
+			simple_entries[i].b,
+			strlen(simple_entries[i].b));
 	}
 }
 
@@ -2331,13 +2357,8 @@ bool rule_builtin_type(DemParser *p, DemResult *r) {
 	TRY_MATCH(READ('j') && AST_APPEND_STR("unsigned int"));
 	TRY_MATCH(READ('l') && AST_APPEND_STR("long"));
 	TRY_MATCH(READ('m') && AST_APPEND_STR("unsigned long"));
-	if (p->options & DEM_OPT_SIMPLE) {
-		TRY_MATCH(READ('x') && AST_APPEND_STR("int64_t"));
-		TRY_MATCH(READ('y') && AST_APPEND_STR("uint64_t"));
-	} else {
-		TRY_MATCH(READ('x') && AST_APPEND_STR("long long"));
-		TRY_MATCH(READ('y') && AST_APPEND_STR("unsigned long long"));
-	}
+	TRY_MATCH(READ('x') && AST_APPEND_STR("long long"));
+	TRY_MATCH(READ('y') && AST_APPEND_STR("unsigned long long"));
 	TRY_MATCH(READ('n') && AST_APPEND_STR("__int128"));
 	TRY_MATCH(READ('o') && AST_APPEND_STR("unsigned __int128"));
 	TRY_MATCH(READ('f') && AST_APPEND_STR("float"));
@@ -3039,17 +3060,13 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 #endif
 #endif
 	// Initialize DemParser
-	DemParser parser = { 0 };
-	DemParser *p = &parser;
+	DemParser *p = &ctx->parser;
 	DemParser_init(p, opts, mangled);
-	parser.trace = trace;
-	DemResult dem_result = { 0 };
-	if (!rule(p, &dem_result)) {
-		ctx->parser = parser;
-		ctx->result = dem_result;
+	ctx->parser.trace = trace;
+	if (!rule(p, &ctx->result)) {
 		return false;
 	}
-	if (parser.trace && VecPDemNode_len(&p->detected_types) > 0) {
+	if (ctx->parser.trace && VecPDemNode_len(&p->detected_types) > 0) {
 		DemString buf = { 0 };
 		PPContext pp_ctx = { .opts = opts, .paren_depth = 0, .inside_template = false };
 		vec_foreach_ptr_i(&p->detected_types, i, sub_ptr, {
@@ -3066,20 +3083,21 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 		fprintf(stderr, "# substitutions:\n%s\n", buf_str ? buf_str : "(null)");
 		free(buf_str);
 	}
-	DemNode *output_node = dem_result.output;
+	DemNode *output_node = ctx->result.output;
 	PPContext pp_ctx = { .opts = opts, .paren_depth = 0, .inside_template = false };
 	ast_pp(output_node, &ctx->output, &pp_ctx);
-	ctx->parser = parser;
-	ctx->result = dem_result;
+	if (ctx->parser.options & DEM_OPT_SIMPLE) {
+		dem_simplify(&ctx->output);
+	}
 
 	// Generate DOT graph if tracing is enabled
-	if (trace && dem_result.output) {
+	if (trace && ctx->result.output) {
 		DotGraph dot_graph = { 0 };
 		// Use mangled name as input and demangled result (ctx->output) as output
 		const char *demangled = ctx->output.buf ? ctx->output.buf : "unknown";
 		dot_graph_init(&dot_graph, pp_ctx, mangled, demangled);
 		if (dot_graph.enabled) {
-			dot_graph_generate(&dot_graph, dem_result.output);
+			dot_graph_generate(&dot_graph, ctx->result.output);
 			dot_graph_finish(&dot_graph);
 		}
 		dot_graph_cleanup(&dot_graph);

@@ -226,14 +226,11 @@ DemString *dem_string_init_clone(DemString *dst, const DemString *src) {
 	return dst;
 }
 
-static bool dem_string_has_enough_capacity(DemString *ds, ssize_t size) {
+static bool dem_string_has_enough_capacity(DemString *ds, size_t size) {
 	return size < 1 || ((ds->len + size) < ds->cap);
 }
 
-static bool dem_string_increase_capacity(DemString *ds, ssize_t size) {
-	if (size < 0) {
-		return false;
-	}
+static bool dem_string_increase_capacity(DemString *ds, size_t size) {
 	if (dem_string_has_enough_capacity(ds, size)) {
 		return true;
 	}
@@ -417,6 +414,32 @@ void dem_string_replace_char(DemString *ds, char ch, char rp) {
 		return;
 	}
 	dem_str_replace_char(ds->buf, ds->len, ch, rp);
+}
+
+bool dem_string_replace_all(DemString *ds, const char *a, size_t alen, const char *b, size_t blen) {
+	dem_return_val_if_fail(ds && ds->buf && a && b && alen > 0, true);
+
+	if (alen == blen && strncmp(a, b, alen) == 0) {
+		return true;
+	}
+	char *p = ds->buf;
+	while (true) {
+		p = strstr(p, a);
+		if (!p) {
+			break;
+		}
+		const size_t off = (size_t)(p - ds->buf);
+		if (blen > alen) {
+			if (!dem_string_increase_capacity(ds, blen - alen)) {
+				return false;
+			}
+		}
+		memmove(p + blen, p + alen, ds->len - (off + alen) + 1);
+		memcpy(p, b, blen);
+		ds->len = ds->len - alen + blen;
+	}
+	return true;
+
 }
 
 DemList *dem_list_newf(DemListFree f) {
