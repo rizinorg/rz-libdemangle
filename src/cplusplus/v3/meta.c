@@ -17,7 +17,7 @@ void NodeList_copy(NodeList *dst, const NodeList *src) {
 	VecF(PDemNode, deinit)(dst);
 	VecF(PDemNode, init)(dst);
 
-	vec_foreach_ptr_typed(src, PDemNode, node_ptr, {
+	vec_foreach_ptr(PDemNode, src, node_ptr, {
 		if (!node_ptr || !*node_ptr) {
 			return;
 		}
@@ -60,10 +60,10 @@ void DemParser_init(DemParser *p, CpDemOptions options, const char *input) {
 
 	// Initialize metadata fields
 	p->outer_template_params = VecF(PDemNode, ctor)();
-	vec_init(&p->detected_types);
-	vec_init(&p->names);
-	vec_init(&p->template_params);
-	vec_init(&p->forward_template_refs);
+	VecPDemNode_init(&p->detected_types);
+	VecPDemNode_init(&p->names);
+	VecPNodeList_init(&p->template_params);
+	VecPForwardTemplateRef_init(&p->forward_template_refs);
 }
 
 void DemParser_deinit(DemParser *p) {
@@ -128,7 +128,7 @@ DemNode *substitute_get(DemParser *p, ut64 id) {
 	if (p->detected_types.length <= id) {
 		return NULL;
 	}
-	PDemNode *type_node_ptr = vec_ptr_at(&p->detected_types, id);
+	PDemNode *type_node_ptr = VecPDemNode_at(&p->detected_types, id);
 	return type_node_ptr ? *type_node_ptr : NULL;
 }
 
@@ -136,12 +136,12 @@ DemNode *template_param_get(DemParser *p, ut64 level, ut64 index) {
 	if (level >= p->template_params.length) {
 		goto branch_fail;
 	}
-	NodeList **pptparams_at_level = vec_ptr_at(&p->template_params, level);
+	NodeList **pptparams_at_level = VecPNodeList_at(&p->template_params, level);
 	if (!(pptparams_at_level && *pptparams_at_level && index < (*pptparams_at_level)->length)) {
 		goto branch_fail;
 	}
 	NodeList *tparams_at_level = *pptparams_at_level;
-	PDemNode *node_ptr = vec_ptr_at(tparams_at_level, index);
+	PDemNode *node_ptr = VecPDemNode_at(tparams_at_level, index);
 	return node_ptr ? *node_ptr : NULL;
 
 branch_fail:
@@ -157,7 +157,11 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 	}
 
 	bool all_resolved = true;
-	vec_foreach(&p->forward_template_refs, fwd_ref, {
+	vec_foreach_ptr(PForwardTemplateRef, &p->forward_template_refs, pfwd_ref, {
+		if (!pfwd_ref) {
+			continue;
+		}
+		ForwardTemplateRef *fwd_ref = *pfwd_ref;
 		ut64 level = fwd_ref->level;
 		ut64 index = fwd_ref->index;
 

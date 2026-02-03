@@ -329,7 +329,7 @@ bool pp_pack_expansion_with_context(PPPackExpansionContext *ctx, DemString *out,
 			dem_string_append(out, "<expansion error>");
 			return true;
 		}
-		vec_foreach_ptr_typed_i(many_node->children, PDemNode, idx, child, {
+		vec_foreach_ptr_i(PDemNode, many_node->children, idx, child, {
 			if (idx > 0) {
 				dem_string_append(out, many_node->many_ty.sep);
 			}
@@ -710,7 +710,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		// Print children with separator
 		if (node->children) {
 			bool first = true;
-			vec_foreach_ptr_typed(node->children, PDemNode, child_ptr, {
+			vec_foreach_ptr(PDemNode, node->children, child_ptr, {
 				DemNode *child = child_ptr ? *child_ptr : NULL;
 				if (child) {
 					if (!first && node->many_ty.sep) {
@@ -798,7 +798,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			pp_type_with_quals(node, out, ctx);
 		} else {
 			// Regular type - print children and add decorator
-			vec_foreach_ptr_typed(node->children, PDemNode, child_ptr, {
+			vec_foreach_ptr(PDemNode, node->children, child_ptr, {
 				ast_pp(*child_ptr, out, ctx);
 			});
 		}
@@ -985,7 +985,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 	default:
 		// For all other nodes with children, recursively print all children
 		if (node->children) {
-			vec_foreach_ptr_typed(node->children, PDemNode, child_ptr, {
+			vec_foreach_ptr(PDemNode, node->children, child_ptr, {
 				DemNode *child = child_ptr ? *child_ptr : NULL;
 				if (child) {
 					ast_pp(child, out, ctx);
@@ -3069,7 +3069,7 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 	if (ctx->parser.trace && VecPDemNode_len(&p->detected_types) > 0) {
 		DemString buf = { 0 };
 		PPContext pp_ctx = { .opts = opts, .paren_depth = 0, .inside_template = false };
-		vec_foreach_ptr_typed_i(&p->detected_types, PDemNode, i, sub_ptr, {
+		vec_foreach_ptr_i(PDemNode, &p->detected_types, i, sub_ptr, {
 			DemNode *sub = sub_ptr ? *sub_ptr : NULL;
 			dem_string_appendf(&buf, "[%lu] = ", i);
 			if (sub) {

@@ -180,7 +180,7 @@ char *cpdem_get_demangled(CpDem *dem) {
 
 	/* add all qualifiers */
 	if (dem->qualifiers.length) {
-		vec_foreach_ptr_typed(&dem->qualifiers, DemString, q, {
+		vec_foreach_ptr(DemString, &dem->qualifiers, q, {
 			dem_string_concat(&demangled, q);
 			dem_string_append_n(&demangled, "::", 2);
 		});
@@ -188,7 +188,7 @@ char *cpdem_get_demangled(CpDem *dem) {
 		if (IS_XTOR(dem)) {
 			/* when adding into constructor or destructor, we don't need template params,
 			 * make sure to not add that, but stopping at "<" */
-			DemString *last_qualifier = vec_end(&dem->qualifiers);
+			DemString *last_qualifier = VecDemString_tail(&dem->qualifiers);
 			char *buf = last_qualifier->buf;
 			size_t buf_len = last_qualifier->len;
 			if (dem->is_ctor) {
@@ -276,23 +276,23 @@ CpDem *cpdem_public_name(CpDem *dem) {
 
 					/* it can be a base name, or a class name, or a custom type name */
 					if (cpdem_class_names(dem, &class_names, 1)) {
-						DemString *cname = vec_begin(&class_names);
+						DemString *cname = VecDemString_head(&class_names);
 						dem_string_concat(&dem->base_name, cname);
 						dem_string_deinit(cname);
-						vec_deinit(&class_names);
+						VecDemString_deinit(&class_names);
 
 						if (IS_TERM(dem)) {
 							dem_string_append_n(&dem->base_name, "::", 2);
 							ADV();
 						}
 					} else if (cpdem_name(dem)) {
-						vec_deinit(&class_names);
+						VecDemString_deinit(&class_names);
 						if (IS_TERM(dem)) {
 							dem_string_append_n(&dem->base_name, "::", 2);
 							ADV();
 						}
 					} else if (cpdem_custom_type_name(dem, &custom_name)) {
-						vec_deinit(&class_names);
+						VecDemString_deinit(&class_names);
 						dem_string_concat(&dem->base_name, &custom_name);
 						dem_string_deinit(&custom_name);
 
@@ -301,7 +301,7 @@ CpDem *cpdem_public_name(CpDem *dem) {
 							ADV();
 						}
 					} else {
-						vec_deinit(&class_names);
+						VecDemString_deinit(&class_names);
 						dem_string_deinit(&custom_name);
 						break;
 					}
@@ -338,27 +338,26 @@ CpDem *cpdem_public_name(CpDem *dem) {
 						&dem->suffix,
 						((ch == 'i') ? "type_info node" : "type_info function"));
 
-					dem_string_concat(&dem->base_name, vec_end(&class_names));
-					vec_foreach_ptr_typed(&class_names, DemString, cn, { dem_string_deinit(cn); });
-					vec_deinit(&class_names);
+					dem_string_concat(&dem->base_name, VecDemString_tail(&class_names));
+					VecDemString_deinit(&class_names);
 					return dem;
 				} else {
-					vec_deinit(&class_names);
+					VecDemString_deinit(&class_names);
 					ParamVec types = { 0 };
-					param_vec_init(&types);
+					VecParam_init(&types);
 					if (cpdem_param_type(dem, &types) && types.length) {
 						dem_string_append(
 							&dem->suffix,
 							((ch == 'i') ? "type_info node" : "type_info function"));
 
-						Param *first_param = vec_begin(&types);
+						Param *first_param = VecParam_head(&types);
 						DemString ti = first_param->name;
 						dem_string_concat(&dem->base_name, &ti);
-						param_vec_deinit(&types);
+						VecParam_deinit(&types);
 						return dem;
 					} else {
 						SEEK_TO(trial_start_pos);
-						param_vec_deinit(&types);
+						VecParam_deinit(&types);
 						/* continue parsing from beginning */
 					}
 				}
@@ -573,7 +572,7 @@ CpDem *cpdem_name(CpDem *dem) {
 				ADV_BY(3);
 
 				ParamVec params = { 0 };
-				param_vec_init(&params);
+				VecParam_init(&params);
 
 				/* NOTE: for now, this method will match more strings than it should.
 				 * If the provided string is correct, then the output will be correct,
@@ -583,14 +582,14 @@ CpDem *cpdem_name(CpDem *dem) {
 				if (cpdem_param_type(dem, &params) && params.length) {
 					if (PEEK() == '_') {
 						ADV();
-						Param *p = vec_begin(&params);
+						Param *p = VecParam_head(&params);
 						param_append_to_dem_string(p, &dem->custom_operator);
-						param_vec_deinit(&params);
+						VecParam_deinit(&params);
 						return dem;
 					} else {
 						/* restore to iniital parsing position and try for a normal name */
 						SEEK_TO(trial_start_pos);
-						param_vec_deinit(&params);
+						VecParam_deinit(&params);
 						goto parse_name;
 					}
 				}
@@ -675,7 +674,7 @@ CpDem *cpdem_class_names(CpDem *dem, ClassNameVec *class_names, ut64 qualifiers_
 	}
 
 	/* get each qualifier and append in qualifier name vector */
-	vec_reserve(class_names, qualifiers_count);
+	VecDemString_reserve(class_names, qualifiers_count);
 
 	while (qualifiers_count--) {
 		DemString name = { 0 };
@@ -715,7 +714,7 @@ CpDem *cpdem_class_names(CpDem *dem, ClassNameVec *class_names, ut64 qualifiers_
 		}
 		}
 
-		vec_append(class_names, &name);
+		VecDemString_append(class_names, &name);
 	}
 
 	return dem;
@@ -744,11 +743,11 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 	param_init(&param);
 
 #define ADD_PARAM(x) \
-	dem_string_append(&param.name, x) ? (param_vec_append(params, &param) ? dem : (param_deinit(&param), NULL)) : (param_deinit(&param), NULL)
+	dem_string_append(&param.name, x) ? (VecParam_append(params, &param) ? dem : (param_deinit(&param), NULL)) : (param_deinit(&param), NULL)
 
 	/** read a custom type from current read position and add it to params vector if success */
 #define ADD_NAMED_PARAM() \
-	cpdem_custom_type_name(dem, &param.name) ? (param_vec_append(params, &param) ? dem : (param_deinit(&param), NULL)) : (param_deinit(&param), NULL)
+	cpdem_custom_type_name(dem, &param.name) ? (VecParam_append(params, &param) ? dem : (param_deinit(&param), NULL)) : (param_deinit(&param), NULL)
 
 #define ADD_QUALIFIER_LIST() \
 	do { \
@@ -759,13 +758,13 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		} \
 \
 		ClassNameVec qualifiers = { 0 }; \
-		vec_init(&qualifiers); \
+		VecDemString_init(&qualifiers); \
 		if (!cpdem_class_names(dem, &qualifiers, qualifiers_count)) { \
 			param_deinit(&param); \
 			return NULL; \
 		} \
 \
-		vec_foreach_ptr_typed(&qualifiers, DemString, q, { \
+		vec_foreach_ptr(DemString, &qualifiers, q, { \
 			dem_string_concat(&param.name, q); \
 			dem_string_append_n(&param.name, "::", 2); \
 			dem_string_deinit(q); \
@@ -774,9 +773,9 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		/* HACK: to remove last two extraneous ":" (colon) symbols */ \
 		param.name.buf[--param.name.len] = 0; \
 		param.name.buf[--param.name.len] = 0; \
-		vec_deinit(&qualifiers); \
+		VecDemString_deinit(&qualifiers); \
 \
-		param_vec_append(params, &param); \
+		VecParam_append(params, &param); \
 	} while (0)
 
 #define MATCH_TYPE() \
@@ -819,7 +818,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 	case 't': { \
 		ADV(); \
 		if (cpdem_template_class(dem, &param.name)) { \
-			param_vec_append(params, &param); \
+			VecParam_append(params, &param); \
 			return dem; \
 		} else { \
 			param_deinit(&param); \
@@ -1037,30 +1036,30 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 
 			/* get all params */
 			ParamVec pf_params = { 0 };
-			param_vec_init(&pf_params);
+			VecParam_init(&pf_params);
 			while (PEEK() && cpdem_param_type(dem, &pf_params)) {
 			}
 			DemString param_list = { 0 };
 			dem_string_append_char(&param_list, '(');
 			param_vec_append_to_dem_string(&pf_params, &param_list);
 			dem_string_append_char(&param_list, ')');
-			param_vec_deinit(&pf_params);
+			VecParam_deinit(&pf_params);
 
 			/* get return type */
 			DemString return_type = { 0 };
 			if (PEEK() == '_') {
 				ADV();
 				ParamVec pf_return_type = { 0 };
-				param_vec_init(&pf_return_type);
+				VecParam_init(&pf_return_type);
 				cpdem_param_type(dem, &pf_return_type);
 				if (pf_return_type.length) {
-					Param *rp = vec_end(&pf_return_type);
+					Param *rp = VecParam_head(&pf_return_type);
 					param_append_to_dem_string(rp, &return_type);
-					param_vec_deinit(&pf_return_type);
+					VecParam_deinit(&pf_return_type);
 				} else {
 					dem_string_deinit(&return_type);
 					dem_string_deinit(&param_list);
-					param_vec_deinit(&pf_return_type);
+					VecParam_deinit(&pf_return_type);
 					param_deinit(&param);
 					return NULL;
 				}
@@ -1099,7 +1098,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 			dem_string_deinit(&return_type);
 			dem_string_deinit(&param_list);
 
-			param_vec_append(params, &param);
+			VecParam_append(params, &param);
 			return dem;
 		}
 
@@ -1210,7 +1209,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		char *base_typename = NULL;
 		if (dem->qualifiers.length) {
 			DemString tname = { 0 };
-			vec_foreach_ptr_typed(&dem->qualifiers, DemString, q, {
+			vec_foreach_ptr(DemString, &dem->qualifiers, q, {
 				dem_string_concat(&tname, q);
 				dem_string_append_n(&tname, "::", 2);
 			});
@@ -1243,7 +1242,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 				}
 
 				param_append_to(&p, name, base_typename);
-				param_vec_append(params, &p);
+				VecParam_append(params, &p);
 			}
 		} else {
 			/* if base name is considered as first type then assume array index starts at 1 in vector */
@@ -1254,7 +1253,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 			/* for each rep, make clone of a type at previous index and put it at the end in the param vec */
 			for (ut64 r = 0; r < (ut64)num_reps; r++) {
 				Param p = { 0 };
-				param_init_clone(&p, vec_ptr_at(params, typeidx));
+				param_init_clone(&p, VecParam_at(params, typeidx));
 
 				/* if we fell down from R */
 				if (is_ref) {
@@ -1268,7 +1267,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 					param_prepend_to(&p, suffix, "*");
 				}
 
-				param_vec_append(params, &p);
+				VecParam_append(params, &p);
 			}
 		}
 
@@ -1335,7 +1334,7 @@ CpDem *cpdem_template_param_type(CpDem *dem, ParamVec *params) {
 		const char *pos_after_val = CUR();
 
 		/* make it as if string is clear */
-		Param *param = vec_end(params);
+		Param *param = VecParam_tail(params);
 		param->name.len = param->prefix.len = param->suffix.len = 0;
 
 		if (!strcmp(param->name.buf, "bool")) {
@@ -1372,12 +1371,12 @@ CpDem *cpdem_template_class(CpDem *dem, DemString *tclass_name) {
 	}
 
 	ParamVec tparams = { 0 };
-	param_vec_init(&tparams);
+	VecParam_init(&tparams);
 
 	/* parse each template parameter */
 	while (numtp--) {
 		if (!cpdem_template_param_type(dem, &tparams)) {
-			param_vec_deinit(&tparams);
+			VecParam_deinit(&tparams);
 			return NULL;
 		}
 	}
@@ -1390,7 +1389,7 @@ CpDem *cpdem_template_class(CpDem *dem, DemString *tclass_name) {
 
 	/* release temp resources */
 	dem_string_deinit(&class_name);
-	param_vec_deinit(&tparams);
+	VecParam_deinit(&tparams);
 
 	return dem;
 }
@@ -1399,7 +1398,7 @@ CpDem *cpdem_template_class(CpDem *dem, DemString *tclass_name) {
  * Read a custom type name from mangled character array.
  *
  * \param dem       : Demanling context.
- * \param name_dstr : DemString object to append name to.
+ * \param name : DemString object to append name to.
  *
  * \return dem on success;
  * \return NULL otherwise.
@@ -1440,7 +1439,7 @@ CpDem *cpdem_template_function_keep_parsing(CpDem *dem) {
 
 	/* get all template paramter types */
 	ParamVec tparams = { 0 };
-	param_vec_init(&tparams);
+	VecParam_init(&tparams);
 	while (tparam_count-- && cpdem_template_param_type(dem, &tparams)) {
 	}
 	if (tparam_count > 0) {
@@ -1482,8 +1481,8 @@ CpDem *cpdem_template_function_keep_parsing(CpDem *dem) {
 					free(idx_str);
 					if (tparam_idx >= 0) {
 						Param tp_clone = { 0 };
-						param_init_clone(&tp_clone, vec_ptr_at(&tparams, tparam_idx));
-						param_vec_append(&dem->func_params, &tp_clone);
+						param_init_clone(&tp_clone, VecParam_at(&tparams, tparam_idx));
+						VecParam_append(&dem->func_params, &tp_clone);
 					} else {
 						goto cleanup_and_return;
 					}
@@ -1507,22 +1506,22 @@ CpDem *cpdem_template_function_keep_parsing(CpDem *dem) {
 	}
 
 	ParamVec tpf_ret_type = { 0 };
-	param_vec_init(&tpf_ret_type);
+	VecParam_init(&tpf_ret_type);
 	if (cpdem_param_type(dem, &tpf_ret_type) && tpf_ret_type.length) {
-		Param *return_type = vec_ptr_at(&tpf_ret_type, 0);
+		Param *return_type = VecParam_at(&tpf_ret_type, 0);
 		param_append_to_dem_string(return_type, &dem->prefix);
 	} else {
 		goto cleanup_and_return;
 	}
 
-	param_vec_deinit(&tpf_ret_type);
-	param_vec_deinit(&tparams);
+	VecParam_deinit(&tpf_ret_type);
+	VecParam_deinit(&tparams);
 	return dem;
 
 cleanup_and_return:
-	param_vec_deinit(&tpf_ret_type);
-	param_vec_deinit(&dem->func_params);
-	param_vec_deinit(&tparams);
+	VecParam_deinit(&tpf_ret_type);
+	VecParam_deinit(&dem->func_params);
+	VecParam_deinit(&tparams);
 	return NULL;
 }
 

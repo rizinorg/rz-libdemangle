@@ -101,20 +101,8 @@ typedef struct {
 #define param_prepend_to(p, field, val) \
 	((p) ? (dem_string_append_prefix_n(&((p)->field), val, strlen(val)) ? (p) : NULL) : NULL)
 
-typedef Vec(Param) ParamVec;
-
-#define param_vec_init(pv) vec_init((pv))
-
-#define param_vec_deinit(pv) \
-	do { \
-		vec_foreach_ptr_typed((pv), Param, param, { \
-			void *_ = param_deinit(param); \
-			((void)_); /* trick to silence unused variable warnings */ \
-		}); \
-		vec_deinit((pv)); \
-	} while (0)
-
-#define param_vec_append(pv, val) vec_append((pv), (val))
+VecIMPL(Param, param_deinit);
+typedef VecT(Param) ParamVec;
 
 Param *param_append_to_dem_string(Param *p, DemString *ds);
 ParamVec *param_vec_append_to_dem_string(ParamVec *pv, DemString *ds);

@@ -19,7 +19,8 @@ typedef struct StrIter {
 	const char *cur; /**< \b Current read position. */
 } StrIter;
 
-typedef Vec(DemString) ClassNameVec;
+VecIMPL(DemString, dem_string_deinit);
+typedef VecT(DemString) ClassNameVec;
 
 typedef struct {
 	StrIter original;

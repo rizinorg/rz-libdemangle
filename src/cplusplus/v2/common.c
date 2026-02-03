@@ -16,7 +16,7 @@ CpDem *cpdem_init(CpDem *dem, const char *mangled, CpDemOptions opts) {
 	dem_string_init(&dem->base_name);
 	dem_string_init(&dem->suffix);
 	dem_string_init(&dem->prefix);
-	param_vec_init(&dem->func_params);
+	VecParam_init(&dem->func_params);
 	return dem;
 }
 
@@ -26,11 +26,10 @@ void cpdem_fini(CpDem *dem) {
 	}
 
 	/* free all demstring and deinit qualifiers vector */
-	vec_foreach_ptr_typed(&dem->qualifiers, DemString, q, { dem_string_deinit(q); });
-	vec_deinit(&dem->qualifiers);
+	VecDemString_deinit(&dem->qualifiers);
 
 	// deinit all func params first
-	param_vec_deinit(&dem->func_params);
+	VecParam_deinit(&dem->func_params);
 
 	dem_string_deinit(&dem->base_name);
 	dem_string_deinit(&dem->prefix);

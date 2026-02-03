@@ -57,7 +57,7 @@ static int check_subs(const char *input, const char *expected_output, const char
 	}
 
 	for (size_t i = 0; i < expected_count; i++) {
-		DemNode **psub_node = vec_ptr_at(&ctx->parser.detected_types, i);
+		DemNode **psub_node = VecPDemNode_at(&ctx->parser.detected_types, i);
 		if (!psub_node || !*psub_node) {
 			printf(TBOLD TRED "  Substitution [%zu] is NULL\n" TRESET, i);
 			goto beach;

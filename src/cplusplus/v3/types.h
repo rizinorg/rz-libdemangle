@@ -117,8 +117,6 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_expanded_special_substitution,
 } CpDemTypeKind;
 
-typedef Vec(CpDemTypeKind) CpDemTypeKinds;
-
 typedef struct {
 	const char *buf;
 	size_t len;
