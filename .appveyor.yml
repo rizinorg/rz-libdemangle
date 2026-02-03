@@ -6,10 +6,27 @@ skip_tags: true
 
 # Environment variables
 environment:
+  VSVARSALLPATH2017: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat'
   VSVARSALLPATH2019: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat'
   VSVARSALLPATH2022: 'C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat'
 
   matrix:
+    # VS2017 64-bit (Static)
+    - builder: vs2017_64_static
+      PYTHON: 'C:\\Python310-x64'
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      BUILD_DIR: build
+      RUN_TESTS: true
+      STATIC_LIB: true
+      ENABLE_CLI: true
+    # VS2017 64-bit (Dynamic)
+    - builder: vs2017_64_dynamic
+      PYTHON: 'C:\\Python310-x64'
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      BUILD_DIR: build
+      RUN_TESTS: true
+      STATIC_LIB: false
+      ENABLE_CLI: true
     # VS2022 64-bit (Static)
     - builder: vs2022_64_static
       PYTHON: 'C:\\Python310-x64'
@@ -59,6 +76,10 @@ install:
 build_script:
   - appveyor AddMessage "Building rz-libdemangle (%builder%)"
 
+  - cmd: if %builder% == vs2017_64_static ( call "%VSVARSALLPATH2017%" x64 && %PYTHON%\Scripts\meson setup --buildtype=release --default-library=static -Denable_cli=%ENABLE_CLI% -Db_vscrt=static_from_buildtype build && %PYTHON%\Scripts\ninja -C build )
+
+  - cmd: if %builder% == vs2017_64_dynamic ( call "%VSVARSALLPATH2017%" x64 && %PYTHON%\Scripts\meson setup --buildtype=release --default-library=shared -Denable_cli=%ENABLE_CLI% build && %PYTHON%\Scripts\ninja -C build )
+
   - cmd: if %builder% == vs2022_64_static ( call "%VSVARSALLPATH2022%" x64 && %PYTHON%\Scripts\meson setup --buildtype=release --default-library=static -Denable_cli=%ENABLE_CLI% -Db_vscrt=static_from_buildtype build && %PYTHON%\Scripts\ninja -C build )
 
   - cmd: if %builder% == vs2022_64_dynamic ( call "%VSVARSALLPATH2022%" x64 && %PYTHON%\Scripts\meson setup --buildtype=release --default-library=shared -Denable_cli=%ENABLE_CLI% build && %PYTHON%\Scripts\ninja -C build )
@@ -67,6 +88,8 @@ build_script:
 
 # Test scripts
 test_script:
+  - cmd: if %builder% == vs2017_64_static ( call "%VSVARSALLPATH2017%" x64 )
+  - cmd: if %builder% == vs2017_64_dynamic ( call "%VSVARSALLPATH2017%" x64 )
   - cmd: if %builder% == vs2022_64_static ( call "%VSVARSALLPATH2022%" x64 )
   - cmd: if %builder% == vs2022_64_dynamic ( call "%VSVARSALLPATH2022%" x64 )
   - cmd: if %builder% == clang_cl_64 ( call "%VSVARSALLPATH2019%" x64 )
