@@ -180,7 +180,7 @@ char *cpdem_get_demangled(CpDem *dem) {
 
 	/* add all qualifiers */
 	if (dem->qualifiers.length) {
-		vec_foreach_ptr(&dem->qualifiers, q, {
+		vec_foreach_ptr_typed(&dem->qualifiers, DemString, q, {
 			dem_string_concat(&demangled, q);
 			dem_string_append_n(&demangled, "::", 2);
 		});
@@ -339,7 +339,7 @@ CpDem *cpdem_public_name(CpDem *dem) {
 						((ch == 'i') ? "type_info node" : "type_info function"));
 
 					dem_string_concat(&dem->base_name, vec_end(&class_names));
-					vec_foreach_ptr(&class_names, cn, { dem_string_deinit(cn); });
+					vec_foreach_ptr_typed(&class_names, DemString, cn, { dem_string_deinit(cn); });
 					vec_deinit(&class_names);
 					return dem;
 				} else {
@@ -765,7 +765,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 			return NULL; \
 		} \
 \
-		vec_foreach_ptr(&qualifiers, q, { \
+		vec_foreach_ptr_typed(&qualifiers, DemString, q, { \
 			dem_string_concat(&param.name, q); \
 			dem_string_append_n(&param.name, "::", 2); \
 			dem_string_deinit(q); \
@@ -1210,7 +1210,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		char *base_typename = NULL;
 		if (dem->qualifiers.length) {
 			DemString tname = { 0 };
-			vec_foreach_ptr(&dem->qualifiers, q, {
+			vec_foreach_ptr_typed(&dem->qualifiers, DemString, q, {
 				dem_string_concat(&tname, q);
 				dem_string_append_n(&tname, "::", 2);
 			});

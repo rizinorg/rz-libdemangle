@@ -29,7 +29,7 @@ ParamVec *param_vec_append_to_dem_string(ParamVec *pv, DemString *ds) {
 
 	if (pv->length) {
 		bool is_first_param = true;
-		vec_foreach_ptr(pv, param, {
+		vec_foreach_ptr_typed(pv, Param, param, {
 			if (is_first_param) {
 				is_first_param = false;
 			} else {

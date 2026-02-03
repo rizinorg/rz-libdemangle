@@ -17,7 +17,7 @@ void NodeList_copy(NodeList *dst, const NodeList *src) {
 	VecF(PDemNode, deinit)(dst);
 	VecF(PDemNode, init)(dst);
 
-	vec_foreach_ptr(src, node_ptr, {
+	vec_foreach_ptr_typed(src, PDemNode, node_ptr, {
 		if (!node_ptr || !*node_ptr) {
 			return;
 		}
@@ -45,7 +45,7 @@ NodeList *NodeList_make(NodeList *self, ut64 from, ut64 to) {
 // DemParser functions
 // ============================================================================
 
-void DemParser_init(DemParser *p,CpDemOptions options, const char *input) {
+void DemParser_init(DemParser *p, CpDemOptions options, const char *input) {
 	if (!p) {
 		return;
 	}

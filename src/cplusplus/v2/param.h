@@ -104,14 +104,16 @@ typedef struct {
 typedef Vec(Param) ParamVec;
 
 #define param_vec_init(pv) vec_init((pv))
+
 #define param_vec_deinit(pv) \
 	do { \
-		vec_foreach_ptr((pv), param, { \
+		vec_foreach_ptr_typed((pv), Param, param, { \
 			void *_ = param_deinit(param); \
 			((void)_); /* trick to silence unused variable warnings */ \
 		}); \
 		vec_deinit((pv)); \
 	} while (0)
+
 #define param_vec_append(pv, val) vec_append((pv), (val))
 
 Param *param_append_to_dem_string(Param *p, DemString *ds);

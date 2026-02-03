@@ -26,7 +26,7 @@ void cpdem_fini(CpDem *dem) {
 	}
 
 	/* free all demstring and deinit qualifiers vector */
-	vec_foreach_ptr(&dem->qualifiers, q, { dem_string_deinit(q); });
+	vec_foreach_ptr_typed(&dem->qualifiers, DemString, q, { dem_string_deinit(q); });
 	vec_deinit(&dem->qualifiers);
 
 	// deinit all func params first
