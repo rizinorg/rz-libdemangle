@@ -351,7 +351,8 @@ CpDem *cpdem_public_name(CpDem *dem) {
 							&dem->suffix,
 							((ch == 'i') ? "type_info node" : "type_info function"));
 
-						DemString ti = vec_front(&types).name;
+						Param *first_param = vec_begin(&types);
+						DemString ti = first_param->name;
 						dem_string_concat(&dem->base_name, &ti);
 						param_vec_deinit(&types);
 						return dem;

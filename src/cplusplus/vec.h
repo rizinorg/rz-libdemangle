@@ -29,7 +29,14 @@
 		ut64 capacity; \
 	}
 
+// MSVC doesn't support __typeof__ in C mode, so we need workarounds
+#if defined(_MSC_VER) && !defined(__cplusplus)
+// For MSVC C mode, we cannot use typeof. Code must use typed macros instead.
+// This is just a placeholder to avoid compilation errors in generic macros.
+#define VEC_DATA_TYPE(vec) void
+#else
 #define VEC_DATA_TYPE(vec) __typeof__((vec)->data[0])
+#endif
 
 #define vec_mem_size(vec) (sizeof(VEC_DATA_TYPE((vec))) * (vec)->length)
 
@@ -63,6 +70,9 @@
  *
  * \return vec->data[idx] if vec is not NULL.
  * \return {0} otherwise.
+ *
+ * WARNING: This macro uses compound literals which are not supported by MSVC.
+ * Prefer using vec_ptr_at() or vec_begin()/vec_end() for MSVC compatibility.
  */
 #define vec_at(vec, idx) ((vec) ? (vec)->data[idx] : ((VEC_DATA_TYPE(vec)){ 0 }))
 #define vec_front(vec)   vec_at(vec, 0)
@@ -165,10 +175,28 @@
  * NOTE: to maintain this macro in future, consider replacing the large iterator name with a small one
  * and then replace it back to an uncommon name :-)
  */
+#if defined(_MSC_VER) && !defined(__cplusplus)
+/* MSVC C mode doesn't support typeof, so we use void* and rely on implicit conversion */
 #define vec_foreach_ptr_i(v, I, var, body) \
 	do { \
 		size_t I = 0; \
-		VEC_DATA_TYPE(v) *var = { 0 }; \
+		void *var = NULL; \
+		if ((v) && (v)->length) { \
+			for ((I) = 0; \
+				(I) < (v)->length; \
+				++(I)) { \
+				var = (void *)&(v)->data[(I)]; \
+				{ \
+					body \
+				} \
+			} \
+		} \
+	} while (0)
+#else
+#define vec_foreach_ptr_i(v, I, var, body) \
+	do { \
+		size_t I = 0; \
+		VEC_DATA_TYPE(v) *var = NULL; \
 		if ((v) && (v)->length) { \
 			for ((I) = 0; \
 				(I) < (v)->length; \
@@ -180,6 +208,7 @@
 			} \
 		} \
 	} while (0)
+#endif
 #define vec_foreach_ptr(v, var, body) vec_foreach_ptr_i(v, _idx_##var, var, body)
 /**
  * Iterate over each element in vector.
@@ -196,7 +225,8 @@
 	do { \
 		size_t _it_##var = 0; \
 		VEC_DATA_TYPE(v) \
-		var = { 0 }; \
+		var; \
+		memset(&var, 0, sizeof(var)); \
 		if ((v) && (v)->length) { \
 			for ((_it_##var) = 0; \
 				(_it_##var) < (v)->length; \
@@ -384,5 +414,24 @@
 		} \
 		VecF(T, deinit)(self); \
 	}
+
+// MSVC-compatible typed foreach macros (since MSVC doesn't support __typeof__ in C mode)
+#define vec_foreach_ptr_typed_i(v, T, I, var, body) \
+	do { \
+		size_t I = 0; \
+		T *var = NULL; \
+		if ((v) && (v)->length) { \
+			for ((I) = 0; \
+				(I) < (v)->length; \
+				++(I)) { \
+				var = &(v)->data[(I)]; \
+				{ \
+					body \
+				} \
+			} \
+		} \
+	} while (0)
+
+#define vec_foreach_ptr_typed(v, T, var, body) vec_foreach_ptr_typed_i(v, T, _idx_##var, var, body)
 
 #endif // CPDEM_VEC_H
