@@ -13,7 +13,7 @@ environment:
   matrix:
     # VS2017 64-bit (Static)
     - builder: vs2017_64_static
-      PYTHON: 'C:\\Python310-x64'
+      PYTHON: 'C:\\Python310'
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       BUILD_DIR: build
       RUN_TESTS: true
@@ -21,7 +21,7 @@ environment:
       ENABLE_CLI: true
     # VS2017 64-bit (Dynamic)
     - builder: vs2017_64_dynamic
-      PYTHON: 'C:\\Python310-x64'
+      PYTHON: 'C:\\Python310'
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       BUILD_DIR: build
       RUN_TESTS: true
