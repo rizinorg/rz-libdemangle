@@ -18,9 +18,10 @@ set -e
 "$CLI" 'java' 'makeConcatWithConstants(Ljava/lang/String;)Ljava/lang/String;'
 "$CLI" -s 'java' 'makeConcatWithConstants(Ljava/lang/String;)Ljava/lang/String;'
 
-## use borland which is always available even when gpl is disabled.
 "$CLI" 'c++' '@Bar@foo9$wxqv'
 "$CLI" -s 'c++' '@Bar@foo9$wxqv'
+"$CLI" 'c++' '_ZTTNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr'
+"$CLI" -s 'c++' '_ZTTNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr'
 
 "$CLI" 'rust' 'ZN13test$u20$test4foobE'
 "$CLI" -s 'rust' 'ZN13test$u20$test4foobE'

@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2012-2019 pancake <pancake@nopcode.org>
 // SPDX-License-Identifier: LGPL-3.0-only
 #include "demangler_util.h"
-#include "cxx.h"
+#include "cplusplus/demangle.h"
 #include <rz_libdemangle.h>
 
-char *find_block_invoke(char *p) {
+static char *find_block_invoke(char *p) {
 	const size_t kwlen = strlen("_block_invoke");
 	char *last = NULL;
 	char *next = p;
@@ -166,5 +166,5 @@ DEM_LIB_EXPORT char *libdemangle_handler_objc(const char *symbol, RzDemangleOpts
 	if (res) {
 		return res;
 	}
-	return demangle_gpl_cxx(symbol, opts & RZ_DEMANGLE_OPT_SIMPLIFY);
+	return cp_demangle(symbol, cp_options_convert(opts & RZ_DEMANGLE_OPT_SIMPLIFY));
 }

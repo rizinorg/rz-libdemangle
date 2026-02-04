@@ -3,13 +3,6 @@
 
 #include "minunit.h"
 
-// Define expected result based on WITH_GPL
-#if WITH_GPL
-#define EXPECTED_GPL_RESULT "GetFileName(char*)"
-#else
-#define EXPECTED_GPL_RESULT NULL
-#endif
-
 mu_demangle_tests(objc,
 	mu_demangle_test("_OBJC_CLASS_$_Employee", "class Employee"),
 	mu_demangle_test("_OBJC_Class_Employee", "class Employee"),
@@ -33,7 +26,7 @@ mu_demangle_tests(objc,
 	mu_demangle_test("___25", NULL),
 	mu_demangle_test("___25-", NULL),
 	mu_demangle_test("___25-[", NULL),
-	mu_demangle_test("_Z11GetFileNamePc", EXPECTED_GPL_RESULT),
+	mu_demangle_test("_Z11GetFileNamePc", "GetFileName(char*)"),
 	// end
 );
 
