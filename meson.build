@@ -41,39 +41,20 @@ tests = [
 
     'subs', # Substitution table tests
 
-    'cxx.00',
-    'cxx.01',
-    'cxx.02',
-    'cxx.03',
-    'cxx.04',
-    'cxx.05',
-    'cxx.06',
-    'cxx.07',
-    'cxx.08',
-    'cxx.09',
-    'cxx.10',
-    'cxx.11',
-    'cxx.12',
-    'cxx.13',
-    'cxx.14',
-    'cxx.15',
-    'cxx.16',
-    'cxx.17',
-    'cxx.18',
-    'cxx.19',
-    'cxx.20',
-    'cxx.21',
-    'cxx.22',
-    'cxx.23',
-    'cxx.24',
-    'cxx.25',
-    'cxx.26',
-
-    'cxx_base',
-    'cxx_gnu_v2',
-    'cxx_gnu_v3_type',
-    'cxx_gnu_v3_template',
-    'cxx_gnu_v3_llvm',
+    # C++ demangling tests (organized by category)
+    'cxx_ctor_dtor',
+    'cxx_function',
+    'cxx_lambda',
+    'cxx_method',
+    'cxx_operator',
+    'cxx_other',
+    'cxx_special',
+    'cxx_template',
+    'cxx_thunk',
+    'cxx_typeinfo',
+    'cxx_vtable',
+    
+    'cxx_gnu_v2',  # Keep GNU v2 separate (different ABI)
 ]
 
 unit_tests = [
@@ -150,18 +131,40 @@ if get_option('enable_tests') and not meson.is_subproject()
     if get_option('b_sanitize').contains('undefined')
         test_dependencies += cc.find_library('ubsan')
     endif
+    
     # Tests that need longer timeout due to large number of test cases
-    # (especially when running with sanitizers like ASAN)
-    slow_tests = ['cxx_base']
+    slow_tests = ['cxx_method', 'cxx_template', 'cxx_ctor_dtor']
+    
+    # Tests that use CSV data files and need SOURCE_ROOT defined
+    csv_tests = [
+        'cxx_ctor_dtor',
+        'cxx_function',
+        'cxx_lambda',
+        'cxx_method',
+        'cxx_operator',
+        'cxx_other',
+        'cxx_special',
+        'cxx_template',
+        'cxx_thunk',
+        'cxx_typeinfo',
+        'cxx_vtable',
+    ]
 
     foreach test : tests
+        test_c_args = common_c_args
+        
+        # Add SOURCE_ROOT for CSV-based tests
+        if test in csv_tests
+            test_c_args += '-DSOURCE_ROOT="@0@"'.format(meson.project_source_root())
+        endif
+        
         exe = executable(
             'test_@0@'.format(test),
             'test/test_@0@.c'.format(test),
             link_whole : libdemangle.get_static_lib(),
             include_directories : include_directories(['include', 'test']),
             dependencies : test_dependencies,
-            c_args : common_c_args,
+            c_args : test_c_args,
             install : false,
             install_rpath : '',
             implicit_include_directories : false,

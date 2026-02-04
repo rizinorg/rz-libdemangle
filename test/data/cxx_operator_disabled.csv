@@ -1,0 +1,31 @@
+mangled,demangled
+_ZNSolsEPSt15basic_streambufIcSt11char_traitsIcEE_ptr,std::ostream::operator<<(std::streambuf*)
+_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc_ptr,"std::ostream& std::operator<< <std::char_traits<char>>(std::ostream&, char const*)"
+_ZNK3Ncr6Silver7Utility6detail12CallOnThreadIZ53-[DeploymentSetupController handleManualServerEntry:]E3$_5EclIJEEEDTclclL_ZNS2_4getTIS4_EERT_vEEspclsr3stdE7forwardIT_Efp_EEEDpOSA_,decltype(-[DeploymentSetupController handleManualServerEntry:]::$_5& Ncr::Silver::Utility::detail::getT<-[DeploymentSetupController handleManualServerEntry:]::$_5>()()()) Ncr::Silver::Utility::detail::CallOnThread<-[DeploymentSetupController handleManualServerEntry:]::$_5>::operator()<>() const
+_ZN6test191gINS_1AEEEvNS_1SIXadsrT_cviEEE,void test19::g<test19::A>(test19::S<&test19::A::operator int>)
+_ZZN4NIds4NStr14TCStrAggregateINS0_13TCTCStrTraitsINS0_11TCStrTraitsIcNS0_17CDefaultStrParamsEEENS0_14TCStrImp_FixedIS5_Lx256EEEEEE21f_AddFromIteratorUTF8INS0_16CStrIteratorUTF8EEEvRxRKT_ENKSA_ISB_EUlmE0_clEm,"void NIds::NStr::TCStrAggregate<NIds::NStr::TCTCStrTraits<NIds::NStr::TCStrTraits<char, NIds::NStr::CDefaultStrParams>, NIds::NStr::TCStrImp_Fixed<NIds::NStr::TCStrTraits<char, NIds::NStr::CDefaultStrParams>, 256ll>>>::f_AddFromIteratorUTF8<NIds::NStr::CStrIteratorUTF8>(long long&, NIds::NStr::CStrIteratorUTF8 const&)::NIds::NStr::TCStrAggregate<NIds::NStr::TCTCStrTraits<NIds::NStr::TCStrTraits<char, NIds::NStr::CDefaultStrParams>, NIds::NStr::TCStrImp_Fixed<NIds::NStr::TCStrTraits<char, NIds::NStr::CDefaultStrParams>, 256ll>>>::f_AddFromIteratorUTF8<NIds::NStr::CStrIteratorUTF8>::'lambda0'(unsigned long)::operator()(unsigned long) const"
+_ZZN4NIds4NStr14TCStrAggregateINS0_13TCTCStrTraitsINS0_11TCStrTraitsIcNS0_17CDefaultStrParamsEEENS0_14TCStrImp_FixedIS5_Lx256EEEEEE21f_AddFromIteratorUTF8INS0_16CStrIteratorUTF8EEEvRxRKT_ENKSA_ISB_EUt0_clEm,"void NIds::NStr::TCStrAggregate<NIds::NStr::TCTCStrTraits<NIds::NStr::TCStrTraits<char, NIds::NStr::CDefaultStrParams>, NIds::NStr::TCStrImp_Fixed<NIds::NStr::TCStrTraits<char, NIds::NStr::CDefaultStrParams>, 256ll>>>::f_AddFromIteratorUTF8<NIds::NStr::CStrIteratorUTF8>(long long&, NIds::NStr::CStrIteratorUTF8 const&)::NIds::NStr::TCStrAggregate<NIds::NStr::TCTCStrTraits<NIds::NStr::TCStrTraits<char, NIds::NStr::CDefaultStrParams>, NIds::NStr::TCStrImp_Fixed<NIds::NStr::TCStrTraits<char, NIds::NStr::CDefaultStrParams>, 256ll>>>::f_AddFromIteratorUTF8<NIds::NStr::CStrIteratorUTF8>::'unnamed0'::operator()(unsigned long) const"
+_ZZN1S1fEiiEd0_NKUlvE_clEv,"S::f(int, int)::'lambda'()::operator()() const"
+_ZNK1AIJ1Z1Y1XEEcv1BIJDpPT_EEIJS2_S1_S0_EEEv,"A<Z, Y, X>::operator B<X*, Y*, Z*><X, Y, Z>() const"
+_ZZ18test_assign_throwsI20small_throws_on_copyLb0EEvvENKUlRNSt3__13anyEOT_E_clIRS0_EEDaS3_S5_,"auto void test_assign_throws<small_throws_on_copy, false>()::'lambda'(std::__1::any&, auto&&)::operator()<small_throws_on_copy&>(std::__1::any&, auto&&) const"
+_ZN5OuterI4MarpEcv7MuncherIJT_T0_DpT1_EEI4MerpS0_JicfEEEv,"Outer<Marp>::operator Muncher<Merp, Marp, int, char, float><Merp, Marp, int, char, float>()"
+_ZZN5OuterI4MarpEcv7MuncherIJT_T0_DpT1_EEI4MerpS0_JicfEEEvEN1ScvS9_Ev,"Outer<Marp>::operator Muncher<Merp, Marp, int, char, float><Merp, Marp, int, char, float>()::S::operator Merp()"
+_ZN1Scv7MuncherIJDpPT_EEIJFivEA_iEEEv,"S::operator Muncher<int (*)(), int (*) []><int (), int []>()"
+_ZNK13StaticMembersIfE1xMUlvE_clEv,StaticMembers<float>::x::'lambda'()::operator()() const
+_ZNK10inline_varMUlvE_clEv,inline_var::'lambda'()::operator()() const
+_ZNK1xMUlTyT_E_clIiEEDaS_,auto x::'lambda'<typename $T>($T)::operator()<int>(x) const
+_ZNK1xMUlTnPA3_ivE_clILS0_0EEEDav,auto x::'lambda'<int (*$N) [3]>()::operator()<(int [3])0>() const
+_ZNK1xMUlTyTtTyTnT_TpTnPA3_TL0__ETpTyvE_clIi1XJfEEEDav,"auto x::'lambda'<typename $T, template<typename $T0, $T $N, $T0 (*...$N0) [3]> typename $TT, typename ...$T1>()::operator()<int, X, float>() const"
+_ZZ11inline_funcvENKUlTyTyT_T0_E_clIiiEEDaS_S0_,"auto inline_func()::'lambda'<typename $T, typename $T0>($T, $T0)::operator()<int, int>($T, $T0) const"
+_ZZ11inline_funcvENKUlTyTyT_T1_T0_E_clIiiiEEDaS_S0_S1_,"auto inline_func()::'lambda'<typename $T, typename $T0>($T, auto, $T0)::operator()<int, int, int>($T, auto, $T0) const"
+_ZN1XIZ1fIiEvOT_EUlOT_DpT0_E_EclIJEEEvDpT_,"void X<void f<int>(int&&)::'lambda'(auto&&, auto...)>::operator()<>()"
+_ZN1XIZ1fIiEvOT_EUlS2_DpT0_E_EclIJEEEvDpT_,"void X<void f<int>(int&&)::'lambda'(int&&, auto...)>::operator()<>()"
+_ZZZZN6abcdef9abcdefghi29abcdefabcdefabcdefabcefabcdef27xxxxxxxxxxxxxxxxxxxxxxxxxxxEN4absl8DurationERKNSt3__u12basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEEPNS1_19yyyyyyyyyyyyyyyyyyyEENK3$_5clEvENKUlvE_clEvE6zzzzzz,"abcdef::abcdefghi::abcdefabcdefabcdefabcefabcdef::xxxxxxxxxxxxxxxxxxxxxxxxxxx(absl::Duration, std::__u::basic_string<char, std::__u::char_traits<char>, std::__u::allocator<char>> const&, abcdef::abcdefghi::abcdefabcdefabcdefabcefabcdef::yyyyyyyyyyyyyyyyyyy*)::$_5::operator()() const::'lambda'()::operator()() const::zzzzzz"
+_Zcv1BIRT_EIS1_E,operator B<><>
+_ZZN5test71fIiEEvvENKUlTyQaa1CIT_E1CITL0__ET0_E_clIiiEEDaS3_Q1CIDtfp_EE,"auto void test7::f<int>()::'lambda'<typename $T> requires C<T> && C<TL0_> (auto)::operator()<int, int>(auto) const requires C<decltype (fp)>"
+_ZZN5test71fIiEEvvENKUlTyQaa1CIT_E1CITL0__ET0_E0_clIiiEEDaS3_Qaa1CIDtfp_EELb1E,"auto void test7::f<int>()::'lambda0'<typename $T> requires C<T> && C<TL0_> (auto)::operator()<int, int>(auto) const requires C<decltype (fp)> && true"
+_ZZN5test71fIiEEvvENKUlTyQaa1CIT_E1CITL0__ET0_E1_clIiiEEDaS3_Q1CIDtfp_EE,"auto void test7::f<int>()::'lambda1'<typename $T> requires C<T> && C<TL0_> (auto)::operator()<int, int>(auto) const requires C<decltype (fp)>"
+_ZZN5test71fIiEEvvENKUlTyT0_E_clIiiEEDaS1_,"auto void test7::f<int>()::'lambda'<typename $T>(auto)::operator()<int, int>(auto) const"
+_ZNH3FooclERKS_,Foo::operator()(this Foo const&)
+__ZNKSt3__19nullptr_tcvPT_IcEEv,std::__1::nullptr_t::operator char*<char>() const
+__ZNKSt3__19nullptr_tcvPT_IKcEEv,std::__1::nullptr_t::operator char const*<char const>() const

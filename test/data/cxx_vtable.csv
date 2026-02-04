@@ -1,0 +1,1491 @@
+mangled,demangled
+_ZTV10MenuHelper_ptr,vtable for MenuHelper
+_ZTV14ClickableLabel_ptr,vtable for ClickableLabel
+_ZTV15FormInputDialog_ptr,vtable for FormInputDialog
+_ZTVSt15basic_streambufIcSt11char_traitsIcEE_ptr,"vtable for std::basic_streambuf<char, std::char_traits<char>>"
+_ZTVSt9basic_iosIcSt11char_traitsIcEE_ptr,"vtable for std::basic_ios<char, std::char_traits<char>>"
+_ZTV11ImageLoader,vtable for ImageLoader
+_ZTV16ImageLoaderMachO,vtable for ImageLoaderMachO
+_ZTV23ImageLoaderMachOClassic,vtable for ImageLoaderMachOClassic
+_ZTV26ImageLoaderMachOCompressed,vtable for ImageLoaderMachOCompressed
+_ZTVSt12length_error,vtable for std::length_error
+_ZTVSt11logic_error,vtable for std::logic_error
+_ZTVSt13bad_exception,vtable for std::bad_exception
+_ZTVSt9exception,vtable for std::exception
+_ZTVSt9bad_alloc,vtable for std::bad_alloc
+_ZTVN10__cxxabiv120__si_class_type_infoE,vtable for __cxxabiv1::__si_class_type_info
+_ZTVN10__cxxabiv117__class_type_infoE,vtable for __cxxabiv1::__class_type_info
+_ZTVSt9type_info,vtable for std::type_info
+_ZTVN10__cxxabiv119__pointer_type_infoE,vtable for __cxxabiv1::__pointer_type_info
+_ZTVN10__cxxabiv117__pbase_type_infoE,vtable for __cxxabiv1::__pbase_type_info
+_ZTVN10__cxxabiv123__fundamental_type_infoE,vtable for __cxxabiv1::__fundamental_type_info
+_ZTVN9libunwind12UnwindCursorINS_17LocalAddressSpaceENS_16Registers_x86_64EEE,"vtable for libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_x86_64>"
+_ZTVN12_GLOBAL__N_110ASTDumpXMLE,vtable for (anonymous namespace)::ASTDumpXML
+_ZTVN12_GLOBAL__N_117InheritanceViewerE,vtable for (anonymous namespace)::InheritanceViewer
+_ZTVN12_GLOBAL__N_118DeclContextPrinterE,vtable for (anonymous namespace)::DeclContextPrinter
+_ZTVN12_GLOBAL__N_19ASTViewerE,vtable for (anonymous namespace)::ASTViewer
+_ZTVN12_GLOBAL__N_113ASTPrinterXMLE,vtable for (anonymous namespace)::ASTPrinterXML
+_ZTVN12_GLOBAL__N_110ASTPrinterE,vtable for (anonymous namespace)::ASTPrinter
+_ZTVN5clang14ASTMergeActionE,vtable for clang::ASTMergeAction
+_ZTVN12_GLOBAL__N_129AugmentedCodeCompleteConsumerE,vtable for (anonymous namespace)::AugmentedCodeCompleteConsumer
+_ZTVN12_GLOBAL__N_122StoredDiagnosticClientE,vtable for (anonymous namespace)::StoredDiagnosticClient
+_ZTVN12_GLOBAL__N_124PrecompilePreambleActionE,vtable for (anonymous namespace)::PrecompilePreambleAction
+_ZTVN12_GLOBAL__N_126PrecompilePreambleConsumerE,vtable for (anonymous namespace)::PrecompilePreambleConsumer
+_ZTVN12_GLOBAL__N_125TopLevelDeclTrackerActionE,vtable for (anonymous namespace)::TopLevelDeclTrackerAction
+_ZTVN12_GLOBAL__N_127TopLevelDeclTrackerConsumerE,vtable for (anonymous namespace)::TopLevelDeclTrackerConsumer
+_ZTVN12_GLOBAL__N_116ASTInfoCollectorE,vtable for (anonymous namespace)::ASTInfoCollector
+_ZTVN5clang14BoostConActionE,vtable for clang::BoostConAction
+_ZTVN12_GLOBAL__N_119BoostConASTConsumerE,vtable for (anonymous namespace)::BoostConASTConsumer
+_ZTVN12_GLOBAL__N_112StatListenerE,vtable for (anonymous namespace)::StatListener
+_ZTVN12_GLOBAL__N_122DependencyFileCallbackE,vtable for (anonymous namespace)::DependencyFileCallback
+_ZTVN5clang14FrontendActionE,vtable for clang::FrontendAction
+_ZTVN5clang17ASTFrontendActionE,vtable for clang::ASTFrontendAction
+_ZTVN5clang26PreprocessorFrontendActionE,vtable for clang::PreprocessorFrontendAction
+_ZTVN12_GLOBAL__N_124DeserializedDeclsCheckerE,vtable for (anonymous namespace)::DeserializedDeclsChecker
+_ZTVN12_GLOBAL__N_123DeserializedDeclsDumperE,vtable for (anonymous namespace)::DeserializedDeclsDumper
+_ZTVN5clang14InitOnlyActionE,vtable for clang::InitOnlyAction
+_ZTVN5clang14ASTPrintActionE,vtable for clang::ASTPrintAction
+_ZTVN5clang17ASTPrintXMLActionE,vtable for clang::ASTPrintXMLAction
+_ZTVN5clang13ASTDumpActionE,vtable for clang::ASTDumpAction
+_ZTVN5clang16ASTDumpXMLActionE,vtable for clang::ASTDumpXMLAction
+_ZTVN5clang13ASTViewActionE,vtable for clang::ASTViewAction
+_ZTVN5clang22DeclContextPrintActionE,vtable for clang::DeclContextPrintAction
+_ZTVN5clang17GeneratePCHActionE,vtable for clang::GeneratePCHAction
+_ZTVN5clang21InheritanceViewActionE,vtable for clang::InheritanceViewAction
+_ZTVN5clang16SyntaxOnlyActionE,vtable for clang::SyntaxOnlyAction
+_ZTVN5clang19PrintPreambleActionE,vtable for clang::PrintPreambleAction
+_ZTVN5clang19DumpRawTokensActionE,vtable for clang::DumpRawTokensAction
+_ZTVN5clang16DumpTokensActionE,vtable for clang::DumpTokensAction
+_ZTVN5clang17GeneratePTHActionE,vtable for clang::GeneratePTHAction
+_ZTVN5clang20PreprocessOnlyActionE,vtable for clang::PreprocessOnlyAction
+_ZTVN5clang23PrintPreprocessedActionE,vtable for clang::PrintPreprocessedAction
+_ZTVN12_GLOBAL__N_122HeaderIncludesCallbackE,vtable for (anonymous namespace)::HeaderIncludesCallback
+_ZTVN5clang35MultiplexASTDeserializationListenerE,vtable for clang::MultiplexASTDeserializationListener
+_ZTVN5clang28MultiplexASTMutationListenerE,vtable for clang::MultiplexASTMutationListener
+_ZTVN5clang17MultiplexConsumerE,vtable for clang::MultiplexConsumer
+_ZTVN12_GLOBAL__N_120UnknownPragmaHandlerE,vtable for (anonymous namespace)::UnknownPragmaHandler
+_ZTVN12_GLOBAL__N_124PrintPPOutputPPCallbacksE,vtable for (anonymous namespace)::PrintPPOutputPPCallbacks
+_ZTVN5clang20TextDiagnosticBufferE,vtable for clang::TextDiagnosticBuffer
+_ZTVN5clang21TextDiagnosticPrinterE,vtable for clang::TextDiagnosticPrinter
+_ZTVN5clang23VerifyDiagnosticsClientE,vtable for clang::VerifyDiagnosticsClient
+_ZTVN12_GLOBAL__N_117StandardDirectiveE,vtable for (anonymous namespace)::StandardDirective
+_ZTVN12_GLOBAL__N_19DirectiveE,vtable for (anonymous namespace)::Directive
+_ZTVN12_GLOBAL__N_114RegexDirectiveE,vtable for (anonymous namespace)::RegexDirective
+_ZTVN5clang6driver6ActionE,vtable for clang::driver::Action
+_ZTVN5clang6driver7ArgListE,vtable for clang::driver::ArgList
+_ZTVN5clang6driver12InputArgListE,vtable for clang::driver::InputArgList
+_ZTVN5clang6driver14DerivedArgListE,vtable for clang::driver::DerivedArgList
+_ZTVN5clang6driver8HostInfoE,vtable for clang::driver::HostInfo
+_ZTVN12_GLOBAL__N_115UnknownHostInfoE,vtable for (anonymous namespace)::UnknownHostInfo
+_ZTVN12_GLOBAL__N_113MinGWHostInfoE,vtable for (anonymous namespace)::MinGWHostInfo
+_ZTVN12_GLOBAL__N_115WindowsHostInfoE,vtable for (anonymous namespace)::WindowsHostInfo
+_ZTVN12_GLOBAL__N_111TCEHostInfoE,vtable for (anonymous namespace)::TCEHostInfo
+_ZTVN12_GLOBAL__N_113LinuxHostInfoE,vtable for (anonymous namespace)::LinuxHostInfo
+_ZTVN12_GLOBAL__N_117DragonFlyHostInfoE,vtable for (anonymous namespace)::DragonFlyHostInfo
+_ZTVN12_GLOBAL__N_113MinixHostInfoE,vtable for (anonymous namespace)::MinixHostInfo
+_ZTVN12_GLOBAL__N_114NetBSDHostInfoE,vtable for (anonymous namespace)::NetBSDHostInfo
+_ZTVN12_GLOBAL__N_115FreeBSDHostInfoE,vtable for (anonymous namespace)::FreeBSDHostInfo
+_ZTVN12_GLOBAL__N_115OpenBSDHostInfoE,vtable for (anonymous namespace)::OpenBSDHostInfo
+_ZTVN12_GLOBAL__N_114DarwinHostInfoE,vtable for (anonymous namespace)::DarwinHostInfo
+_ZTVN12_GLOBAL__N_116AuroraUXHostInfoE,vtable for (anonymous namespace)::AuroraUXHostInfo
+_ZTVN5clang6driver3JobE,vtable for clang::driver::Job
+_ZTVN5clang6driver7JobListE,vtable for clang::driver::JobList
+_ZTVN5clang6driver6OptionE,vtable for clang::driver::Option
+_ZTVN5clang6driver11OptionGroupE,vtable for clang::driver::OptionGroup
+_ZTVN5clang6driver11InputOptionE,vtable for clang::driver::InputOption
+_ZTVN5clang6driver13UnknownOptionE,vtable for clang::driver::UnknownOption
+_ZTVN5clang6driver10FlagOptionE,vtable for clang::driver::FlagOption
+_ZTVN5clang6driver12JoinedOptionE,vtable for clang::driver::JoinedOption
+_ZTVN5clang6driver17CommaJoinedOptionE,vtable for clang::driver::CommaJoinedOption
+_ZTVN5clang6driver14SeparateOptionE,vtable for clang::driver::SeparateOption
+_ZTVN5clang6driver14MultiArgOptionE,vtable for clang::driver::MultiArgOption
+_ZTVN5clang6driver22JoinedOrSeparateOptionE,vtable for clang::driver::JoinedOrSeparateOption
+_ZTVN5clang6driver23JoinedAndSeparateOptionE,vtable for clang::driver::JoinedAndSeparateOption
+_ZTVN5clang6driver4ToolE,vtable for clang::driver::Tool
+_ZTVN5clang6driver9ToolChainE,vtable for clang::driver::ToolChain
+_ZTVN5clang6driver10toolchains6DarwinE,vtable for clang::driver::toolchains::Darwin
+_ZTVN5clang6driver10toolchains9DarwinGCCE,vtable for clang::driver::toolchains::DarwinGCC
+_ZTVN5clang6driver10toolchains11DarwinClangE,vtable for clang::driver::toolchains::DarwinClang
+_ZTVN5clang6driver10toolchains11Generic_GCCE,vtable for clang::driver::toolchains::Generic_GCC
+_ZTVN5clang6driver10toolchains12TCEToolChainE,vtable for clang::driver::toolchains::TCEToolChain
+_ZTVN5clang6driver10toolchains7OpenBSDE,vtable for clang::driver::toolchains::OpenBSD
+_ZTVN5clang6driver10toolchains7FreeBSDE,vtable for clang::driver::toolchains::FreeBSD
+_ZTVN5clang6driver10toolchains6NetBSDE,vtable for clang::driver::toolchains::NetBSD
+_ZTVN5clang6driver10toolchains5MinixE,vtable for clang::driver::toolchains::Minix
+_ZTVN5clang6driver10toolchains8AuroraUXE,vtable for clang::driver::toolchains::AuroraUX
+_ZTVN5clang6driver10toolchains5LinuxE,vtable for clang::driver::toolchains::Linux
+_ZTVN5clang6driver10toolchains9DragonFlyE,vtable for clang::driver::toolchains::DragonFly
+_ZTVN5clang6driver10toolchains7WindowsE,vtable for clang::driver::toolchains::Windows
+_ZTVN5clang6driver10toolchains18Darwin_Generic_GCCE,vtable for clang::driver::toolchains::Darwin_Generic_GCC
+_ZTVN5clang6driver5tools5ClangE,vtable for clang::driver::tools::Clang
+_ZTVN5clang6driver5tools7ClangAsE,vtable for clang::driver::tools::ClangAs
+_ZTVN5clang6driver5tools3gcc6CommonE,vtable for clang::driver::tools::gcc::Common
+_ZTVN5clang6driver5tools3gcc10PreprocessE,vtable for clang::driver::tools::gcc::Preprocess
+_ZTVN5clang6driver5tools3gcc10PrecompileE,vtable for clang::driver::tools::gcc::Precompile
+_ZTVN5clang6driver5tools3gcc7CompileE,vtable for clang::driver::tools::gcc::Compile
+_ZTVN5clang6driver5tools3gcc8AssembleE,vtable for clang::driver::tools::gcc::Assemble
+_ZTVN5clang6driver5tools3gcc4LinkE,vtable for clang::driver::tools::gcc::Link
+_ZTVN5clang6driver5tools6darwin10PreprocessE,vtable for clang::driver::tools::darwin::Preprocess
+_ZTVN5clang6driver5tools6darwin7CompileE,vtable for clang::driver::tools::darwin::Compile
+_ZTVN5clang6driver5tools6darwin8AssembleE,vtable for clang::driver::tools::darwin::Assemble
+_ZTVN5clang6driver5tools6darwin4LinkE,vtable for clang::driver::tools::darwin::Link
+_ZTVN5clang6driver5tools6darwin4LipoE,vtable for clang::driver::tools::darwin::Lipo
+_ZTVN5clang6driver5tools6darwin8DsymutilE,vtable for clang::driver::tools::darwin::Dsymutil
+_ZTVN5clang6driver5tools7openbsd8AssembleE,vtable for clang::driver::tools::openbsd::Assemble
+_ZTVN5clang6driver5tools7openbsd4LinkE,vtable for clang::driver::tools::openbsd::Link
+_ZTVN5clang6driver5tools7freebsd8AssembleE,vtable for clang::driver::tools::freebsd::Assemble
+_ZTVN5clang6driver5tools7freebsd4LinkE,vtable for clang::driver::tools::freebsd::Link
+_ZTVN5clang6driver5tools6netbsd8AssembleE,vtable for clang::driver::tools::netbsd::Assemble
+_ZTVN5clang6driver5tools6netbsd4LinkE,vtable for clang::driver::tools::netbsd::Link
+_ZTVN5clang6driver5tools10linuxtools8AssembleE,vtable for clang::driver::tools::linuxtools::Assemble
+_ZTVN5clang6driver5tools10linuxtools4LinkE,vtable for clang::driver::tools::linuxtools::Link
+_ZTVN5clang6driver5tools5minix8AssembleE,vtable for clang::driver::tools::minix::Assemble
+_ZTVN5clang6driver5tools5minix4LinkE,vtable for clang::driver::tools::minix::Link
+_ZTVN5clang6driver5tools8auroraux8AssembleE,vtable for clang::driver::tools::auroraux::Assemble
+_ZTVN5clang6driver5tools8auroraux4LinkE,vtable for clang::driver::tools::auroraux::Link
+_ZTVN5clang6driver5tools9dragonfly8AssembleE,vtable for clang::driver::tools::dragonfly::Assemble
+_ZTVN5clang6driver5tools9dragonfly4LinkE,vtable for clang::driver::tools::dragonfly::Link
+_ZTVN5clang6driver5tools12visualstudio4LinkE,vtable for clang::driver::tools::visualstudio::Link
+_ZTVN5clang26ASTDeserializationListenerE,vtable for clang::ASTDeserializationListener
+_ZTVN5clang17ASTReaderListenerE,vtable for clang::ASTReaderListener
+_ZTVN5clang21ASTIdentifierIteratorE,vtable for clang::ASTIdentifierIterator
+_ZTVN5clang9ASTReaderE,vtable for clang::ASTReader
+_ZTVN5clang12PCHValidatorE,vtable for clang::PCHValidator
+_ZTVN12_GLOBAL__N_112ASTStatCacheE,vtable for (anonymous namespace)::ASTStatCache
+_ZTVN5clang9ASTWriterE,vtable for clang::ASTWriter
+_ZTVN5clang24ASTSerializationListenerE,vtable for clang::ASTSerializationListener
+_ZTVN5clang12PCHGeneratorE,vtable for clang::PCHGenerator
+_ZTVN5clang7CodeGen8CGCXXABIE,vtable for clang::CodeGen::CGCXXABI
+_ZTVN12_GLOBAL__N_113CallLocalDtorE,vtable for (anonymous namespace)::CallLocalDtor
+_ZTVN12_GLOBAL__N_113CallFieldDtorE,vtable for (anonymous namespace)::CallFieldDtor
+_ZTVN12_GLOBAL__N_118CallArrayFieldDtorE,vtable for (anonymous namespace)::CallArrayFieldDtor
+_ZTVN12_GLOBAL__N_114CallDtorDeleteE,vtable for (anonymous namespace)::CallDtorDelete
+_ZTVN12_GLOBAL__N_112CallBaseDtorE,vtable for (anonymous namespace)::CallBaseDtor
+_ZTVN12_GLOBAL__N_114CallMemberDtorE,vtable for (anonymous namespace)::CallMemberDtor
+_ZTVN5clang7CodeGen12EHScopeStack7CleanupE,vtable for clang::CodeGen::EHScopeStack::Cleanup
+_ZTVN12_GLOBAL__N_116CallBlockReleaseE,vtable for (anonymous namespace)::CallBlockRelease
+_ZTVN12_GLOBAL__N_119CallCleanupFunctionE,vtable for (anonymous namespace)::CallCleanupFunction
+_ZTVN12_GLOBAL__N_111CallVarDtorE,vtable for (anonymous namespace)::CallVarDtor
+_ZTVN12_GLOBAL__N_113CallArrayDtorE,vtable for (anonymous namespace)::CallArrayDtor
+_ZTVN12_GLOBAL__N_116CallStackRestoreE,vtable for (anonymous namespace)::CallStackRestore
+_ZTVN12_GLOBAL__N_114PerformFinallyE,vtable for (anonymous namespace)::PerformFinally
+_ZTVN12_GLOBAL__N_122CallEndCatchForFinallyE,vtable for (anonymous namespace)::CallEndCatchForFinally
+_ZTVN12_GLOBAL__N_111CallRethrowE,vtable for (anonymous namespace)::CallRethrow
+_ZTVN12_GLOBAL__N_112CallEndCatchE,vtable for (anonymous namespace)::CallEndCatch
+_ZTVN12_GLOBAL__N_116CallObjectDeleteE,vtable for (anonymous namespace)::CallObjectDelete
+_ZTVN12_GLOBAL__N_115CallArrayDeleteE,vtable for (anonymous namespace)::CallArrayDelete
+_ZTVN12_GLOBAL__N_130CallDeleteDuringConditionalNewE,vtable for (anonymous namespace)::CallDeleteDuringConditionalNew
+_ZTVN12_GLOBAL__N_119CallDeleteDuringNewE,vtable for (anonymous namespace)::CallDeleteDuringNew
+_ZTVN5clang7CodeGen13CGObjCRuntimeE,vtable for clang::CodeGen::CGObjCRuntime
+_ZTVN12_GLOBAL__N_19CGObjCGNUE,vtable for (anonymous namespace)::CGObjCGNU
+_ZTVN12_GLOBAL__N_112CallSyncExitE,vtable for (anonymous namespace)::CallSyncExit
+_ZTVN12_GLOBAL__N_122CGObjCNonFragileABIMacE,vtable for (anonymous namespace)::CGObjCNonFragileABIMac
+_ZTVN12_GLOBAL__N_116CallObjCEndCatchE,vtable for (anonymous namespace)::CallObjCEndCatch
+_ZTVN12_GLOBAL__N_112CallSyncExitE,vtable for (anonymous namespace)::CallSyncExit
+_ZTVN12_GLOBAL__N_115CGObjCCommonMacE,vtable for (anonymous namespace)::CGObjCCommonMac
+_ZTVN12_GLOBAL__N_19CGObjCMacE,vtable for (anonymous namespace)::CGObjCMac
+_ZTVN12_GLOBAL__N_121PerformFragileFinallyE,vtable for (anonymous namespace)::PerformFragileFinally
+_ZTVN5clang13CodeGenActionE,vtable for clang::CodeGenAction
+_ZTVN12_GLOBAL__N_19ARMCXXABIE,vtable for (anonymous namespace)::ARMCXXABI
+_ZTVN12_GLOBAL__N_114CallGuardAbortE,vtable for (anonymous namespace)::CallGuardAbort
+_ZTVN12_GLOBAL__N_113ItaniumCXXABIE,vtable for (anonymous namespace)::ItaniumCXXABI
+_ZTVN12_GLOBAL__N_115MicrosoftCXXABIE,vtable for (anonymous namespace)::MicrosoftCXXABI
+_ZTVN12_GLOBAL__N_117CodeGeneratorImplE,vtable for (anonymous namespace)::CodeGeneratorImpl
+_ZTVN5clang7ABIInfoE,vtable for clang::ABIInfo
+_ZTVN5clang17TargetCodeGenInfoE,vtable for clang::TargetCodeGenInfo
+_ZTVN12_GLOBAL__N_123X86_64TargetCodeGenInfoE,vtable for (anonymous namespace)::X86_64TargetCodeGenInfo
+_ZTVN12_GLOBAL__N_113X86_64ABIInfoE,vtable for (anonymous namespace)::X86_64ABIInfo
+_ZTVN12_GLOBAL__N_126WinX86_64TargetCodeGenInfoE,vtable for (anonymous namespace)::WinX86_64TargetCodeGenInfo
+_ZTVN12_GLOBAL__N_116WinX86_64ABIInfoE,vtable for (anonymous namespace)::WinX86_64ABIInfo
+_ZTVN12_GLOBAL__N_123X86_32TargetCodeGenInfoE,vtable for (anonymous namespace)::X86_32TargetCodeGenInfo
+_ZTVN12_GLOBAL__N_113X86_32ABIInfoE,vtable for (anonymous namespace)::X86_32ABIInfo
+_ZTVN12_GLOBAL__N_123MSP430TargetCodeGenInfoE,vtable for (anonymous namespace)::MSP430TargetCodeGenInfo
+_ZTVN12_GLOBAL__N_114DefaultABIInfoE,vtable for (anonymous namespace)::DefaultABIInfo
+_ZTVN12_GLOBAL__N_123MBlazeTargetCodeGenInfoE,vtable for (anonymous namespace)::MBlazeTargetCodeGenInfo
+_ZTVN12_GLOBAL__N_113MBlazeABIInfoE,vtable for (anonymous namespace)::MBlazeABIInfo
+_ZTVN12_GLOBAL__N_124SystemZTargetCodeGenInfoE,vtable for (anonymous namespace)::SystemZTargetCodeGenInfo
+_ZTVN12_GLOBAL__N_114SystemZABIInfoE,vtable for (anonymous namespace)::SystemZABIInfo
+_ZTVN12_GLOBAL__N_122PPC32TargetCodeGenInfoE,vtable for (anonymous namespace)::PPC32TargetCodeGenInfo
+_ZTVN12_GLOBAL__N_124DefaultTargetCodeGenInfoE,vtable for (anonymous namespace)::DefaultTargetCodeGenInfo
+_ZTVN12_GLOBAL__N_120ARMTargetCodeGenInfoE,vtable for (anonymous namespace)::ARMTargetCodeGenInfo
+_ZTVN12_GLOBAL__N_110ARMABIInfoE,vtable for (anonymous namespace)::ARMABIInfo
+_ZTVN12_GLOBAL__N_121MIPSTargetCodeGenInfoE,vtable for (anonymous namespace)::MIPSTargetCodeGenInfo
+_ZTVN5clang6Parser21LateParsedDeclarationE,vtable for clang::Parser::LateParsedDeclaration
+_ZTVN5clang6Parser15LateParsedClassE,vtable for clang::Parser::LateParsedClass
+_ZTVN5clang6Parser11LexedMethodE,vtable for clang::Parser::LexedMethod
+_ZTVN5clang6Parser27LateParsedMethodDeclarationE,vtable for clang::Parser::LateParsedMethodDeclaration
+_ZTVZN5clang6Parser20ParseStructUnionBodyENS_14SourceLocationEjPNS_4DeclEE14CFieldCallback,"vtable for clang::Parser::ParseStructUnionBody(clang::SourceLocation, unsigned int, clang::Decl*)::CFieldCallback"
+_ZTVZN5clang6Parser31ParseObjCClassInstanceVariablesEPNS_4DeclENS_3tok15ObjCKeywordKindENS_14SourceLocationEE16ObjCIvarCallback,"vtable for clang::Parser::ParseObjCClassInstanceVariables(clang::Decl*, clang::tok::ObjCKeywordKind, clang::SourceLocation)::ObjCIvarCallback"
+_ZTVN5clang18PragmaAlignHandlerE,vtable for clang::PragmaAlignHandler
+_ZTVN5clang26PragmaGCCVisibilityHandlerE,vtable for clang::PragmaGCCVisibilityHandler
+_ZTVN5clang20PragmaOptionsHandlerE,vtable for clang::PragmaOptionsHandler
+_ZTVN5clang17PragmaPackHandlerE,vtable for clang::PragmaPackHandler
+_ZTVN5clang19PragmaUnusedHandlerE,vtable for clang::PragmaUnusedHandler
+_ZTVN5clang17PragmaWeakHandlerE,vtable for clang::PragmaWeakHandler
+_ZTVN5clang6ParserE,vtable for clang::Parser
+_ZTVN5clang27PrettyStackTraceParserEntryE,vtable for clang::PrettyStackTraceParserEntry
+_ZTVN5clang6Parser13FieldCallbackE,vtable for clang::Parser::FieldCallback
+_ZTVN12_GLOBAL__N_122UninitValsDiagReporterE,vtable for (anonymous namespace)::UninitValsDiagReporter
+_ZTVN12_GLOBAL__N_122UnreachableCodeHandlerE,vtable for (anonymous namespace)::UnreachableCodeHandler
+_ZTVN5clang20CodeCompleteConsumerE,vtable for clang::CodeCompleteConsumer
+_ZTVN5clang28PrintingCodeCompleteConsumerE,vtable for clang::PrintingCodeCompleteConsumer
+_ZTVN5clang4sema17FunctionScopeInfoE,vtable for clang::sema::FunctionScopeInfo
+_ZTVN5clang4sema14BlockScopeInfoE,vtable for clang::sema::BlockScopeInfo
+_ZTVN5clang18ExternalSemaSourceE,vtable for clang::ExternalSemaSource
+_ZTVN5clang25PrettyDeclStackTraceEntryE,vtable for clang::PrettyDeclStackTraceEntry
+_ZTVN12_GLOBAL__N_117CheckScanfHandlerE,vtable for (anonymous namespace)::CheckScanfHandler
+_ZTVN12_GLOBAL__N_118CheckFormatHandlerE,vtable for (anonymous namespace)::CheckFormatHandler
+_ZTVN12_GLOBAL__N_118CheckPrintfHandlerE,vtable for (anonymous namespace)::CheckPrintfHandler
+_ZTVN12_GLOBAL__N_126CodeCompletionDeclConsumerE,vtable for (anonymous namespace)::CodeCompletionDeclConsumer
+_ZTVN5clang19VisibleDeclConsumerE,vtable for clang::VisibleDeclConsumer
+_ZTVN12_GLOBAL__N_122TypoCorrectionConsumerE,vtable for (anonymous namespace)::TypoCorrectionConsumer
+_ZTVN5clang20TargetAttributesSemaE,vtable for clang::TargetAttributesSema
+_ZTVN12_GLOBAL__N_117X86AttributesSemaE,vtable for (anonymous namespace)::X86AttributesSema
+_ZTVN12_GLOBAL__N_120MBlazeAttributesSemaE,vtable for (anonymous namespace)::MBlazeAttributesSema
+_ZTVN12_GLOBAL__N_120MSP430AttributesSemaE,vtable for (anonymous namespace)::MSP430AttributesSema
+_ZTVN12_GLOBAL__N_126AdjustedReturnValueCheckerE,vtable for (anonymous namespace)::AdjustedReturnValueChecker
+_ZTVN12_GLOBAL__N_111UbigraphVizE,vtable for (anonymous namespace)::UbigraphViz
+_ZTVN12_GLOBAL__N_116AnalysisConsumerE,vtable for (anonymous namespace)::AnalysisConsumer
+_ZTVN12_GLOBAL__N_120AnalyzerStatsCheckerE,vtable for (anonymous namespace)::AnalyzerStatsChecker
+_ZTVN12_GLOBAL__N_117ArrayBoundCheckerE,vtable for (anonymous namespace)::ArrayBoundChecker
+_ZTVN12_GLOBAL__N_119ArrayBoundCheckerV2E,vtable for (anonymous namespace)::ArrayBoundCheckerV2
+_ZTVN12_GLOBAL__N_118AttrNonNullCheckerE,vtable for (anonymous namespace)::AttrNonNullChecker
+_ZTVN12_GLOBAL__N_119ClassReleaseCheckerE,vtable for (anonymous namespace)::ClassReleaseChecker
+_ZTVN12_GLOBAL__N_19APIMisuseE,vtable for (anonymous namespace)::APIMisuse
+_ZTVN12_GLOBAL__N_122CFRetainReleaseCheckerE,vtable for (anonymous namespace)::CFRetainReleaseChecker
+_ZTVN12_GLOBAL__N_121CFNumberCreateCheckerE,vtable for (anonymous namespace)::CFNumberCreateChecker
+_ZTVN12_GLOBAL__N_113NilArgCheckerE,vtable for (anonymous namespace)::NilArgChecker
+_ZTVN12_GLOBAL__N_122BuiltinFunctionCheckerE,vtable for (anonymous namespace)::BuiltinFunctionChecker
+_ZTVN12_GLOBAL__N_114CStringCheckerE,vtable for (anonymous namespace)::CStringChecker
+_ZTVN12_GLOBAL__N_121CallAndMessageCheckerE,vtable for (anonymous namespace)::CallAndMessageChecker
+_ZTVN12_GLOBAL__N_115CastSizeCheckerE,vtable for (anonymous namespace)::CastSizeChecker
+_ZTVN12_GLOBAL__N_119CastToStructCheckerE,vtable for (anonymous namespace)::CastToStructChecker
+_ZTVN12_GLOBAL__N_113ChrootCheckerE,vtable for (anonymous namespace)::ChrootChecker
+_ZTVN12_GLOBAL__N_112DeadStoreObsE,vtable for (anonymous namespace)::DeadStoreObs
+_ZTVN12_GLOBAL__N_118DereferenceCheckerE,vtable for (anonymous namespace)::DereferenceChecker
+_ZTVN12_GLOBAL__N_114DivZeroCheckerE,vtable for (anonymous namespace)::DivZeroChecker
+_ZTVN5clang4ento10ExprEngineE,vtable for clang::ento::ExprEngine
+_ZTVN12_GLOBAL__N_119FixedAddressCheckerE,vtable for (anonymous namespace)::FixedAddressChecker
+_ZTVN5clang4ento14AnalysisActionE,vtable for clang::ento::AnalysisAction
+_ZTVN12_GLOBAL__N_126IdempotentOperationCheckerE,vtable for (anonymous namespace)::IdempotentOperationChecker
+_ZTVZN12_GLOBAL__N_126IdempotentOperationChecker25PathWasCompletelyAnalyzedEPKN5clang3CFGEPKNS1_8CFGBlockEPKNS1_10CFGStmtMapERKNS1_4ento10CoreEngineEE7VisitWL,"vtable for (anonymous namespace)::IdempotentOperationChecker::PathWasCompletelyAnalyzed(clang::CFG const*, clang::CFGBlock const*, clang::CFGStmtMap const*, clang::ento::CoreEngine const&)::VisitWL"
+_ZTVN12_GLOBAL__N_116MacOSXAPICheckerE,vtable for (anonymous namespace)::MacOSXAPIChecker
+_ZTVN12_GLOBAL__N_113MallocCheckerE,vtable for (anonymous namespace)::MallocChecker
+_ZTVN12_GLOBAL__N_124NSAutoreleasePoolCheckerE,vtable for (anonymous namespace)::NSAutoreleasePoolChecker
+_ZTVN12_GLOBAL__N_114NSErrorCheckerE,vtable for (anonymous namespace)::NSErrorChecker
+_ZTVN12_GLOBAL__N_123NoReturnFunctionCheckerE,vtable for (anonymous namespace)::NoReturnFunctionChecker
+_ZTVN12_GLOBAL__N_115OSAtomicCheckerE,vtable for (anonymous namespace)::OSAtomicChecker
+_ZTVN12_GLOBAL__N_117ObjCAtSyncCheckerE,vtable for (anonymous namespace)::ObjCAtSyncChecker
+_ZTVN12_GLOBAL__N_119ObjCSelfInitCheckerE,vtable for (anonymous namespace)::ObjCSelfInitChecker
+_ZTVN12_GLOBAL__N_111InitSelfBugE,vtable for (anonymous namespace)::InitSelfBug
+_ZTVN12_GLOBAL__N_119PointerArithCheckerE,vtable for (anonymous namespace)::PointerArithChecker
+_ZTVN12_GLOBAL__N_117PointerSubCheckerE,vtable for (anonymous namespace)::PointerSubChecker
+_ZTVN12_GLOBAL__N_118PthreadLockCheckerE,vtable for (anonymous namespace)::PthreadLockChecker
+_ZTVN12_GLOBAL__N_125ReturnPointerRangeCheckerE,vtable for (anonymous namespace)::ReturnPointerRangeChecker
+_ZTVN12_GLOBAL__N_118ReturnUndefCheckerE,vtable for (anonymous namespace)::ReturnUndefChecker
+_ZTVN12_GLOBAL__N_120StackAddrLeakCheckerE,vtable for (anonymous namespace)::StackAddrLeakChecker
+_ZTVZN12_GLOBAL__N_120StackAddrLeakChecker11evalEndPathERN5clang4ento24EndOfFunctionNodeBuilderEPvRNS2_10ExprEngineEE8CallBack,"vtable for (anonymous namespace)::StackAddrLeakChecker::evalEndPath(clang::ento::EndOfFunctionNodeBuilder&, void*, clang::ento::ExprEngine&)::CallBack"
+_ZTVN12_GLOBAL__N_113StreamCheckerE,vtable for (anonymous namespace)::StreamChecker
+_ZTVN12_GLOBAL__N_118UndefBranchCheckerE,vtable for (anonymous namespace)::UndefBranchChecker
+_ZTVN12_GLOBAL__N_128UndefCapturedBlockVarCheckerE,vtable for (anonymous namespace)::UndefCapturedBlockVarChecker
+_ZTVN12_GLOBAL__N_118UndefResultCheckerE,vtable for (anonymous namespace)::UndefResultChecker
+_ZTVN12_GLOBAL__N_130UndefinedArraySubscriptCheckerE,vtable for (anonymous namespace)::UndefinedArraySubscriptChecker
+_ZTVN12_GLOBAL__N_126UndefinedAssignmentCheckerE,vtable for (anonymous namespace)::UndefinedAssignmentChecker
+_ZTVN12_GLOBAL__N_114UnixAPICheckerE,vtable for (anonymous namespace)::UnixAPIChecker
+_ZTVN12_GLOBAL__N_122UnreachableCodeCheckerE,vtable for (anonymous namespace)::UnreachableCodeChecker
+_ZTVN12_GLOBAL__N_114VLASizeCheckerE,vtable for (anonymous namespace)::VLASizeChecker
+_ZTVN12_GLOBAL__N_122BasicConstraintManagerE,vtable for (anonymous namespace)::BasicConstraintManager
+_ZTVN5clang4ento12StoreManager15BindingsHandlerE,vtable for clang::ento::StoreManager::BindingsHandler
+_ZTVN12_GLOBAL__N_117BasicStoreManagerE,vtable for (anonymous namespace)::BasicStoreManager
+_ZTVN12_GLOBAL__N_122BasicStoreSubRegionMapE,vtable for (anonymous namespace)::BasicStoreSubRegionMap
+_ZTVN5clang4ento18BugReporterVisitorE,vtable for clang::ento::BugReporterVisitor
+_ZTVN5clang4ento18BugReporterContextE,vtable for clang::ento::BugReporterContext
+_ZTVN5clang4ento7BugTypeE,vtable for clang::ento::BugType
+_ZTVN5clang4ento9BugReportE,vtable for clang::ento::BugReport
+_ZTVN5clang4ento15RangedBugReportE,vtable for clang::ento::RangedBugReport
+_ZTVN5clang4ento13GRBugReporterE,vtable for clang::ento::GRBugReporter
+_ZTVN5clang4ento15BugReporterDataE,vtable for clang::ento::BugReporterData
+_ZTVN5clang4ento11BugReporterE,vtable for clang::ento::BugReporter
+_ZTVN12_GLOBAL__N_121PathDiagnosticBuilderE,vtable for (anonymous namespace)::PathDiagnosticBuilder
+_ZTVN12_GLOBAL__N_114NodeMapClosureE,vtable for (anonymous namespace)::NodeMapClosure
+_ZTVN12_GLOBAL__N_118ScanNotableSymbolsE,vtable for (anonymous namespace)::ScanNotableSymbols
+_ZTVN12_GLOBAL__N_120NotableSymbolHandlerE,vtable for (anonymous namespace)::NotableSymbolHandler
+_ZTVN12_GLOBAL__N_118NilReceiverVisitorE,vtable for (anonymous namespace)::NilReceiverVisitor
+_ZTVN12_GLOBAL__N_122FindLastStoreBRVisitorE,vtable for (anonymous namespace)::FindLastStoreBRVisitor
+_ZTVN12_GLOBAL__N_124TrackConstraintBRVisitorE,vtable for (anonymous namespace)::TrackConstraintBRVisitor
+_ZTVN12_GLOBAL__N_110CFRefCountE,vtable for (anonymous namespace)::CFRefCount
+_ZTVN12_GLOBAL__N_111CFRefReportE,vtable for (anonymous namespace)::CFRefReport
+_ZTVN12_GLOBAL__N_115CFRefLeakReportE,vtable for (anonymous namespace)::CFRefLeakReport
+_ZTVN12_GLOBAL__N_117FindUniqueBindingE,vtable for (anonymous namespace)::FindUniqueBinding
+_ZTVN12_GLOBAL__N_120StopTrackingCallbackE,vtable for (anonymous namespace)::StopTrackingCallback
+_ZTVN12_GLOBAL__N_120RetainReleaseCheckerE,vtable for (anonymous namespace)::RetainReleaseChecker
+_ZTVN12_GLOBAL__N_118LeakWithinFunctionE,vtable for (anonymous namespace)::LeakWithinFunction
+_ZTVN12_GLOBAL__N_18CFRefBugE,vtable for (anonymous namespace)::CFRefBug
+_ZTVN12_GLOBAL__N_112LeakAtReturnE,vtable for (anonymous namespace)::LeakAtReturn
+_ZTVN12_GLOBAL__N_124ReturnedNotOwnedForOwnedE,vtable for (anonymous namespace)::ReturnedNotOwnedForOwned
+_ZTVN12_GLOBAL__N_115OverAutoreleaseE,vtable for (anonymous namespace)::OverAutorelease
+_ZTVN12_GLOBAL__N_115DeallocNotOwnedE,vtable for (anonymous namespace)::DeallocNotOwned
+_ZTVN12_GLOBAL__N_19DeallocGCE,vtable for (anonymous namespace)::DeallocGC
+_ZTVN12_GLOBAL__N_110BadReleaseE,vtable for (anonymous namespace)::BadRelease
+_ZTVN12_GLOBAL__N_115UseAfterReleaseE,vtable for (anonymous namespace)::UseAfterRelease
+_ZTVN12_GLOBAL__N_110CFRefCount15BindingsPrinterE,vtable for (anonymous namespace)::CFRefCount::BindingsPrinter
+_ZTVN5clang4ento7CheckerE,vtable for clang::ento::Checker
+_ZTVN5clang4ento8WorkList7VisitorE,vtable for clang::ento::WorkList::Visitor
+_ZTVN5clang4ento8WorkListE,vtable for clang::ento::WorkList
+_ZTVN12_GLOBAL__N_119BFSBlockDFSContentsE,vtable for (anonymous namespace)::BFSBlockDFSContents
+_ZTVN12_GLOBAL__N_13BFSE,vtable for (anonymous namespace)::BFS
+_ZTVN12_GLOBAL__N_13DFSE,vtable for (anonymous namespace)::DFS
+_ZTVN12_GLOBAL__N_116MarkLiveCallbackE,vtable for (anonymous namespace)::MarkLiveCallback
+_ZTVN5clang4ento12ExplodedNode7AuditorE,vtable for clang::ento::ExplodedNode::Auditor
+_ZTVN12_GLOBAL__N_116FlatStoreManagerE,vtable for (anonymous namespace)::FlatStoreManager
+_ZTVN5clang4ento17ConstraintManagerE,vtable for clang::ento::ConstraintManager
+_ZTVN12_GLOBAL__N_120ScanReachableSymbolsE,vtable for (anonymous namespace)::ScanReachableSymbols
+_ZTVN12_GLOBAL__N_115HTMLDiagnosticsE,vtable for (anonymous namespace)::HTMLDiagnostics
+_ZTVN5clang4ento9MemRegionE,vtable for clang::ento::MemRegion
+_ZTVN5clang4ento14MemSpaceRegionE,vtable for clang::ento::MemSpaceRegion
+_ZTVN5clang4ento23StaticGlobalSpaceRegionE,vtable for clang::ento::StaticGlobalSpaceRegion
+_ZTVN5clang4ento26NonStaticGlobalSpaceRegionE,vtable for clang::ento::NonStaticGlobalSpaceRegion
+_ZTVN5clang4ento16StackSpaceRegionE,vtable for clang::ento::StackSpaceRegion
+_ZTVN5clang4ento9SubRegionE,vtable for clang::ento::SubRegion
+_ZTVN5clang4ento12AllocaRegionE,vtable for clang::ento::AllocaRegion
+_ZTVN5clang4ento18FunctionTextRegionE,vtable for clang::ento::FunctionTextRegion
+_ZTVN5clang4ento15BlockTextRegionE,vtable for clang::ento::BlockTextRegion
+_ZTVN5clang4ento15BlockDataRegionE,vtable for clang::ento::BlockDataRegion
+_ZTVN5clang4ento14SymbolicRegionE,vtable for clang::ento::SymbolicRegion
+_ZTVN5clang4ento12StringRegionE,vtable for clang::ento::StringRegion
+_ZTVN5clang4ento21CompoundLiteralRegionE,vtable for clang::ento::CompoundLiteralRegion
+_ZTVN5clang4ento10DeclRegionE,vtable for clang::ento::DeclRegion
+_ZTVN5clang4ento9VarRegionE,vtable for clang::ento::VarRegion
+_ZTVN5clang4ento13CXXThisRegionE,vtable for clang::ento::CXXThisRegion
+_ZTVN5clang4ento11FieldRegionE,vtable for clang::ento::FieldRegion
+_ZTVN5clang4ento14ObjCIvarRegionE,vtable for clang::ento::ObjCIvarRegion
+_ZTVN5clang4ento13ElementRegionE,vtable for clang::ento::ElementRegion
+_ZTVN5clang4ento19CXXTempObjectRegionE,vtable for clang::ento::CXXTempObjectRegion
+_ZTVN5clang4ento19CXXBaseObjectRegionE,vtable for clang::ento::CXXBaseObjectRegion
+_ZTVN5clang4ento19PathDiagnosticPieceE,vtable for clang::ento::PathDiagnosticPiece
+_ZTVN5clang4ento24PathDiagnosticEventPieceE,vtable for clang::ento::PathDiagnosticEventPiece
+_ZTVN5clang4ento30PathDiagnosticControlFlowPieceE,vtable for clang::ento::PathDiagnosticControlFlowPiece
+_ZTVN5clang4ento24PathDiagnosticMacroPieceE,vtable for clang::ento::PathDiagnosticMacroPiece
+_ZTVN5clang4ento20PathDiagnosticClientE,vtable for clang::ento::PathDiagnosticClient
+_ZTVN5clang4ento23PathDiagnosticSpotPieceE,vtable for clang::ento::PathDiagnosticSpotPiece
+_ZTVN12_GLOBAL__N_116PlistDiagnosticsE,vtable for (anonymous namespace)::PlistDiagnostics
+_ZTVN12_GLOBAL__N_122RangeConstraintManagerE,vtable for (anonymous namespace)::RangeConstraintManager
+_ZTVN12_GLOBAL__N_118RegionStoreManagerE,vtable for (anonymous namespace)::RegionStoreManager
+_ZTVN12_GLOBAL__N_123RegionStoreSubRegionMapE,vtable for (anonymous namespace)::RegionStoreSubRegionMap
+_ZTVN5clang4ento23SimpleConstraintManagerE,vtable for clang::ento::SimpleConstraintManager
+_ZTVN12_GLOBAL__N_117SimpleSValBuilderE,vtable for (anonymous namespace)::SimpleSValBuilder
+_ZTVN5clang4ento12StoreManagerE,vtable for clang::ento::StoreManager
+_ZTVN5clang4ento13SymbolVisitorE,vtable for clang::ento::SymbolVisitor
+_ZTVN5clang4ento17SymbolRegionValueE,vtable for clang::ento::SymbolRegionValue
+_ZTVN5clang4ento14SymbolConjuredE,vtable for clang::ento::SymbolConjured
+_ZTVN5clang4ento13SymbolDerivedE,vtable for clang::ento::SymbolDerived
+_ZTVN5clang4ento12SymbolExtentE,vtable for clang::ento::SymbolExtent
+_ZTVN5clang4ento14SymbolMetadataE,vtable for clang::ento::SymbolMetadata
+_ZTVN5clang4ento10SymIntExprE,vtable for clang::ento::SymIntExpr
+_ZTVN5clang4ento10SymSymExprE,vtable for clang::ento::SymSymExpr
+_ZTVN12_GLOBAL__N_119TextPathDiagnosticsE,vtable for (anonymous namespace)::TextPathDiagnostics
+_ZTVN5clang15LocationContextE,vtable for clang::LocationContext
+_ZTVN5clang17StackFrameContextE,vtable for clang::StackFrameContext
+_ZTVN5clang12ScopeContextE,vtable for clang::ScopeContext
+_ZTVN5clang22BlockInvocationContextE,vtable for clang::BlockInvocationContext
+_ZTVN12_GLOBAL__N_117StmtPrinterHelperE,vtable for (anonymous namespace)::StmtPrinterHelper
+_ZTVN5clang21analyze_format_string19FormatStringHandlerE,vtable for clang::analyze_format_string::FormatStringHandler
+_ZTVN5clang30UninitializedValues_ValueTypes10ObserverTyE,vtable for clang::UninitializedValues_ValueTypes::ObserverTy
+_ZTVN12_GLOBAL__N_126UninitializedValuesCheckerE,vtable for (anonymous namespace)::UninitializedValuesChecker
+_ZTVN5clang22UninitVariablesHandlerE,vtable for clang::UninitVariablesHandler
+_ZTVN5clang3idx13EntityHandlerE,vtable for clang::idx::EntityHandler
+_ZTVN5clang3idx22TranslationUnitHandlerE,vtable for clang::idx::TranslationUnitHandler
+_ZTVN5clang3idx17TULocationHandlerE,vtable for clang::idx::TULocationHandler
+_ZTVN5clang3idx13IndexProviderE,vtable for clang::idx::IndexProvider
+_ZTVN5clang3idx7IndexerE,vtable for clang::idx::Indexer
+_ZTVN12_GLOBAL__N_113EntityIndexerE,vtable for (anonymous namespace)::EntityIndexer
+_ZTVN5clang3idx15TranslationUnitE,vtable for clang::idx::TranslationUnit
+_ZTVN5clang13FixItRewriterE,vtable for clang::FixItRewriter
+_ZTVN5clang12FixItOptionsE,vtable for clang::FixItOptions
+_ZTVN5clang11FixItActionE,vtable for clang::FixItAction
+_ZTVN5clang15HTMLPrintActionE,vtable for clang::HTMLPrintAction
+_ZTVN5clang17RewriteObjCActionE,vtable for clang::RewriteObjCAction
+_ZTVN5clang19RewriteMacrosActionE,vtable for clang::RewriteMacrosAction
+_ZTVN5clang17RewriteTestActionE,vtable for clang::RewriteTestAction
+_ZTVN12_GLOBAL__N_119FixItRewriteInPlaceE,vtable for (anonymous namespace)::FixItRewriteInPlace
+_ZTVN12_GLOBAL__N_125FixItActionSuffixInserterE,vtable for (anonymous namespace)::FixItActionSuffixInserter
+_ZTVN12_GLOBAL__N_111HTMLPrinterE,vtable for (anonymous namespace)::HTMLPrinter
+_ZTVN12_GLOBAL__N_118IgnoringDiagClientE,vtable for (anonymous namespace)::IgnoringDiagClient
+_ZTVN12_GLOBAL__N_111RewriteObjCE,vtable for (anonymous namespace)::RewriteObjC
+_ZTVN5clang11ASTConsumerE,vtable for clang::ASTConsumer
+_ZTVN5clang17ExternalASTSourceE,vtable for clang::ExternalASTSource
+_ZTVN5clang19ASTMutationListenerE,vtable for clang::ASTMutationListener
+_ZTVN5clang6CXXABIE,vtable for clang::CXXABI
+_ZTVN5clang11ASTImporterE,vtable for clang::ASTImporter
+_ZTVN5clang4AttrE,vtable for clang::Attr
+_ZTVN5clang9AliasAttrE,vtable for clang::AliasAttr
+_ZTVN5clang15AlignMac68kAttrE,vtable for clang::AlignMac68kAttr
+_ZTVN5clang11AlignedAttrE,vtable for clang::AlignedAttr
+_ZTVN5clang16AlwaysInlineAttrE,vtable for clang::AlwaysInlineAttr
+_ZTVN5clang20AnalyzerNoReturnAttrE,vtable for clang::AnalyzerNoReturnAttr
+_ZTVN5clang12AnnotateAttrE,vtable for clang::AnnotateAttr
+_ZTVN5clang12AsmLabelAttrE,vtable for clang::AsmLabelAttr
+_ZTVN5clang10BlocksAttrE,vtable for clang::BlocksAttr
+_ZTVN5clang9CDeclAttrE,vtable for clang::CDeclAttr
+_ZTVN5clang14CFConsumedAttrE,vtable for clang::CFConsumedAttr
+_ZTVN5clang24CFReturnsNotRetainedAttrE,vtable for clang::CFReturnsNotRetainedAttr
+_ZTVN5clang21CFReturnsRetainedAttrE,vtable for clang::CFReturnsRetainedAttr
+_ZTVN5clang16CUDAConstantAttrE,vtable for clang::CUDAConstantAttr
+_ZTVN5clang14CUDADeviceAttrE,vtable for clang::CUDADeviceAttr
+_ZTVN5clang14CUDAGlobalAttrE,vtable for clang::CUDAGlobalAttr
+_ZTVN5clang12CUDAHostAttrE,vtable for clang::CUDAHostAttr
+_ZTVN5clang20CUDALaunchBoundsAttrE,vtable for clang::CUDALaunchBoundsAttr
+_ZTVN5clang14CUDASharedAttrE,vtable for clang::CUDASharedAttr
+_ZTVN5clang21CarriesDependencyAttrE,vtable for clang::CarriesDependencyAttr
+_ZTVN5clang11CleanupAttrE,vtable for clang::CleanupAttr
+_ZTVN5clang10CommonAttrE,vtable for clang::CommonAttr
+_ZTVN5clang9ConstAttrE,vtable for clang::ConstAttr
+_ZTVN5clang15ConstructorAttrE,vtable for clang::ConstructorAttr
+_ZTVN5clang13DLLExportAttrE,vtable for clang::DLLExportAttr
+_ZTVN5clang13DLLImportAttrE,vtable for clang::DLLImportAttr
+_ZTVN5clang14DeprecatedAttrE,vtable for clang::DeprecatedAttr
+_ZTVN5clang14DestructorAttrE,vtable for clang::DestructorAttr
+_ZTVN5clang12ExplicitAttrE,vtable for clang::ExplicitAttr
+_ZTVN5clang12FastCallAttrE,vtable for clang::FastCallAttr
+_ZTVN5clang9FinalAttrE,vtable for clang::FinalAttr
+_ZTVN5clang10FormatAttrE,vtable for clang::FormatAttr
+_ZTVN5clang13FormatArgAttrE,vtable for clang::FormatArgAttr
+_ZTVN5clang13GNUInlineAttrE,vtable for clang::GNUInlineAttr
+_ZTVN5clang12IBActionAttrE,vtable for clang::IBActionAttr
+_ZTVN5clang12IBOutletAttrE,vtable for clang::IBOutletAttr
+_ZTVN5clang22IBOutletCollectionAttrE,vtable for clang::IBOutletCollectionAttr
+_ZTVN5clang16InitPriorityAttrE,vtable for clang::InitPriorityAttr
+_ZTVN5clang26MBlazeInterruptHandlerAttrE,vtable for clang::MBlazeInterruptHandlerAttr
+_ZTVN5clang23MBlazeSaveVolatilesAttrE,vtable for clang::MBlazeSaveVolatilesAttr
+_ZTVN5clang19MSP430InterruptAttrE,vtable for clang::MSP430InterruptAttr
+_ZTVN5clang10MallocAttrE,vtable for clang::MallocAttr
+_ZTVN5clang21MaxFieldAlignmentAttrE,vtable for clang::MaxFieldAlignmentAttr
+_ZTVN5clang12MayAliasAttrE,vtable for clang::MayAliasAttr
+_ZTVN5clang14NSConsumedAttrE,vtable for clang::NSConsumedAttr
+_ZTVN5clang18NSConsumesSelfAttrE,vtable for clang::NSConsumesSelfAttr
+_ZTVN5clang25NSReturnsAutoreleasedAttrE,vtable for clang::NSReturnsAutoreleasedAttr
+_ZTVN5clang24NSReturnsNotRetainedAttrE,vtable for clang::NSReturnsNotRetainedAttr
+_ZTVN5clang21NSReturnsRetainedAttrE,vtable for clang::NSReturnsRetainedAttr
+_ZTVN5clang9NakedAttrE,vtable for clang::NakedAttr
+_ZTVN5clang12NoCommonAttrE,vtable for clang::NoCommonAttr
+_ZTVN5clang11NoDebugAttrE,vtable for clang::NoDebugAttr
+_ZTVN5clang12NoInlineAttrE,vtable for clang::NoInlineAttr
+_ZTVN5clang24NoInstrumentFunctionAttrE,vtable for clang::NoInstrumentFunctionAttr
+_ZTVN5clang12NoReturnAttrE,vtable for clang::NoReturnAttr
+_ZTVN5clang11NoThrowAttrE,vtable for clang::NoThrowAttr
+_ZTVN5clang11NonNullAttrE,vtable for clang::NonNullAttr
+_ZTVN5clang17ObjCExceptionAttrE,vtable for clang::ObjCExceptionAttr
+_ZTVN5clang16ObjCNSObjectAttrE,vtable for clang::ObjCNSObjectAttr
+_ZTVN5clang16OverloadableAttrE,vtable for clang::OverloadableAttr
+_ZTVN5clang12OverrideAttrE,vtable for clang::OverrideAttr
+_ZTVN5clang13OwnershipAttrE,vtable for clang::OwnershipAttr
+_ZTVN5clang10PackedAttrE,vtable for clang::PackedAttr
+_ZTVN5clang10PascalAttrE,vtable for clang::PascalAttr
+_ZTVN5clang8PureAttrE,vtable for clang::PureAttr
+_ZTVN5clang11RegparmAttrE,vtable for clang::RegparmAttr
+_ZTVN5clang21ReqdWorkGroupSizeAttrE,vtable for clang::ReqdWorkGroupSizeAttr
+_ZTVN5clang11SectionAttrE,vtable for clang::SectionAttr
+_ZTVN5clang12SentinelAttrE,vtable for clang::SentinelAttr
+_ZTVN5clang11StdCallAttrE,vtable for clang::StdCallAttr
+_ZTVN5clang12ThisCallAttrE,vtable for clang::ThisCallAttr
+_ZTVN5clang20TransparentUnionAttrE,vtable for clang::TransparentUnionAttr
+_ZTVN5clang15UnavailableAttrE,vtable for clang::UnavailableAttr
+_ZTVN5clang10UnusedAttrE,vtable for clang::UnusedAttr
+_ZTVN5clang8UsedAttrE,vtable for clang::UsedAttr
+_ZTVN5clang8UuidAttrE,vtable for clang::UuidAttr
+_ZTVN5clang13VecReturnAttrE,vtable for clang::VecReturnAttr
+_ZTVN5clang14VisibilityAttrE,vtable for clang::VisibilityAttr
+_ZTVN5clang20WarnUnusedResultAttrE,vtable for clang::WarnUnusedResultAttr
+_ZTVN5clang8WeakAttrE,vtable for clang::WeakAttr
+_ZTVN5clang14WeakImportAttrE,vtable for clang::WeakImportAttr
+_ZTVN5clang11WeakRefAttrE,vtable for clang::WeakRefAttr
+_ZTVN5clang27X86ForceAlignArgPointerAttrE,vtable for clang::X86ForceAlignArgPointerAttr
+_ZTVN5clang10RecordDeclE,vtable for clang::RecordDecl
+_ZTVN5clang7VarDeclE,vtable for clang::VarDecl
+_ZTVN5clang12FunctionDeclE,vtable for clang::FunctionDecl
+_ZTVN5clang16EnumConstantDeclE,vtable for clang::EnumConstantDecl
+_ZTVN5clang7TagDeclE,vtable for clang::TagDecl
+_ZTVN5clang9BlockDeclE,vtable for clang::BlockDecl
+_ZTVN5clang4DeclE,vtable for clang::Decl
+_ZTVN5clang20PrettyStackTraceDeclE,vtable for clang::PrettyStackTraceDecl
+_ZTVN5clang13CXXRecordDeclE,vtable for clang::CXXRecordDecl
+_ZTVN5clang13ObjCClassDeclE,vtable for clang::ObjCClassDecl
+_ZTVN5clang14ObjCMethodDeclE,vtable for clang::ObjCMethodDecl
+_ZTVN5clang20ObjCPropertyImplDeclE,vtable for clang::ObjCPropertyImplDecl
+_ZTVN5clang23NonTypeTemplateParmDeclE,vtable for clang::NonTypeTemplateParmDecl
+_ZTVN5clang31ClassTemplateSpecializationDeclE,vtable for clang::ClassTemplateSpecializationDecl
+_ZTVN5clang24RedeclarableTemplateDeclE,vtable for clang::RedeclarableTemplateDecl
+_ZTVN5clang20FunctionTemplateDeclE,vtable for clang::FunctionTemplateDecl
+_ZTVN5clang17ClassTemplateDeclE,vtable for clang::ClassTemplateDecl
+_ZTVN12_GLOBAL__N_19ARMCXXABIE,vtable for (anonymous namespace)::ARMCXXABI
+_ZTVN12_GLOBAL__N_113ItaniumCXXABIE,vtable for (anonymous namespace)::ItaniumCXXABI
+_ZTVN12_GLOBAL__N_120ItaniumMangleContextE,vtable for (anonymous namespace)::ItaniumMangleContext
+_ZTVN12_GLOBAL__N_115MicrosoftCXXABIE,vtable for (anonymous namespace)::MicrosoftCXXABI
+_ZTVN12_GLOBAL__N_122MicrosoftMangleContextE,vtable for (anonymous namespace)::MicrosoftMangleContext
+_ZTVN12_GLOBAL__N_119RecordLayoutBuilderE,vtable for (anonymous namespace)::RecordLayoutBuilder
+_ZTVN12_GLOBAL__N_121MSRecordLayoutBuilderE,vtable for (anonymous namespace)::MSRecordLayoutBuilder
+_ZTVN5clang13PrinterHelperE,vtable for clang::PrinterHelper
+_ZTVN5clang11PPCallbacksE,vtable for clang::PPCallbacks
+_ZTVN5clang8PTHLexerE,vtable for clang::PTHLexer
+_ZTVN5clang10PTHManagerE,vtable for clang::PTHManager
+_ZTVN12_GLOBAL__N_112PTHStatCacheE,vtable for (anonymous namespace)::PTHStatCache
+_ZTVN5clang13PragmaHandlerE,vtable for clang::PragmaHandler
+_ZTVN5clang18EmptyPragmaHandlerE,vtable for clang::EmptyPragmaHandler
+_ZTVN5clang15PragmaNamespaceE,vtable for clang::PragmaNamespace
+_ZTVN12_GLOBAL__N_120PragmaCommentHandlerE,vtable for (anonymous namespace)::PragmaCommentHandler
+_ZTVN12_GLOBAL__N_125PragmaSTDC_UnknownHandlerE,vtable for (anonymous namespace)::PragmaSTDC_UnknownHandler
+_ZTVN12_GLOBAL__N_134PragmaSTDC_CX_LIMITED_RANGEHandlerE,vtable for (anonymous namespace)::PragmaSTDC_CX_LIMITED_RANGEHandler
+_ZTVN12_GLOBAL__N_129PragmaSTDC_FENV_ACCESSHandlerE,vtable for (anonymous namespace)::PragmaSTDC_FENV_ACCESSHandler
+_ZTVN12_GLOBAL__N_129PragmaSTDC_FP_CONTRACTHandlerE,vtable for (anonymous namespace)::PragmaSTDC_FP_CONTRACTHandler
+_ZTVN12_GLOBAL__N_118PragmaDebugHandlerE,vtable for (anonymous namespace)::PragmaDebugHandler
+_ZTVN12_GLOBAL__N_123PragmaDiagnosticHandlerE,vtable for (anonymous namespace)::PragmaDiagnosticHandler
+_ZTVN12_GLOBAL__N_123PragmaDependencyHandlerE,vtable for (anonymous namespace)::PragmaDependencyHandler
+_ZTVN12_GLOBAL__N_125PragmaSystemHeaderHandlerE,vtable for (anonymous namespace)::PragmaSystemHeaderHandler
+_ZTVN12_GLOBAL__N_119PragmaPoisonHandlerE,vtable for (anonymous namespace)::PragmaPoisonHandler
+_ZTVN12_GLOBAL__N_120PragmaMessageHandlerE,vtable for (anonymous namespace)::PragmaMessageHandler
+_ZTVN12_GLOBAL__N_121PragmaPopMacroHandlerE,vtable for (anonymous namespace)::PragmaPopMacroHandler
+_ZTVN12_GLOBAL__N_122PragmaPushMacroHandlerE,vtable for (anonymous namespace)::PragmaPushMacroHandler
+_ZTVN12_GLOBAL__N_117PragmaMarkHandlerE,vtable for (anonymous namespace)::PragmaMarkHandler
+_ZTVN12_GLOBAL__N_117PragmaOnceHandlerE,vtable for (anonymous namespace)::PragmaOnceHandler
+_ZTVN5clang33ExternalPreprocessingRecordSourceE,vtable for clang::ExternalPreprocessingRecordSource
+_ZTVN5clang19PreprocessingRecordE,vtable for clang::PreprocessingRecord
+_ZTVN5clang26ExternalPreprocessorSourceE,vtable for clang::ExternalPreprocessorSource
+_ZTVN5clang14CommentHandlerE,vtable for clang::CommentHandler
+_ZTVN5clang21CodeCompletionHandlerE,vtable for clang::CodeCompletionHandler
+_ZTVN5clang16DiagnosticClientE,vtable for clang::DiagnosticClient
+_ZTVN5clang17MemorizeStatCallsE,vtable for clang::MemorizeStatCalls
+_ZTVN5clang18IdentifierIteratorE,vtable for clang::IdentifierIterator
+_ZTVN5clang20IdentifierInfoLookupE,vtable for clang::IdentifierInfoLookup
+_ZTVN5clang24ExternalIdentifierLookupE,vtable for clang::ExternalIdentifierLookup
+_ZTVN12_GLOBAL__N_119EmptyLookupIteratorE,vtable for (anonymous namespace)::EmptyLookupIterator
+_ZTVN5clang19PrettyStackTraceLocE,vtable for clang::PrettyStackTraceLoc
+_ZTVN5clang23ExternalSLocEntrySourceE,vtable for clang::ExternalSLocEntrySource
+_ZTVN5clang10TargetInfoE,vtable for clang::TargetInfo
+_ZTVN12_GLOBAL__N_116X86_64TargetInfoE,vtable for (anonymous namespace)::X86_64TargetInfo
+_ZTVN12_GLOBAL__N_113X86TargetInfoE,vtable for (anonymous namespace)::X86TargetInfo
+_ZTVN12_GLOBAL__N_135VisualStudioWindowsX86_64TargetInfoE,vtable for (anonymous namespace)::VisualStudioWindowsX86_64TargetInfo
+_ZTVN12_GLOBAL__N_121MinGWX86_64TargetInfoE,vtable for (anonymous namespace)::MinGWX86_64TargetInfo
+_ZTVN12_GLOBAL__N_117SolarisTargetInfoINS_16X86_64TargetInfoEEE,vtable for (anonymous namespace)::SolarisTargetInfo<(anonymous namespace)::X86_64TargetInfo>
+_ZTVN12_GLOBAL__N_117FreeBSDTargetInfoINS_16X86_64TargetInfoEEE,vtable for (anonymous namespace)::FreeBSDTargetInfo<(anonymous namespace)::X86_64TargetInfo>
+_ZTVN12_GLOBAL__N_123OpenBSDX86_64TargetInfoE,vtable for (anonymous namespace)::OpenBSDX86_64TargetInfo
+_ZTVN12_GLOBAL__N_116NetBSDTargetInfoINS_16X86_64TargetInfoEEE,vtable for (anonymous namespace)::NetBSDTargetInfo<(anonymous namespace)::X86_64TargetInfo>
+_ZTVN12_GLOBAL__N_122DragonFlyBSDTargetInfoINS_16X86_64TargetInfoEEE,vtable for (anonymous namespace)::DragonFlyBSDTargetInfo<(anonymous namespace)::X86_64TargetInfo>
+_ZTVN12_GLOBAL__N_115LinuxTargetInfoINS_16X86_64TargetInfoEEE,vtable for (anonymous namespace)::LinuxTargetInfo<(anonymous namespace)::X86_64TargetInfo>
+_ZTVN12_GLOBAL__N_122DarwinX86_64TargetInfoE,vtable for (anonymous namespace)::DarwinX86_64TargetInfo
+_ZTVN12_GLOBAL__N_116DarwinTargetInfoINS_16X86_64TargetInfoEEE,vtable for (anonymous namespace)::DarwinTargetInfo<(anonymous namespace)::X86_64TargetInfo>
+_ZTVN12_GLOBAL__N_118AuroraUXTargetInfoINS_16X86_64TargetInfoEEE,vtable for (anonymous namespace)::AuroraUXTargetInfo<(anonymous namespace)::X86_64TargetInfo>
+_ZTVN12_GLOBAL__N_116X86_32TargetInfoE,vtable for (anonymous namespace)::X86_32TargetInfo
+_ZTVN12_GLOBAL__N_121HaikuX86_32TargetInfoE,vtable for (anonymous namespace)::HaikuX86_32TargetInfo
+_ZTVN12_GLOBAL__N_135VisualStudioWindowsX86_32TargetInfoE,vtable for (anonymous namespace)::VisualStudioWindowsX86_32TargetInfo
+_ZTVN12_GLOBAL__N_121MinGWX86_32TargetInfoE,vtable for (anonymous namespace)::MinGWX86_32TargetInfo
+_ZTVN12_GLOBAL__N_122CygwinX86_32TargetInfoE,vtable for (anonymous namespace)::CygwinX86_32TargetInfo
+_ZTVN12_GLOBAL__N_117SolarisTargetInfoINS_16X86_32TargetInfoEEE,vtable for (anonymous namespace)::SolarisTargetInfo<(anonymous namespace)::X86_32TargetInfo>
+_ZTVN12_GLOBAL__N_115MinixTargetInfoINS_16X86_32TargetInfoEEE,vtable for (anonymous namespace)::MinixTargetInfo<(anonymous namespace)::X86_32TargetInfo>
+_ZTVN12_GLOBAL__N_117FreeBSDTargetInfoINS_16X86_32TargetInfoEEE,vtable for (anonymous namespace)::FreeBSDTargetInfo<(anonymous namespace)::X86_32TargetInfo>
+_ZTVN12_GLOBAL__N_121OpenBSDI386TargetInfoE,vtable for (anonymous namespace)::OpenBSDI386TargetInfo
+_ZTVN12_GLOBAL__N_116NetBSDTargetInfoINS_16X86_32TargetInfoEEE,vtable for (anonymous namespace)::NetBSDTargetInfo<(anonymous namespace)::X86_32TargetInfo>
+_ZTVN12_GLOBAL__N_122DragonFlyBSDTargetInfoINS_16X86_32TargetInfoEEE,vtable for (anonymous namespace)::DragonFlyBSDTargetInfo<(anonymous namespace)::X86_32TargetInfo>
+_ZTVN12_GLOBAL__N_115LinuxTargetInfoINS_16X86_32TargetInfoEEE,vtable for (anonymous namespace)::LinuxTargetInfo<(anonymous namespace)::X86_32TargetInfo>
+_ZTVN12_GLOBAL__N_120DarwinI386TargetInfoE,vtable for (anonymous namespace)::DarwinI386TargetInfo
+_ZTVN12_GLOBAL__N_116DarwinTargetInfoINS_16X86_32TargetInfoEEE,vtable for (anonymous namespace)::DarwinTargetInfo<(anonymous namespace)::X86_32TargetInfo>
+_ZTVN12_GLOBAL__N_118AuroraUXTargetInfoINS_16X86_32TargetInfoEEE,vtable for (anonymous namespace)::AuroraUXTargetInfo<(anonymous namespace)::X86_32TargetInfo>
+_ZTVN12_GLOBAL__N_113TCETargetInfoE,vtable for (anonymous namespace)::TCETargetInfo
+_ZTVN12_GLOBAL__N_117SystemZTargetInfoE,vtable for (anonymous namespace)::SystemZTargetInfo
+_ZTVN12_GLOBAL__N_116PS3SPUTargetInfoINS_15PPC64TargetInfoEEE,vtable for (anonymous namespace)::PS3SPUTargetInfo<(anonymous namespace)::PPC64TargetInfo>
+_ZTVN12_GLOBAL__N_115PPC64TargetInfoE,vtable for (anonymous namespace)::PPC64TargetInfo
+_ZTVN12_GLOBAL__N_113PPCTargetInfoE,vtable for (anonymous namespace)::PPCTargetInfo
+_ZTVN12_GLOBAL__N_117SparcV8TargetInfoE,vtable for (anonymous namespace)::SparcV8TargetInfo
+_ZTVN12_GLOBAL__N_124SolarisSparcV8TargetInfoE,vtable for (anonymous namespace)::SolarisSparcV8TargetInfo
+_ZTVN12_GLOBAL__N_125AuroraUXSparcV8TargetInfoE,vtable for (anonymous namespace)::AuroraUXSparcV8TargetInfo
+_ZTVN12_GLOBAL__N_116MBlazeTargetInfoE,vtable for (anonymous namespace)::MBlazeTargetInfo
+_ZTVN12_GLOBAL__N_117FreeBSDTargetInfoINS_15PPC64TargetInfoEEE,vtable for (anonymous namespace)::FreeBSDTargetInfo<(anonymous namespace)::PPC64TargetInfo>
+_ZTVN12_GLOBAL__N_116PS3PPUTargetInfoINS_15PPC64TargetInfoEEE,vtable for (anonymous namespace)::PS3PPUTargetInfo<(anonymous namespace)::PPC64TargetInfo>
+_ZTVN12_GLOBAL__N_121DarwinPPC64TargetInfoE,vtable for (anonymous namespace)::DarwinPPC64TargetInfo
+_ZTVN12_GLOBAL__N_116DarwinTargetInfoINS_15PPC64TargetInfoEEE,vtable for (anonymous namespace)::DarwinTargetInfo<(anonymous namespace)::PPC64TargetInfo>
+_ZTVN12_GLOBAL__N_115PPC32TargetInfoE,vtable for (anonymous namespace)::PPC32TargetInfo
+_ZTVN12_GLOBAL__N_117FreeBSDTargetInfoINS_15PPC32TargetInfoEEE,vtable for (anonymous namespace)::FreeBSDTargetInfo<(anonymous namespace)::PPC32TargetInfo>
+_ZTVN12_GLOBAL__N_121DarwinPPC32TargetInfoE,vtable for (anonymous namespace)::DarwinPPC32TargetInfo
+_ZTVN12_GLOBAL__N_116DarwinTargetInfoINS_15PPC32TargetInfoEEE,vtable for (anonymous namespace)::DarwinTargetInfo<(anonymous namespace)::PPC32TargetInfo>
+_ZTVN12_GLOBAL__N_116MipselTargetInfoE,vtable for (anonymous namespace)::MipselTargetInfo
+_ZTVN12_GLOBAL__N_114MipsTargetInfoE,vtable for (anonymous namespace)::MipsTargetInfo
+_ZTVN12_GLOBAL__N_115LinuxTargetInfoINS_16MipselTargetInfoEEE,vtable for (anonymous namespace)::LinuxTargetInfo<(anonymous namespace)::MipselTargetInfo>
+_ZTVN12_GLOBAL__N_113PSPTargetInfoINS_16MipselTargetInfoEEE,vtable for (anonymous namespace)::PSPTargetInfo<(anonymous namespace)::MipselTargetInfo>
+_ZTVN12_GLOBAL__N_115LinuxTargetInfoINS_14MipsTargetInfoEEE,vtable for (anonymous namespace)::LinuxTargetInfo<(anonymous namespace)::MipsTargetInfo>
+_ZTVN12_GLOBAL__N_113PSPTargetInfoINS_14MipsTargetInfoEEE,vtable for (anonymous namespace)::PSPTargetInfo<(anonymous namespace)::MipsTargetInfo>
+_ZTVN12_GLOBAL__N_116MSP430TargetInfoE,vtable for (anonymous namespace)::MSP430TargetInfo
+_ZTVN12_GLOBAL__N_118BlackfinTargetInfoE,vtable for (anonymous namespace)::BlackfinTargetInfo
+_ZTVN12_GLOBAL__N_113ARMTargetInfoE,vtable for (anonymous namespace)::ARMTargetInfo
+_ZTVN12_GLOBAL__N_117FreeBSDTargetInfoINS_13ARMTargetInfoEEE,vtable for (anonymous namespace)::FreeBSDTargetInfo<(anonymous namespace)::ARMTargetInfo>
+_ZTVN12_GLOBAL__N_119DarwinARMTargetInfoE,vtable for (anonymous namespace)::DarwinARMTargetInfo
+_ZTVN12_GLOBAL__N_116DarwinTargetInfoINS_13ARMTargetInfoEEE,vtable for (anonymous namespace)::DarwinTargetInfo<(anonymous namespace)::ARMTargetInfo>
+_ZTVN12_GLOBAL__N_115LinuxTargetInfoINS_13ARMTargetInfoEEE,vtable for (anonymous namespace)::LinuxTargetInfo<(anonymous namespace)::ARMTargetInfo>
+_ZTVN12_GLOBAL__N_112ArgPromotionE,vtable for (anonymous namespace)::ArgPromotion
+_ZTVN12_GLOBAL__N_113ConstantMergeE,vtable for (anonymous namespace)::ConstantMerge
+_ZTVN12_GLOBAL__N_13DAHE,vtable for (anonymous namespace)::DAH
+_ZTVN12_GLOBAL__N_13DAEE,vtable for (anonymous namespace)::DAE
+_ZTVN12_GLOBAL__N_13DTEE,vtable for (anonymous namespace)::DTE
+_ZTVN12_GLOBAL__N_113FunctionAttrsE,vtable for (anonymous namespace)::FunctionAttrs
+_ZTVN12_GLOBAL__N_19GlobalDCEE,vtable for (anonymous namespace)::GlobalDCE
+_ZTVN12_GLOBAL__N_19GlobalOptE,vtable for (anonymous namespace)::GlobalOpt
+_ZTVN12_GLOBAL__N_113AlwaysInlinerE,vtable for (anonymous namespace)::AlwaysInliner
+_ZTVN12_GLOBAL__N_113SimpleInlinerE,vtable for (anonymous namespace)::SimpleInliner
+_ZTVN4llvm7InlinerE,vtable for llvm::Inliner
+_ZTVN12_GLOBAL__N_17PruneEHE,vtable for (anonymous namespace)::PruneEH
+_ZTVN12_GLOBAL__N_123StripDeadPrototypesPassE,vtable for (anonymous namespace)::StripDeadPrototypesPass
+_ZTVN12_GLOBAL__N_116WriteBitcodePassE,vtable for (anonymous namespace)::WriteBitcodePass
+_ZTVN4llvm13BitcodeReaderE,vtable for llvm::BitcodeReader
+_ZTVN4llvm12_GLOBAL__N_119ConstantPlaceHolderE,vtable for llvm::(anonymous namespace)::ConstantPlaceHolder
+_ZTVN12_GLOBAL__N_111X86AsmLexerE,vtable for (anonymous namespace)::X86AsmLexer
+_ZTVN12_GLOBAL__N_118X86_64ATTAsmParserE,vtable for (anonymous namespace)::X86_64ATTAsmParser
+_ZTVN12_GLOBAL__N_110X86OperandE,vtable for (anonymous namespace)::X86Operand
+_ZTVN12_GLOBAL__N_115X86ATTAsmParserE,vtable for (anonymous namespace)::X86ATTAsmParser
+_ZTVN12_GLOBAL__N_118X86_32ATTAsmParserE,vtable for (anonymous namespace)::X86_32ATTAsmParser
+_ZTVN12_GLOBAL__N_116SSEDomainFixPassE,vtable for (anonymous namespace)::SSEDomainFixPass
+_ZTVN12_GLOBAL__N_119ELFX86_64AsmBackendE,vtable for (anonymous namespace)::ELFX86_64AsmBackend
+_ZTVN12_GLOBAL__N_118X86ELFObjectWriterE,vtable for (anonymous namespace)::X86ELFObjectWriter
+_ZTVN12_GLOBAL__N_113X86AsmBackendE,vtable for (anonymous namespace)::X86AsmBackend
+_ZTVN12_GLOBAL__N_122DarwinX86_64AsmBackendE,vtable for (anonymous namespace)::DarwinX86_64AsmBackend
+_ZTVN12_GLOBAL__N_119ELFX86_32AsmBackendE,vtable for (anonymous namespace)::ELFX86_32AsmBackend
+_ZTVN12_GLOBAL__N_120WindowsX86AsmBackendE,vtable for (anonymous namespace)::WindowsX86AsmBackend
+_ZTVN12_GLOBAL__N_122DarwinX86_32AsmBackendE,vtable for (anonymous namespace)::DarwinX86_32AsmBackend
+_ZTVN4llvm13X86AsmPrinterE,vtable for llvm::X86AsmPrinter
+_ZTVN4llvm24X86COFFMachineModuleInfoE,vtable for llvm::X86COFFMachineModuleInfo
+_ZTVN12_GLOBAL__N_17EmitterIN4llvm14JITCodeEmitterEEE,vtable for (anonymous namespace)::Emitter<llvm::JITCodeEmitter>
+_ZTVN4llvm16X86ELFWriterInfoE,vtable for llvm::X86ELFWriterInfo
+_ZTVN12_GLOBAL__N_111X86FastISelE,vtable for (anonymous namespace)::X86FastISel
+_ZTVN12_GLOBAL__N_13FPSE,vtable for (anonymous namespace)::FPS
+_ZTVN4llvm16X86FrameLoweringE,vtable for llvm::X86FrameLowering
+_ZTVN12_GLOBAL__N_115X86DAGToDAGISelE,vtable for (anonymous namespace)::X86DAGToDAGISel
+_ZTVN4llvm17X86TargetLoweringE,vtable for llvm::X86TargetLowering
+_ZTVN4llvm12X86InstrInfoE,vtable for llvm::X86InstrInfo
+_ZTVN12_GLOBAL__N_14CGBRE,vtable for (anonymous namespace)::CGBR
+_ZTVN4llvm10X86JITInfoE,vtable for llvm::X86JITInfo
+_ZTVN4llvm15X86ELFMCAsmInfoE,vtable for llvm::X86ELFMCAsmInfo
+_ZTVN12_GLOBAL__N_116X86MCCodeEmitterE,vtable for (anonymous namespace)::X86MCCodeEmitter
+_ZTVN12_GLOBAL__N_119X86MachObjectWriterE,vtable for (anonymous namespace)::X86MachObjectWriter
+_ZTVN4llvm15X86RegisterInfoE,vtable for llvm::X86RegisterInfo
+_ZTVN4llvm3X868CCRClassE,vtable for llvm::X86::CCRClass
+_ZTVN4llvm3X869FR32ClassE,vtable for llvm::X86::FR32Class
+_ZTVN4llvm3X869FR64ClassE,vtable for llvm::X86::FR64Class
+_ZTVN4llvm3X869GR16ClassE,vtable for llvm::X86::GR16Class
+_ZTVN4llvm3X8615GR16_NOREXClassE,vtable for llvm::X86::GR16_NOREXClass
+_ZTVN4llvm3X869GR32ClassE,vtable for llvm::X86::GR32Class
+_ZTVN4llvm3X8615GR32_NOREXClassE,vtable for llvm::X86::GR32_NOREXClass
+_ZTVN4llvm3X8614GR32_NOSPClassE,vtable for llvm::X86::GR32_NOSPClass
+_ZTVN4llvm3X869GR64ClassE,vtable for llvm::X86::GR64Class
+_ZTVN4llvm3X8615GR64_NOREXClassE,vtable for llvm::X86::GR64_NOREXClass
+_ZTVN4llvm3X8620GR64_NOREX_NOSPClassE,vtable for llvm::X86::GR64_NOREX_NOSPClass
+_ZTVN4llvm3X8614GR64_NOSPClassE,vtable for llvm::X86::GR64_NOSPClass
+_ZTVN4llvm3X868GR8ClassE,vtable for llvm::X86::GR8Class
+_ZTVN4llvm3X8614GR8_NOREXClassE,vtable for llvm::X86::GR8_NOREXClass
+_ZTVN4llvm3X868RSTClassE,vtable for llvm::X86::RSTClass
+_ZTVN4llvm3X8610VR128ClassE,vtable for llvm::X86::VR128Class
+_ZTVN4llvm3X8610VR256ClassE,vtable for llvm::X86::VR256Class
+_ZTVN4llvm18X86GenRegisterInfoE,vtable for llvm::X86GenRegisterInfo
+_ZTVN12_GLOBAL__N_14MSAHE,vtable for (anonymous namespace)::MSAH
+_ZTVN4llvm19X86SelectionDAGInfoE,vtable for llvm::X86SelectionDAGInfo
+_ZTVN4llvm12X86SubtargetE,vtable for llvm::X86Subtarget
+_ZTVN4llvm16X86TargetMachineE,vtable for llvm::X86TargetMachine
+_ZTVN4llvm25X8632_ELFTargetObjectFileE,vtable for llvm::X8632_ELFTargetObjectFile
+_ZTVN4llvm25X8664_ELFTargetObjectFileE,vtable for llvm::X8664_ELFTargetObjectFile
+_ZTVN4llvm27X8664_MachoTargetObjectFileE,vtable for llvm::X8664_MachoTargetObjectFile
+_ZTVN4llvm17X86ATTInstPrinterE,vtable for llvm::X86ATTInstPrinter
+_ZTVN4llvm19X86IntelInstPrinterE,vtable for llvm::X86IntelInstPrinter
+_ZTVN12_GLOBAL__N_113ThumbAsmLexerE,vtable for (anonymous namespace)::ThumbAsmLexer
+_ZTVN12_GLOBAL__N_115ARMBaseAsmLexerE,vtable for (anonymous namespace)::ARMBaseAsmLexer
+_ZTVN12_GLOBAL__N_111ARMAsmLexerE,vtable for (anonymous namespace)::ARMAsmLexer
+_ZTVN12_GLOBAL__N_112ARMAsmParserE,vtable for (anonymous namespace)::ARMAsmParser
+_ZTVN12_GLOBAL__N_110ARMOperandE,vtable for (anonymous namespace)::ARMOperand
+_ZTVN12_GLOBAL__N_116ELFARMAsmBackendE,vtable for (anonymous namespace)::ELFARMAsmBackend
+_ZTVN12_GLOBAL__N_118ARMELFObjectWriterE,vtable for (anonymous namespace)::ARMELFObjectWriter
+_ZTVN12_GLOBAL__N_113ARMAsmBackendE,vtable for (anonymous namespace)::ARMAsmBackend
+_ZTVN12_GLOBAL__N_119DarwinARMAsmBackendE,vtable for (anonymous namespace)::DarwinARMAsmBackend
+_ZTVN12_GLOBAL__N_119ARMMachObjectWriterE,vtable for (anonymous namespace)::ARMMachObjectWriter
+_ZTVN4llvm13ARMAsmPrinterE,vtable for llvm::ARMAsmPrinter
+_ZTVN12_GLOBAL__N_122ObjectAttributeEmitterE,vtable for (anonymous namespace)::ObjectAttributeEmitter
+_ZTVN12_GLOBAL__N_116AttributeEmitterE,vtable for (anonymous namespace)::AttributeEmitter
+_ZTVN12_GLOBAL__N_119AsmAttributeEmitterE,vtable for (anonymous namespace)::AsmAttributeEmitter
+_ZTVN4llvm16ARMBaseInstrInfoE,vtable for llvm::ARMBaseInstrInfo
+_ZTVN4llvm19ARMBaseRegisterInfoE,vtable for llvm::ARMBaseRegisterInfo
+_ZTVN4llvm3ARM8DPRClassE,vtable for llvm::ARM::DPRClass
+_ZTVN4llvm3ARM8GPRClassE,vtable for llvm::ARM::GPRClass
+_ZTVN4llvm3ARM8QPRClassE,vtable for llvm::ARM::QPRClass
+_ZTVN4llvm3ARM9QQPRClassE,vtable for llvm::ARM::QQPRClass
+_ZTVN4llvm3ARM11QQQQPRClassE,vtable for llvm::ARM::QQQQPRClass
+_ZTVN4llvm3ARM9rGPRClassE,vtable for llvm::ARM::rGPRClass
+_ZTVN4llvm3ARM10tcGPRClassE,vtable for llvm::ARM::tcGPRClass
+_ZTVN4llvm18ARMGenRegisterInfoE,vtable for llvm::ARMGenRegisterInfo
+_ZTVN12_GLOBAL__N_114ARMCodeEmitterE,vtable for (anonymous namespace)::ARMCodeEmitter
+_ZTVN12_GLOBAL__N_118ARMConstantIslandsE,vtable for (anonymous namespace)::ARMConstantIslands
+_ZTVN4llvm20ARMConstantPoolValueE,vtable for llvm::ARMConstantPoolValue
+_ZTVN4llvm16ARMELFWriterInfoE,vtable for llvm::ARMELFWriterInfo
+_ZTVN12_GLOBAL__N_115ARMExpandPseudoE,vtable for (anonymous namespace)::ARMExpandPseudo
+_ZTVN12_GLOBAL__N_111ARMFastISelE,vtable for (anonymous namespace)::ARMFastISel
+_ZTVN4llvm16ARMFrameLoweringE,vtable for llvm::ARMFrameLowering
+_ZTVN12_GLOBAL__N_114ARMGlobalMergeE,vtable for (anonymous namespace)::ARMGlobalMerge
+_ZTVN4llvm19ARMHazardRecognizerE,vtable for llvm::ARMHazardRecognizer
+_ZTVN12_GLOBAL__N_115ARMDAGToDAGISelE,vtable for (anonymous namespace)::ARMDAGToDAGISel
+_ZTVN4llvm17ARMTargetLoweringE,vtable for llvm::ARMTargetLowering
+_ZTVN4llvm12ARMInstrInfoE,vtable for llvm::ARMInstrInfo
+_ZTVN4llvm10ARMJITInfoE,vtable for llvm::ARMJITInfo
+_ZTVN12_GLOBAL__N_115ARMLoadStoreOptE,vtable for (anonymous namespace)::ARMLoadStoreOpt
+_ZTVN12_GLOBAL__N_123ARMPreAllocLoadStoreOptE,vtable for (anonymous namespace)::ARMPreAllocLoadStoreOpt
+_ZTVN12_GLOBAL__N_116ARMMCCodeEmitterE,vtable for (anonymous namespace)::ARMMCCodeEmitter
+_ZTVN4llvm9ARMMCExprE,vtable for llvm::ARMMCExpr
+_ZTVN4llvm19ARMSelectionDAGInfoE,vtable for llvm::ARMSelectionDAGInfo
+_ZTVN4llvm12ARMSubtargetE,vtable for llvm::ARMSubtarget
+_ZTVN4llvm20ARMBaseTargetMachineE,vtable for llvm::ARMBaseTargetMachine
+_ZTVN4llvm22ARMElfTargetObjectFileE,vtable for llvm::ARMElfTargetObjectFile
+_ZTVN12_GLOBAL__N_112MLxExpansionE,vtable for (anonymous namespace)::MLxExpansion
+_ZTVN12_GLOBAL__N_115NEONMoveFixPassE,vtable for (anonymous namespace)::NEONMoveFixPass
+_ZTVN4llvm19Thumb1FrameLoweringE,vtable for llvm::Thumb1FrameLowering
+_ZTVN4llvm15Thumb1InstrInfoE,vtable for llvm::Thumb1InstrInfo
+_ZTVN4llvm18Thumb1RegisterInfoE,vtable for llvm::Thumb1RegisterInfo
+_ZTVN12_GLOBAL__N_117Thumb2ITBlockPassE,vtable for (anonymous namespace)::Thumb2ITBlockPass
+_ZTVN4llvm15Thumb2InstrInfoE,vtable for llvm::Thumb2InstrInfo
+_ZTVN4llvm18Thumb2RegisterInfoE,vtable for llvm::Thumb2RegisterInfo
+_ZTVN12_GLOBAL__N_116Thumb2SizeReduceE,vtable for (anonymous namespace)::Thumb2SizeReduce
+_ZTVN12_GLOBAL__N_115WorkListRemoverE,vtable for (anonymous namespace)::WorkListRemover
+_ZTVN4llvm8FastISelE,vtable for llvm::FastISel
+_ZTVN12_GLOBAL__N_118NodeUpdateListenerE,vtable for (anonymous namespace)::NodeUpdateListener
+_ZTVN12_GLOBAL__N_115ScheduleDAGListE,vtable for (anonymous namespace)::ScheduleDAGList
+_ZTVN12_GLOBAL__N_125RegReductionPriorityQueueINS_14ilp_ls_rr_sortEEE,vtable for (anonymous namespace)::RegReductionPriorityQueue<(anonymous namespace)::ilp_ls_rr_sort>
+_ZTVN12_GLOBAL__N_118RegReductionPQBaseE,vtable for (anonymous namespace)::RegReductionPQBase
+_ZTVN12_GLOBAL__N_125RegReductionPriorityQueueINS_17hybrid_ls_rr_sortEEE,vtable for (anonymous namespace)::RegReductionPriorityQueue<(anonymous namespace)::hybrid_ls_rr_sort>
+_ZTVN12_GLOBAL__N_125RegReductionPriorityQueueINS_14src_ls_rr_sortEEE,vtable for (anonymous namespace)::RegReductionPriorityQueue<(anonymous namespace)::src_ls_rr_sort>
+_ZTVN12_GLOBAL__N_125RegReductionPriorityQueueINS_13td_ls_rr_sortEEE,vtable for (anonymous namespace)::RegReductionPriorityQueue<(anonymous namespace)::td_ls_rr_sort>
+_ZTVN12_GLOBAL__N_125RegReductionPriorityQueueINS_13bu_ls_rr_sortEEE,vtable for (anonymous namespace)::RegReductionPriorityQueue<(anonymous namespace)::bu_ls_rr_sort>
+_ZTVN12_GLOBAL__N_117ScheduleDAGRRListE,vtable for (anonymous namespace)::ScheduleDAGRRList
+_ZTVN4llvm18ScheduleDAGSDNodesE,vtable for llvm::ScheduleDAGSDNodes
+_ZTVN4llvm12SelectionDAG17DAGUpdateListenerE,vtable for llvm::SelectionDAG::DAGUpdateListener
+_ZTVN12_GLOBAL__N_118RAUWUpdateListenerE,vtable for (anonymous namespace)::RAUWUpdateListener
+_ZTVN4llvm16SelectionDAGISelE,vtable for llvm::SelectionDAGISel
+_ZTVN4llvm14TargetLoweringE,vtable for llvm::TargetLowering
+_ZTVN4llvm22TargetSelectionDAGInfoE,vtable for llvm::TargetSelectionDAGInfo
+_ZTVN4llvm10AsmPrinterE,vtable for llvm::AsmPrinter
+_ZTVN4llvm3DIEE,vtable for llvm::DIE
+_ZTVN4llvm10DIEIntegerE,vtable for llvm::DIEInteger
+_ZTVN4llvm9DIEStringE,vtable for llvm::DIEString
+_ZTVN4llvm8DIELabelE,vtable for llvm::DIELabel
+_ZTVN4llvm8DIEDeltaE,vtable for llvm::DIEDelta
+_ZTVN4llvm8DIEEntryE,vtable for llvm::DIEEntry
+_ZTVN4llvm8DIEBlockE,vtable for llvm::DIEBlock
+_ZTVN4llvm17DwarfCFIExceptionE,vtable for llvm::DwarfCFIException
+_ZTVN4llvm8DbgScopeE,vtable for llvm::DbgScope
+_ZTVN4llvm14DwarfExceptionE,vtable for llvm::DwarfException
+_ZTVN4llvm19DwarfTableExceptionE,vtable for llvm::DwarfTableException
+_ZTVN4llvm8AsmLexerE,vtable for llvm::AsmLexer
+_ZTVN12_GLOBAL__N_19AsmParserE,vtable for (anonymous namespace)::AsmParser
+_ZTVN12_GLOBAL__N_116GenericAsmParserE,vtable for (anonymous namespace)::GenericAsmParser
+_ZTVN12_GLOBAL__N_113COFFAsmParserE,vtable for (anonymous namespace)::COFFAsmParser
+_ZTVN12_GLOBAL__N_115DarwinAsmParserE,vtable for (anonymous namespace)::DarwinAsmParser
+_ZTVN12_GLOBAL__N_112ELFAsmParserE,vtable for (anonymous namespace)::ELFAsmParser
+_ZTVN4llvm10MCAsmLexerE,vtable for llvm::MCAsmLexer
+_ZTVN4llvm11MCAsmParserE,vtable for llvm::MCAsmParser
+_ZTVN4llvm20MCAsmParserExtensionE,vtable for llvm::MCAsmParserExtension
+_ZTVN4llvm15TargetAsmParserE,vtable for llvm::TargetAsmParser
+_ZTVN4llvm24AggressiveAntiDepBreakerE,vtable for llvm::AggressiveAntiDepBreaker
+_ZTVN12_GLOBAL__N_116BranchFolderPassE,vtable for (anonymous namespace)::BranchFolderPass
+_ZTVN4llvm21CalculateSpillWeightsE,vtable for llvm::CalculateSpillWeights
+_ZTVN12_GLOBAL__N_116CodePlacementOptE,vtable for (anonymous namespace)::CodePlacementOpt
+_ZTVN4llvm22CriticalAntiDepBreakerE,vtable for llvm::CriticalAntiDepBreaker
+_ZTVN12_GLOBAL__N_126DeadMachineInstructionElimE,vtable for (anonymous namespace)::DeadMachineInstructionElim
+_ZTVN12_GLOBAL__N_114DwarfEHPrepareE,vtable for (anonymous namespace)::DwarfEHPrepare
+_ZTVN4llvm11EdgeBundlesE,vtable for llvm::EdgeBundles
+_ZTVN12_GLOBAL__N_117ExpandISelPseudosE,vtable for (anonymous namespace)::ExpandISelPseudos
+_ZTVN4llvm12GCModuleInfoE,vtable for llvm::GCModuleInfo
+_ZTVN12_GLOBAL__N_17DeleterE,vtable for (anonymous namespace)::Deleter
+_ZTVN12_GLOBAL__N_17PrinterE,vtable for (anonymous namespace)::Printer
+_ZTVN4llvm10GCStrategyE,vtable for llvm::GCStrategy
+_ZTVN12_GLOBAL__N_119MachineCodeAnalysisE,vtable for (anonymous namespace)::MachineCodeAnalysis
+_ZTVN12_GLOBAL__N_115LowerIntrinsicsE,vtable for (anonymous namespace)::LowerIntrinsics
+_ZTVN12_GLOBAL__N_111IfConverterE,vtable for (anonymous namespace)::IfConverter
+_ZTVN12_GLOBAL__N_113InlineSpillerE,vtable for (anonymous namespace)::InlineSpiller
+_ZTVN4llvm17LLVMTargetMachineE,vtable for llvm::LLVMTargetMachine
+_ZTVN4llvm20LatencyPriorityQueueE,vtable for llvm::LatencyPriorityQueue
+_ZTVN4llvm18LiveDebugVariablesE,vtable for llvm::LiveDebugVariables
+_ZTVN4llvm13LiveIntervalsE,vtable for llvm::LiveIntervals
+_ZTVN4llvm10LiveStacksE,vtable for llvm::LiveStacks
+_ZTVN4llvm13LiveVariablesE,vtable for llvm::LiveVariables
+_ZTVN12_GLOBAL__N_118LocalStackSlotPassE,vtable for (anonymous namespace)::LocalStackSlotPass
+_ZTVN12_GLOBAL__N_127LowerSubregsInstructionPassE,vtable for (anonymous namespace)::LowerSubregsInstructionPass
+_ZTVN12_GLOBAL__N_110MachineCSEE,vtable for (anonymous namespace)::MachineCSE
+_ZTVN4llvm20MachineDominatorTreeE,vtable for llvm::MachineDominatorTree
+_ZTVN4llvm19MachineFunctionInfoE,vtable for llvm::MachineFunctionInfo
+_ZTVN4llvm23MachineFunctionAnalysisE,vtable for llvm::MachineFunctionAnalysis
+_ZTVN4llvm19MachineFunctionPassE,vtable for llvm::MachineFunctionPass
+_ZTVN12_GLOBAL__N_126MachineFunctionPrinterPassE,vtable for (anonymous namespace)::MachineFunctionPrinterPass
+_ZTVN12_GLOBAL__N_111MachineLICME,vtable for (anonymous namespace)::MachineLICM
+_ZTVN4llvm15MachineLoopInfoE,vtable for llvm::MachineLoopInfo
+_ZTVN4llvm21MachineModuleInfoImplE,vtable for llvm::MachineModuleInfoImpl
+_ZTVN4llvm17MachineModuleInfoE,vtable for llvm::MachineModuleInfo
+_ZTVN4llvm26MMIAddrLabelMapCallbackPtrE,vtable for llvm::MMIAddrLabelMapCallbackPtr
+_ZTVN4llvm22MachineModuleInfoMachOE,vtable for llvm::MachineModuleInfoMachO
+_ZTVN4llvm20MachineModuleInfoELFE,vtable for llvm::MachineModuleInfoELF
+_ZTVN12_GLOBAL__N_114MachineSinkingE,vtable for (anonymous namespace)::MachineSinking
+_ZTVN12_GLOBAL__N_119MachineVerifierPassE,vtable for (anonymous namespace)::MachineVerifierPass
+_ZTVN12_GLOBAL__N_112OptimizePHIsE,vtable for (anonymous namespace)::OptimizePHIs
+_ZTVN12_GLOBAL__N_114PHIEliminationE,vtable for (anonymous namespace)::PHIElimination
+_ZTVN12_GLOBAL__N_117PeepholeOptimizerE,vtable for (anonymous namespace)::PeepholeOptimizer
+_ZTVN4llvm14AntiDepBreakerE,vtable for llvm::AntiDepBreaker
+_ZTVN12_GLOBAL__N_115PostRASchedulerE,vtable for (anonymous namespace)::PostRAScheduler
+_ZTVN12_GLOBAL__N_120SchedulePostRATDListE,vtable for (anonymous namespace)::SchedulePostRATDList
+_ZTVN12_GLOBAL__N_117PreAllocSplittingE,vtable for (anonymous namespace)::PreAllocSplitting
+_ZTVN4llvm19ProcessImplicitDefsE,vtable for llvm::ProcessImplicitDefs
+_ZTVN4llvm17PseudoSourceValueE,vtable for llvm::PseudoSourceValue
+_ZTVN4llvm27FixedStackPseudoSourceValueE,vtable for llvm::FixedStackPseudoSourceValue
+_ZTVN12_GLOBAL__N_16RAFastE,vtable for (anonymous namespace)::RAFast
+_ZTVN12_GLOBAL__N_19RALinScanE,vtable for (anonymous namespace)::RALinScan
+_ZTVN4llvm17RegisterCoalescerE,vtable for llvm::RegisterCoalescer
+_ZTVN4llvm11ScheduleDAGE,vtable for llvm::ScheduleDAG
+_ZTVN4llvm24ScheduleHazardRecognizerE,vtable for llvm::ScheduleHazardRecognizer
+_ZTVN4llvm17ScheduleDAGInstrsE,vtable for llvm::ScheduleDAGInstrs
+_ZTVN4llvm26ScoreboardHazardRecognizerE,vtable for llvm::ScoreboardHazardRecognizer
+_ZTVN4llvm3PEIE,vtable for llvm::PEI
+_ZTVN4llvm24SimpleRegisterCoalescingE,vtable for llvm::SimpleRegisterCoalescing
+_ZTVN12_GLOBAL__N_110SjLjEHPassE,vtable for (anonymous namespace)::SjLjEHPass
+_ZTVN4llvm11SlotIndexesE,vtable for llvm::SlotIndexes
+_ZTVN12_GLOBAL__N_115StandardSpillerE,vtable for (anonymous namespace)::StandardSpiller
+_ZTVN12_GLOBAL__N_114TrivialSpillerE,vtable for (anonymous namespace)::TrivialSpiller
+_ZTVN12_GLOBAL__N_111SpillerBaseE,vtable for (anonymous namespace)::SpillerBase
+_ZTVN12_GLOBAL__N_114StackProtectorE,vtable for (anonymous namespace)::StackProtector
+_ZTVN12_GLOBAL__N_117StackSlotColoringE,vtable for (anonymous namespace)::StackSlotColoring
+_ZTVN12_GLOBAL__N_120StrongPHIEliminationE,vtable for (anonymous namespace)::StrongPHIElimination
+_ZTVN12_GLOBAL__N_117TailDuplicatePassE,vtable for (anonymous namespace)::TailDuplicatePass
+_ZTVN4llvm19TargetInstrInfoImplE,vtable for llvm::TargetInstrInfoImpl
+_ZTVN4llvm27TargetLoweringObjectFileELFE,vtable for llvm::TargetLoweringObjectFileELF
+_ZTVN4llvm29TargetLoweringObjectFileMachOE,vtable for llvm::TargetLoweringObjectFileMachO
+_ZTVN4llvm28TargetLoweringObjectFileCOFFE,vtable for llvm::TargetLoweringObjectFileCOFF
+_ZTVN12_GLOBAL__N_125TwoAddressInstructionPassE,vtable for (anonymous namespace)::TwoAddressInstructionPass
+_ZTVN12_GLOBAL__N_127UnreachableMachineBlockElimE,vtable for (anonymous namespace)::UnreachableMachineBlockElim
+_ZTVN12_GLOBAL__N_120UnreachableBlockElimE,vtable for (anonymous namespace)::UnreachableBlockElim
+_ZTVN4llvm10VirtRegMapE,vtable for llvm::VirtRegMap
+_ZTVN4llvm15VirtRegRewriterE,vtable for llvm::VirtRegRewriter
+_ZTVN12_GLOBAL__N_115TrivialRewriterE,vtable for (anonymous namespace)::TrivialRewriter
+_ZTVN12_GLOBAL__N_113LocalRewriterE,vtable for (anonymous namespace)::LocalRewriter
+_ZTVN12_GLOBAL__N_14ADCEE,vtable for (anonymous namespace)::ADCE
+_ZTVN12_GLOBAL__N_114CodeGenPrepareE,vtable for (anonymous namespace)::CodeGenPrepare
+_ZTVN12_GLOBAL__N_131CodeGenPrepareFortifiedLibCallsE,vtable for (anonymous namespace)::CodeGenPrepareFortifiedLibCalls
+_ZTVN12_GLOBAL__N_126CorrelatedValuePropagationE,vtable for (anonymous namespace)::CorrelatedValuePropagation
+_ZTVN12_GLOBAL__N_13DSEE,vtable for (anonymous namespace)::DSE
+_ZTVN12_GLOBAL__N_18EarlyCSEE,vtable for (anonymous namespace)::EarlyCSE
+_ZTVN12_GLOBAL__N_111GEPSplitterE,vtable for (anonymous namespace)::GEPSplitter
+_ZTVN12_GLOBAL__N_13GVNE,vtable for (anonymous namespace)::GVN
+_ZTVN12_GLOBAL__N_114IndVarSimplifyE,vtable for (anonymous namespace)::IndVarSimplify
+_ZTVN12_GLOBAL__N_113JumpThreadingE,vtable for (anonymous namespace)::JumpThreading
+_ZTVN12_GLOBAL__N_14LICME,vtable for (anonymous namespace)::LICM
+_ZTVN12_GLOBAL__N_112LoopPromoterE,vtable for (anonymous namespace)::LoopPromoter
+_ZTVN12_GLOBAL__N_112LoopDeletionE,vtable for (anonymous namespace)::LoopDeletion
+_ZTVN12_GLOBAL__N_118LoopIdiomRecognizeE,vtable for (anonymous namespace)::LoopIdiomRecognize
+_ZTVN12_GLOBAL__N_110LoopRotateE,vtable for (anonymous namespace)::LoopRotate
+_ZTVN12_GLOBAL__N_118LoopStrengthReduceE,vtable for (anonymous namespace)::LoopStrengthReduce
+_ZTVN12_GLOBAL__N_110LoopUnrollE,vtable for (anonymous namespace)::LoopUnroll
+_ZTVN12_GLOBAL__N_112LoopUnswitchE,vtable for (anonymous namespace)::LoopUnswitch
+_ZTVN12_GLOBAL__N_19MemCpyOptE,vtable for (anonymous namespace)::MemCpyOpt
+_ZTVN12_GLOBAL__N_111ReassociateE,vtable for (anonymous namespace)::Reassociate
+_ZTVN12_GLOBAL__N_16IPSCCPE,vtable for (anonymous namespace)::IPSCCP
+_ZTVN12_GLOBAL__N_14SCCPE,vtable for (anonymous namespace)::SCCP
+_ZTVN12_GLOBAL__N_110SROA_SSAUpE,vtable for (anonymous namespace)::SROA_SSAUp
+_ZTVN12_GLOBAL__N_114AllocaPromoterE,vtable for (anonymous namespace)::AllocaPromoter
+_ZTVN12_GLOBAL__N_14SROAE,vtable for (anonymous namespace)::SROA
+_ZTVN12_GLOBAL__N_17SROA_DTE,vtable for (anonymous namespace)::SROA_DT
+_ZTVN12_GLOBAL__N_115CFGSimplifyPassE,vtable for (anonymous namespace)::CFGSimplifyPass
+_ZTVN12_GLOBAL__N_116SimplifyLibCallsE,vtable for (anonymous namespace)::SimplifyLibCalls
+_ZTVN12_GLOBAL__N_19StrCatOptE,vtable for (anonymous namespace)::StrCatOpt
+_ZTVN12_GLOBAL__N_119LibCallOptimizationE,vtable for (anonymous namespace)::LibCallOptimization
+_ZTVN12_GLOBAL__N_110StrNCatOptE,vtable for (anonymous namespace)::StrNCatOpt
+_ZTVN12_GLOBAL__N_19StrChrOptE,vtable for (anonymous namespace)::StrChrOpt
+_ZTVN12_GLOBAL__N_110StrRChrOptE,vtable for (anonymous namespace)::StrRChrOpt
+_ZTVN12_GLOBAL__N_19StrCmpOptE,vtable for (anonymous namespace)::StrCmpOpt
+_ZTVN12_GLOBAL__N_110StrNCmpOptE,vtable for (anonymous namespace)::StrNCmpOpt
+_ZTVN12_GLOBAL__N_19StrCpyOptE,vtable for (anonymous namespace)::StrCpyOpt
+_ZTVN12_GLOBAL__N_110StrNCpyOptE,vtable for (anonymous namespace)::StrNCpyOpt
+_ZTVN12_GLOBAL__N_19StrLenOptE,vtable for (anonymous namespace)::StrLenOpt
+_ZTVN12_GLOBAL__N_110StrPBrkOptE,vtable for (anonymous namespace)::StrPBrkOpt
+_ZTVN12_GLOBAL__N_18StrToOptE,vtable for (anonymous namespace)::StrToOpt
+_ZTVN12_GLOBAL__N_19StrSpnOptE,vtable for (anonymous namespace)::StrSpnOpt
+_ZTVN12_GLOBAL__N_110StrCSpnOptE,vtable for (anonymous namespace)::StrCSpnOpt
+_ZTVN12_GLOBAL__N_19StrStrOptE,vtable for (anonymous namespace)::StrStrOpt
+_ZTVN12_GLOBAL__N_19MemCmpOptE,vtable for (anonymous namespace)::MemCmpOpt
+_ZTVN12_GLOBAL__N_19MemCpyOptE,vtable for (anonymous namespace)::MemCpyOpt
+_ZTVN12_GLOBAL__N_110MemMoveOptE,vtable for (anonymous namespace)::MemMoveOpt
+_ZTVN12_GLOBAL__N_19MemSetOptE,vtable for (anonymous namespace)::MemSetOpt
+_ZTVN12_GLOBAL__N_16PowOptE,vtable for (anonymous namespace)::PowOpt
+_ZTVN12_GLOBAL__N_17Exp2OptE,vtable for (anonymous namespace)::Exp2Opt
+_ZTVN12_GLOBAL__N_116UnaryDoubleFPOptE,vtable for (anonymous namespace)::UnaryDoubleFPOpt
+_ZTVN12_GLOBAL__N_16FFSOptE,vtable for (anonymous namespace)::FFSOpt
+_ZTVN12_GLOBAL__N_16AbsOptE,vtable for (anonymous namespace)::AbsOpt
+_ZTVN12_GLOBAL__N_110IsDigitOptE,vtable for (anonymous namespace)::IsDigitOpt
+_ZTVN12_GLOBAL__N_110IsAsciiOptE,vtable for (anonymous namespace)::IsAsciiOpt
+_ZTVN12_GLOBAL__N_110ToAsciiOptE,vtable for (anonymous namespace)::ToAsciiOpt
+_ZTVN12_GLOBAL__N_110SPrintFOptE,vtable for (anonymous namespace)::SPrintFOpt
+_ZTVN12_GLOBAL__N_19PrintFOptE,vtable for (anonymous namespace)::PrintFOpt
+_ZTVN12_GLOBAL__N_19FWriteOptE,vtable for (anonymous namespace)::FWriteOpt
+_ZTVN12_GLOBAL__N_18FPutsOptE,vtable for (anonymous namespace)::FPutsOpt
+_ZTVN12_GLOBAL__N_110FPrintFOptE,vtable for (anonymous namespace)::FPrintFOpt
+_ZTVN12_GLOBAL__N_17PutsOptE,vtable for (anonymous namespace)::PutsOpt
+_ZTVN12_GLOBAL__N_112TailCallElimE,vtable for (anonymous namespace)::TailCallElim
+_ZTVN12_GLOBAL__N_128InstCombineFortifiedLibCallsE,vtable for (anonymous namespace)::InstCombineFortifiedLibCalls
+_ZTVN4llvm12InstCombinerE,vtable for llvm::InstCombiner
+_ZTVN12_GLOBAL__N_118BreakCriticalEdgesE,vtable for (anonymous namespace)::BreakCriticalEdges
+_ZTVN4llvm25SimplifyFortifiedLibCallsE,vtable for llvm::SimplifyFortifiedLibCalls
+_ZTVN12_GLOBAL__N_15LCSSAE,vtable for (anonymous namespace)::LCSSA
+_ZTVN12_GLOBAL__N_112LoopSimplifyE,vtable for (anonymous namespace)::LoopSimplify
+_ZTVN12_GLOBAL__N_111LowerInvokeE,vtable for (anonymous namespace)::LowerInvoke
+_ZTVN12_GLOBAL__N_111LowerSwitchE,vtable for (anonymous namespace)::LowerSwitch
+_ZTVN4llvm22UnifyFunctionExitNodesE,vtable for llvm::UnifyFunctionExitNodes
+_ZTVN4llvm9CallGraphE,vtable for llvm::CallGraph
+_ZTVN12_GLOBAL__N_114BasicCallGraphE,vtable for (anonymous namespace)::BasicCallGraph
+_ZTVN4llvm16CallGraphSCCPassE,vtable for llvm::CallGraphSCCPass
+_ZTVN12_GLOBAL__N_118PrintCallGraphPassE,vtable for (anonymous namespace)::PrintCallGraphPass
+_ZTVN12_GLOBAL__N_113CGPassManagerE,vtable for (anonymous namespace)::CGPassManager
+_ZTVN4llvm13FindUsedTypesE,vtable for llvm::FindUsedTypes
+_ZTVN4llvm13AliasAnalysisE,vtable for llvm::AliasAnalysis
+_ZTVN4llvm15AliasSetTracker13ASTCallbackVHE,vtable for llvm::AliasSetTracker::ASTCallbackVH
+_ZTVN12_GLOBAL__N_115AliasSetPrinterE,vtable for (anonymous namespace)::AliasSetPrinter
+_ZTVN12_GLOBAL__N_118BasicAliasAnalysisE,vtable for (anonymous namespace)::BasicAliasAnalysis
+_ZTVN4llvm7IVUsersE,vtable for llvm::IVUsers
+_ZTVN4llvm11IVStrideUseE,vtable for llvm::IVStrideUse
+_ZTVN4llvm13LazyValueInfoE,vtable for llvm::LazyValueInfo
+_ZTVN12_GLOBAL__N_114LVIValueHandleE,vtable for (anonymous namespace)::LVIValueHandle
+_ZTVN4llvm8LoopInfoE,vtable for llvm::LoopInfo
+_ZTVN4llvm13LPPassManagerE,vtable for llvm::LPPassManager
+_ZTVN4llvm8LoopPassE,vtable for llvm::LoopPass
+_ZTVN12_GLOBAL__N_113PrintLoopPassE,vtable for (anonymous namespace)::PrintLoopPass
+_ZTVN4llvm24MemoryDependenceAnalysisE,vtable for llvm::MemoryDependenceAnalysis
+_ZTVN12_GLOBAL__N_14NoAAE,vtable for (anonymous namespace)::NoAA
+_ZTVN12_GLOBAL__N_113NoProfileInfoE,vtable for (anonymous namespace)::NoProfileInfo
+_ZTVN4llvm15ScalarEvolution14SCEVCallbackVHE,vtable for llvm::ScalarEvolution::SCEVCallbackVH
+_ZTVN4llvm15ScalarEvolutionE,vtable for llvm::ScalarEvolution
+_ZTVN4llvm11SCEVUnknownE,vtable for llvm::SCEVUnknown
+_ZTVN12_GLOBAL__N_122TypeBasedAliasAnalysisE,vtable for (anonymous namespace)::TypeBasedAliasAnalysis
+_ZTVN4llvm14TargetAsmLexerE,vtable for llvm::TargetAsmLexer
+_ZTVN4llvm10DataLayoutE,vtable for llvm::DataLayout
+_ZTVN12_GLOBAL__N_115StructLayoutMapE,vtable for (anonymous namespace)::StructLayoutMap
+_ZTVN4llvm19TargetELFWriterInfoE,vtable for llvm::TargetELFWriterInfo
+_ZTVN4llvm19TargetFrameLoweringE,vtable for llvm::TargetFrameLowering
+_ZTVN4llvm15TargetInstrInfoE,vtable for llvm::TargetInstrInfo
+_ZTVN4llvm24TargetLoweringObjectFileE,vtable for llvm::TargetLoweringObjectFile
+_ZTVN4llvm13TargetMachineE,vtable for llvm::TargetMachine
+_ZTVN4llvm18TargetRegisterInfoE,vtable for llvm::TargetRegisterInfo
+_ZTVN4llvm15TargetSubtargetE,vtable for llvm::TargetSubtarget
+_ZTVN4llvm24AssemblyAnnotationWriterE,vtable for llvm::AssemblyAnnotationWriter
+_ZTVN4llvm5ValueE,vtable for llvm::Value
+_ZTVN4llvm4TypeE,vtable for llvm::Type
+_ZTVN4llvm10BasicBlockE,vtable for llvm::BasicBlock
+_ZTVN4llvm10ConstantFPE,vtable for llvm::ConstantFP
+_ZTVN4llvm13ConstantArrayE,vtable for llvm::ConstantArray
+_ZTVN4llvm14ConstantStructE,vtable for llvm::ConstantStruct
+_ZTVN4llvm14ConstantVectorE,vtable for llvm::ConstantVector
+_ZTVN4llvm12BlockAddressE,vtable for llvm::BlockAddress
+_ZTVN4llvm21ConstantAggregateZeroE,vtable for llvm::ConstantAggregateZero
+_ZTVN4llvm19ConstantPointerNullE,vtable for llvm::ConstantPointerNull
+_ZTVN4llvm12ConstantExprE,vtable for llvm::ConstantExpr
+_ZTVN4llvm10UndefValueE,vtable for llvm::UndefValue
+_ZTVN4llvm10DebugRecVHE,vtable for llvm::DebugRecVH
+_ZTVN4llvm13DominatorTreeE,vtable for llvm::DominatorTree
+_ZTVN4llvm8FunctionE,vtable for llvm::Function
+_ZTVN4llvm14GVMaterializerE,vtable for llvm::GVMaterializer
+_ZTVN4llvm14GlobalVariableE,vtable for llvm::GlobalVariable
+_ZTVN4llvm11GlobalAliasE,vtable for llvm::GlobalAlias
+_ZTVN4llvm11GlobalValueE,vtable for llvm::GlobalValue
+_ZTVN4llvm9InlineAsmE,vtable for llvm::InlineAsm
+_ZTVN4llvm11InstructionE,vtable for llvm::Instruction
+_ZTVN4llvm14TerminatorInstE,vtable for llvm::TerminatorInst
+_ZTVN4llvm16UnaryInstructionE,vtable for llvm::UnaryInstruction
+_ZTVN4llvm7PHINodeE,vtable for llvm::PHINode
+_ZTVN4llvm8CallInstE,vtable for llvm::CallInst
+_ZTVN4llvm10InvokeInstE,vtable for llvm::InvokeInst
+_ZTVN4llvm10ReturnInstE,vtable for llvm::ReturnInst
+_ZTVN4llvm10UnwindInstE,vtable for llvm::UnwindInst
+_ZTVN4llvm15UnreachableInstE,vtable for llvm::UnreachableInst
+_ZTVN4llvm10BranchInstE,vtable for llvm::BranchInst
+_ZTVN4llvm10AllocaInstE,vtable for llvm::AllocaInst
+_ZTVN4llvm8LoadInstE,vtable for llvm::LoadInst
+_ZTVN4llvm9StoreInstE,vtable for llvm::StoreInst
+_ZTVN4llvm17GetElementPtrInstE,vtable for llvm::GetElementPtrInst
+_ZTVN4llvm18ExtractElementInstE,vtable for llvm::ExtractElementInst
+_ZTVN4llvm17InsertElementInstE,vtable for llvm::InsertElementInst
+_ZTVN4llvm17ShuffleVectorInstE,vtable for llvm::ShuffleVectorInst
+_ZTVN4llvm15InsertValueInstE,vtable for llvm::InsertValueInst
+_ZTVN4llvm16ExtractValueInstE,vtable for llvm::ExtractValueInst
+_ZTVN4llvm14BinaryOperatorE,vtable for llvm::BinaryOperator
+_ZTVN4llvm9TruncInstE,vtable for llvm::TruncInst
+_ZTVN4llvm8ZExtInstE,vtable for llvm::ZExtInst
+_ZTVN4llvm8SExtInstE,vtable for llvm::SExtInst
+_ZTVN4llvm11FPTruncInstE,vtable for llvm::FPTruncInst
+_ZTVN4llvm9FPExtInstE,vtable for llvm::FPExtInst
+_ZTVN4llvm10UIToFPInstE,vtable for llvm::UIToFPInst
+_ZTVN4llvm10SIToFPInstE,vtable for llvm::SIToFPInst
+_ZTVN4llvm10FPToUIInstE,vtable for llvm::FPToUIInst
+_ZTVN4llvm10FPToSIInstE,vtable for llvm::FPToSIInst
+_ZTVN4llvm12PtrToIntInstE,vtable for llvm::PtrToIntInst
+_ZTVN4llvm12IntToPtrInstE,vtable for llvm::IntToPtrInst
+_ZTVN4llvm11BitCastInstE,vtable for llvm::BitCastInst
+_ZTVN4llvm7CmpInstE,vtable for llvm::CmpInst
+_ZTVN4llvm10SwitchInstE,vtable for llvm::SwitchInst
+_ZTVN4llvm14IndirectBrInstE,vtable for llvm::IndirectBrInst
+_ZTVN4llvm8ICmpInstE,vtable for llvm::ICmpInst
+_ZTVN4llvm8FCmpInstE,vtable for llvm::FCmpInst
+_ZTVN4llvm10SelectInstE,vtable for llvm::SelectInst
+_ZTVN4llvm9VAArgInstE,vtable for llvm::VAArgInst
+_ZTVN4llvm6MDNodeE,vtable for llvm::MDNode
+_ZTVN4llvm13MDNodeOperandE,vtable for llvm::MDNodeOperand
+_ZTVN4llvm4PassE,vtable for llvm::Pass
+_ZTVN4llvm10ModulePassE,vtable for llvm::ModulePass
+_ZTVN4llvm13ImmutablePassE,vtable for llvm::ImmutablePass
+_ZTVN4llvm24PassRegistrationListenerE,vtable for llvm::PassRegistrationListener
+_ZTVN4llvm14PassNameParserE,vtable for llvm::PassNameParser
+_ZTVN4llvm12FunctionPassE,vtable for llvm::FunctionPass
+_ZTVN4llvm14BasicBlockPassE,vtable for llvm::BasicBlockPass
+_ZTVN12_GLOBAL__N_116GetCFGOnlyPassesE,vtable for (anonymous namespace)::GetCFGOnlyPasses
+_ZTVN4llvm17PMTopLevelManagerE,vtable for llvm::PMTopLevelManager
+_ZTVN4llvm13PMDataManagerE,vtable for llvm::PMDataManager
+_ZTVN4llvm19FunctionPassManagerE,vtable for llvm::FunctionPassManager
+_ZTVN4llvm11PassManagerE,vtable for llvm::PassManager
+_ZTVN4llvm15PassManagerBaseE,vtable for llvm::PassManagerBase
+_ZTVN4llvm27PassManagerPrettyStackEntryE,vtable for llvm::PassManagerPrettyStackEntry
+_ZTVN4llvm13FPPassManagerE,vtable for llvm::FPPassManager
+_ZTVN4llvm13MPPassManagerE,vtable for llvm::MPPassManager
+_ZTVN12_GLOBAL__N_113BBPassManagerE,vtable for (anonymous namespace)::BBPassManager
+_ZTVN12_GLOBAL__N_117PrintFunctionPassE,vtable for (anonymous namespace)::PrintFunctionPass
+_ZTVN12_GLOBAL__N_115PrintModulePassE,vtable for (anonymous namespace)::PrintModulePass
+_ZTVN4llvm16AbstractTypeUserE,vtable for llvm::AbstractTypeUser
+_ZTVN4llvm12FunctionTypeE,vtable for llvm::FunctionType
+_ZTVN4llvm10StructTypeE,vtable for llvm::StructType
+_ZTVN4llvm9ArrayTypeE,vtable for llvm::ArrayType
+_ZTVN4llvm10VectorTypeE,vtable for llvm::VectorType
+_ZTVN4llvm11PointerTypeE,vtable for llvm::PointerType
+_ZTVN4llvm14SequentialTypeE,vtable for llvm::SequentialType
+_ZTVN4llvm15TypeSymbolTableE,vtable for llvm::TypeSymbolTable
+_ZTVN4llvm10CallbackVHE,vtable for llvm::CallbackVH
+_ZTVN12_GLOBAL__N_18VerifierE,vtable for (anonymous namespace)::Verifier
+_ZTVN12_GLOBAL__N_17TypeSetE,vtable for (anonymous namespace)::TypeSet
+_ZTVN12_GLOBAL__N_111PreVerifierE,vtable for (anonymous namespace)::PreVerifier
+_ZTVN4llvm14ARMInstPrinterE,vtable for llvm::ARMInstPrinter
+_ZTVN12_GLOBAL__N_118X86ELFObjectWriterE,vtable for (anonymous namespace)::X86ELFObjectWriter
+_ZTVN12_GLOBAL__N_115ELFObjectWriterE,vtable for (anonymous namespace)::ELFObjectWriter
+_ZTVN12_GLOBAL__N_121MBlazeELFObjectWriterE,vtable for (anonymous namespace)::MBlazeELFObjectWriter
+_ZTVN12_GLOBAL__N_118ARMELFObjectWriterE,vtable for (anonymous namespace)::ARMELFObjectWriter
+_ZTVN4llvm9MCAsmInfoE,vtable for llvm::MCAsmInfo
+_ZTVN12_GLOBAL__N_113MCAsmStreamerE,vtable for (anonymous namespace)::MCAsmStreamer
+_ZTVN4llvm10MCFragmentE,vtable for llvm::MCFragment
+_ZTVN4llvm13MCCodeEmitterE,vtable for llvm::MCCodeEmitter
+_ZTVN4llvm23MCELFObjectTargetWriterE,vtable for llvm::MCELFObjectTargetWriter
+_ZTVN12_GLOBAL__N_113MCELFStreamerE,vtable for (anonymous namespace)::MCELFStreamer
+_ZTVN4llvm12MCTargetExprE,vtable for llvm::MCTargetExpr
+_ZTVN4llvm13MCInstPrinterE,vtable for llvm::MCInstPrinter
+_ZTVN12_GLOBAL__N_117MCLoggingStreamerE,vtable for (anonymous namespace)::MCLoggingStreamer
+_ZTVN12_GLOBAL__N_115MCMachOStreamerE,vtable for (anonymous namespace)::MCMachOStreamer
+_ZTVN4llvm24MCMachObjectTargetWriterE,vtable for llvm::MCMachObjectTargetWriter
+_ZTVN12_GLOBAL__N_114MCNullStreamerE,vtable for (anonymous namespace)::MCNullStreamer
+_ZTVN4llvm16MCObjectStreamerE,vtable for llvm::MCObjectStreamer
+_ZTVN4llvm14MCObjectWriterE,vtable for llvm::MCObjectWriter
+_ZTVN4llvm9MCSectionE,vtable for llvm::MCSection
+_ZTVN4llvm13MCSectionCOFFE,vtable for llvm::MCSectionCOFF
+_ZTVN4llvm12MCSectionELFE,vtable for llvm::MCSectionELF
+_ZTVN4llvm14MCSectionMachOE,vtable for llvm::MCSectionMachO
+_ZTVN4llvm10MCStreamerE,vtable for llvm::MCStreamer
+_ZTVN12_GLOBAL__N_116MachObjectWriterE,vtable for (anonymous namespace)::MachObjectWriter
+_ZTVN4llvm16TargetAsmBackendE,vtable for llvm::TargetAsmBackend
+_ZTVN12_GLOBAL__N_119WinCOFFObjectWriterE,vtable for (anonymous namespace)::WinCOFFObjectWriter
+_ZTVN12_GLOBAL__N_115WinCOFFStreamerE,vtable for (anonymous namespace)::WinCOFFStreamer
+_ZTVN4llvm13SlabAllocatorE,vtable for llvm::SlabAllocator
+_ZTVN4llvm19MallocSlabAllocatorE,vtable for llvm::MallocSlabAllocator
+_ZTVN4llvm2cl6OptionE,vtable for llvm::cl::Option
+_ZTVN4llvm2cl19generic_parser_baseE,vtable for llvm::cl::generic_parser_base
+_ZTVN4llvm2cl17basic_parser_implE,vtable for llvm::cl::basic_parser_impl
+_ZTVN4llvm2cl6parserIbEE,vtable for llvm::cl::parser<bool>
+_ZTVN4llvm2cl6parserINS0_13boolOrDefaultEEE,vtable for llvm::cl::parser<llvm::cl::boolOrDefault>
+_ZTVN4llvm2cl6parserIiEE,vtable for llvm::cl::parser<int>
+_ZTVN4llvm2cl6parserIjEE,vtable for llvm::cl::parser<unsigned int>
+_ZTVN4llvm2cl6parserIdEE,vtable for llvm::cl::parser<double>
+_ZTVN4llvm2cl6parserIfEE,vtable for llvm::cl::parser<float>
+_ZTVN4llvm2cl6parserISsEE,vtable for llvm::cl::parser<std::string>
+_ZTVN4llvm2cl6parserIcEE,vtable for llvm::cl::parser<char>
+_ZTVN4llvm2cl5aliasE,vtable for llvm::cl::alias
+_ZTVN4llvm14FoldingSetImplE,vtable for llvm::FoldingSetImpl
+_ZTVN4llvm21formatted_raw_ostreamE,vtable for llvm::formatted_raw_ostream
+_ZTVN4llvm12MemoryBufferE,vtable for llvm::MemoryBuffer
+_ZTVN12_GLOBAL__N_120MemoryBufferMMapFileE,vtable for (anonymous namespace)::MemoryBufferMMapFile
+_ZTVN12_GLOBAL__N_115MemoryBufferMemE,vtable for (anonymous namespace)::MemoryBufferMem
+_ZTVN4llvm21PrettyStackTraceEntryE,vtable for llvm::PrettyStackTraceEntry
+_ZTVN4llvm22PrettyStackTraceStringE,vtable for llvm::PrettyStackTraceString
+_ZTVN4llvm23PrettyStackTraceProgramE,vtable for llvm::PrettyStackTraceProgram
+_ZTVN4llvm3sys15ThreadLocalImplE,vtable for llvm::sys::ThreadLocalImpl
+_ZTVN4llvm11raw_ostreamE,vtable for llvm::raw_ostream
+_ZTVN4llvm14raw_fd_ostreamE,vtable for llvm::raw_fd_ostream
+_ZTVN4llvm18raw_string_ostreamE,vtable for llvm::raw_string_ostream
+_ZTVN4llvm19raw_svector_ostreamE,vtable for llvm::raw_svector_ostream
+_ZTVN4llvm16raw_null_ostreamE,vtable for llvm::raw_null_ostream
+_ZTVN4llvm18format_object_baseE,vtable for llvm::format_object_base
+_ZTVN4llvm14error_categoryE,vtable for llvm::error_category
+_ZTVN4llvm11_do_messageE,vtable for llvm::_do_message
+_ZTVN4llvm23_generic_error_categoryE,vtable for llvm::_generic_error_category
+_ZTVN4llvm22_system_error_categoryE,vtable for llvm::_system_error_category
+_ZTVN5clang17PreprocessorLexerE,vtable for clang::PreprocessorLexer
+_ZTVN5clang6driver5tools6darwin10DarwinToolE,vtable for clang::driver::tools::darwin::DarwinTool
+_ZTVN5clang6driver5tools6darwin3CC1E,vtable for clang::driver::tools::darwin::CC1
+_ZTVN5clang19FileSystemStatCacheE,vtable for clang::FileSystemStatCache
+_ZTVN5clang13CodeGeneratorE,vtable for clang::CodeGenerator
+_ZTVN5clang14reachable_code8CallbackE,vtable for clang::reachable_code::Callback
+_ZTVN5clang15InheritableAttrE,vtable for clang::InheritableAttr
+_ZTVN5clang4ento9SubEngineE,vtable for clang::ento::SubEngine
+_ZTVN5clang4ento12SubRegionMapE,vtable for clang::ento::SubRegionMap
+_ZTVN5clang4ento9BugReport12NodeResolverE,vtable for clang::ento::BugReport::NodeResolver
+_ZTVN5clang4ento7GRState7PrinterE,vtable for clang::ento::GRState::Printer
+_ZTVN5clang4ento12SubRegionMap7VisitorE,vtable for clang::ento::SubRegionMap::Visitor
+_ZTVN5clang4ento11TypedRegionE,vtable for clang::ento::TypedRegion
+_ZTVN5clang4ento14CodeTextRegionE,vtable for clang::ento::CodeTextRegion
+_ZTVN5clang4ento11SValBuilderE,vtable for clang::ento::SValBuilder
+_ZTVN5clang4ento7SymExprE,vtable for clang::ento::SymExpr
+_ZTVN5clang4ento10SymbolDataE,vtable for clang::ento::SymbolData
+_ZTVN5clang13MangleContextE,vtable for clang::MangleContext
+_ZTVN4llvm18MCParsedAsmOperandE,vtable for llvm::MCParsedAsmOperand
+_ZTVN4llvm24MachineConstantPoolValueE,vtable for llvm::MachineConstantPoolValue
+_ZTVN4llvm13TargetJITInfoE,vtable for llvm::TargetJITInfo
+_ZTVN4llvm27MachinePassRegistryListenerE,vtable for llvm::MachinePassRegistryListener
+_ZTVN4llvm8DIEValueE,vtable for llvm::DIEValue
+_ZTVN4llvm23SchedulingPriorityQueueE,vtable for llvm::SchedulingPriorityQueue
+_ZTVN4llvm7SpillerE,vtable for llvm::Spiller
+_ZTVN4llvm8ConstantE,vtable for llvm::Constant
+_ZTVN4llvm8CastInstE,vtable for llvm::CastInst
+_ZTVN4llvm13CompositeTypeE,vtable for llvm::CompositeType
+_ZTVN5clang23ChainedDiagnosticClientE,vtable for clang::ChainedDiagnosticClient
+_ZTVN5clang5LexerE,vtable for clang::Lexer
+_ZTVN5clang12SemaConsumerE,vtable for clang::SemaConsumer
+_ZTVN5clang6driver11InputActionE,vtable for clang::driver::InputAction
+_ZTVN5clang6driver14BindArchActionE,vtable for clang::driver::BindArchAction
+_ZTVN5clang6driver9JobActionE,vtable for clang::driver::JobAction
+_ZTVN5clang6driver19PreprocessJobActionE,vtable for clang::driver::PreprocessJobAction
+_ZTVN5clang6driver19PrecompileJobActionE,vtable for clang::driver::PrecompileJobAction
+_ZTVN5clang6driver16AnalyzeJobActionE,vtable for clang::driver::AnalyzeJobAction
+_ZTVN5clang6driver16CompileJobActionE,vtable for clang::driver::CompileJobAction
+_ZTVN5clang6driver17AssembleJobActionE,vtable for clang::driver::AssembleJobAction
+_ZTVN5clang6driver13LinkJobActionE,vtable for clang::driver::LinkJobAction
+_ZTVN5clang6driver13LipoJobActionE,vtable for clang::driver::LipoJobAction
+_ZTVN5clang6driver17DsymutilJobActionE,vtable for clang::driver::DsymutilJobAction
+_ZTVN5clang6driver7CommandE,vtable for clang::driver::Command
+_ZTVN5clang6driver10toolchains11Generic_ELFE,vtable for clang::driver::toolchains::Generic_ELF
+_ZTVN5clang7CodeGen12EHScopeStack19ConditionalCleanup1IN12_GLOBAL__N_113FreeExceptionEPN4llvm5ValueEEE,"vtable for clang::CodeGen::EHScopeStack::ConditionalCleanup1<(anonymous namespace)::FreeException, llvm::Value*>"
+_ZTVN5clang7CodeGen12EHScopeStack21UnconditionalCleanup1IN12_GLOBAL__N_113FreeExceptionEPN4llvm5ValueEEE,"vtable for clang::CodeGen::EHScopeStack::UnconditionalCleanup1<(anonymous namespace)::FreeException, llvm::Value*>"
+_ZTVN5clang7CodeGen12EHScopeStack19ConditionalCleanup2IN12_GLOBAL__N_116DestroyTemporaryEPKNS_17CXXDestructorDeclEPN4llvm5ValueEEE,"vtable for clang::CodeGen::EHScopeStack::ConditionalCleanup2<(anonymous namespace)::DestroyTemporary, clang::CXXDestructorDecl const*, llvm::Value*>"
+_ZTVN5clang7CodeGen12EHScopeStack21UnconditionalCleanup2IN12_GLOBAL__N_116DestroyTemporaryEPKNS_17CXXDestructorDeclEPN4llvm5ValueEEE,"vtable for clang::CodeGen::EHScopeStack::UnconditionalCleanup2<(anonymous namespace)::DestroyTemporary, clang::CXXDestructorDecl const*, llvm::Value*>"
+_ZTVN5clang18EmitAssemblyActionE,vtable for clang::EmitAssemblyAction
+_ZTVN5clang12EmitBCActionE,vtable for clang::EmitBCAction
+_ZTVN5clang14EmitLLVMActionE,vtable for clang::EmitLLVMAction
+_ZTVN5clang18EmitLLVMOnlyActionE,vtable for clang::EmitLLVMOnlyAction
+_ZTVN5clang21EmitCodeGenOnlyActionE,vtable for clang::EmitCodeGenOnlyAction
+_ZTVN5clang13EmitObjActionE,vtable for clang::EmitObjAction
+_ZTVN5clang15BackendConsumerE,vtable for clang::BackendConsumer
+_ZTVN4llvm10FoldingSetIN5clang7CodeGen14CGFunctionInfoEEE,vtable for llvm::FoldingSet<clang::CodeGen::CGFunctionInfo>
+_ZTVN5clang6Parser20ObjCPropertyCallbackE,vtable for clang::Parser::ObjCPropertyCallback
+_ZTVN5clang15UsingShadowDeclE,vtable for clang::UsingShadowDecl
+_ZTVN5clang14AccessSpecDeclE,vtable for clang::AccessSpecDecl
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_126AdjustedReturnValueCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::AdjustedReturnValueChecker>
+_ZTVN5clang4ento15AnalysisManagerE,vtable for clang::ento::AnalysisManager
+_ZTVN4llvm10FoldingSetIN5clang15LocationContextEEE,vtable for llvm::FoldingSet<clang::LocationContext>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_120AnalyzerStatsCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::AnalyzerStatsChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_117ArrayBoundCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::ArrayBoundChecker>
+_ZTVN5clang4ento10BuiltinBugE,vtable for clang::ento::BuiltinBug
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_119ArrayBoundCheckerV2EEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::ArrayBoundCheckerV2>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_118AttrNonNullCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::AttrNonNullChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_119ClassReleaseCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::ClassReleaseChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_122CFRetainReleaseCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::CFRetainReleaseChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_121CFNumberCreateCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::CFNumberCreateChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_113NilArgCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::NilArgChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_114CStringCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::CStringChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_121CallAndMessageCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::CallAndMessageChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_115CastSizeCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::CastSizeChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_119CastToStructCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::CastToStructChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_113ChrootCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::ChrootChecker>
+_ZTVN5clang24LiveVariables_ValueTypes10ObserverTyE,vtable for clang::LiveVariables_ValueTypes::ObserverTy
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_114DivZeroCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::DivZeroChecker>
+_ZTVN4llvm10FoldingSetIN5clang4ento7GRStateEEE,vtable for llvm::FoldingSet<clang::ento::GRState>
+_ZTVN4llvm10FoldingSetIN5clang4ento12ExplodedNodeEEE,vtable for llvm::FoldingSet<clang::ento::ExplodedNode>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_119FixedAddressCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::FixedAddressChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_126IdempotentOperationCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::IdempotentOperationChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_116MacOSXAPICheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::MacOSXAPIChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_113MallocCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::MallocChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_124NSAutoreleasePoolCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::NSAutoreleasePoolChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_123NoReturnFunctionCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::NoReturnFunctionChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_117ObjCAtSyncCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::ObjCAtSyncChecker>
+_ZTVN4llvm10FoldingSetIN5clang4ento19BugReportEquivClassEEE,vtable for llvm::FoldingSet<clang::ento::BugReportEquivClass>
+_ZTVN5clang4ento17EnhancedBugReportE,vtable for clang::ento::EnhancedBugReport
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_119ObjCSelfInitCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::ObjCSelfInitChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_119PointerArithCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::PointerArithChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_117PointerSubCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::PointerSubChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_118PthreadLockCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::PthreadLockChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_125ReturnPointerRangeCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::ReturnPointerRangeChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_118ReturnUndefCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::ReturnUndefChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_120StackAddrLeakCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::StackAddrLeakChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_113StreamCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::StreamChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_128UndefCapturedBlockVarCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::UndefCapturedBlockVarChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_118UndefResultCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::UndefResultChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_130UndefinedArraySubscriptCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::UndefinedArraySubscriptChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_126UndefinedAssignmentCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::UndefinedAssignmentChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_114UnixAPICheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::UnixAPIChecker>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_114VLASizeCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::VLASizeChecker>
+_ZTVN4llvm21FoldingSetNodeWrapperINS_6APSIntEEE,vtable for llvm::FoldingSetNodeWrapper<llvm::APSInt>
+_ZTVN4llvm10FoldingSetIN5clang4ento15CompoundValDataEEE,vtable for llvm::FoldingSet<clang::ento::CompoundValData>
+_ZTVN4llvm10FoldingSetIN5clang4ento19LazyCompoundValDataEEE,vtable for llvm::FoldingSet<clang::ento::LazyCompoundValData>
+_ZTVN5clang4ento13DiagBugReportE,vtable for clang::ento::DiagBugReport
+_ZTVN4llvm10FoldingSetIN12_GLOBAL__N_113DiagCacheItemEEE,vtable for llvm::FoldingSet<(anonymous namespace)::DiagCacheItem>
+_ZTVN4llvm10FoldingSetIN5clang4ento18BugReporterVisitorEEE,vtable for llvm::FoldingSet<clang::ento::BugReporterVisitor>
+_ZTVN5clang4ento14CheckerVisitorIN12_GLOBAL__N_120RetainReleaseCheckerEEE,vtable for clang::ento::CheckerVisitor<(anonymous namespace)::RetainReleaseChecker>
+_ZTVN5clang4ento13TransferFuncsE,vtable for clang::ento::TransferFuncs
+_ZTVN5clang4ento21InterExplodedGraphMapE,vtable for clang::ento::InterExplodedGraphMap
+_ZTVN5clang4ento18UnknownSpaceRegionE,vtable for clang::ento::UnknownSpaceRegion
+_ZTVN5clang4ento15HeapSpaceRegionE,vtable for clang::ento::HeapSpaceRegion
+_ZTVN5clang4ento18GlobalsSpaceRegionE,vtable for clang::ento::GlobalsSpaceRegion
+_ZTVN5clang4ento25StackArgumentsSpaceRegionE,vtable for clang::ento::StackArgumentsSpaceRegion
+_ZTVN5clang4ento22StackLocalsSpaceRegionE,vtable for clang::ento::StackLocalsSpaceRegion
+_ZTVN4llvm10FoldingSetIN5clang4ento9MemRegionEEE,vtable for llvm::FoldingSet<clang::ento::MemRegion>
+_ZTVN4llvm10FoldingSetIN5clang4ento7SymExprEEE,vtable for llvm::FoldingSet<clang::ento::SymExpr>
+_ZTVN5clang24LiveVariables_ValueTypes14AnalysisDataTyE,vtable for clang::LiveVariables_ValueTypes::AnalysisDataTy
+_ZTVN5clang23StmtDeclBitVector_Types14AnalysisDataTyE,vtable for clang::StmtDeclBitVector_Types::AnalysisDataTy
+_ZTVN5clang19DeclBitVector_Types14AnalysisDataTyE,vtable for clang::DeclBitVector_Types::AnalysisDataTy
+_ZTVN4llvm14format_object1IjEE,vtable for llvm::format_object1<unsigned int>
+_ZTVN5clang30UninitializedValues_ValueTypes14AnalysisDataTyE,vtable for clang::UninitializedValues_ValueTypes::AnalysisDataTy
+_ZTVN4llvm10FoldingSetIN5clang3idx10EntityImplEEE,vtable for llvm::FoldingSet<clang::idx::EntityImpl>
+_ZTVN4llvm10FoldingSetIN5clang10ASTContext29CanonicalTemplateTemplateParmEEE,vtable for llvm::FoldingSet<clang::ASTContext::CanonicalTemplateTemplateParm>
+_ZTVN4llvm10FoldingSetIN5clang19NestedNameSpecifierEEE,vtable for llvm::FoldingSet<clang::NestedNameSpecifier>
+_ZTVN4llvm10FoldingSetIN5clang36SubstTemplateTemplateParmPackStorageEEE,vtable for llvm::FoldingSet<clang::SubstTemplateTemplateParmPackStorage>
+_ZTVN4llvm10FoldingSetIN5clang21DependentTemplateNameEEE,vtable for llvm::FoldingSet<clang::DependentTemplateName>
+_ZTVN4llvm10FoldingSetIN5clang21QualifiedTemplateNameEEE,vtable for llvm::FoldingSet<clang::QualifiedTemplateName>
+_ZTVN4llvm10FoldingSetIN5clang14AttributedTypeEEE,vtable for llvm::FoldingSet<clang::AttributedType>
+_ZTVN4llvm10FoldingSetIN5clang21ObjCObjectPointerTypeEEE,vtable for llvm::FoldingSet<clang::ObjCObjectPointerType>
+_ZTVN4llvm10FoldingSetIN5clang18ObjCObjectTypeImplEEE,vtable for llvm::FoldingSet<clang::ObjCObjectTypeImpl>
+_ZTVN4llvm10FoldingSetIN5clang17PackExpansionTypeEEE,vtable for llvm::FoldingSet<clang::PackExpansionType>
+_ZTVN4llvm10FoldingSetIN5clang17DependentNameTypeEEE,vtable for llvm::FoldingSet<clang::DependentNameType>
+_ZTVN4llvm10FoldingSetIN5clang14ElaboratedTypeEEE,vtable for llvm::FoldingSet<clang::ElaboratedType>
+_ZTVN4llvm10FoldingSetIN5clang9ParenTypeEEE,vtable for llvm::FoldingSet<clang::ParenType>
+_ZTVN4llvm10FoldingSetIN5clang29SubstTemplateTypeParmPackTypeEEE,vtable for llvm::FoldingSet<clang::SubstTemplateTypeParmPackType>
+_ZTVN4llvm10FoldingSetIN5clang25SubstTemplateTypeParmTypeEEE,vtable for llvm::FoldingSet<clang::SubstTemplateTypeParmType>
+_ZTVN4llvm10FoldingSetIN5clang20TemplateTypeParmTypeEEE,vtable for llvm::FoldingSet<clang::TemplateTypeParmType>
+_ZTVN4llvm10FoldingSetIN5clang21DependentDecltypeTypeEEE,vtable for llvm::FoldingSet<clang::DependentDecltypeType>
+_ZTVN4llvm10FoldingSetIN5clang23DependentTypeOfExprTypeEEE,vtable for llvm::FoldingSet<clang::DependentTypeOfExprType>
+_ZTVN4llvm10FoldingSetIN5clang17FunctionProtoTypeEEE,vtable for llvm::FoldingSet<clang::FunctionProtoType>
+_ZTVN4llvm10FoldingSetIN5clang19FunctionNoProtoTypeEEE,vtable for llvm::FoldingSet<clang::FunctionNoProtoType>
+_ZTVN4llvm10FoldingSetIN5clang10VectorTypeEEE,vtable for llvm::FoldingSet<clang::VectorType>
+_ZTVN4llvm10FoldingSetIN5clang27DependentSizedExtVectorTypeEEE,vtable for llvm::FoldingSet<clang::DependentSizedExtVectorType>
+_ZTVN4llvm10FoldingSetIN5clang23DependentSizedArrayTypeEEE,vtable for llvm::FoldingSet<clang::DependentSizedArrayType>
+_ZTVN4llvm10FoldingSetIN5clang19IncompleteArrayTypeEEE,vtable for llvm::FoldingSet<clang::IncompleteArrayType>
+_ZTVN4llvm10FoldingSetIN5clang17ConstantArrayTypeEEE,vtable for llvm::FoldingSet<clang::ConstantArrayType>
+_ZTVN4llvm10FoldingSetIN5clang17MemberPointerTypeEEE,vtable for llvm::FoldingSet<clang::MemberPointerType>
+_ZTVN4llvm10FoldingSetIN5clang19RValueReferenceTypeEEE,vtable for llvm::FoldingSet<clang::RValueReferenceType>
+_ZTVN4llvm10FoldingSetIN5clang19LValueReferenceTypeEEE,vtable for llvm::FoldingSet<clang::LValueReferenceType>
+_ZTVN4llvm10FoldingSetIN5clang16BlockPointerTypeEEE,vtable for llvm::FoldingSet<clang::BlockPointerType>
+_ZTVN4llvm10FoldingSetIN5clang11PointerTypeEEE,vtable for llvm::FoldingSet<clang::PointerType>
+_ZTVN4llvm10FoldingSetIN5clang11ComplexTypeEEE,vtable for llvm::FoldingSet<clang::ComplexType>
+_ZTVN4llvm10FoldingSetIN5clang8ExtQualsEEE,vtable for llvm::FoldingSet<clang::ExtQuals>
+_ZTVN4llvm20ContextualFoldingSetIN5clang35DependentTemplateSpecializationTypeERNS1_10ASTContextEEE,"vtable for llvm::ContextualFoldingSet<clang::DependentTemplateSpecializationType, clang::ASTContext&>"
+_ZTVN4llvm20ContextualFoldingSetIN5clang26TemplateSpecializationTypeERNS1_10ASTContextEEE,"vtable for llvm::ContextualFoldingSet<clang::TemplateSpecializationType, clang::ASTContext&>"
+_ZTVN5clang8TypeDeclE,vtable for clang::TypeDecl
+_ZTVN5clang9NamedDeclE,vtable for clang::NamedDecl
+_ZTVN5clang9ValueDeclE,vtable for clang::ValueDecl
+_ZTVN5clang14DeclaratorDeclE,vtable for clang::DeclaratorDecl
+_ZTVN5clang16FileScopeAsmDeclE,vtable for clang::FileScopeAsmDecl
+_ZTVN5clang11TypedefDeclE,vtable for clang::TypedefDecl
+_ZTVN5clang17IndirectFieldDeclE,vtable for clang::IndirectFieldDecl
+_ZTVN5clang17ImplicitParamDeclE,vtable for clang::ImplicitParamDecl
+_ZTVN5clang13NamespaceDeclE,vtable for clang::NamespaceDecl
+_ZTVN5clang19TranslationUnitDeclE,vtable for clang::TranslationUnitDecl
+_ZTVN5clang8EnumDeclE,vtable for clang::EnumDecl
+_ZTVN5clang9FieldDeclE,vtable for clang::FieldDecl
+_ZTVN5clang11ParmVarDeclE,vtable for clang::ParmVarDecl
+_ZTVN5clang16StaticAssertDeclE,vtable for clang::StaticAssertDecl
+_ZTVN5clang27UnresolvedUsingTypenameDeclE,vtable for clang::UnresolvedUsingTypenameDecl
+_ZTVN5clang24UnresolvedUsingValueDeclE,vtable for clang::UnresolvedUsingValueDecl
+_ZTVN5clang9UsingDeclE,vtable for clang::UsingDecl
+_ZTVN5clang18NamespaceAliasDeclE,vtable for clang::NamespaceAliasDecl
+_ZTVN5clang18UsingDirectiveDeclE,vtable for clang::UsingDirectiveDecl
+_ZTVN5clang15LinkageSpecDeclE,vtable for clang::LinkageSpecDecl
+_ZTVN5clang17CXXConversionDeclE,vtable for clang::CXXConversionDecl
+_ZTVN5clang13CXXMethodDeclE,vtable for clang::CXXMethodDecl
+_ZTVN5clang17CXXDestructorDeclE,vtable for clang::CXXDestructorDecl
+_ZTVN5clang18CXXConstructorDeclE,vtable for clang::CXXConstructorDecl
+_ZTVN5clang10FriendDeclE,vtable for clang::FriendDecl
+_ZTVN5clang17ObjCInterfaceDeclE,vtable for clang::ObjCInterfaceDecl
+_ZTVN5clang23ObjCForwardProtocolDeclE,vtable for clang::ObjCForwardProtocolDecl
+_ZTVN5clang17ObjCContainerDeclE,vtable for clang::ObjCContainerDecl
+_ZTVN5clang16ObjCPropertyDeclE,vtable for clang::ObjCPropertyDecl
+_ZTVN5clang23ObjCCompatibleAliasDeclE,vtable for clang::ObjCCompatibleAliasDecl
+_ZTVN5clang22ObjCImplementationDeclE,vtable for clang::ObjCImplementationDecl
+_ZTVN5clang12ObjCImplDeclE,vtable for clang::ObjCImplDecl
+_ZTVN5clang20ObjCCategoryImplDeclE,vtable for clang::ObjCCategoryImplDecl
+_ZTVN5clang16ObjCCategoryDeclE,vtable for clang::ObjCCategoryDecl
+_ZTVN5clang16ObjCProtocolDeclE,vtable for clang::ObjCProtocolDecl
+_ZTVN5clang19ObjCAtDefsFieldDeclE,vtable for clang::ObjCAtDefsFieldDecl
+_ZTVN5clang12ObjCIvarDeclE,vtable for clang::ObjCIvarDecl
+_ZTVN5clang12TemplateDeclE,vtable for clang::TemplateDecl
+_ZTVN5clang18FriendTemplateDeclE,vtable for clang::FriendTemplateDecl
+_ZTVN5clang38ClassTemplatePartialSpecializationDeclE,vtable for clang::ClassTemplatePartialSpecializationDecl
+_ZTVN5clang24TemplateTemplateParmDeclE,vtable for clang::TemplateTemplateParmDecl
+_ZTVN5clang20TemplateTypeParmDeclE,vtable for clang::TemplateTypeParmDecl
+_ZTVN4llvm10FoldingSetIN5clang38ClassTemplatePartialSpecializationDeclEEE,vtable for llvm::FoldingSet<clang::ClassTemplatePartialSpecializationDecl>
+_ZTVN4llvm10FoldingSetIN5clang31ClassTemplateSpecializationDeclEEE,vtable for llvm::FoldingSet<clang::ClassTemplateSpecializationDecl>
+_ZTVN4llvm10FoldingSetIN5clang34FunctionTemplateSpecializationInfoEEE,vtable for llvm::FoldingSet<clang::FunctionTemplateSpecializationInfo>
+_ZTVN4llvm10FoldingSetIN5clang24CXXLiteralOperatorIdNameEEE,vtable for llvm::FoldingSet<clang::CXXLiteralOperatorIdName>
+_ZTVN4llvm10FoldingSetIN5clang14CXXSpecialNameEEE,vtable for llvm::FoldingSet<clang::CXXSpecialName>
+_ZTVN5clang18PPChainedCallbacksE,vtable for clang::PPChainedCallbacks
+_ZTVN4llvm10FoldingSetIN5clang20MultiKeywordSelectorEEE,vtable for llvm::FoldingSet<clang::MultiKeywordSelector>
+_ZTVN4llvm12DISubprogramE,vtable for llvm::DISubprogram
+_ZTVN4llvm7DIScopeE,vtable for llvm::DIScope
+_ZTVN4llvm22X86MachineFunctionInfoE,vtable for llvm::X86MachineFunctionInfo
+_ZTVN4llvm18X86MCAsmInfoDarwinE,vtable for llvm::X86MCAsmInfoDarwin
+_ZTVN4llvm16X86MCAsmInfoCOFFE,vtable for llvm::X86MCAsmInfoCOFF
+_ZTVN4llvm15MCAsmInfoDarwinE,vtable for llvm::MCAsmInfoDarwin
+_ZTVN4llvm13MCAsmInfoCOFFE,vtable for llvm::MCAsmInfoCOFF
+_ZTVN4llvm2cl6parserI17AsmWriterFlavorTyEE,vtable for llvm::cl::parser<AsmWriterFlavorTy>
+_ZTVN4llvm3X8616CONTROL_REGClassE,vtable for llvm::X86::CONTROL_REGClass
+_ZTVN4llvm3X8614DEBUG_REGClassE,vtable for llvm::X86::DEBUG_REGClass
+_ZTVN4llvm3X8614GR16_ABCDClassE,vtable for llvm::X86::GR16_ABCDClass
+_ZTVN4llvm3X8614GR32_ABCDClassE,vtable for llvm::X86::GR32_ABCDClass
+_ZTVN4llvm3X8612GR32_ADClassE,vtable for llvm::X86::GR32_ADClass
+_ZTVN4llvm3X8612GR32_TCClassE,vtable for llvm::X86::GR32_TCClass
+_ZTVN4llvm3X8614GR64_ABCDClassE,vtable for llvm::X86::GR64_ABCDClass
+_ZTVN4llvm3X8612GR64_TCClassE,vtable for llvm::X86::GR64_TCClass
+_ZTVN4llvm3X8615GR64_TCW64ClassE,vtable for llvm::X86::GR64_TCW64Class
+_ZTVN4llvm3X8615GR8_ABCD_HClassE,vtable for llvm::X86::GR8_ABCD_HClass
+_ZTVN4llvm3X8615GR8_ABCD_LClassE,vtable for llvm::X86::GR8_ABCD_LClass
+_ZTVN4llvm3X8610RFP32ClassE,vtable for llvm::X86::RFP32Class
+_ZTVN4llvm3X8610RFP64ClassE,vtable for llvm::X86::RFP64Class
+_ZTVN4llvm3X8610RFP80ClassE,vtable for llvm::X86::RFP80Class
+_ZTVN4llvm3X8616SEGMENT_REGClassE,vtable for llvm::X86::SEGMENT_REGClass
+_ZTVN4llvm3X869VR64ClassE,vtable for llvm::X86::VR64Class
+_ZTVN4llvm19X86_32TargetMachineE,vtable for llvm::X86_32TargetMachine
+_ZTVN4llvm19X86_64TargetMachineE,vtable for llvm::X86_64TargetMachine
+_ZTVN4llvm15ARMFunctionInfoE,vtable for llvm::ARMFunctionInfo
+_ZTVN4llvm3ARM8CCRClassE,vtable for llvm::ARM::CCRClass
+_ZTVN4llvm3ARM10DPR_8ClassE,vtable for llvm::ARM::DPR_8Class
+_ZTVN4llvm3ARM13DPR_VFP2ClassE,vtable for llvm::ARM::DPR_VFP2Class
+_ZTVN4llvm3ARM10QPR_8ClassE,vtable for llvm::ARM::QPR_8Class
+_ZTVN4llvm3ARM13QPR_VFP2ClassE,vtable for llvm::ARM::QPR_VFP2Class
+_ZTVN4llvm3ARM14QQPR_VFP2ClassE,vtable for llvm::ARM::QQPR_VFP2Class
+_ZTVN4llvm3ARM8SPRClassE,vtable for llvm::ARM::SPRClass
+_ZTVN4llvm3ARM10SPR_8ClassE,vtable for llvm::ARM::SPR_8Class
+_ZTVN4llvm3ARM9tGPRClassE,vtable for llvm::ARM::tGPRClass
+_ZTVN4llvm19TargetRegisterClassE,vtable for llvm::TargetRegisterClass
+_ZTVN4llvm16SelectionDAGISel11ISelUpdaterE,vtable for llvm::SelectionDAGISel::ISelUpdater
+_ZTVN4llvm18ARMMCAsmInfoDarwinE,vtable for llvm::ARMMCAsmInfoDarwin
+_ZTVN4llvm15ARMELFMCAsmInfoE,vtable for llvm::ARMELFMCAsmInfo
+_ZTVN4llvm16ARMTargetMachineE,vtable for llvm::ARMTargetMachine
+_ZTVN4llvm18ThumbTargetMachineE,vtable for llvm::ThumbTargetMachine
+_ZTVN4llvm15ARMRegisterInfoE,vtable for llvm::ARMRegisterInfo
+_ZTVN4llvm10FoldingSetINS_6SDNodeEEE,vtable for llvm::FoldingSet<llvm::SDNode>
+_ZTVN4llvm18RegisterPassParserINS_17RegisterSchedulerEEE,vtable for llvm::RegisterPassParser<llvm::RegisterScheduler>
+_ZTVN4llvm2cl6parserIPFPNS_18ScheduleDAGSDNodesEPNS_16SelectionDAGISelENS_10CodeGenOpt5LevelEEEE,"vtable for llvm::cl::parser<llvm::ScheduleDAGSDNodes* (*)(llvm::SelectionDAGISel*, llvm::CodeGenOpt::Level)>"
+_ZTVN4llvm14format_object1IyEE,vtable for llvm::format_object1<unsigned long long>
+_ZTVN4llvm10FoldingSetINS_9DIEAbbrevEEE,vtable for llvm::FoldingSet<llvm::DIEAbbrev>
+_ZTVN4llvm9DIEAbbrevE,vtable for llvm::DIEAbbrev
+_ZTVN4llvm17DominatorTreeBaseINS_17MachineBasicBlockEEE,vtable for llvm::DominatorTreeBase<llvm::MachineBasicBlock>
+_ZTVN4llvm18RegisterPassParserINS_16RegisterRegAllocEEE,vtable for llvm::RegisterPassParser<llvm::RegisterRegAlloc>
+_ZTVN4llvm2cl6parserIPFPNS_12FunctionPassEvEEE,vtable for llvm::cl::parser<llvm::FunctionPass* (*)()>
+_ZTVN4llvm2cl6parserI20ShrinkWrapDebugLevelEE,vtable for llvm::cl::parser<ShrinkWrapDebugLevel>
+_ZTVN4llvm2cl6parserIN12_GLOBAL__N_111SpillerNameEEE,vtable for llvm::cl::parser<(anonymous namespace)::SpillerName>
+_ZTVN4llvm2cl6parserIN12_GLOBAL__N_112RewriterNameEEE,vtable for llvm::cl::parser<(anonymous namespace)::RewriterName>
+_ZTVN4llvm20LoadAndStorePromoterE,vtable for llvm::LoadAndStorePromoter
+_ZTVN4llvm6DITypeE,vtable for llvm::DIType
+_ZTVN4llvm15DICompositeTypeE,vtable for llvm::DICompositeType
+_ZTVN4llvm13DIDerivedTypeE,vtable for llvm::DIDerivedType
+_ZTVN4llvm11DIBasicTypeE,vtable for llvm::DIBasicType
+_ZTVN4llvm6DIFileE,vtable for llvm::DIFile
+_ZTVN4llvm11DINameSpaceE,vtable for llvm::DINameSpace
+_ZTVN4llvm13DICompileUnitE,vtable for llvm::DICompileUnit
+_ZTVN4llvm14DILexicalBlockE,vtable for llvm::DILexicalBlock
+_ZTVN4llvm10FoldingSetINS_4SCEVEEE,vtable for llvm::FoldingSet<llvm::SCEV>
+_ZTVN4llvm2cl6parserINS_9CodeModel5ModelEEE,vtable for llvm::cl::parser<llvm::CodeModel::Model>
+_ZTVN4llvm2cl6parserINS_5Reloc5ModelEEE,vtable for llvm::cl::parser<llvm::Reloc::Model>
+_ZTVN4llvm2cl6parserINS_8FloatABI7ABITypeEEE,vtable for llvm::cl::parser<llvm::FloatABI::ABIType>
+_ZTVN4llvm10FoldingSetINS_17AttributeListImplEEE,vtable for llvm::FoldingSet<llvm::AttributeListImpl>
+_ZTVN4llvm11ConstantIntE,vtable for llvm::ConstantInt
+_ZTVN4llvm25GetElementPtrConstantExprE,vtable for llvm::GetElementPtrConstantExpr
+_ZTVN4llvm4UserE,vtable for llvm::User
+_ZTVN4llvm19CompareConstantExprE,vtable for llvm::CompareConstantExpr
+_ZTVN4llvm24ExtractValueConstantExprE,vtable for llvm::ExtractValueConstantExpr
+_ZTVN4llvm23InsertValueConstantExprE,vtable for llvm::InsertValueConstantExpr
+_ZTVN4llvm25ShuffleVectorConstantExprE,vtable for llvm::ShuffleVectorConstantExpr
+_ZTVN4llvm25InsertElementConstantExprE,vtable for llvm::InsertElementConstantExpr
+_ZTVN4llvm26ExtractElementConstantExprE,vtable for llvm::ExtractElementConstantExpr
+_ZTVN4llvm18SelectConstantExprE,vtable for llvm::SelectConstantExpr
+_ZTVN4llvm18BinaryConstantExprE,vtable for llvm::BinaryConstantExpr
+_ZTVN4llvm17UnaryConstantExprE,vtable for llvm::UnaryConstantExpr
+_ZTVN4llvm17DominatorTreeBaseINS_10BasicBlockEEE,vtable for llvm::DominatorTreeBase<llvm::BasicBlock>
+_ZTVN4llvm8ArgumentE,vtable for llvm::Argument
+_ZTVN4llvm10FoldingSetINS_6MDNodeEEE,vtable for llvm::FoldingSet<llvm::MDNode>
+_ZTVN4llvm17ConstantUniqueMapIcNS_4TypeENS_21ConstantAggregateZeroELb0EEE,"vtable for llvm::ConstantUniqueMap<char, llvm::Type, llvm::ConstantAggregateZero, false>"
+_ZTVN4llvm17ConstantUniqueMapIcNS_11PointerTypeENS_19ConstantPointerNullELb0EEE,"vtable for llvm::ConstantUniqueMap<char, llvm::PointerType, llvm::ConstantPointerNull, false>"
+_ZTVN4llvm17ConstantUniqueMapIcNS_4TypeENS_10UndefValueELb0EEE,"vtable for llvm::ConstantUniqueMap<char, llvm::Type, llvm::UndefValue, false>"
+_ZTVN4llvm17ConstantUniqueMapINS_14ExprMapKeyTypeENS_4TypeENS_12ConstantExprELb0EEE,"vtable for llvm::ConstantUniqueMap<llvm::ExprMapKeyType, llvm::Type, llvm::ConstantExpr, false>"
+_ZTVN4llvm17ConstantUniqueMapINS_16InlineAsmKeyTypeENS_11PointerTypeENS_9InlineAsmELb0EEE,"vtable for llvm::ConstantUniqueMap<llvm::InlineAsmKeyType, llvm::PointerType, llvm::InlineAsm, false>"
+_ZTVN4llvm11IntegerTypeE,vtable for llvm::IntegerType
+_ZTVN4llvm11DerivedTypeE,vtable for llvm::DerivedType
+_ZTVN4llvm8MDStringE,vtable for llvm::MDString
+_ZTVN4llvm2cl6parserIPKNS_8PassInfoEEE,vtable for llvm::cl::parser<llvm::PassInfo const*>
+_ZTVN4llvm2cl4listIPKNS_8PassInfoEbNS_14PassNameParserEEE,"vtable for llvm::cl::list<llvm::PassInfo const*, bool, llvm::PassNameParser>"
+_ZTVN4llvm2cl6parserINS_14PassDebugLevelEEE,vtable for llvm::cl::parser<llvm::PassDebugLevel>
+_ZTVN4llvm15PassManagerImplE,vtable for llvm::PassManagerImpl
+_ZTVN4llvm23FunctionPassManagerImplE,vtable for llvm::FunctionPassManagerImpl
+_ZTVN4llvm10OpaqueTypeE,vtable for llvm::OpaqueType
+_ZTVN4llvm14format_object1IhEE,vtable for llvm::format_object1<unsigned char>
+_ZTVN4llvm15MCAlignFragmentE,vtable for llvm::MCAlignFragment
+_ZTVN4llvm14MCFillFragmentE,vtable for llvm::MCFillFragment
+_ZTVN4llvm14MCDataFragmentE,vtable for llvm::MCDataFragment
+_ZTVN4llvm13MCOrgFragmentE,vtable for llvm::MCOrgFragment
+_ZTVN4llvm24MCDwarfCallFrameFragmentE,vtable for llvm::MCDwarfCallFrameFragment
+_ZTVN4llvm23MCDwarfLineAddrFragmentE,vtable for llvm::MCDwarfLineAddrFragment
+_ZTVN4llvm13MCLEBFragmentE,vtable for llvm::MCLEBFragment
+_ZTVN4llvm14MCInstFragmentE,vtable for llvm::MCInstFragment
+_ZTVN4llvm2cl12basic_parserIbEE,vtable for llvm::cl::basic_parser<bool>
+_ZTVN4llvm2cl12basic_parserINS0_13boolOrDefaultEEE,vtable for llvm::cl::basic_parser<llvm::cl::boolOrDefault>
+_ZTVN4llvm2cl12basic_parserIiEE,vtable for llvm::cl::basic_parser<int>
+_ZTVN4llvm2cl12basic_parserIjEE,vtable for llvm::cl::basic_parser<unsigned int>
+_ZTVN4llvm2cl12basic_parserIdEE,vtable for llvm::cl::basic_parser<double>
+_ZTVN4llvm2cl12basic_parserIfEE,vtable for llvm::cl::basic_parser<float>
+_ZTVN4llvm2cl12basic_parserISsEE,vtable for llvm::cl::basic_parser<std::string>
+_ZTVN4llvm2cl12basic_parserIcEE,vtable for llvm::cl::basic_parser<char>
+_ZTVN4llvm3sys11ThreadLocalIKN12_GLOBAL__N_124CrashRecoveryContextImplEEE,vtable for llvm::sys::ThreadLocal<(anonymous namespace)::CrashRecoveryContextImpl const>
+_ZTVN4llvm3sys11ThreadLocalIKNS_21PrettyStackTraceEntryEEE,vtable for llvm::sys::ThreadLocal<llvm::PrettyStackTraceEntry const>
+_ZTVN4llvm14format_object1IxEE,vtable for llvm::format_object1<long long>
+_ZTVN4llvm14format_object1IdEE,vtable for llvm::format_object1<double>
+_ZTVN10__cxxabiv117__class_type_infoE,vtable for __cxxabiv1::__class_type_info
+_ZTVN10__cxxabiv120__si_class_type_infoE,vtable for __cxxabiv1::__si_class_type_info
+_ZTVN10__cxxabiv121__vmi_class_type_infoE,vtable for __cxxabiv1::__vmi_class_type_info
+_ZTC14SSDatabaseImpl0_N8Security10CssmClient6DbImplE,construction vtable for Security::CssmClient::DbImpl-in-SSDatabaseImpl
+_ZTVN9__gnu_cxx24__concurrence_lock_errorE,vtable for __gnu_cxx::__concurrence_lock_error
+_ZTVN9__gnu_cxx26__concurrence_unlock_errorE,vtable for __gnu_cxx::__concurrence_unlock_error
+_ZTVN4llvm21FoldingSetNodeWrapperISt4pairIN5clang4ento4SValES4_EEE,"vtable for llvm::FoldingSetNodeWrapper<std::pair<clang::ento::SVal, clang::ento::SVal>>"
+_ZTVN4llvm10FoldingSetINS_21FoldingSetNodeWrapperISt4pairIN5clang4ento4SValES5_EEEEE,"vtable for llvm::FoldingSet<llvm::FoldingSetNodeWrapper<std::pair<clang::ento::SVal, clang::ento::SVal>>>"
+_ZTVN4llvm21FoldingSetNodeWrapperISt4pairIN5clang4ento4SValEmEEE,"vtable for llvm::FoldingSetNodeWrapper<std::pair<clang::ento::SVal, unsigned long>>"
+_ZTVN4llvm10FoldingSetINS_21FoldingSetNodeWrapperISt4pairIN5clang4ento4SValEmEEEEE,"vtable for llvm::FoldingSet<llvm::FoldingSetNodeWrapper<std::pair<clang::ento::SVal, unsigned long>>>"
+_ZTVN4llvm10FoldingSetINS_17ImmutableListImplIN5clang4ento4SValEEEEE,vtable for llvm::FoldingSet<llvm::ImmutableListImpl<clang::ento::SVal>>
+_ZTVN4llvm10FoldingSetINS_21FoldingSetNodeWrapperINS_6APSIntEEEEE,vtable for llvm::FoldingSet<llvm::FoldingSetNodeWrapper<llvm::APSInt>>
+_ZTVN4llvm10FoldingSetINS_17ImmutableListImplIPN5clang4ento18BugReporterVisitorEEEEE,vtable for llvm::FoldingSet<llvm::ImmutableListImpl<clang::ento::BugReporterVisitor*>>
+_ZTVN4llvm10FoldingSetINS_17ImmutableListImplIPKN5clang4ento10SymbolDataEEEEE,vtable for llvm::FoldingSet<llvm::ImmutableListImpl<clang::ento::SymbolData const*>>
+_ZTVN4llvm18ValueMapCallbackVHIPKNS_8FunctionENS_18InlineCostAnalyzer12FunctionInfoENS_14ValueMapConfigIS3_EENS_12DenseMapInfoIS5_EEEE,"vtable for llvm::ValueMapCallbackVH<llvm::Function const*, llvm::InlineCostAnalyzer::FunctionInfo, llvm::ValueMapConfig<llvm::Function const*>, llvm::DenseMapInfo<llvm::InlineCostAnalyzer::FunctionInfo>>"
+_ZTVN4llvm2cl3optI17AsmWriterFlavorTyLb0ENS0_6parserIS2_EEEE,"vtable for llvm::cl::opt<AsmWriterFlavorTy, false, llvm::cl::parser<AsmWriterFlavorTy>>"
+_ZTVN4llvm2cl3optIPFPNS_18ScheduleDAGSDNodesEPNS_16SelectionDAGISelENS_10CodeGenOpt5LevelEELb0ENS_18RegisterPassParserINS_17RegisterSchedulerEEEEE,"vtable for llvm::cl::opt<llvm::ScheduleDAGSDNodes* (*)(llvm::SelectionDAGISel*, llvm::CodeGenOpt::Level), false, llvm::RegisterPassParser<llvm::RegisterScheduler>>"
+_ZTVN4llvm2cl3optINS0_13boolOrDefaultELb0ENS0_6parserIS2_EEEE,"vtable for llvm::cl::opt<llvm::cl::boolOrDefault, false, llvm::cl::parser<llvm::cl::boolOrDefault>>"
+_ZTVN4llvm2cl3optIPFPNS_12FunctionPassEvELb0ENS_18RegisterPassParserINS_16RegisterRegAllocEEEEE,"vtable for llvm::cl::opt<llvm::FunctionPass* (*)(), false, llvm::RegisterPassParser<llvm::RegisterRegAlloc>>"
+_ZTVN4llvm2cl3optI20ShrinkWrapDebugLevelLb0ENS0_6parserIS2_EEEE,"vtable for llvm::cl::opt<ShrinkWrapDebugLevel, false, llvm::cl::parser<ShrinkWrapDebugLevel>>"
+_ZTVN4llvm2cl3optIN12_GLOBAL__N_111SpillerNameELb0ENS0_6parserIS3_EEEE,"vtable for llvm::cl::opt<(anonymous namespace)::SpillerName, false, llvm::cl::parser<(anonymous namespace)::SpillerName>>"
+_ZTVN4llvm2cl3optIN12_GLOBAL__N_112RewriterNameELb0ENS0_6parserIS3_EEEE,"vtable for llvm::cl::opt<(anonymous namespace)::RewriterName, false, llvm::cl::parser<(anonymous namespace)::RewriterName>>"
+_ZTVN4llvm18ValueMapCallbackVHIPKNS_5ValueENS_10TrackingVHIS1_EENS_14ValueMapConfigIS3_EENS_12DenseMapInfoIS5_EEEE,"vtable for llvm::ValueMapCallbackVH<llvm::Value const*, llvm::TrackingVH<llvm::Value>, llvm::ValueMapConfig<llvm::Value const*>, llvm::DenseMapInfo<llvm::TrackingVH<llvm::Value>>>"
+_ZTVN4llvm2cl3optIbLb1ENS0_6parserIbEEEE,"vtable for llvm::cl::opt<bool, true, llvm::cl::parser<bool>>"
+_ZTVN4llvm2cl3optIjLb1ENS0_6parserIjEEEE,"vtable for llvm::cl::opt<unsigned int, true, llvm::cl::parser<unsigned int>>"
+_ZTVN4llvm2cl3optINS_9CodeModel5ModelELb1ENS0_6parserIS3_EEEE,"vtable for llvm::cl::opt<llvm::CodeModel::Model, true, llvm::cl::parser<llvm::CodeModel::Model>>"
+_ZTVN4llvm2cl3optINS_5Reloc5ModelELb1ENS0_6parserIS3_EEEE,"vtable for llvm::cl::opt<llvm::Reloc::Model, true, llvm::cl::parser<llvm::Reloc::Model>>"
+_ZTVN4llvm2cl3optINS_8FloatABI7ABITypeELb1ENS0_6parserIS3_EEEE,"vtable for llvm::cl::opt<llvm::FloatABI::ABIType, true, llvm::cl::parser<llvm::FloatABI::ABIType>>"
+_ZTVN4llvm17ConstantUniqueMapISt6vectorIPNS_8ConstantESaIS3_EENS_9ArrayTypeENS_13ConstantArrayELb1EEE,"vtable for llvm::ConstantUniqueMap<std::vector<llvm::Constant*, std::allocator<llvm::Constant*>>, llvm::ArrayType, llvm::ConstantArray, true>"
+_ZTVN4llvm17ConstantUniqueMapISt6vectorIPNS_8ConstantESaIS3_EENS_10StructTypeENS_14ConstantStructELb1EEE,"vtable for llvm::ConstantUniqueMap<std::vector<llvm::Constant*, std::allocator<llvm::Constant*>>, llvm::StructType, llvm::ConstantStruct, true>"
+_ZTVN4llvm17ConstantUniqueMapISt6vectorIPNS_8ConstantESaIS3_EENS_10VectorTypeENS_14ConstantVectorELb0EEE,"vtable for llvm::ConstantUniqueMap<std::vector<llvm::Constant*, std::allocator<llvm::Constant*>>, llvm::VectorType, llvm::ConstantVector, false>"
+_ZTVN4llvm2cl3optINS_14PassDebugLevelELb0ENS0_6parserIS2_EEEE,"vtable for llvm::cl::opt<llvm::PassDebugLevel, false, llvm::cl::parser<llvm::PassDebugLevel>>"
+_ZTVN4llvm2cl3optIjLb0ENS0_6parserIjEEEE,"vtable for llvm::cl::opt<unsigned int, false, llvm::cl::parser<unsigned int>>"
+_ZTVN4llvm2cl3optIiLb0ENS0_6parserIiEEEE,"vtable for llvm::cl::opt<int, false, llvm::cl::parser<int>>"
+_ZTVN4llvm2cl3optISsLb0ENS0_6parserISsEEEE,"vtable for llvm::cl::opt<std::string, false, llvm::cl::parser<std::string>>"
+_ZTVN4llvm2cl3optIcLb0ENS0_6parserIcEEEE,"vtable for llvm::cl::opt<char, false, llvm::cl::parser<char>>"
+_ZTVN4llvm2cl3optIbLb0ENS0_6parserIbEEEE,"vtable for llvm::cl::opt<bool, false, llvm::cl::parser<bool>>"
+_ZTVN4llvm2cl3optIN12_GLOBAL__N_114VersionPrinterELb1ENS0_6parserIbEEEE,"vtable for llvm::cl::opt<(anonymous namespace)::VersionPrinter, true, llvm::cl::parser<bool>>"
+_ZTVN4llvm2cl3optIN12_GLOBAL__N_111HelpPrinterELb1ENS0_6parserIbEEEE,"vtable for llvm::cl::opt<(anonymous namespace)::HelpPrinter, true, llvm::cl::parser<bool>>"
+_ZTVN4llvm2cl3optISsLb1ENS0_6parserISsEEEE,"vtable for llvm::cl::opt<std::string, true, llvm::cl::parser<std::string>>"

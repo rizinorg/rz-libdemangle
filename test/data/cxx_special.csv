@@ -1,0 +1,14 @@
+mangled,demangled
+_ZGVZ18IsCachedDiagnosticPN5clang4ento9BugReportEPNS0_14PathDiagnosticEE2DC,"guard variable for IsCachedDiagnostic(clang::ento::BugReport*, clang::ento::PathDiagnostic*)::DC"
+_ZGVZN5clang22getClangRepositoryPathEvE13SVNRepository,guard variable for clang::getClangRepositoryPath()::SVNRepository
+_ZGVZN4llvm10DwarfDebug21computeSizeAndOffsetsEvE6Offset,guard variable for llvm::DwarfDebug::computeSizeAndOffsets()::Offset
+_ZGVZ8getMutexvE12HandlesMutex,guard variable for getMutex()::HandlesMutex
+_ZGVZN4llvm5foutsEvE1S,guard variable for llvm::fouts()::S
+_ZGVZN4llvm5ferrsEvE1S,guard variable for llvm::ferrs()::S
+_ZGVZN4llvm5fdbgsEvE1S,guard variable for llvm::fdbgs()::S
+_ZGVZN4llvm4outsEvE1S,guard variable for llvm::outs()::S
+_ZGVZN4llvm4errsEvE1S,guard variable for llvm::errs()::S
+_ZGVZN4llvm5nullsEvE1S,guard variable for llvm::nulls()::S
+_ZGVZN4llvm16generic_categoryEvE1s,guard variable for llvm::generic_category()::s
+_ZGVZN4llvm15system_categoryEvE1s,guard variable for llvm::system_category()::s
+_ZGVZN1N1gEvE1a,guard variable for N::g()::a
