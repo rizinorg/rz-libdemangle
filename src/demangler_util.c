@@ -433,13 +433,13 @@ bool dem_string_replace_all(DemString *ds, const char *a, size_t alen, const cha
 			if (!dem_string_increase_capacity(ds, blen - alen)) {
 				return false;
 			}
+			p = ds->buf + off;
 		}
 		memmove(p + blen, p + alen, ds->len - (off + alen) + 1);
 		memcpy(p, b, blen);
 		ds->len = ds->len - alen + blen;
 	}
 	return true;
-
 }
 
 DemList *dem_list_newf(DemListFree f) {
