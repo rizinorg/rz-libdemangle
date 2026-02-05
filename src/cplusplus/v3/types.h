@@ -116,6 +116,8 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_abi_tag_ty,
 	CP_DEM_TYPE_KIND_special_substitution,
 	CP_DEM_TYPE_KIND_expanded_special_substitution,
+	CP_DEM_TYPE_KIND_noexcept_spec,
+	CP_DEM_TYPE_KIND_dynamic_exception_spec,
 } CpDemTypeKind;
 
 typedef struct {
@@ -339,6 +341,7 @@ typedef struct DemNode_t {
 		struct {
 			const struct DemNode_t *child_ref;
 		};
+
 		struct {
 			struct DemNode_t *child;
 		};

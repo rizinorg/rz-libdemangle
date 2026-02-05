@@ -30,6 +30,8 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_function_param: return "function_param";
 	case CP_DEM_TYPE_KIND_function_encoding: return "function_encoding";
 	case CP_DEM_TYPE_KIND_exception_spec: return "exception_spec";
+	case CP_DEM_TYPE_KIND_noexcept_spec: return "noexcept_spec";
+	case CP_DEM_TYPE_KIND_dynamic_exception_spec: return "dynamic_exception_spec";
 
 	// Template related
 	case CP_DEM_TYPE_KIND_template_args: return "template_args";
@@ -163,6 +165,8 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_function_param: return "box";
 	case CP_DEM_TYPE_KIND_function_encoding: return "box";
 	case CP_DEM_TYPE_KIND_exception_spec: return "box";
+	case CP_DEM_TYPE_KIND_noexcept_spec: return "box";
+	case CP_DEM_TYPE_KIND_dynamic_exception_spec: return "box";
 
 	// Template related - hexagon
 	case CP_DEM_TYPE_KIND_template_args: return "hexagon";
@@ -299,6 +303,8 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_function_param: return "lightgreen";
 	case CP_DEM_TYPE_KIND_function_encoding: return "green";
 	case CP_DEM_TYPE_KIND_exception_spec: return "lightgreen";
+	case CP_DEM_TYPE_KIND_noexcept_spec: return "lightgreen";
+	case CP_DEM_TYPE_KIND_dynamic_exception_spec: return "lightgreen";
 
 	// Template related - yellow
 	case CP_DEM_TYPE_KIND_template_args: return "yellow";
@@ -830,6 +836,8 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 	case CP_DEM_TYPE_KIND_template_args:
 	case CP_DEM_TYPE_KIND_template_argument_pack:
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+	case CP_DEM_TYPE_KIND_noexcept_spec:
+	case CP_DEM_TYPE_KIND_dynamic_exception_spec:
 		// These types use child pointer
 		if (node->child) {
 			dot_graph_traverse_ast(dot, node->child, current_id, "child", "solid");

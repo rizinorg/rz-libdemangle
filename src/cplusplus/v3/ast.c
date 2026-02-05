@@ -49,6 +49,8 @@ DemNode *DemNode_ctor_inplace(DemNode *xs, CpDemTypeKind tag, const char *val_be
 		xs->conv_op_ty.ty = NULL;
 		break;
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+	case CP_DEM_TYPE_KIND_noexcept_spec:
+	case CP_DEM_TYPE_KIND_dynamic_exception_spec:
 		xs->child = NULL;
 		break;
 	case CP_DEM_TYPE_KIND_parameter_pack:
@@ -189,6 +191,8 @@ void DemNode_deinit(DemNode *xs) {
 	case CP_DEM_TYPE_KIND_template_args:
 	case CP_DEM_TYPE_KIND_template_argument_pack:
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+	case CP_DEM_TYPE_KIND_noexcept_spec:
+	case CP_DEM_TYPE_KIND_dynamic_exception_spec:
 		DemNode_dtor(xs->child);
 		break;
 	case CP_DEM_TYPE_KIND_abi_tag_ty:
@@ -354,6 +358,8 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 	case CP_DEM_TYPE_KIND_template_args:
 	case CP_DEM_TYPE_KIND_template_argument_pack:
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+	case CP_DEM_TYPE_KIND_noexcept_spec:
+	case CP_DEM_TYPE_KIND_dynamic_exception_spec:
 		dst->child = src->child ? DemNode_clone(src->child) : NULL;
 		break;
 	case CP_DEM_TYPE_KIND_name_with_template_args:

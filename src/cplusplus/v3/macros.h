@@ -336,11 +336,12 @@ static inline DemNode *Node_append(DemNode *node, DemNode *x) {
 	return res ? *res : NULL;
 }
 
-#define AST_APPEND_STR(s)     Node_append(node, make_primitive_type(CUR(), CUR(), s, strlen(s)))
-#define AST_APPEND_STRN(s, N) Node_append(node, make_primitive_type(CUR(), CUR(), s, N))
-#define AST_APPENDF(s, ...)   true //(dem_string_appendf(&node->dem, s, __VA_ARGS__))
-#define PRIMITIVE_TYPE(s)     make_primitive_type_inplace(node, CUR(), CUR(), s, strlen(s))
-#define PRIMITIVE_TYPEN(s, N) make_primitive_type_inplace(node, CUR(), CUR(), s, N)
+#define MAKE_PRIMITIVE_TYPE(A, B, s) make_primitive_type(A, B, s, strlen(s))
+#define AST_APPEND_STR(s)            Node_append(node, make_primitive_type(CUR(), CUR(), s, strlen(s)))
+#define AST_APPEND_STRN(s, N)        Node_append(node, make_primitive_type(CUR(), CUR(), s, N))
+#define AST_APPENDF(s, ...)          true //(dem_string_appendf(&node->dem, s, __VA_ARGS__))
+#define PRIMITIVE_TYPE(s)            make_primitive_type_inplace(node, CUR(), CUR(), s, strlen(s))
+#define PRIMITIVE_TYPEN(s, N)        make_primitive_type_inplace(node, CUR(), CUR(), s, N)
 
 #define AST_APPEND_TYPE     append_type(p, node)
 #define AST_APPEND_TYPE1(T) append_type(p, (T))

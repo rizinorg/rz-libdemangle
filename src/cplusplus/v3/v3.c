@@ -515,6 +515,7 @@ static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out) {
 
 	// Print exception spec
 	if (ft->exception_spec) {
+		dem_string_append(out, " ");
 		ast_pp(ft->exception_spec, out, ctx->pp_ctx);
 	}
 }
@@ -624,6 +625,18 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		dem_string_append(out, "]");
 		break;
 
+	case CP_DEM_TYPE_KIND_noexcept_spec:
+		dem_string_append(out, "noexcept");
+		print_open(out, ctx);
+		ast_pp(node->child, out, ctx);
+		print_close(out, ctx);
+		break;
+	case CP_DEM_TYPE_KIND_dynamic_exception_spec:
+		dem_string_append(out, "throw");
+		print_open(out, ctx);
+		ast_pp(node->child, out, ctx);
+		print_close(out, ctx);
+		break;
 	case CP_DEM_TYPE_KIND_function_type: {
 		pp_function_ty(node, out, ctx);
 		break;
@@ -1401,14 +1414,6 @@ bool rule_decltype(DemParser *p, DemResult *r) {
 	AST_APPEND_NODE(expr);
 	AST_APPEND_STR(")");
 	TRACE_RETURN_SUCCESS;
-}
-
-bool rule_exception_spec(DemParser *p, DemResult *r) {
-	RULE_HEAD(exception_spec);
-	TRY_MATCH(READ_STR("DO") && (CALL_RULE(rule_expression)) && READ('E'));
-	TRY_MATCH(READ_STR("Dw") && (CALL_RULE(rule_type)) && READ('E'));
-	TRY_MATCH(READ_STR("Do"));
-	RULE_FOOT(exception_spec);
 }
 
 bool rule_array_type(DemParser *p, DemResult *r) {
@@ -2250,7 +2255,29 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 	// This rule only handles F...E (bare function type)
 	// P prefix is handled in the type rule, which properly inserts * for function pointers
 	parse_cv_qualifiers(p, &node->fn_ty.cv_qualifiers);
-	CALL_RULE_N(node->fn_ty.exception_spec, rule_exception_spec);
+
+	if (READ_STR("Do")) {
+		node->fn_ty.exception_spec = MAKE_PRIMITIVE_TYPE(CUR() - 2, CUR(), "noexcept");
+		if (!node->fn_ty.exception_spec) {
+			TRACE_RETURN_FAILURE();
+		}
+	} else if (READ_STR("DO")) {
+		PDemNode spec = NULL;
+		MUST_MATCH(CALL_RULE_N(spec, rule_expression) && READ('E'));
+		node->fn_ty.exception_spec = DemNode_ctor(CP_DEM_TYPE_KIND_noexcept_spec, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
+		if (!node->fn_ty.exception_spec) {
+			TRACE_RETURN_FAILURE();
+		}
+		node->fn_ty.exception_spec->child = spec;
+	} else if (READ_STR("Dw")) {
+		PDemNode spec = NULL;
+		MUST_MATCH(CALL_MANY_N(spec, rule_type, ", ", 'E'));
+		node->fn_ty.exception_spec = DemNode_ctor(CP_DEM_TYPE_KIND_dynamic_exception_spec, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
+		if (!node->fn_ty.exception_spec) {
+			TRACE_RETURN_FAILURE();
+		}
+		node->fn_ty.exception_spec->child = spec;
+	}
 
 	READ_STR("Dx");
 	MUST_MATCH(READ('F'));
