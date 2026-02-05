@@ -309,8 +309,10 @@ bool pp_pack_expansion(PDemNode node, DemString *out, PPContext *pp_ctx) {
 		goto beach;
 	}
 
-	if (pp_ctx->current_pack_max == 0) {
+	if (pp_ctx->current_pack_max == 0 && out->len != saved_pos) {
+		// Empty pack expansion - remove previously appended content
 		out->len = saved_pos;
+		out->buf[out->len] = '\0';
 		goto beach;
 	}
 
@@ -704,19 +706,28 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 
 	case CP_DEM_TYPE_KIND_many:
 		// Print children with separator
-		if (node->children) {
-			bool first = true;
-			vec_foreach_ptr(PDemNode, node->children, child_ptr, {
-				DemNode *child = child_ptr ? *child_ptr : NULL;
-				if (child) {
-					if (!first && node->many_ty.sep) {
-						dem_string_append(out, node->many_ty.sep);
-					}
-					ast_pp(child, out, ctx);
-					first = false;
-				}
-			});
+		if (!node->children) {
+			break;
 		}
+		bool first = true;
+		vec_foreach_ptr(PDemNode, node->children, child_ptr, {
+			DemNode *child = child_ptr ? *child_ptr : NULL;
+			if (!child) {
+				continue;
+			}
+			size_t saved_pos = dem_string_length(out);
+			if (!first && node->many_ty.sep) {
+				dem_string_append(out, node->many_ty.sep);
+			}
+			size_t pos_after_sep = dem_string_length(out);
+			ast_pp(child, out, ctx);
+			first = false;
+			if (dem_string_length(out) == pos_after_sep && out->buf) {
+				// No content was added after separator - remove it
+				out->len = saved_pos;
+				out->buf[out->len] = '\0';
+			}
+		});
 		break;
 
 	case CP_DEM_TYPE_KIND_nested_name:
