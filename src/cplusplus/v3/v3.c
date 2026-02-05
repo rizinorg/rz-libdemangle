@@ -2000,7 +2000,9 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("sizeof...(") && CALL_MANY(rule_template_arg, "", 'E') && AST_APPEND_STR(")"));
 	}
 	if (READ_STR("sp")) {
-		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_expression));
+		MUST_MATCH(CALL_RULE_N(node->child, rule_expression));
+		node->tag = CP_DEM_TYPE_KIND_parameter_pack_expansion;
+		TRACE_RETURN_SUCCESS;
 	}
 	if (READ('u')) {
 		PDemNode name = NULL;
