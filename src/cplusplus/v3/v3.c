@@ -274,84 +274,56 @@ static void pp_type_with_quals(PDemNode node, DemString *out, PPContext *ctx) {
 	dem_string_deinit(&qualifiers_string);
 }
 
-typedef struct PPPackExpansionContext_t {
-	DemNode *node;
-	DemNode *pack;
-	DemNode *outer;
-} PPPackExpansionContext;
-
-bool extract_pack_expansion(DemNode *node, PDemNode *outer_ty, PDemNode *inner_ty) {
-	if (!node || (!outer_ty && !inner_ty)) {
+bool pp_parameter_pack(PDemNode node, DemString *out, PPContext *pp_ctx) {
+	if (!(node->tag == CP_DEM_TYPE_KIND_parameter_pack && node->child_ref && node->child_ref->tag == CP_DEM_TYPE_KIND_many)) {
 		return false;
 	}
-
-	if (node->tag == CP_DEM_TYPE_KIND_parameter_pack_expansion && node->parameter_pack_expansion.ty && outer_ty) {
-		PDemNode ty = node->parameter_pack_expansion.ty;
-		if (ty->tag == CP_DEM_TYPE_KIND_type && ty->subtag != SUB_TAG_INVALID) {
-			*outer_ty = ty;
-			return extract_pack_expansion(AST_(ty, 0), NULL, inner_ty);
-		}
-		if (ty->tag == CP_DEM_TYPE_KIND_qualified_type) {
-			*outer_ty = ty;
-			return extract_pack_expansion(ty->qualified_ty.inner_type, NULL, inner_ty);
-		}
-		return extract_pack_expansion(ty, outer_ty, inner_ty);
-	}
-	if (node->tag == CP_DEM_TYPE_KIND_template_parameter_pack && inner_ty) {
-		*inner_ty = node;
-		return true;
-	}
-	if (node->tag == CP_DEM_TYPE_KIND_type && node->subtag != SUB_TAG_INVALID) {
-		return extract_pack_expansion(AST_(node, 0), outer_ty, inner_ty);
-	}
-	if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
-		return extract_pack_expansion(node->qualified_ty.inner_type, outer_ty, inner_ty);
+	const DemNode *many_node = node->child_ref;
+	if (pp_ctx->current_pack_index == UT32_MAX) {
+		pp_ctx->current_pack_index = 0;
+		pp_ctx->current_pack_max = VecPDemNode_len(many_node->children);
 	}
 
-	return true;
-}
-
-bool pp_pack_expansion_with_context(PPPackExpansionContext *ctx, DemString *out, PPContext *pp_ctx) {
-	if (!ctx || !ctx->node || !out) {
-		return false;
-	}
-	DemNode *node = ctx->node;
-	if (node->parameter_pack_expansion.ty) {
-		if (!extract_pack_expansion(node, &ctx->outer, &ctx->pack)) {
-			dem_string_append(out, "<expansion error>");
-			return true;
-		}
-		if (!ctx->pack) {
-			return true;
-		}
-		PDemNode many_node = AST_(ctx->pack, 0);
-		if (!many_node || many_node->tag != CP_DEM_TYPE_KIND_many) {
-			dem_string_append(out, "<expansion error>");
-			return true;
-		}
-		vec_foreach_ptr_i(PDemNode, many_node->children, idx, child, {
-			if (idx > 0) {
-				dem_string_append(out, many_node->many_ty.sep);
-			}
-			if (!child) {
-				continue;
-			}
+	if (pp_ctx->current_pack_index < VecPDemNode_len(many_node->children)) {
+		PDemNode *child = VecPDemNode_at(many_node->children, pp_ctx->current_pack_index);
+		if (child && *child) {
 			ast_pp(*child, out, pp_ctx);
-			pp_type_quals(ctx->outer, out, CP_DEM_TYPE_KIND_template_parameter_pack, NULL, pp_ctx);
-		});
-	} else {
-		dem_string_append(out, "expansion(?)");
+		} else {
+			dem_string_append(out, "<null pack element>");
+		}
 	}
 	return true;
 }
 
 bool pp_pack_expansion(PDemNode node, DemString *out, PPContext *pp_ctx) {
-	PPPackExpansionContext ctx = {
-		.node = node,
-		.pack = NULL,
-		.outer = NULL,
-	};
-	return pp_pack_expansion_with_context(&ctx, out, pp_ctx);
+	ut32 saved_pack_index = pp_ctx->current_pack_index;
+	ut32 saved_pack_max = pp_ctx->current_pack_max;
+	pp_ctx->current_pack_index = UT32_MAX;
+	pp_ctx->current_pack_max = UT32_MAX;
+
+	size_t saved_pos = dem_string_length(out);
+	ast_pp(node->child, out, pp_ctx);
+
+	if (pp_ctx->current_pack_index == UT32_MAX) {
+		dem_string_append(out, "...");
+		goto beach;
+	}
+
+	if (pp_ctx->current_pack_max == 0) {
+		out->len = saved_pos;
+		goto beach;
+	}
+
+	for (size_t i = 1; i < pp_ctx->current_pack_max; i++) {
+		dem_string_append(out, ", ");
+		pp_ctx->current_pack_index = i;
+		ast_pp(node->child, out, pp_ctx);
+	}
+
+beach:
+	pp_ctx->current_pack_index = saved_pack_index;
+	pp_ctx->current_pack_max = saved_pack_max;
+	return true;
 }
 
 // Helper function to extract the base class name from a ctor/dtor name
@@ -624,7 +596,7 @@ static inline void pp_as_operand_ex(DemNode *node, DemString *out, Prec prec, bo
 }
 
 void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
-	if (!node || !out) {
+	if (!node || !out || !ctx) {
 		return;
 	}
 
@@ -669,6 +641,17 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 				dem_string_append(out, ".");
 			}
 		}
+		break;
+	case CP_DEM_TYPE_KIND_template_args:
+		dem_string_append(out, "<");
+
+		// Set inside_template flag when printing template arguments
+		bool old_inside_template = ctx->inside_template;
+		ctx->inside_template = true;
+		ast_pp(node->child, out, ctx);
+		ctx->inside_template = old_inside_template;
+
+		dem_string_append(out, ">");
 		break;
 	case CP_DEM_TYPE_KIND_name_with_template_args:
 		if (node->name_with_template_args.name) {
@@ -770,18 +753,6 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_template_args:
-		dem_string_append(out, "<");
-		if (AST(0)) {
-			// Set inside_template flag when printing template arguments
-			bool old_inside_template = ctx->inside_template;
-			ctx->inside_template = true;
-			ast_pp(AST(0), out, ctx);
-			ctx->inside_template = old_inside_template;
-		}
-		dem_string_append(out, ">");
-		break;
-
 	case CP_DEM_TYPE_KIND_type: {
 		// Check if this is a function pointer (or pointer/reference/qualified wrapping a function pointer)
 		DemNode *func_node = NULL;
@@ -822,10 +793,11 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		break;
 	}
 
-	case CP_DEM_TYPE_KIND_template_parameter_pack:
-		if (AST(0)) {
-			ast_pp(AST(0), out, ctx);
-		}
+	case CP_DEM_TYPE_KIND_template_argument_pack:
+		ast_pp(node->child, out, ctx);
+		break;
+	case CP_DEM_TYPE_KIND_parameter_pack:
+		pp_parameter_pack(node, out, ctx);
 		break;
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
 		pp_pack_expansion(node, out, ctx);
@@ -2399,8 +2371,10 @@ bool rule_source_name(DemParser *p, DemResult *r) {
 
 bool rule_class_enum_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(class_enum_type);
-	TRY_MATCH(((READ_STR("Ts") || READ_STR("Tu") || READ_STR("Te")) || true) && (CALL_RULE_VA(rule_name, NULL)));
-	RULE_FOOT(class_enum_type);
+	if (READ_STR("Ts") || READ_STR("Tu") || READ_STR("Te")) {
+		DEM_UNREACHABLE;
+	}
+	RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE_VA(rule_name, NULL));
 }
 
 bool rule_mangled_name(DemParser *p, DemResult *r) {
@@ -2497,13 +2471,8 @@ bool rule_type(DemParser *p, DemResult *r) {
 		// Dp <type>       # pack expansion (C++0x)
 		if (PEEK_AT(1) == 'p') {
 			ADV_BY(2);
-			PDemNode ty = NULL;
-			MUST_MATCH(CALL_RULE_N(ty, rule_type));
-			if (!ty) {
-				TRACE_RETURN_FAILURE();
-			}
+			MUST_MATCH(CALL_RULE_N(node->child, rule_type));
 			node->tag = CP_DEM_TYPE_KIND_parameter_pack_expansion;
-			node->parameter_pack_expansion.ty = ty;
 			break;
 		}
 		if (PEEK_AT(1) == 'v') {
@@ -2835,8 +2804,8 @@ bool rule_template_arg(DemParser *p, DemResult *r) {
 	}
 	case 'J': {
 		ADV();
-		MUST_MATCH(CALL_MANY(rule_template_arg, ", ", 'E'));
-		node->tag = CP_DEM_TYPE_KIND_template_parameter_pack;
+		MUST_MATCH(CALL_MANY_N(node->child, rule_template_arg, ", ", 'E'));
+		node->tag = CP_DEM_TYPE_KIND_template_argument_pack;
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'L': {
@@ -2881,25 +2850,35 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 		TRACE_RETURN_FAILURE();
 	}
 	while (!READ('E')) {
-		PDemNode child = NULL;
-		if (!CALL_RULE_N(child, rule_template_arg)) {
+		PDemNode arg = NULL;
+		if (!CALL_RULE_N(arg, rule_template_arg)) {
 			TRACE_RETURN_FAILURE();
 		}
 		if (tag_templates) {
-			DemNode *node_arg_cloned = DemNode_clone(child);
-			if (!node_arg_cloned) {
+			DemNode *entry = arg;
+			if (arg->tag == CP_DEM_TYPE_KIND_template_argument_pack) {
+				entry = DemNode_ctor(CP_DEM_TYPE_KIND_parameter_pack, arg->val.buf, arg->val.len);
+				if (entry) {
+					entry->child_ref = arg->child;
+				}
+			} else {
+				entry = DemNode_clone(arg);
+			}
+			if (!entry) {
+				DemNode_dtor(arg);
 				TRACE_RETURN_FAILURE();
 			}
-			VecF(PDemNode, append)(p->outer_template_params, &node_arg_cloned);
+
+			VecF(PDemNode, append)(p->outer_template_params, &entry);
 		}
-		Node_append(many_node, child);
+		Node_append(many_node, arg);
 		if (READ('Q')) {
 			DEM_UNREACHABLE;
 		}
 	}
 	many_node->many_ty.sep = ", ";
 	many_node->val.len = CUR() - many_node->val.buf;
-	AST_APPEND_NODE(many_node);
+	node->child = many_node;
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -3066,13 +3045,14 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 	if (!rule(p, &ctx->result)) {
 		return false;
 	}
+	PPContext pp_ctx = { 0 };
 	if (ctx->parser.trace && VecPDemNode_len(&p->detected_types) > 0) {
 		DemString buf = { 0 };
-		PPContext pp_ctx = { .opts = opts, .paren_depth = 0, .inside_template = false };
 		vec_foreach_ptr_i(PDemNode, &p->detected_types, i, sub_ptr, {
 			DemNode *sub = sub_ptr ? *sub_ptr : NULL;
 			dem_string_appendf(&buf, "[%lu] = ", i);
 			if (sub) {
+				PPContext_init(&pp_ctx, opts);
 				ast_pp(sub, &buf, &pp_ctx);
 				dem_string_append(&buf, "\n");
 			} else {
@@ -3084,7 +3064,7 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 		free(buf_str);
 	}
 	DemNode *output_node = ctx->result.output;
-	PPContext pp_ctx = { .opts = opts, .paren_depth = 0, .inside_template = false };
+	PPContext_init(&pp_ctx, opts);
 	ast_pp(output_node, &ctx->output, &pp_ctx);
 	if (ctx->parser.options & DEM_OPT_SIMPLE) {
 		dem_simplify(&ctx->output);

@@ -35,6 +35,7 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_template_args: return "template_args";
 	case CP_DEM_TYPE_KIND_template_param: return "template_param";
 	case CP_DEM_TYPE_KIND_template_arg: return "template_arg";
+	case CP_DEM_TYPE_KIND_template_argument_pack: return "template_argument_pack";
 	case CP_DEM_TYPE_KIND_template_param_decl: return "template_param_decl";
 	case CP_DEM_TYPE_KIND_template_template_param: return "template_template_param";
 	case CP_DEM_TYPE_KIND_fwd_template_ref: return "fwd_template_ref";
@@ -138,7 +139,7 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_conv_op_ty: return "conv_op_ty";
 	case CP_DEM_TYPE_KIND_abi_tag_ty: return "abi_tag_ty";
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion: return "parameter_pack_expansion";
-	case CP_DEM_TYPE_KIND_template_parameter_pack: return "template_parameter_pack";
+	case CP_DEM_TYPE_KIND_parameter_pack: return "template_parameter_pack";
 	case CP_DEM_TYPE_KIND_special_substitution: return "special_substitution";
 	case CP_DEM_TYPE_KIND_expanded_special_substitution: return "expanded_special_substitution";
 
@@ -167,6 +168,7 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_template_args: return "hexagon";
 	case CP_DEM_TYPE_KIND_template_param: return "hexagon";
 	case CP_DEM_TYPE_KIND_template_arg: return "hexagon";
+	case CP_DEM_TYPE_KIND_template_argument_pack: return "hexagon";
 	case CP_DEM_TYPE_KIND_template_param_decl: return "hexagon";
 	case CP_DEM_TYPE_KIND_template_template_param: return "hexagon";
 	case CP_DEM_TYPE_KIND_fwd_template_ref: return "doublecircle";
@@ -272,7 +274,7 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_conv_op_ty: return "doubleoctagon";
 	case CP_DEM_TYPE_KIND_abi_tag_ty: return "tab";
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion: return "septagon";
-	case CP_DEM_TYPE_KIND_template_parameter_pack: return "septagon";
+	case CP_DEM_TYPE_KIND_parameter_pack: return "septagon";
 	case CP_DEM_TYPE_KIND_special_substitution: return "invtriangle";
 	case CP_DEM_TYPE_KIND_expanded_special_substitution: return "invtrapezium";
 
@@ -302,6 +304,7 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_template_args: return "yellow";
 	case CP_DEM_TYPE_KIND_template_param: return "yellow";
 	case CP_DEM_TYPE_KIND_template_arg: return "yellow";
+	case CP_DEM_TYPE_KIND_template_argument_pack: return "yellow";
 	case CP_DEM_TYPE_KIND_template_param_decl: return "yellow";
 	case CP_DEM_TYPE_KIND_template_template_param: return "yellow";
 	case CP_DEM_TYPE_KIND_fwd_template_ref: return "greenyellow";
@@ -404,7 +407,7 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	case CP_DEM_TYPE_KIND_conv_op_ty: return "mediumpurple";
 	case CP_DEM_TYPE_KIND_abi_tag_ty: return "plum";
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion: return "palegreen";
-	case CP_DEM_TYPE_KIND_template_parameter_pack: return "paleturquoise";
+	case CP_DEM_TYPE_KIND_parameter_pack: return "paleturquoise";
 	case CP_DEM_TYPE_KIND_special_substitution: return "orangered";
 	case CP_DEM_TYPE_KIND_expanded_special_substitution: return "tomato";
 
@@ -824,9 +827,19 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
+	case CP_DEM_TYPE_KIND_template_args:
+	case CP_DEM_TYPE_KIND_template_argument_pack:
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
-		if (node->parameter_pack_expansion.ty) {
-			dot_graph_traverse_ast(dot, node->parameter_pack_expansion.ty, current_id, "type", "solid");
+		// These types use child pointer
+		if (node->child) {
+			dot_graph_traverse_ast(dot, node->child, current_id, "child", "solid");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_parameter_pack:
+		// parameter_pack uses child_ref (const pointer to many node)
+		if (node->child_ref) {
+			dot_graph_traverse_ast(dot, (DemNode *)node->child_ref, current_id, "pack_ref", "dashed");
 		}
 		break;
 
@@ -922,8 +935,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		break;
 
 	case CP_DEM_TYPE_KIND_many:
-	case CP_DEM_TYPE_KIND_template_args:
-		// These types use the generic children vector
+		// This type uses the generic children vector
 		if (node->children) {
 			size_t child_count = VecPDemNode_len(node->children);
 			for (size_t i = 0; i < child_count; i++) {

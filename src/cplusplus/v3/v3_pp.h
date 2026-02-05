@@ -10,7 +10,23 @@ typedef struct {
 	CpDemOptions opts;
 	int paren_depth; // Current parenthesis nesting depth
 	bool inside_template; // Whether we're inside template arguments
+
+	ut32 current_pack_index;
+	ut32 current_pack_max;
 } PPContext;
+
+static inline void PPContext_init(PPContext *ctx, CpDemOptions options) {
+	if (!ctx) {
+		return;
+	}
+	ctx->opts = options;
+	ctx->paren_depth = 0;
+	ctx->inside_template = false;
+	ctx->current_pack_index = UT32_MAX;
+	ctx->current_pack_max = UT32_MAX;
+}
+
+
 
 void ast_pp(DemNode *node, DemString *out, PPContext *ctx);
 void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out, PPContext *ctx);

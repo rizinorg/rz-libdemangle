@@ -103,7 +103,8 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_signature_type,
 	CP_DEM_TYPE_KIND_nv_digit,
 	CP_DEM_TYPE_KIND_template_param_decl,
-	CP_DEM_TYPE_KIND_template_parameter_pack,
+	CP_DEM_TYPE_KIND_parameter_pack,
+	CP_DEM_TYPE_KIND_template_argument_pack,
 	CP_DEM_TYPE_KIND_parameter_pack_expansion,
 	CP_DEM_TYPE_KIND_non_neg_number,
 	CP_DEM_TYPE_KIND_fwd_template_ref,
@@ -253,10 +254,6 @@ typedef struct {
 
 typedef struct {
 	PDemNode ty;
-} ParameterPackExpansion;
-
-typedef struct {
-	PDemNode ty;
 	DemStringView tag;
 } AbiTagTy;
 
@@ -339,6 +336,13 @@ typedef struct DemNode_t {
 	struct Vec_t(PDemNode) * children; // Moved outside union, used by all types
 
 	union {
+		struct {
+			const struct DemNode_t *child_ref;
+		};
+		struct {
+			struct DemNode_t *child;
+		};
+
 		const ForwardTemplateRef *fwd_template_ref;
 		PrimitiveTy primitive_ty;
 		QualifiedTy qualified_ty;
@@ -352,7 +356,6 @@ typedef struct DemNode_t {
 		LocalName local_name;
 		CtorDtorName ctor_dtor_name;
 		ConvOpTy conv_op_ty;
-		ParameterPackExpansion parameter_pack_expansion;
 		AbiTagTy abi_tag_ty;
 		ArrayTy array_ty;
 		MemberExpr member_expr;

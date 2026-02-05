@@ -49,7 +49,9 @@ DemNode *DemNode_ctor_inplace(DemNode *xs, CpDemTypeKind tag, const char *val_be
 		xs->conv_op_ty.ty = NULL;
 		break;
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
-		xs->parameter_pack_expansion.ty = NULL;
+		xs->child = NULL;
+		break;
+	case CP_DEM_TYPE_KIND_parameter_pack:
 		break;
 	case CP_DEM_TYPE_KIND_many:
 		xs->many_ty.sep = NULL;
@@ -181,10 +183,13 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->conv_op_ty.ty);
 		}
 		break;
+	case CP_DEM_TYPE_KIND_parameter_pack:
+		// No fields to free
+		break;
+	case CP_DEM_TYPE_KIND_template_args:
+	case CP_DEM_TYPE_KIND_template_argument_pack:
 	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
-		if (xs->parameter_pack_expansion.ty) {
-			DemNode_dtor(xs->parameter_pack_expansion.ty);
-		}
+		DemNode_dtor(xs->child);
 		break;
 	case CP_DEM_TYPE_KIND_abi_tag_ty:
 		if (xs->abi_tag_ty.ty) {
@@ -343,6 +348,14 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		dst->module_name_ty.name = src->module_name_ty.name ? DemNode_clone(src->module_name_ty.name) : NULL;
 		dst->module_name_ty.pare = src->module_name_ty.pare ? DemNode_clone(src->module_name_ty.pare) : NULL;
 		break;
+	case CP_DEM_TYPE_KIND_parameter_pack:
+		dst->child_ref = src->child_ref;
+		break;
+	case CP_DEM_TYPE_KIND_template_args:
+	case CP_DEM_TYPE_KIND_template_argument_pack:
+	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+		dst->child = src->child ? DemNode_clone(src->child) : NULL;
+		break;
 	case CP_DEM_TYPE_KIND_name_with_template_args:
 		dst->name_with_template_args.name = src->name_with_template_args.name ? DemNode_clone(src->name_with_template_args.name) : NULL;
 		dst->name_with_template_args.template_args = src->name_with_template_args.template_args ? DemNode_clone(src->name_with_template_args.template_args) : NULL;
@@ -368,9 +381,6 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		break;
 	case CP_DEM_TYPE_KIND_conv_op_ty:
 		dst->conv_op_ty.ty = src->conv_op_ty.ty ? DemNode_clone(src->conv_op_ty.ty) : NULL;
-		break;
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
-		dst->parameter_pack_expansion.ty = src->parameter_pack_expansion.ty ? DemNode_clone(src->parameter_pack_expansion.ty) : NULL;
 		break;
 	case CP_DEM_TYPE_KIND_abi_tag_ty:
 		dst->abi_tag_ty.ty = src->abi_tag_ty.ty ? DemNode_clone(src->abi_tag_ty.ty) : NULL;

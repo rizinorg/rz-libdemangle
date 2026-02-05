@@ -1,4 +1,4 @@
-project('libdemangle', 'c', meson_version : '>=0.49.0')
+project('libdemangle', 'c', meson_version : '>=0.56.0')
 
 cc = meson.get_compiler('c')
 
