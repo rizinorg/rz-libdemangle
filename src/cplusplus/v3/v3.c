@@ -1341,8 +1341,18 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 	}
 
 	if (result && module) {
-		// TODO: handle module scoping
-		DEM_UNREACHABLE;
+		// Attach module name: name@module
+		DemNode *wrapper = DemNode_ctor(CP_DEM_TYPE_KIND_many, result->val.buf, result->val.len);
+		if (!wrapper) {
+			DemNode_dtor(result);
+			DemNode_dtor(module);
+			TRACE_RETURN_FAILURE();
+		}
+		wrapper->many_ty.sep = "";
+		Node_append(wrapper, result);
+		Node_append(wrapper, make_primitive_type(CUR(), CUR(), "@", 1));
+		Node_append(wrapper, module);
+		result = wrapper;
 	}
 	if (result) {
 		result = parse_abi_tags(p, result);
