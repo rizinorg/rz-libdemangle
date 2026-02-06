@@ -1385,9 +1385,7 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 	if (!result) {
 		TRACE_RETURN_FAILURE();
 	}
-	DemNode_move(node, result);
-	free(result);
-	TRACE_RETURN_SUCCESS;
+	RETURN_AND_OUTPUT_VAR(result);
 }
 
 bool rule_unresolved_name(DemParser *p, DemResult *r) {
@@ -1458,12 +1456,10 @@ bool rule_unscoped_name(DemParser *p, DemResult *r, NameState *ns, bool *is_subs
 	}
 
 	if (!result || std_node) {
-		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE_VA(rule_unqualified_name, ns, std_node, module));
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE_VA_REPLACE_NODE(rule_unqualified_name, ns, std_node, module));
 	}
 	if (result) {
-		DemNode_move(node, result);
-		free(result);
-		TRACE_RETURN_SUCCESS;
+		RETURN_AND_OUTPUT_VAR(result);
 	}
 	RULE_FOOT(unscoped_name);
 }
@@ -1866,7 +1862,7 @@ bool rule_braced_expression(DemParser *p, DemResult *r) {
 			break;
 		}
 	}
-	RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_expression));
+	RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_expression));
 }
 
 static void swap(void **a, void **b) {
@@ -1949,16 +1945,16 @@ bool rule_expression(DemParser *p, DemResult *r) {
 	const OperatorInfo *Op = parse_operator_info(p);
 	if (Op) {
 		switch (Op->Kind) {
-		case Prefix: return PASSTHRU_RULE_VA(rule_prefix_expression, Op);
+		case Prefix: RETURN_SUCCESS_OR_FAIL(CALL_RULE_VA_REPLACE_NODE(rule_prefix_expression, Op));
 		case Postfix:
 			if (READ('_')) {
-				return PASSTHRU_RULE_VA(rule_prefix_expression, Op);
+				RETURN_SUCCESS_OR_FAIL(CALL_RULE_VA_REPLACE_NODE(rule_prefix_expression, Op));
 			}
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR(opinfo_get_symbol(Op));
 			node->prec = Op->Prec;
 			TRACE_RETURN_SUCCESS;
-		case Binary: return PASSTHRU_RULE_VA(rule_binary_expression, Op);
+		case Binary: RETURN_SUCCESS_OR_FAIL(CALL_RULE_VA_REPLACE_NODE(rule_binary_expression, Op));
 		case Array: // ix: arr[idx]
 			MUST_MATCH(CALL_RULE(rule_expression));
 			AST_APPEND_STR("[");
@@ -2061,10 +2057,10 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		AST_APPEND_STR("::");
 	}
 	if (PEEK() == 'L') {
-		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_expr_primary));
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_expr_primary));
 	}
 	if (PEEK() == 'T') {
-		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_template_param));
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_template_param));
 	}
 	if (PEEK() == 'f') {
 		if (PEEK_AT(1) == 'p' || (PEEK_AT(1) == 'L' && isdigit(PEEK_AT(2)))) {
@@ -2140,7 +2136,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		TRACE_RETURN_SUCCESS;
 	}
 
-	RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_unresolved_name));
+	RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_unresolved_name));
 }
 
 bool rule_simple_id(DemParser *p, DemResult *r) {
@@ -2502,7 +2498,7 @@ bool rule_class_enum_type(DemParser *p, DemResult *r) {
 	if (READ_STR("Ts") || READ_STR("Tu") || READ_STR("Te")) {
 		DEM_UNREACHABLE;
 	}
-	RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE_VA(rule_name, NULL));
+	RETURN_SUCCESS_OR_FAIL(CALL_RULE_VA_REPLACE_NODE(rule_name, NULL));
 }
 
 bool rule_mangled_name(DemParser *p, DemResult *r) {
@@ -2543,7 +2539,7 @@ bool rule_qualified_type(DemParser *p, DemResult *r) {
 bool rule_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(type);
 	const char *before_builtin = CUR();
-	if (PASSTHRU_RULE(rule_builtin_type)) {
+	if (CALL_RULE_REPLACE_NODE(rule_builtin_type)) {
 		// Vendor-extended types (u<length><name>) should be added to substitution table
 		// because they can be referenced by substitutions later
 		if (*before_builtin == 'u') {
@@ -2551,7 +2547,7 @@ bool rule_type(DemParser *p, DemResult *r) {
 		}
 		TRACE_RETURN_SUCCESS;
 	}
-	if (PASSTHRU_RULE(rule_function_type)) {
+	if (CALL_RULE_REPLACE_NODE(rule_function_type)) {
 		goto beach;
 	}
 	switch (PEEK()) {
@@ -2559,14 +2555,14 @@ bool rule_type(DemParser *p, DemResult *r) {
 	case 'V':
 	case 'K':
 	case 'U': {
-		MUST_MATCH(PASSTHRU_RULE(rule_qualified_type));
+		MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_qualified_type));
 		break;
 	}
 	case 'M':
-		MUST_MATCH(PASSTHRU_RULE(rule_pointer_to_member_type));
+		MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_pointer_to_member_type));
 		break;
 	case 'A':
-		MUST_MATCH(PASSTHRU_RULE(rule_array_type));
+		MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_array_type));
 		break;
 	case 'C':
 		ADV();
@@ -2641,17 +2637,17 @@ bool rule_type(DemParser *p, DemResult *r) {
 			break;
 		}
 		if (PEEK_AT(1) == 'v') {
-			MUST_MATCH(PASSTHRU_RULE(rule_vector_type));
+			MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_vector_type));
 			break;
 		}
 		if (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T') {
-			MUST_MATCH(PASSTHRU_RULE(rule_decltype));
+			MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_decltype));
 			break;
 		}
 		// fallthrough
 	case 'T': {
 		if (strchr("sue", PEEK_AT(1)) != NULL) {
-			MUST_MATCH(PASSTHRU_RULE(rule_class_enum_type));
+			MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_class_enum_type));
 			break;
 		}
 		PDemNode template_param_node = NULL;
@@ -2664,8 +2660,9 @@ bool rule_type(DemParser *p, DemResult *r) {
 			node->name_with_template_args.name = template_param_node;
 			node->name_with_template_args.template_args = template_args_node;
 		} else {
-			DemNode_move(node, template_param_node);
-			free(template_param_node); // Free the container, content is now in node
+			PDemNode saved_node = node;
+			node = template_param_node;
+			DemNode_dtor(saved_node);
 		}
 		break;
 	}
@@ -2691,18 +2688,14 @@ bool rule_type(DemParser *p, DemResult *r) {
 				node->name_with_template_args.name = result;
 				node->name_with_template_args.template_args = ta;
 			} else if (is_subst) {
-				// Move result's content to node instead of replacing the pointer
-				// This avoids use-after-free in PASSTHRU mode where node == r->output
-				DemNode_move(node, result);
-				free(result); // Free the result container, but its content is now in node
-				TRACE_RETURN_SUCCESS;
+				RETURN_AND_OUTPUT_VAR(result);
 			}
 			break;
 		}
 		// fallthrough
 	}
 	default:
-		MUST_MATCH(PASSTHRU_RULE(rule_class_enum_type));
+		MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_class_enum_type));
 		break;
 	}
 
@@ -2801,9 +2794,7 @@ bool rule_substitution(DemParser *p, DemResult *r) {
 			special_subst = with_tags;
 		}
 
-		DemNode_move(node, special_subst);
-		free(special_subst);
-		TRACE_RETURN_SUCCESS;
+		RETURN_AND_OUTPUT_VAR(special_subst);
 	}
 
 	DemNode *child_node = NULL;
@@ -2832,10 +2823,10 @@ bool rule_destructor_name(DemParser *p, DemResult *r) {
 bool rule_name(DemParser *p, DemResult *r, NameState *ns) {
 	RULE_HEAD(name);
 	if (PEEK() == 'N') {
-		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE_VA(rule_nested_name, ns));
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE_VA_REPLACE_NODE(rule_nested_name, ns));
 	}
 	if (PEEK() == 'Z') {
-		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE_VA(rule_local_name, ns));
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE_VA_REPLACE_NODE(rule_local_name, ns));
 	}
 
 	DemNode *result = NULL;
@@ -2868,9 +2859,7 @@ bool rule_name(DemParser *p, DemResult *r, NameState *ns) {
 		DemNode_dtor(result);
 		TRACE_RETURN_FAILURE();
 	}
-	DemNode_move(node, result);
-	free(result); // Free the container, content is now in node
-	TRACE_RETURN_SUCCESS;
+	RETURN_AND_OUTPUT_VAR(result);
 }
 
 bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
@@ -2960,9 +2949,7 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 	if (pop_node) {
 		DemNode_dtor(*pop_node);
 	}
-	DemNode_move(node, ast_node);
-	free(ast_node);
-	TRACE_RETURN_SUCCESS;
+	RETURN_AND_OUTPUT_VAR(ast_node);
 fail:
 	DemNode_dtor(ast_node);
 	TRACE_RETURN_FAILURE();
@@ -2977,7 +2964,7 @@ bool rule_template_arg(DemParser *p, DemResult *r) {
 	switch (PEEK()) {
 	case 'X': {
 		ADV();
-		MUST_MATCH(PASSTHRU_RULE(rule_expression) && READ('E'));
+		MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_expression) && READ('E'));
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'J': {
@@ -2989,21 +2976,21 @@ bool rule_template_arg(DemParser *p, DemResult *r) {
 	case 'L': {
 		if (PEEK_AT(1) == 'Z') {
 			ADV_BY(2);
-			MUST_MATCH(PASSTHRU_RULE(rule_encoding) && READ('E'));
+			MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_encoding) && READ('E'));
 			TRACE_RETURN_SUCCESS;
 		}
-		MUST_MATCH(PASSTHRU_RULE(rule_expr_primary));
+		MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_expr_primary));
 		TRACE_RETURN_SUCCESS;
 		break;
 	}
 	case 'T': {
 		if (!is_template_param_decl(p)) {
-			RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_type));
+			RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_type));
 		}
 		DEM_UNREACHABLE;
 	}
 	default:
-		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_type));
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_type));
 		break;
 	}
 	RULE_FOOT(template_arg);
@@ -3152,7 +3139,7 @@ bool rule_encoding(DemParser *p, DemResult *r) {
 	// Handle special names (G=guard variable, T=typeinfo/vtable)
 	// These have different structure than function signatures
 	if (PEEK() == 'G' || PEEK() == 'T') {
-		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_special_name));
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_special_name));
 	}
 	// Override tag to function_type since encoding produces function signatures
 	node->tag = CP_DEM_TYPE_KIND_function_type;
@@ -3165,10 +3152,9 @@ bool rule_encoding(DemParser *p, DemResult *r) {
 	}
 
 	if (is_end_of_encoding(p)) {
-		DemNode temp_node = { 0 };
-		DemNode_move(&temp_node, node->fn_ty.name);
-		DemNode_move(node, &temp_node);
-		TRACE_RETURN_SUCCESS;
+		PDemNode name = node->fn_ty.name;
+		node->fn_ty.name = NULL;
+		RETURN_AND_OUTPUT_VAR(name);
 	}
 
 	if (ns.end_with_template_args && !ns.is_conversion_ctor_dtor) {

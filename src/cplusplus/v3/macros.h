@@ -108,20 +108,14 @@ static inline bool parse_string(DemParser *p, const char *s) {
 		return false; \
 	} \
 	DemNode *node = NULL; \
-	bool is_PASSTHRU = false; \
 	DECLARE_MACRO_HELPERS(); \
-	if (!r->output) { \
-		node = (DemNode *)malloc(sizeof(DemNode)); \
-		if (!node) { \
-			r->error = DEM_ERR_OUT_OF_MEMORY; \
-			return false; \
-		} \
-		DemNode_init(node); \
-		node->val.buf = p->cur; \
-	} else { \
-		is_PASSTHRU = true; \
-		node = r->output; \
+	node = (DemNode *)malloc(sizeof(DemNode)); \
+	if (!node) { \
+		r->error = DEM_ERR_OUT_OF_MEMORY; \
+		return false; \
 	} \
+	DemNode_init(node); \
+	node->val.buf = p->cur; \
 	node->tag = CP_DEM_TYPE_KIND_##X; \
 	context_save(rule);
 
@@ -209,29 +203,22 @@ static inline void context_restore_inline(DemParser *p, DemNode *node, const Par
 		return true; \
 	} while (0);
 
+#define RETURN_AND_OUTPUT_VAR(N) \
+	do { \
+		N->val.len = p->cur - N->val.buf; \
+		r->output = N; \
+		r->error = DEM_ERR_OK; \
+		DemNode_dtor(node); \
+		return true; \
+	} while (0)
+
 #define TRACE_RETURN_FAILURE() \
 	do { \
-		if (!is_PASSTHRU) { \
-			if (node) { \
-				DemNode_dtor(node); \
-			} \
-			r->output = NULL; \
-		} else { \
-			/* In PASSTHRU mode, we still need to clean up children we added */ \
-			context_restore_node(rule); \
-		} \
+		DemNode_dtor(node); \
+		r->output = NULL; \
 		r->error = DEM_ERR_INVALID_SYNTAX; \
 		context_restore_parser(rule); \
 		return false; \
-	} while (0)
-
-#define RETURN_SUCCESS_OR_FAIL(expr) \
-	do { \
-		if (expr) { \
-			TRACE_RETURN_SUCCESS; \
-		} else { \
-			TRACE_RETURN_FAILURE(); \
-		} \
 	} while (0)
 
 #define RETURN_SUCCESS_OR_FAIL(expr) \
@@ -275,25 +262,6 @@ static inline void context_restore_inline(DemParser *p, DemNode *node, const Par
 	__attribute__((unused)) DemResult _child_result_macro = { 0 }; \
 	__attribute__((unused)) bool _macro_result = false
 
-// Helper for PASSTHRU restore that also reinits the node
-static inline void passthru_restore_inline(DemParser *p, DemNode *node, const ParseContext *ctx) {
-	DemNode_deinit(node);
-	DemNode_init(node);
-	context_restore_inline(p, node, ctx);
-}
-
-#define PASSTHRU_RULE_VA(rule_fn, ...) \
-	(r->output = node, \
-		_macro_result = (rule_fn)(p, r, __VA_ARGS__), \
-		(_macro_result ? (void)0 : passthru_restore_inline(p, node, &saved_ctx_rule)), \
-		_macro_result)
-
-#define PASSTHRU_RULE(rule_fn) \
-	(r->output = node, \
-		_macro_result = (rule_fn)(p, r), \
-		(_macro_result ? (void)0 : passthru_restore_inline(p, node, &saved_ctx_rule)), \
-		_macro_result)
-
 #define CALL_RULE(rule_fn) \
 	(_child_result_macro = (DemResult){ 0 }, \
 		_macro_result = (rule_fn)(p, &_child_result_macro), \
@@ -316,6 +284,24 @@ static inline void passthru_restore_inline(DemParser *p, DemNode *node, const Pa
 	(_child_result_macro = (DemResult){ 0 }, \
 		_macro_result = (rule_fn)(p, &_child_result_macro), \
 		(_macro_result && _child_result_macro.output ? (N = _child_result_macro.output) : (DemResult_deinit(&_child_result_macro), N = NULL)), \
+		_macro_result)
+
+// Like CALL_RULE but the child's output replaces `node` instead of being appended as a child.
+// This implements "passthrough" semantics: the child's result IS the result, not a child of it.
+#define CALL_RULE_REPLACE_NODE(rule_fn) \
+	(_child_result_macro = (DemResult){ 0 }, \
+		_macro_result = (rule_fn)(p, &_child_result_macro), \
+		(_macro_result && _child_result_macro.output \
+			? (DemNode_dtor(node), node = _child_result_macro.output, _child_result_macro.output = NULL, (void)0) \
+			: (DemResult_deinit(&_child_result_macro), (void)0)), \
+		_macro_result)
+
+#define CALL_RULE_VA_REPLACE_NODE(rule_fn, ...) \
+	(_child_result_macro = (DemResult){ 0 }, \
+		_macro_result = (rule_fn)(p, &_child_result_macro, __VA_ARGS__), \
+		(_macro_result && _child_result_macro.output \
+			? (DemNode_dtor(node), node = _child_result_macro.output, _child_result_macro.output = NULL, (void)0) \
+			: (DemResult_deinit(&_child_result_macro), (void)0)), \
 		_macro_result)
 
 // Helper macro for match_many/match_many1 calls
