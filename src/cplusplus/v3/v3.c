@@ -1327,6 +1327,18 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 	DemNode *result = NULL;
 	if (READ_STR("DC")) {
 		CALL_MANY1_N(result, rule_source_name, ", ", 'E');
+		if (result) {
+			// Wrap structured binding names in brackets: [a1, a2]
+			DemNode *wrapper = DemNode_ctor(CP_DEM_TYPE_KIND_many, result->val.buf, result->val.len);
+			if (!wrapper) {
+				TRACE_RETURN_FAILURE();
+			}
+			wrapper->many_ty.sep = "";
+			Node_append(wrapper, make_primitive_type(CUR(), CUR(), "[", 1));
+			Node_append(wrapper, result);
+			Node_append(wrapper, make_primitive_type(CUR(), CUR(), "]", 1));
+			result = wrapper;
+		}
 	} else if (PEEK() == 'U') {
 		CALL_RULE_N(result, rule_unnamed_type_name);
 	} else if (PEEK() == 'D' || PEEK() == 'C') {
