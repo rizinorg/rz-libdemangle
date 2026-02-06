@@ -87,6 +87,20 @@ static void pp_array_type(PDemNode node, DemString *out, PPContext *ctx) {
 	dem_string_deinit(&dim_string);
 }
 
+static bool pp_array_type_as_string(PDemNode node, DemString *out, PPContext *ctx, PDemNode elems) {
+	PDemNode base_node = node->array_ty.inner_ty;
+	if ((base_node->tag == CP_DEM_TYPE_KIND_primitive_ty &&
+		    strncmp(base_node->primitive_ty.name.buf, "char", base_node->primitive_ty.name.len) == 0) ||
+		(base_node->tag == CP_DEM_TYPE_KIND_builtin_type && AST_(base_node, 0) &&
+			strncmp(AST_(base_node, 0)->primitive_ty.name.buf, "char", AST_(base_node, 0)->primitive_ty.name.len) == 0)) {
+		dem_string_append(out, "\"\"");
+
+		return true;
+	}
+	pp_array_type(node, out, ctx);
+	return false;
+}
+
 // Helper to print pointer/reference/qualifier decorators
 static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_tag, PDemNode *pbase_ty, PPContext *ctx) {
 	if (!node || !out) {
@@ -961,8 +975,12 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		break;
 	}
 	case CP_DEM_TYPE_KIND_init_list_expression: {
-		if (node->init_list_expr.ty) {
-			ast_pp(node->init_list_expr.ty, out, ctx);
+		DemNode *ty = node->init_list_expr.ty;
+		if (ty) {
+			if (ty->tag == CP_DEM_TYPE_KIND_array_type && pp_array_type_as_string(ty, out, ctx, node->init_list_expr.inits)) {
+				break;
+			}
+			ast_pp(ty, out, ctx);
 		}
 		dem_string_append(out, "{");
 		ast_pp(node->init_list_expr.inits, out, ctx);
@@ -2136,7 +2154,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		TRACE_RETURN_SUCCESS;
 	}
 
-	RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_unresolved_name));
+	RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_unresolved_name));
 }
 
 bool rule_simple_id(DemParser *p, DemResult *r) {
