@@ -1660,8 +1660,17 @@ bool rule_operator_name(DemParser *p, DemResult *r, NameState *ns) {
 		if (Op->Kind == CCast) {
 			bool old_not_parse = p->not_parse_template_args;
 			p->not_parse_template_args = true;
-			MUST_MATCH(CALL_RULE_N(node->conv_op_ty.ty, rule_type));
+			// Save and clear template_params so that T_ inside the
+			// conversion type creates a forward reference instead of
+			// resolving to the enclosing class's template parameters.
+			// The forward reference will be resolved later when the
+			// conversion operator's own template args (I<args>E) are parsed.
+			size_t saved_tparams_len = p->template_params.length;
+			p->template_params.length = 0;
+			bool cv_type_ok = CALL_RULE_N(node->conv_op_ty.ty, rule_type);
+			p->template_params.length = saved_tparams_len;
 			p->not_parse_template_args = old_not_parse;
+			MUST_MATCH(cv_type_ok);
 			if (ns) {
 				ns->is_conversion_ctor_dtor = true;
 			}
