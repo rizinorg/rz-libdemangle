@@ -2918,12 +2918,11 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 				} else {
 					CALL_RULE_N(subst, rule_substitution);
 				}
-				if (!subst || ast_node != NULL) {
-					DemNode_dtor(subst);
-					goto fail;
-				}
 				if (subst->tag == CP_DEM_TYPE_KIND_module_name) {
 					module = subst;
+				} else if (ast_node) {
+					DemNode_dtor(subst);
+					goto fail;
 				} else {
 					ast_node = subst;
 					continue;
