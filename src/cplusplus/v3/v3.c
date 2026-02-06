@@ -2598,6 +2598,37 @@ bool rule_type(DemParser *p, DemResult *r) {
 		}
 		ADV();
 		MUST_MATCH(CALL_RULE(rule_type));
+		// Reference collapsing (C++11 rules):
+		// If the inner type is already a reference, apply collapsing:
+		//   & + &  = &
+		//   & + && = &
+		//   && + & = &
+		//   && + && = &&
+		// In other words, if either is an lvalue ref, the result is lvalue ref.
+		if (AST(0) && AST(0)->tag == CP_DEM_TYPE_KIND_type &&
+			(AST(0)->subtag == REFERENCE_TYPE || AST(0)->subtag == RVALUE_REFERENCE_TYPE)) {
+			if (subtag == REFERENCE_TYPE || AST(0)->subtag == REFERENCE_TYPE) {
+				// Collapse to lvalue reference: unwrap the inner ref
+				// and set outer subtag to REFERENCE_TYPE
+				subtag = REFERENCE_TYPE;
+			}
+			// else both are rvalue ref -> stays RVALUE_REFERENCE_TYPE
+			// Unwrap the inner reference: promote its child to be our direct child
+			PDemNode inner_child = AST(0);
+			if (inner_child->children && inner_child->children->length > 0) {
+				PDemNode *grandchild_ptr = VecPDemNode_at(inner_child->children, 0);
+				if (grandchild_ptr && *grandchild_ptr) {
+					PDemNode grandchild = *grandchild_ptr;
+					*grandchild_ptr = NULL; // Prevent double-free
+					// Replace inner_child with grandchild in node's children
+					PDemNode *child_ptr = VecPDemNode_at(node->children, 0);
+					if (child_ptr) {
+						DemNode_dtor(*child_ptr);
+						*child_ptr = grandchild;
+					}
+				}
+			}
+		}
 		node->subtag = subtag;
 		break;
 	}
