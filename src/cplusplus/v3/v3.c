@@ -1272,32 +1272,31 @@ bool rule_ctor_dtor_name(DemParser *p, DemResult *r, NameState *ns, PDemNode sco
 	RULE_FOOT(ctor_dtor_name);
 }
 
-bool rule_module_name(DemParser *p, DemResult *r) {
-	RULE_HEAD(module_name);
-	DemNode *Module = NULL;
+bool parse_module_name(DemParser *p, PDemNode *pmodule) {
+	const ParseContext ctx = context_save_inline(p, NULL);
 	while (READ('W')) {
 		bool IsPartition = READ('P');
-		DemNode *Sub = NULL;
-		CALL_RULE_N(Sub, rule_source_name);
-		if (!Sub) {
+		DemResult result = { 0 };
+		if (!rule_source_name(p, &result)) {
 			return true;
 		}
-		DemNode *sub_module = DemNode_ctor(CP_DEM_TYPE_KIND_module_name, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
+
+		DemNode *Sub = result.output;
+		result.output = NULL;
+		DemNode *sub_module = DemNode_ctor(CP_DEM_TYPE_KIND_module_name, ctx.saved_pos, CUR() - ctx.saved_pos);
 		if (!sub_module) {
-			TRACE_RETURN_FAILURE();
+			DemResult_deinit(&result);
+			return false;
 		}
-		sub_module->module_name_ty.pare = Module;
+		sub_module->module_name_ty.pare = pmodule ? *pmodule : NULL;
 		sub_module->module_name_ty.IsPartition = IsPartition;
 		sub_module->module_name_ty.name = Sub;
-		Module = sub_module;
-		AST_APPEND_TYPE1(Module);
+		AST_APPEND_TYPE1(sub_module);
+		if (pmodule) {
+			*pmodule = sub_module;
+		}
 	}
-
-	if (Module) {
-		DemNode_move(node, Module);
-		free(Module);
-	}
-	TRACE_RETURN_SUCCESS;
+	return true;
 }
 
 PDemNode parse_abi_tags(DemParser *p, PDemNode node) {
@@ -1320,6 +1319,10 @@ PDemNode parse_abi_tags(DemParser *p, PDemNode node) {
 bool rule_unqualified_name(DemParser *p, DemResult *r,
 	NameState *ns, DemNode *scope, DemNode *module) {
 	RULE_HEAD(unqualified_name);
+
+	if (!parse_module_name(p, &module)) {
+		TRACE_RETURN_FAILURE();
+	}
 
 	bool is_member_like_friend = scope && READ('F');
 	READ('L');
@@ -2311,7 +2314,11 @@ bool rule_special_name(DemParser *p, DemResult *r) {
 		switch (PEEK()) {
 		case 'I':
 			ADV();
-			MUST_MATCH(AST_APPEND_STR("initializer for module ") && CALL_RULE(rule_module_name));
+			PDemNode module_name = NULL;
+			if (!parse_module_name(p, &module_name) || !module_name) {
+				TRACE_RETURN_FAILURE();
+			}
+			MUST_MATCH(AST_APPEND_STR("initializer for module ") && AST_APPEND_NODE(module_name));
 			break;
 		case 'R':
 			ADV();

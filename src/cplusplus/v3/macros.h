@@ -137,9 +137,11 @@ typedef struct ParseContext {
 
 // Save current parsing context
 static inline ParseContext context_save_inline(DemParser *p, DemNode *node) {
-	ParseContext ctx;
-	ctx.saved_children_len = node->children ? VecPDemNode_len(node->children) : 0;
-	ctx.saved_tag = node->tag;
+	ParseContext ctx = { 0 };
+	if (node) {
+		ctx.saved_children_len = node->children ? VecPDemNode_len(node->children) : 0;
+		ctx.saved_tag = node->tag;
+	}
 	ctx.saved_types_len = VecPDemNode_len(&p->detected_types);
 	ctx.saved_pos = p->cur;
 	return ctx;
