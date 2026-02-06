@@ -267,7 +267,30 @@ static void pp_type_with_quals(PDemNode node, DemString *out, PPContext *ctx) {
 	} else {
 		ast_pp(base_node, out, ctx);
 		if (dem_string_non_empty(&qualifiers_string)) {
-			dem_string_concat(out, &qualifiers_string);
+			// Reference collapsing (C++ rules):
+			// When a reference qualifier is about to be appended and the base type
+			// already ends with a reference (e.g., from a pack expansion element),
+			// apply collapsing: & + & = &, & + && = &, && + & = &, && + && = &&.
+			size_t out_len = dem_string_length(out);
+			size_t q_len = qualifiers_string.len;
+			bool out_ends_with_ref = (out_len >= 1 && out->buf[out_len - 1] == '&');
+			bool quals_is_ref = (q_len >= 1 && qualifiers_string.buf[0] == '&');
+			if (out_ends_with_ref && quals_is_ref) {
+				// Determine inner and outer ref types
+				bool inner_is_rvalue = (out_len >= 2 && out->buf[out_len - 2] == '&');
+				bool outer_is_rvalue = (q_len >= 2 && qualifiers_string.buf[1] == '&');
+				if (inner_is_rvalue && outer_is_rvalue) {
+					// && + && = &&: already have &&, don't append
+				} else if (inner_is_rvalue) {
+					// && + & = &: trim trailing & from out
+					out->len--;
+					out->buf[out->len] = '\0';
+				} else {
+					// & + & = & or & + && = &: already have &, don't append
+				}
+			} else {
+				dem_string_concat(out, &qualifiers_string);
+			}
 		}
 	}
 
