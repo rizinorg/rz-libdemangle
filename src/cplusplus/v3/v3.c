@@ -318,6 +318,25 @@ bool pp_parameter_pack(PDemNode node, DemString *out, PPContext *pp_ctx) {
 	return true;
 }
 
+// Print all elements of a parameter_pack comma-separated (for fold expressions)
+static void pp_pack_all_elements(PDemNode node, DemString *out, PPContext *pp_ctx) {
+	if (node->tag == CP_DEM_TYPE_KIND_parameter_pack && node->child_ref && node->child_ref->tag == CP_DEM_TYPE_KIND_many) {
+		const DemNode *many_node = node->child_ref;
+		size_t count = VecPDemNode_len(many_node->children);
+		for (size_t i = 0; i < count; i++) {
+			if (i > 0) {
+				dem_string_append(out, ", ");
+			}
+			PDemNode *child = VecPDemNode_at(many_node->children, i);
+			if (child && *child) {
+				ast_pp(*child, out, pp_ctx);
+			}
+		}
+	} else {
+		ast_pp(node, out, pp_ctx);
+	}
+}
+
 bool pp_pack_expansion(PDemNode node, DemString *out, PPContext *pp_ctx) {
 	ut32 saved_pack_index = pp_ctx->current_pack_index;
 	ut32 saved_pack_max = pp_ctx->current_pack_max;
@@ -894,7 +913,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 				pp_as_operand_ex(node->fold_expr.init, out, Cast, true, ctx);
 			} else {
 				print_open(out, ctx);
-				ast_pp(node->fold_expr.pack, out, ctx);
+				pp_pack_all_elements(node->fold_expr.pack, out, ctx);
 				print_close(out, ctx);
 			}
 			dem_string_append(out, " ");
@@ -908,7 +927,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			dem_string_append(out, " ");
 			if (node->fold_expr.is_left_fold) {
 				print_open(out, ctx);
-				ast_pp(node->fold_expr.pack, out, ctx);
+				pp_pack_all_elements(node->fold_expr.pack, out, ctx);
 				print_close(out, ctx);
 			} else {
 				pp_as_operand_ex(node->fold_expr.init, out, Cast, true, ctx);
