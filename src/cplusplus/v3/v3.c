@@ -2788,8 +2788,21 @@ bool rule_substitution(DemParser *p, DemResult *r) {
 		default: TRACE_RETURN_FAILURE();
 		}
 		ADV();
-		node->tag = CP_DEM_TYPE_KIND_special_substitution;
-		node->subtag = kind;
+		PDemNode special_subst = DemNode_ctor(CP_DEM_TYPE_KIND_special_substitution, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
+		if (!special_subst) {
+			TRACE_RETURN_FAILURE();
+		}
+		special_subst->subtag = kind;
+		special_subst->tag = CP_DEM_TYPE_KIND_special_substitution;
+
+		PDemNode with_tags = parse_abi_tags(p, special_subst);
+		if (with_tags && with_tags != special_subst) {
+			AST_APPEND_TYPE1(with_tags);
+			special_subst = with_tags;
+		}
+
+		DemNode_move(node, special_subst);
+		free(special_subst);
 		TRACE_RETURN_SUCCESS;
 	}
 
