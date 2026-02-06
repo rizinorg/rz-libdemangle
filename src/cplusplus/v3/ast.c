@@ -284,6 +284,9 @@ void DemNode_deinit(DemNode *xs) {
 		}
 		// is_global is a bool, op is a DemStringView (not allocated), no need to free
 		break;
+	case CP_DEM_TYPE_KIND_integer_literal:
+		// type and value are DemStringViews (not allocated), no need to free
+		break;
 	case CP_DEM_TYPE_KIND_many:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
@@ -437,6 +440,10 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		dst->new_expr.init_list = src->new_expr.init_list ? DemNode_clone(src->new_expr.init_list) : NULL;
 		dst->new_expr.is_global = src->new_expr.is_global; // bool, shallow copy
 		dst->new_expr.op = src->new_expr.op; // DemStringView, shallow copy
+		break;
+	case CP_DEM_TYPE_KIND_integer_literal:
+		dst->integer_literal_expr.type = src->integer_literal_expr.type; // DemStringView, shallow copy
+		dst->integer_literal_expr.value = src->integer_literal_expr.value; // DemStringView, shallow copy
 		break;
 	case CP_DEM_TYPE_KIND_fwd_template_ref:
 		dst->fwd_template_ref = src->fwd_template_ref;

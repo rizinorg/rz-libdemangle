@@ -87,13 +87,44 @@ static void pp_array_type(PDemNode node, DemString *out, PPContext *ctx) {
 	dem_string_deinit(&dim_string);
 }
 
-static bool pp_array_type_as_string(PDemNode node, DemString *out, PPContext *ctx, PDemNode elems) {
+static bool pp_init_list_as_string(PDemNode node, DemString *out, PPContext *ctx, PDemNode elems) {
 	PDemNode base_node = node->array_ty.inner_ty;
 	if ((base_node->tag == CP_DEM_TYPE_KIND_primitive_ty &&
 		    strncmp(base_node->primitive_ty.name.buf, "char", base_node->primitive_ty.name.len) == 0) ||
 		(base_node->tag == CP_DEM_TYPE_KIND_builtin_type && AST_(base_node, 0) &&
 			strncmp(AST_(base_node, 0)->primitive_ty.name.buf, "char", AST_(base_node, 0)->primitive_ty.name.len) == 0)) {
-		dem_string_append(out, "\"\"");
+		dem_string_append(out, "\"");
+		// Reconstruct string content from IntegerLiteral children
+		if (elems && elems->children) {
+			size_t count = VecPDemNode_len(elems->children);
+			for (size_t i = 0; i < count; i++) {
+				PDemNode *child_ptr = VecPDemNode_at(elems->children, i);
+				if (!child_ptr || !*child_ptr) {
+					continue;
+				}
+				PDemNode child = *child_ptr;
+				if (child->tag != CP_DEM_TYPE_KIND_integer_literal) {
+					continue;
+				}
+				// Parse the integer value from the mangled representation
+				DemStringView val = child->integer_literal_expr.value;
+				ut64 num = 0;
+				const char *vp = val.buf;
+				const char *ve = val.buf + val.len;
+				if (vp < ve && *vp == 'n') {
+					vp++; // skip negative sign (shouldn't happen for chars, but handle it)
+				}
+				while (vp < ve && *vp >= '0' && *vp <= '9') {
+					num = num * 10 + (ut64)(*vp - '0');
+					vp++;
+				}
+				if (num > 0 && num < 128) {
+					char ch = (char)num;
+					dem_string_append_n(out, &ch, 1);
+				}
+			}
+		}
+		dem_string_append(out, "\"");
 
 		return true;
 	}
@@ -977,7 +1008,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 	case CP_DEM_TYPE_KIND_init_list_expression: {
 		DemNode *ty = node->init_list_expr.ty;
 		if (ty) {
-			if (ty->tag == CP_DEM_TYPE_KIND_array_type && pp_array_type_as_string(ty, out, ctx, node->init_list_expr.inits)) {
+			if (ty->tag == CP_DEM_TYPE_KIND_array_type && pp_init_list_as_string(ty, out, ctx, node->init_list_expr.inits)) {
 				break;
 			}
 			ast_pp(ty, out, ctx);
@@ -1031,6 +1062,46 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			print_open(out, ctx);
 			ast_pp(node->new_expr.init_list, out, ctx);
 			print_close(out, ctx);
+		}
+		break;
+	}
+
+	case CP_DEM_TYPE_KIND_integer_literal: {
+		DemStringView ty = node->integer_literal_expr.type;
+		DemStringView val = node->integer_literal_expr.value;
+		// Determine if this type uses cast notation (e.g. "(char)104") or suffix notation (e.g. "5u")
+		bool use_cast = false;
+		const char *suffix = "";
+		if (ty.len == 3 && strncmp(ty.buf, "int", 3) == 0) {
+			// no suffix for int
+		} else if (ty.len == 12 && strncmp(ty.buf, "unsigned int", 12) == 0) {
+			suffix = "u";
+		} else if (ty.len == 4 && strncmp(ty.buf, "long", 4) == 0) {
+			suffix = "l";
+		} else if (ty.len == 13 && strncmp(ty.buf, "unsigned long", 13) == 0) {
+			suffix = "ul";
+		} else if (ty.len == 9 && strncmp(ty.buf, "long long", 9) == 0) {
+			suffix = "ll";
+		} else if (ty.len == 18 && strncmp(ty.buf, "unsigned long long", 18) == 0) {
+			suffix = "ull";
+		} else {
+			// char, signed char, unsigned char, etc. use cast notation
+			use_cast = true;
+		}
+		if (use_cast) {
+			dem_string_append(out, "(");
+			dem_string_append_n(out, ty.buf, ty.len);
+			dem_string_append(out, ")");
+		}
+		// Print the numeric value (interpreting 'n' prefix as '-')
+		if (val.len > 0 && val.buf[0] == 'n') {
+			dem_string_append(out, "-");
+			dem_string_append_n(out, val.buf + 1, val.len - 1);
+		} else {
+			dem_string_append_n(out, val.buf, val.len);
+		}
+		if (!use_cast) {
+			dem_string_append(out, suffix);
 		}
 		break;
 	}
@@ -1764,36 +1835,58 @@ bool rule_expr_primary(DemParser *p, DemResult *r) {
 	TRY_MATCH(READ_STR("b0E") && AST_APPEND_STR("false"));
 	TRY_MATCH(READ_STR("b1E") && AST_APPEND_STR("true"));
 
-	// For simple builtin integer types, format as literal with suffix
+	// For simple builtin integer types, build an IntegerLiteral node
 	// Examples: Lj4E -> 4u, Li5E -> 5, Lm6E -> 6ul
 	context_save(literal);
 	char type_code = PEEK();
-	const char *suffix = NULL;
+	const char *type_name = NULL;
+	size_t type_name_len = 0;
 	bool is_literal_int = false;
 
 	switch (type_code) {
 	case 'i': // int
-		suffix = "";
+		type_name = "int";
+		type_name_len = 3;
 		is_literal_int = true;
 		break;
 	case 'j': // unsigned int
-		suffix = "u";
+		type_name = "unsigned int";
+		type_name_len = 12;
 		is_literal_int = true;
 		break;
 	case 'l': // long
-		suffix = "l";
+		type_name = "long";
+		type_name_len = 4;
 		is_literal_int = true;
 		break;
 	case 'm': // unsigned long
-		suffix = "ul";
+		type_name = "unsigned long";
+		type_name_len = 13;
 		is_literal_int = true;
 		break;
 	case 'x': // long long
-		suffix = "ll";
+		type_name = "long long";
+		type_name_len = 9;
 		is_literal_int = true;
 		break;
 	case 'y': // unsigned long long
-		suffix = "ull";
+		type_name = "unsigned long long";
+		type_name_len = 18;
+		is_literal_int = true;
+		break;
+	case 'c': // char
+		type_name = "char";
+		type_name_len = 4;
+		is_literal_int = true;
+		break;
+	case 'a': // signed char
+		type_name = "signed char";
+		type_name_len = 11;
+		is_literal_int = true;
+		break;
+	case 'h': // unsigned char
+		type_name = "unsigned char";
+		type_name_len = 13;
 		is_literal_int = true;
 		break;
 	case 's': // short
@@ -1810,17 +1903,19 @@ bool rule_expr_primary(DemParser *p, DemResult *r) {
 
 	if (is_literal_int) {
 		ADV(); // skip type code
+		// Capture the value portion (including optional 'n' for negative)
+		const char *value_begin = CUR();
 		bool is_negative = READ('n');
+		(void)is_negative;
 		ut64 num = 0;
 		if (parse_non_neg_integer(p, &num) && READ('E')) {
-			// Format the number with suffix
-			char buf[64];
-			int len = snprintf(buf, sizeof(buf), "%s%llu%s",
-				is_negative ? "-" : "", (unsigned long long)num, suffix);
-			if (len > 0 && len < (int)sizeof(buf)) {
-				AST_APPEND_STRN(buf, len);
-				TRACE_RETURN_SUCCESS;
-			}
+			const char *value_end = CUR() - 1; // exclude 'E'
+			node->tag = CP_DEM_TYPE_KIND_integer_literal;
+			node->integer_literal_expr.type.buf = type_name;
+			node->integer_literal_expr.type.len = type_name_len;
+			node->integer_literal_expr.value.buf = value_begin;
+			node->integer_literal_expr.value.len = (size_t)(value_end - value_begin);
+			TRACE_RETURN_SUCCESS;
 		}
 	}
 	context_restore(literal);
@@ -2707,6 +2802,12 @@ bool rule_type(DemParser *p, DemResult *r) {
 				node->name_with_template_args.template_args = ta;
 			} else if (is_subst) {
 				RETURN_AND_OUTPUT_VAR(result);
+			} else {
+				// Module-scoped name without template args:
+				// replace node with result so it gets added to the
+				// substitution table at beach: and returned properly.
+				DemNode_dtor(node);
+				node = result;
 			}
 			break;
 		}

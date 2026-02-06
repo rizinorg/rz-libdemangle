@@ -68,6 +68,7 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	// Expression related
 	case CP_DEM_TYPE_KIND_expression: return "expression";
 	case CP_DEM_TYPE_KIND_expr_primary: return "expr_primary";
+	case CP_DEM_TYPE_KIND_integer_literal: return "integer_literal";
 	case CP_DEM_TYPE_KIND_braced_expression: return "braced_expression";
 	case CP_DEM_TYPE_KIND_braced_range_expression: return "braced_range_expression";
 	case CP_DEM_TYPE_KIND_init_list_expression: return "init_list_expression";
@@ -203,6 +204,7 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 	// Expression related - diamond
 	case CP_DEM_TYPE_KIND_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_expr_primary: return "diamond";
+	case CP_DEM_TYPE_KIND_integer_literal: return "diamond";
 	case CP_DEM_TYPE_KIND_braced_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_braced_range_expression: return "diamond";
 	case CP_DEM_TYPE_KIND_init_list_expression: return "diamond";
@@ -341,6 +343,7 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	// Expression related - pink
 	case CP_DEM_TYPE_KIND_expression: return "pink";
 	case CP_DEM_TYPE_KIND_expr_primary: return "pink";
+	case CP_DEM_TYPE_KIND_integer_literal: return "pink";
 	case CP_DEM_TYPE_KIND_braced_expression: return "pink";
 	case CP_DEM_TYPE_KIND_braced_range_expression: return "pink";
 	case CP_DEM_TYPE_KIND_init_list_expression: return "pink";
@@ -741,6 +744,10 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 	switch (node->tag) {
 	case CP_DEM_TYPE_KIND_primitive_ty:
 		// Primitive types have no additional fields to traverse
+		break;
+
+	case CP_DEM_TYPE_KIND_integer_literal:
+		// Integer literals have only DemStringView fields (type, value), no child nodes
 		break;
 
 	case CP_DEM_TYPE_KIND_function_type:
