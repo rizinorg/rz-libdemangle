@@ -2023,6 +2023,9 @@ bool rule_expression(DemParser *p, DemResult *r) {
 	}
 
 	// Non-operator expressions
+	if (is_global) {
+		AST_APPEND_STR("::");
+	}
 	if (PEEK() == 'L') {
 		RETURN_SUCCESS_OR_FAIL(PASSTHRU_RULE(rule_expr_primary));
 	}
@@ -2257,7 +2260,7 @@ bool rule_special_name(DemParser *p, DemResult *r) {
 			break;
 		case 'A':
 			ADV();
-			MUST_MATCH(AST_APPEND_STR("template parameter for ") && CALL_RULE(rule_template_arg));
+			MUST_MATCH(AST_APPEND_STR("template parameter object for ") && CALL_RULE(rule_template_arg));
 			break;
 		case 'W':
 			ADV();
@@ -2275,6 +2278,10 @@ bool rule_special_name(DemParser *p, DemResult *r) {
 	case 'G':
 		ADV();
 		switch (PEEK()) {
+		case 'I':
+			ADV();
+			MUST_MATCH(AST_APPEND_STR("initializer for module ") && CALL_RULE(rule_module_name));
+			break;
 		case 'R':
 			ADV();
 			AST_APPEND_STR("reference temporary for ");
