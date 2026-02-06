@@ -2513,7 +2513,13 @@ bool rule_qualified_type(DemParser *p, DemResult *r) {
 
 bool rule_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(type);
+	const char *before_builtin = CUR();
 	if (PASSTHRU_RULE(rule_builtin_type)) {
+		// Vendor-extended types (u<length><name>) should be added to substitution table
+		// because they can be referenced by substitutions later
+		if (*before_builtin == 'u') {
+			goto beach;
+		}
 		TRACE_RETURN_SUCCESS;
 	}
 	if (PASSTHRU_RULE(rule_function_type)) {
