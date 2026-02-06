@@ -688,15 +688,12 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 	case CP_DEM_TYPE_KIND_module_name:
 		if (node->module_name_ty.pare) {
 			ast_pp(node->module_name_ty.pare, out, ctx);
-			dem_string_append(out, ".");
+		}
+		if (node->module_name_ty.pare || node->module_name_ty.IsPartition) {
+			dem_string_append(out, node->module_name_ty.IsPartition ? ":" : ".");
 		}
 		if (node->module_name_ty.name) {
 			ast_pp(node->module_name_ty.name, out, ctx);
-			if (node->module_name_ty.IsPartition) {
-				dem_string_append(out, ":");
-			} else if (node->module_name_ty.pare && node->module_name_ty.pare->tag == CP_DEM_TYPE_KIND_module_name) {
-				dem_string_append(out, ".");
-			}
 		}
 		break;
 	case CP_DEM_TYPE_KIND_template_args:
@@ -1296,6 +1293,10 @@ bool rule_module_name(DemParser *p, DemResult *r) {
 		AST_APPEND_TYPE1(Module);
 	}
 
+	if (Module) {
+		DemNode_move(node, Module);
+		free(Module);
+	}
 	TRACE_RETURN_SUCCESS;
 }
 
