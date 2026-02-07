@@ -73,7 +73,6 @@ jobs:
       env:
         ASAN_OPTIONS: detect_leaks=1,detect_odr_violation=0,allocator_may_return_null=1
         DEMANGLE_TRACE: 1
-        DEMANGLE_TRACE_SVG: 1
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
         meson -Dbuildtype=debugoptimized -Denable_cli=true -Db_sanitize=address,undefined --werror build-asan-trace
