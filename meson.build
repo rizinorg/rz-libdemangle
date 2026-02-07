@@ -162,7 +162,7 @@ if get_option('enable_tests') and not meson.is_subproject()
             'test_@0@'.format(test),
             'test/test_@0@.c'.format(test),
             link_whole : libdemangle.get_static_lib(),
-            include_directories : include_directories(['include', 'test']),
+            include_directories : include_directories(['include', 'test', 'src']),
             dependencies : test_dependencies,
             c_args : test_c_args,
             install : false,
@@ -175,13 +175,12 @@ if get_option('enable_tests') and not meson.is_subproject()
             test(test, exe)
         endif
     endforeach
-
     foreach test : unit_tests
         exe = executable(
             'test_@0@'.format(test),
             'test/unit/test_@0@.c'.format(test),
             link_whole : libdemangle.get_static_lib(),
-            include_directories : include_directories(['include', 'test']),
+            include_directories : include_directories(['include', 'test', 'src']),
             dependencies : test_dependencies,
             c_args : common_c_args,
             install : false,

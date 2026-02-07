@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "minunit.h"
+#include "demangler_util.h"
 
 #ifndef CSV_PATH
 #error "CSV_PATH must be defined"
@@ -17,180 +18,141 @@
 #error "TEST_NAME must be defined"
 #endif
 
-typedef struct {
-	char *mangled;
-	char *demangled;
-} test_case_t;
+// Portable getline using DemString (works on MSVC which lacks POSIX getline)
+static bool dem_fgetline(DemString *ds, FILE *f) {
+	ds->len = 0;
+	if (ds->buf) {
+		ds->buf[0] = '\0';
+	}
 
-static test_case_t *test_cases = NULL;
-static size_t test_count = 0;
+	bool got_data = false;
+	int c;
+	while ((c = fgetc(f)) != EOF) {
+		got_data = true;
+		char ch = (char)c;
+		if (!dem_string_append_n(ds, &ch, 1)) {
+			return false;
+		}
+		if (ch == '\n') {
+			break;
+		}
+	}
+	return got_data;
+}
 
-// Parse CSV field, handling quoted fields with commas and escaped quotes
-static char *read_csv_field(char **line, char *buffer, size_t buffer_size) {
-	if (!*line || **line == '\0' || **line == '\n' || **line == '\r') {
+// Parse a CSV field in-place starting at *p.
+// Handles quoted fields (with "" escape for literal quotes).
+// Returns pointer to start of field content within the buffer,
+// advances *p past the field and its trailing comma, and null-terminates the field.
+// Returns NULL if no field is available.
+static char *csv_parse_field(char **p) {
+	char *s = *p;
+	if (!s || *s == '\0' || *s == '\n' || *s == '\r') {
 		return NULL;
 	}
-
-	char *dst = buffer;
-	char *src = *line;
-	size_t written = 0;
-	int in_quotes = 0;
-
-	// Check if field starts with quote
-	if (*src == '"') {
-		in_quotes = 1;
-		src++; // Skip opening quote
-	}
-
-	while (*src && written < buffer_size - 1) {
-		if (in_quotes) {
-			if (*src == '"') {
-				// Check for escaped quote (two quotes in a row: "")
-				if (*(src + 1) == '"') {
+	if (*s == '"') {
+		// Quoted field: read content between quotes, handle "" escapes in-place
+		s++; // skip opening quote
+		char *start = s;
+		char *dst = s;
+		while (*s) {
+			if (*s == '"') {
+				if (*(s + 1) == '"') {
+					// escaped quote
 					*dst++ = '"';
-					written++;
-					src += 2;
+					s += 2;
 				} else {
-					// End of quoted field
-					src++; // Skip closing quote
-					in_quotes = 0;
-					// Skip comma after closing quote
-					if (*src == ',') {
-						src++;
-					}
+					// closing quote
+					s++; // skip closing quote
 					break;
 				}
 			} else {
-				*dst++ = *src++;
-				written++;
+				*dst++ = *s++;
 			}
-		} else {
-			if (*src == ',' || *src == '\n' || *src == '\r') {
-				if (*src == ',') {
-					src++;
-				}
-				break;
-			}
-			*dst++ = *src++;
-			written++;
 		}
-	}
-
-	*dst = '\0';
-	*line = src;
-
-	return (written > 0 || (dst != buffer)) ? buffer : NULL;
-}
-
-static int load_csv_tests(const char *csv_path) {
-	FILE *f = fopen(csv_path, "r");
-	if (!f) {
-		fprintf(stderr, "Failed to open CSV file: %s\n", csv_path);
-		return -1;
-	}
-
-	size_t capacity = 10000;
-	test_cases = calloc(capacity, sizeof(test_case_t));
-	if (!test_cases) {
-		fclose(f);
-		return -1;
-	}
-
-	char *line = NULL;
-	size_t line_cap = 0;
-	ssize_t line_len;
-	char field_buffer[8192];
-
-	// Skip header
-	if (getline(&line, &line_cap, f) < 0) {
-		free(line);
-		fclose(f);
-		return -1;
-	}
-
-	// Read test cases
-	test_count = 0;
-	while ((line_len = getline(&line, &line_cap, f)) >= 0) {
-		if (line_len == 0 || line[0] == '\n') {
-			continue;
+		*dst = '\0';
+		// skip trailing comma
+		if (*s == ',') {
+			s++;
 		}
-
-		// Expand capacity if needed
-		if (test_count >= capacity) {
-			capacity *= 2;
-			test_case_t *new_cases = realloc(test_cases, capacity * sizeof(test_case_t));
-			if (!new_cases) {
-				free(line);
-				fclose(f);
-				return -1;
-			}
-			test_cases = new_cases;
-		}
-
-		// Parse CSV line
-		char *line_ptr = line;
-		char *mangled = read_csv_field(&line_ptr, field_buffer, sizeof(field_buffer));
-
-		if (!mangled) {
-			continue;
-		}
-
-		test_cases[test_count].mangled = strdup(mangled);
-
-		// Read demangled field (might be empty)
-		char *demangled = read_csv_field(&line_ptr, field_buffer, sizeof(field_buffer));
-		test_cases[test_count].demangled = (demangled && demangled[0]) ? strdup(demangled) : NULL;
-
-		test_count++;
+		*p = s;
+		return start;
 	}
-
-	free(line);
-	fclose(f);
-	return 0;
-}
-
-static void free_test_cases(void) {
-	if (test_cases) {
-		for (size_t i = 0; i < test_count; i++) {
-			free(test_cases[i].mangled);
-			free(test_cases[i].demangled);
-		}
-		free(test_cases);
-		test_cases = NULL;
+	// Unquoted field
+	char *start = s;
+	while (*s && *s != ',' && *s != '\n' && *s != '\r') {
+		s++;
 	}
+	if (*s == ',') {
+		*s = '\0';
+		s++;
+	} else {
+		// terminate at newline/CR/end
+		*s = '\0';
+	}
+	*p = s;
+	return start;
 }
 
 static int run_csv_tests(void) {
-	if (load_csv_tests(CSV_PATH) < 0) {
+	FILE *f = fopen(CSV_PATH, "r");
+	if (!f) {
+		fprintf(stderr, "Failed to open CSV file: %s\n", CSV_PATH);
+		return 1;
+	}
+
+	DemString ds = { 0 };
+
+	// Skip header
+	if (!dem_fgetline(&ds, f)) {
+		dem_string_deinit(&ds);
+		fclose(f);
 		return 1;
 	}
 
 	int all_passed = 1;
+	size_t test_count = 0;
+	size_t line_no = 1; // header was line 1
 
-	for (size_t i = 0; i < test_count; i++) {
-		test_case_t *tc = &test_cases[i];
-
-		char *result = libdemangle_handler_cxx(tc->mangled, default_opts);
-
-		int test_passed = 0;
-		if (tc->demangled == NULL) {
-			test_passed = (result == NULL);
-		} else {
-			test_passed = (result != NULL && strcmp(result, tc->demangled) == 0);
+	while (dem_fgetline(&ds, f)) {
+		line_no++;
+		if (ds.len == 0 || ds.buf[0] == '\n') {
+			continue;
 		}
 
-		if (!test_passed) {
+		// Parse CSV fields in-place within ds.buf
+		char *cursor = ds.buf;
+		char *mangled = csv_parse_field(&cursor);
+		if (!mangled || !mangled[0]) {
+			continue;
+		}
+
+		char *demangled = csv_parse_field(&cursor);
+		char *expected = (demangled && demangled[0]) ? demangled : NULL;
+
+		char *result = libdemangle_handler_cxx(mangled, default_opts);
+		test_count++;
+
+		int passed = 0;
+		if (!expected) {
+			passed = (result == NULL);
+		} else {
+			passed = (result != NULL && strcmp(result, expected) == 0);
+		}
+
+		if (!passed) {
 			all_passed = 0;
-			fprintf(stderr, "FAIL [" TEST_NAME "] line %zu:\n", i + 2);
-			fprintf(stderr, "  mangled:  %s\n", tc->mangled);
-			fprintf(stderr, "  expected: %s\n", tc->demangled ? tc->demangled : "(null)");
+			fprintf(stderr, "FAIL [" TEST_NAME "] line %zu:\n", line_no);
+			fprintf(stderr, "  mangled:  %s\n", mangled);
+			fprintf(stderr, "  expected: %s\n", expected ? expected : "(null)");
 			fprintf(stderr, "  got:      %s\n\n", result ? result : "(null)");
 		}
 
 		free(result);
 	}
 
-	free_test_cases();
+	dem_string_deinit(&ds);
+	fclose(f);
 
 	if (all_passed) {
 		fprintf(stderr, "PASS [" TEST_NAME "]: %zu tests\n", test_count);
