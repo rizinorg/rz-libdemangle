@@ -38,3 +38,7 @@ License: LGPL-3.0-only
 Files: .appveyor.yml
 Copyright: 2026 RizinOrg <info@rizin.re>
 License: LGPL-3.0-only
+
+Files: test/data/*.csv
+Copyright: 2025 deroad <wargio@libero.it>
+License: LGPL-3.0-only
