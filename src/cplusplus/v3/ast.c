@@ -24,11 +24,11 @@ DemNode *DemNode_ctor_inplace(DemNode *xs, CpDemTypeKind tag, const char *val_be
 
 	// Initialize union fields based on tag
 	switch (tag) {
-	case CP_DEM_TYPE_KIND_primitive_ty:
+	case CP_DEM_TYPE_KIND_PRIMITIVE_TY:
 		dem_string_init(&xs->primitive_ty.name);
 		break;
-	case CP_DEM_TYPE_KIND_encoding:
-	case CP_DEM_TYPE_KIND_function_type:
+	case CP_DEM_TYPE_KIND_ENCODING:
+	case CP_DEM_TYPE_KIND_FUNCTION_TYPE:
 		xs->fn_ty.name = NULL;
 		xs->fn_ty.params = NULL;
 		xs->fn_ty.ret = NULL;
@@ -37,26 +37,26 @@ DemNode *DemNode_ctor_inplace(DemNode *xs, CpDemTypeKind tag, const char *val_be
 		xs->fn_ty.cv_qualifiers = (CvQualifiers){ 0 };
 		xs->fn_ty.ref_qualifiers = (RefQualifiers){ 0 };
 		break;
-	case CP_DEM_TYPE_KIND_module_name:
+	case CP_DEM_TYPE_KIND_MODULE_NAME:
 		xs->module_name_ty.IsPartition = false;
 		xs->module_name_ty.name = NULL;
 		xs->module_name_ty.pare = NULL;
 		break;
-	case CP_DEM_TYPE_KIND_name_with_template_args:
+	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS:
 		xs->name_with_template_args.name = NULL;
 		xs->name_with_template_args.template_args = NULL;
 		break;
-	case CP_DEM_TYPE_KIND_conv_op_ty:
+	case CP_DEM_TYPE_KIND_CONV_OP_TY:
 		xs->conv_op_ty.ty = NULL;
 		break;
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
-	case CP_DEM_TYPE_KIND_noexcept_spec:
-	case CP_DEM_TYPE_KIND_dynamic_exception_spec:
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION:
+	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC:
+	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC:
 		xs->child = NULL;
 		break;
-	case CP_DEM_TYPE_KIND_parameter_pack:
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK:
 		break;
-	case CP_DEM_TYPE_KIND_many:
+	case CP_DEM_TYPE_KIND_MANY:
 		xs->many_ty.sep = NULL;
 		// Fall through
 	default:
@@ -98,12 +98,12 @@ void DemNode_deinit(DemNode *xs) {
 	VecPDemNode_dtor(xs->children);
 	// Handle different union variants based on tag
 	switch (xs->tag) {
-	case CP_DEM_TYPE_KIND_primitive_ty:
+	case CP_DEM_TYPE_KIND_PRIMITIVE_TY:
 		// Free the primitive type's name string
 		dem_string_deinit(&xs->primitive_ty.name);
 		break;
-	case CP_DEM_TYPE_KIND_encoding:
-	case CP_DEM_TYPE_KIND_function_type:
+	case CP_DEM_TYPE_KIND_ENCODING:
+	case CP_DEM_TYPE_KIND_FUNCTION_TYPE:
 		// Free function type fields (name, params, ret)
 		if (xs->fn_ty.name) {
 			DemNode_dtor(xs->fn_ty.name);
@@ -121,13 +121,13 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->fn_ty.exception_spec);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_qualified_type:
+	case CP_DEM_TYPE_KIND_QUALIFIED_TYPE:
 		// Free qualified type's inner type
 		if (xs->qualified_ty.inner_type) {
 			DemNode_dtor(xs->qualified_ty.inner_type);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type:
+	case CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE:
 		// Free vendor ext qualified type's inner type and template args
 		if (xs->vendor_ext_qualified_ty.inner_type) {
 			DemNode_dtor(xs->vendor_ext_qualified_ty.inner_type);
@@ -136,7 +136,7 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->vendor_ext_qualified_ty.template_args);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_module_name:
+	case CP_DEM_TYPE_KIND_MODULE_NAME:
 		if (xs->module_name_ty.name) {
 			DemNode_dtor(xs->module_name_ty.name);
 		}
@@ -144,7 +144,7 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->module_name_ty.pare);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_name_with_template_args:
+	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS:
 		if (xs->name_with_template_args.name) {
 			DemNode_dtor(xs->name_with_template_args.name);
 		}
@@ -152,7 +152,7 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->name_with_template_args.template_args);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_closure_ty_name:
+	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME:
 		if (xs->closure_ty_name.template_params) {
 			DemNode_dtor(xs->closure_ty_name.template_params);
 		}
@@ -161,7 +161,7 @@ void DemNode_deinit(DemNode *xs) {
 		}
 		// count is a DemStringView (not allocated), no need to free
 		break;
-	case CP_DEM_TYPE_KIND_nested_name:
+	case CP_DEM_TYPE_KIND_NESTED_NAME:
 		if (xs->nested_name.qual) {
 			DemNode_dtor(xs->nested_name.qual);
 		}
@@ -169,7 +169,7 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->nested_name.name);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_local_name:
+	case CP_DEM_TYPE_KIND_LOCAL_NAME:
 		if (xs->local_name.encoding) {
 			DemNode_dtor(xs->local_name.encoding);
 		}
@@ -177,33 +177,33 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->local_name.entry);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_ctor_dtor_name:
+	case CP_DEM_TYPE_KIND_CTOR_DTOR_NAME:
 		// NOTE: ctor_dtor_name.name is a non-owning pointer to the scope,
 		// is_dtor is a bool, no need to free
 		break;
-	case CP_DEM_TYPE_KIND_conv_op_ty:
+	case CP_DEM_TYPE_KIND_CONV_OP_TY:
 		if (xs->conv_op_ty.ty) {
 			DemNode_dtor(xs->conv_op_ty.ty);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_parameter_pack:
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK:
 		// No fields to free
 		break;
-	case CP_DEM_TYPE_KIND_template_args:
-	case CP_DEM_TYPE_KIND_template_argument_pack:
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
-	case CP_DEM_TYPE_KIND_noexcept_spec:
-	case CP_DEM_TYPE_KIND_dynamic_exception_spec:
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGS:
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK:
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION:
+	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC:
+	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC:
 		DemNode_dtor(xs->child);
 		break;
-	case CP_DEM_TYPE_KIND_abi_tag_ty:
+	case CP_DEM_TYPE_KIND_ABI_TAG_TY:
 		if (xs->abi_tag_ty.ty) {
 			DemNode_dtor(xs->abi_tag_ty.ty);
 		}
 		// tag is a DemStringView (not allocated), no need to free
 		break;
-	case CP_DEM_TYPE_KIND_vector_type:
-	case CP_DEM_TYPE_KIND_array_type:
+	case CP_DEM_TYPE_KIND_VECTOR_TYPE:
+	case CP_DEM_TYPE_KIND_ARRAY_TYPE:
 		if (xs->array_ty.inner_ty) {
 			DemNode_dtor(xs->array_ty.inner_ty);
 		}
@@ -211,7 +211,7 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->array_ty.dimension);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_member_expression:
+	case CP_DEM_TYPE_KIND_MEMBER_EXPRESSION:
 		if (xs->member_expr.lhs) {
 			DemNode_dtor(xs->member_expr.lhs);
 		}
@@ -220,7 +220,7 @@ void DemNode_deinit(DemNode *xs) {
 		}
 		// op is a DemStringView (not allocated), no need to free
 		break;
-	case CP_DEM_TYPE_KIND_fold_expression:
+	case CP_DEM_TYPE_KIND_FOLD_EXPRESSION:
 		if (xs->fold_expr.pack) {
 			DemNode_dtor(xs->fold_expr.pack);
 		}
@@ -230,7 +230,7 @@ void DemNode_deinit(DemNode *xs) {
 		// op is a DemStringView (not allocated), no need to free
 		// is_left_fold is a bool, no need to free
 		break;
-	case CP_DEM_TYPE_KIND_braced_expression:
+	case CP_DEM_TYPE_KIND_BRACED_EXPRESSION:
 		if (xs->braced_expr.elem) {
 			DemNode_dtor(xs->braced_expr.elem);
 		}
@@ -239,7 +239,7 @@ void DemNode_deinit(DemNode *xs) {
 		}
 		// is_array is a bool, no need to free
 		break;
-	case CP_DEM_TYPE_KIND_braced_range_expression:
+	case CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION:
 		if (xs->braced_range_expr.first) {
 			DemNode_dtor(xs->braced_range_expr.first);
 		}
@@ -250,7 +250,7 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->braced_range_expr.init);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_init_list_expression:
+	case CP_DEM_TYPE_KIND_INIT_LIST_EXPRESSION:
 		if (xs->init_list_expr.ty) {
 			DemNode_dtor(xs->init_list_expr.ty);
 		}
@@ -258,7 +258,7 @@ void DemNode_deinit(DemNode *xs) {
 			DemNode_dtor(xs->init_list_expr.inits);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_binary_expression:
+	case CP_DEM_TYPE_KIND_BINARY_EXPRESSION:
 		if (xs->binary_expr.lhs) {
 			DemNode_dtor(xs->binary_expr.lhs);
 		}
@@ -267,13 +267,13 @@ void DemNode_deinit(DemNode *xs) {
 		}
 		// op is a DemStringView (not allocated), no need to free
 		break;
-	case CP_DEM_TYPE_KIND_prefix_expression:
+	case CP_DEM_TYPE_KIND_PREFIX_EXPRESSION:
 		if (xs->prefix_expr.inner) {
 			DemNode_dtor(xs->prefix_expr.inner);
 		}
 		// prefix is a DemStringView (not allocated), no need to free
 		break;
-	case CP_DEM_TYPE_KIND_new_expression:
+	case CP_DEM_TYPE_KIND_NEW_EXPRESSION:
 		if (xs->new_expr.expr_list) {
 			DemNode_dtor(xs->new_expr.expr_list);
 		}
@@ -285,10 +285,10 @@ void DemNode_deinit(DemNode *xs) {
 		}
 		// is_global is a bool, op is a DemStringView (not allocated), no need to free
 		break;
-	case CP_DEM_TYPE_KIND_integer_literal:
+	case CP_DEM_TYPE_KIND_INTEGER_LITERAL:
 		// type and value are DemStringViews (not allocated), no need to free
 		break;
-	case CP_DEM_TYPE_KIND_many:
+	case CP_DEM_TYPE_KIND_MANY:
 		// sep is a string literal, don't free it
 		// Fall through to free children vector
 	default:
@@ -326,11 +326,11 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 
 	// Copy union fields based on tag
 	switch (src->tag) {
-	case CP_DEM_TYPE_KIND_primitive_ty:
+	case CP_DEM_TYPE_KIND_PRIMITIVE_TY:
 		dem_string_init_clone(&dst->primitive_ty.name, &src->primitive_ty.name);
 		break;
-	case CP_DEM_TYPE_KIND_encoding:
-	case CP_DEM_TYPE_KIND_function_type:
+	case CP_DEM_TYPE_KIND_ENCODING:
+	case CP_DEM_TYPE_KIND_FUNCTION_TYPE:
 		// Deep copy function type fields
 		dst->fn_ty.name = src->fn_ty.name ? DemNode_clone(src->fn_ty.name) : NULL;
 		dst->fn_ty.ret = src->fn_ty.ret ? DemNode_clone(src->fn_ty.ret) : NULL;
@@ -340,116 +340,116 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		dst->fn_ty.cv_qualifiers = src->fn_ty.cv_qualifiers;
 		dst->fn_ty.ref_qualifiers = src->fn_ty.ref_qualifiers;
 		break;
-	case CP_DEM_TYPE_KIND_qualified_type:
+	case CP_DEM_TYPE_KIND_QUALIFIED_TYPE:
 		// Deep copy qualified type fields
 		dst->qualified_ty.inner_type = src->qualified_ty.inner_type ? DemNode_clone(src->qualified_ty.inner_type) : NULL;
 		dst->qualified_ty.qualifiers = src->qualified_ty.qualifiers;
 		break;
-	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type:
+	case CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE:
 		// Deep copy vendor qualified type fields
 		dst->vendor_ext_qualified_ty.inner_type = src->vendor_ext_qualified_ty.inner_type ? DemNode_clone(src->vendor_ext_qualified_ty.inner_type) : NULL;
 		dst->vendor_ext_qualified_ty.vendor_ext = src->vendor_ext_qualified_ty.vendor_ext;
 		dst->vendor_ext_qualified_ty.template_args = src->vendor_ext_qualified_ty.template_args ? DemNode_clone(src->vendor_ext_qualified_ty.template_args) : NULL;
 		break;
-	case CP_DEM_TYPE_KIND_module_name:
+	case CP_DEM_TYPE_KIND_MODULE_NAME:
 		dst->module_name_ty.IsPartition = src->module_name_ty.IsPartition;
 		dst->module_name_ty.name = src->module_name_ty.name ? DemNode_clone(src->module_name_ty.name) : NULL;
 		dst->module_name_ty.pare = src->module_name_ty.pare ? DemNode_clone(src->module_name_ty.pare) : NULL;
 		break;
-	case CP_DEM_TYPE_KIND_parameter_pack:
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK:
 		dst->child_ref = src->child_ref;
 		break;
-	case CP_DEM_TYPE_KIND_template_args:
-	case CP_DEM_TYPE_KIND_template_argument_pack:
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
-	case CP_DEM_TYPE_KIND_noexcept_spec:
-	case CP_DEM_TYPE_KIND_dynamic_exception_spec:
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGS:
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK:
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION:
+	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC:
+	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC:
 		dst->child = src->child ? DemNode_clone(src->child) : NULL;
 		break;
-	case CP_DEM_TYPE_KIND_name_with_template_args:
+	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS:
 		dst->name_with_template_args.name = src->name_with_template_args.name ? DemNode_clone(src->name_with_template_args.name) : NULL;
 		dst->name_with_template_args.template_args = src->name_with_template_args.template_args ? DemNode_clone(src->name_with_template_args.template_args) : NULL;
 		break;
-	case CP_DEM_TYPE_KIND_closure_ty_name:
+	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME:
 		dst->closure_ty_name.template_params = src->closure_ty_name.template_params ? DemNode_clone(src->closure_ty_name.template_params) : NULL;
 		dst->closure_ty_name.params = src->closure_ty_name.params ? DemNode_clone(src->closure_ty_name.params) : NULL;
 		dst->closure_ty_name.count = src->closure_ty_name.count; // DemStringView, shallow copy
 		break;
-	case CP_DEM_TYPE_KIND_nested_name:
+	case CP_DEM_TYPE_KIND_NESTED_NAME:
 		dst->nested_name.qual = src->nested_name.qual ? DemNode_clone(src->nested_name.qual) : NULL;
 		dst->nested_name.name = src->nested_name.name ? DemNode_clone(src->nested_name.name) : NULL;
 		break;
-	case CP_DEM_TYPE_KIND_local_name:
+	case CP_DEM_TYPE_KIND_LOCAL_NAME:
 		dst->local_name.encoding = src->local_name.encoding ? DemNode_clone(src->local_name.encoding) : NULL;
 		dst->local_name.entry = src->local_name.entry ? DemNode_clone(src->local_name.entry) : NULL;
 		break;
-	case CP_DEM_TYPE_KIND_ctor_dtor_name:
+	case CP_DEM_TYPE_KIND_CTOR_DTOR_NAME:
 		// NOTE: ctor_dtor_name.name is a non-owning pointer.
 		// For shallow copy, just copy the pointer (don't clone).
 		dst->ctor_dtor_name.name = src->ctor_dtor_name.name;
 		dst->ctor_dtor_name.is_dtor = src->ctor_dtor_name.is_dtor;
 		break;
-	case CP_DEM_TYPE_KIND_conv_op_ty:
+	case CP_DEM_TYPE_KIND_CONV_OP_TY:
 		dst->conv_op_ty.ty = src->conv_op_ty.ty ? DemNode_clone(src->conv_op_ty.ty) : NULL;
 		break;
-	case CP_DEM_TYPE_KIND_abi_tag_ty:
+	case CP_DEM_TYPE_KIND_ABI_TAG_TY:
 		dst->abi_tag_ty.ty = src->abi_tag_ty.ty ? DemNode_clone(src->abi_tag_ty.ty) : NULL;
 		dst->abi_tag_ty.tag = src->abi_tag_ty.tag; // DemStringView, shallow copy
 		break;
-	case CP_DEM_TYPE_KIND_vector_type:
-	case CP_DEM_TYPE_KIND_array_type:
+	case CP_DEM_TYPE_KIND_VECTOR_TYPE:
+	case CP_DEM_TYPE_KIND_ARRAY_TYPE:
 		dst->array_ty.inner_ty = src->array_ty.inner_ty ? DemNode_clone(src->array_ty.inner_ty) : NULL;
 		dst->array_ty.dimension = src->array_ty.dimension ? DemNode_clone(src->array_ty.dimension) : NULL;
 		break;
-	case CP_DEM_TYPE_KIND_member_expression:
+	case CP_DEM_TYPE_KIND_MEMBER_EXPRESSION:
 		dst->member_expr.lhs = src->member_expr.lhs ? DemNode_clone(src->member_expr.lhs) : NULL;
 		dst->member_expr.rhs = src->member_expr.rhs ? DemNode_clone(src->member_expr.rhs) : NULL;
 		dst->member_expr.op = src->member_expr.op; // DemStringView, shallow copy
 		break;
-	case CP_DEM_TYPE_KIND_fold_expression:
+	case CP_DEM_TYPE_KIND_FOLD_EXPRESSION:
 		dst->fold_expr.pack = src->fold_expr.pack ? DemNode_clone(src->fold_expr.pack) : NULL;
 		dst->fold_expr.init = src->fold_expr.init ? DemNode_clone(src->fold_expr.init) : NULL;
 		dst->fold_expr.op = src->fold_expr.op; // DemStringView, shallow copy
 		dst->fold_expr.is_left_fold = src->fold_expr.is_left_fold;
 		break;
-	case CP_DEM_TYPE_KIND_braced_expression:
+	case CP_DEM_TYPE_KIND_BRACED_EXPRESSION:
 		dst->braced_expr.elem = src->braced_expr.elem ? DemNode_clone(src->braced_expr.elem) : NULL;
 		dst->braced_expr.init = src->braced_expr.init ? DemNode_clone(src->braced_expr.init) : NULL;
 		dst->braced_expr.is_array = src->braced_expr.is_array;
 		break;
-	case CP_DEM_TYPE_KIND_braced_range_expression:
+	case CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION:
 		dst->braced_range_expr.first = src->braced_range_expr.first ? DemNode_clone(src->braced_range_expr.first) : NULL;
 		dst->braced_range_expr.last = src->braced_range_expr.last ? DemNode_clone(src->braced_range_expr.last) : NULL;
 		dst->braced_range_expr.init = src->braced_range_expr.init ? DemNode_clone(src->braced_range_expr.init) : NULL;
 		break;
-	case CP_DEM_TYPE_KIND_init_list_expression:
+	case CP_DEM_TYPE_KIND_INIT_LIST_EXPRESSION:
 		dst->init_list_expr.ty = src->init_list_expr.ty ? DemNode_clone(src->init_list_expr.ty) : NULL;
 		dst->init_list_expr.inits = src->init_list_expr.inits ? DemNode_clone(src->init_list_expr.inits) : NULL;
 		break;
-	case CP_DEM_TYPE_KIND_binary_expression:
+	case CP_DEM_TYPE_KIND_BINARY_EXPRESSION:
 		dst->binary_expr.lhs = src->binary_expr.lhs ? DemNode_clone(src->binary_expr.lhs) : NULL;
 		dst->binary_expr.rhs = src->binary_expr.rhs ? DemNode_clone(src->binary_expr.rhs) : NULL;
 		dst->binary_expr.op = src->binary_expr.op; // DemStringView, shallow copy
 		break;
-	case CP_DEM_TYPE_KIND_prefix_expression:
+	case CP_DEM_TYPE_KIND_PREFIX_EXPRESSION:
 		dst->prefix_expr.inner = src->prefix_expr.inner ? DemNode_clone(src->prefix_expr.inner) : NULL;
 		dst->prefix_expr.prefix = src->prefix_expr.prefix; // DemStringView, shallow copy
 		break;
-	case CP_DEM_TYPE_KIND_new_expression:
+	case CP_DEM_TYPE_KIND_NEW_EXPRESSION:
 		dst->new_expr.expr_list = src->new_expr.expr_list ? DemNode_clone(src->new_expr.expr_list) : NULL;
 		dst->new_expr.ty = src->new_expr.ty ? DemNode_clone(src->new_expr.ty) : NULL;
 		dst->new_expr.init_list = src->new_expr.init_list ? DemNode_clone(src->new_expr.init_list) : NULL;
 		dst->new_expr.is_global = src->new_expr.is_global; // bool, shallow copy
 		dst->new_expr.op = src->new_expr.op; // DemStringView, shallow copy
 		break;
-	case CP_DEM_TYPE_KIND_integer_literal:
+	case CP_DEM_TYPE_KIND_INTEGER_LITERAL:
 		dst->integer_literal_expr.type = src->integer_literal_expr.type; // DemStringView, shallow copy
 		dst->integer_literal_expr.value = src->integer_literal_expr.value; // DemStringView, shallow copy
 		break;
-	case CP_DEM_TYPE_KIND_fwd_template_ref:
+	case CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF:
 		dst->fwd_template_ref = src->fwd_template_ref;
 		break;
-	case CP_DEM_TYPE_KIND_many:
+	case CP_DEM_TYPE_KIND_MANY:
 		// Deep copy many type fields
 		dst->many_ty.sep = src->many_ty.sep; // Separator is a string literal
 		break;
@@ -491,7 +491,7 @@ DemNode *make_primitive_type_inplace(DemNode *x, const char *begin, const char *
 	if (!x) {
 		return NULL;
 	}
-	DemNode *node = DemNode_ctor_inplace(x, CP_DEM_TYPE_KIND_primitive_ty, begin, end - begin);
+	DemNode *node = DemNode_ctor_inplace(x, CP_DEM_TYPE_KIND_PRIMITIVE_TY, begin, end - begin);
 	if (!node) {
 		return NULL;
 	}
@@ -500,7 +500,7 @@ DemNode *make_primitive_type_inplace(DemNode *x, const char *begin, const char *
 }
 
 DemNode *make_primitive_type(const char *begin, const char *end, const char *name, size_t name_len) {
-	DemNode *node = DemNode_ctor(CP_DEM_TYPE_KIND_primitive_ty, begin, end - begin);
+	DemNode *node = DemNode_ctor(CP_DEM_TYPE_KIND_PRIMITIVE_TY, begin, end - begin);
 	if (!node) {
 		return NULL;
 	}
@@ -508,7 +508,7 @@ DemNode *make_primitive_type(const char *begin, const char *end, const char *nam
 }
 
 DemNode *make_name_with_template_args(const char *begin, const char *end, DemNode *name_node, DemNode *template_args_node) {
-	DemNode *node = DemNode_ctor(CP_DEM_TYPE_KIND_name_with_template_args, begin, end - begin);
+	DemNode *node = DemNode_ctor(CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS, begin, end - begin);
 	if (!node) {
 		return NULL;
 	}

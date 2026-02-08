@@ -14,135 +14,135 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 	// Extract the type name without the CP_DEM_TYPE_KIND_ prefix
 	switch (tag) {
 	// Basic types
-	case CP_DEM_TYPE_KIND_primitive_ty: return "primitive_ty";
-	case CP_DEM_TYPE_KIND_builtin_type: return "builtin_type";
-	case CP_DEM_TYPE_KIND_type: return "type";
-	case CP_DEM_TYPE_KIND_class_type: return "class_type";
-	case CP_DEM_TYPE_KIND_pointer_type: return "pointer_type";
-	case CP_DEM_TYPE_KIND_string_type: return "string_type";
-	case CP_DEM_TYPE_KIND_signature_type: return "signature_type";
+	case CP_DEM_TYPE_KIND_PRIMITIVE_TY: return "primitive_ty";
+	case CP_DEM_TYPE_KIND_BUILTIN_TYPE: return "builtin_type";
+	case CP_DEM_TYPE_KIND_TYPE: return "type";
+	case CP_DEM_TYPE_KIND_CLASS_TYPE: return "class_type";
+	case CP_DEM_TYPE_KIND_POINTER_TYPE: return "pointer_type";
+	case CP_DEM_TYPE_KIND_STRING_TYPE: return "string_type";
+	case CP_DEM_TYPE_KIND_SIGNATURE_TYPE: return "signature_type";
 
 	// Function related
-	case CP_DEM_TYPE_KIND_function_type: return "function_type";
-	case CP_DEM_TYPE_KIND_bare_function_type: return "bare_function_type";
-	case CP_DEM_TYPE_KIND_function_param: return "function_param";
-	case CP_DEM_TYPE_KIND_function_encoding: return "function_encoding";
-	case CP_DEM_TYPE_KIND_exception_spec: return "exception_spec";
-	case CP_DEM_TYPE_KIND_noexcept_spec: return "noexcept_spec";
-	case CP_DEM_TYPE_KIND_dynamic_exception_spec: return "dynamic_exception_spec";
+	case CP_DEM_TYPE_KIND_FUNCTION_TYPE: return "function_type";
+	case CP_DEM_TYPE_KIND_BARE_FUNCTION_TYPE: return "bare_function_type";
+	case CP_DEM_TYPE_KIND_FUNCTION_PARAM: return "function_param";
+	case CP_DEM_TYPE_KIND_FUNCTION_ENCODING: return "function_encoding";
+	case CP_DEM_TYPE_KIND_EXCEPTION_SPEC: return "exception_spec";
+	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC: return "noexcept_spec";
+	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC: return "dynamic_exception_spec";
 
 	// Template related
-	case CP_DEM_TYPE_KIND_template_args: return "template_args";
-	case CP_DEM_TYPE_KIND_template_param: return "template_param";
-	case CP_DEM_TYPE_KIND_template_arg: return "template_arg";
-	case CP_DEM_TYPE_KIND_template_argument_pack: return "template_argument_pack";
-	case CP_DEM_TYPE_KIND_template_param_decl: return "template_param_decl";
-	case CP_DEM_TYPE_KIND_template_template_param: return "template_template_param";
-	case CP_DEM_TYPE_KIND_fwd_template_ref: return "fwd_template_ref";
-	case CP_DEM_TYPE_KIND_name_with_template_args: return "name_w_tpl_args";
-	case CP_DEM_TYPE_KIND_unscoped_template_name: return "unscoped_template_name";
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGS: return "template_args";
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM: return "template_param";
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARG: return "template_arg";
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK: return "template_argument_pack";
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL: return "template_param_decl";
+	case CP_DEM_TYPE_KIND_TEMPLATE_TEMPLATE_PARAM: return "template_template_param";
+	case CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF: return "fwd_template_ref";
+	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS: return "name_w_tpl_args";
+	case CP_DEM_TYPE_KIND_UNSCOPED_TEMPLATE_NAME: return "unscoped_template_name";
 
 	// Names
-	case CP_DEM_TYPE_KIND_name: return "name";
-	case CP_DEM_TYPE_KIND_nested_name: return "nested_name";
-	case CP_DEM_TYPE_KIND_unqualified_name: return "unqualified_name";
-	case CP_DEM_TYPE_KIND_unscoped_name: return "unscoped_name";
-	case CP_DEM_TYPE_KIND_source_name: return "source_name";
-	case CP_DEM_TYPE_KIND_field_source_name: return "field_source_name";
-	case CP_DEM_TYPE_KIND_operator_name: return "operator_name";
-	case CP_DEM_TYPE_KIND_special_name: return "special_name";
-	case CP_DEM_TYPE_KIND_local_name: return "local_name";
-	case CP_DEM_TYPE_KIND_unnamed_type_name: return "unnamed_type_name";
-	case CP_DEM_TYPE_KIND_data_name: return "data_name";
-	case CP_DEM_TYPE_KIND_entity_name: return "entity_name";
-	case CP_DEM_TYPE_KIND_function_name: return "function_name";
+	case CP_DEM_TYPE_KIND_NAME: return "name";
+	case CP_DEM_TYPE_KIND_NESTED_NAME: return "nested_name";
+	case CP_DEM_TYPE_KIND_UNQUALIFIED_NAME: return "unqualified_name";
+	case CP_DEM_TYPE_KIND_UNSCOPED_NAME: return "unscoped_name";
+	case CP_DEM_TYPE_KIND_SOURCE_NAME: return "source_name";
+	case CP_DEM_TYPE_KIND_FIELD_SOURCE_NAME: return "field_source_name";
+	case CP_DEM_TYPE_KIND_OPERATOR_NAME: return "operator_name";
+	case CP_DEM_TYPE_KIND_SPECIAL_NAME: return "special_name";
+	case CP_DEM_TYPE_KIND_LOCAL_NAME: return "local_name";
+	case CP_DEM_TYPE_KIND_UNNAMED_TYPE_NAME: return "unnamed_type_name";
+	case CP_DEM_TYPE_KIND_DATA_NAME: return "data_name";
+	case CP_DEM_TYPE_KIND_ENTITY_NAME: return "entity_name";
+	case CP_DEM_TYPE_KIND_FUNCTION_NAME: return "function_name";
 
 	// Constructor/Destructor
-	case CP_DEM_TYPE_KIND_ctor_dtor_name: return "ctor_dtor_name";
-	case CP_DEM_TYPE_KIND_ctor_name: return "ctor_name";
-	case CP_DEM_TYPE_KIND_dtor_name: return "dtor_name";
-	case CP_DEM_TYPE_KIND_destructor_name: return "destructor_name";
+	case CP_DEM_TYPE_KIND_CTOR_DTOR_NAME: return "ctor_dtor_name";
+	case CP_DEM_TYPE_KIND_CTOR_NAME: return "ctor_name";
+	case CP_DEM_TYPE_KIND_DTOR_NAME: return "dtor_name";
+	case CP_DEM_TYPE_KIND_DESTRUCTOR_NAME: return "destructor_name";
 
 	// Expression related
-	case CP_DEM_TYPE_KIND_expression: return "expression";
-	case CP_DEM_TYPE_KIND_expr_primary: return "expr_primary";
-	case CP_DEM_TYPE_KIND_integer_literal: return "integer_literal";
-	case CP_DEM_TYPE_KIND_braced_expression: return "braced_expression";
-	case CP_DEM_TYPE_KIND_braced_range_expression: return "braced_range_expression";
-	case CP_DEM_TYPE_KIND_init_list_expression: return "init_list_expression";
-	case CP_DEM_TYPE_KIND_fold_expression: return "fold_expression";
-	case CP_DEM_TYPE_KIND_prefix_expression: return "prefix_expression";
-	case CP_DEM_TYPE_KIND_binary_expression: return "binary_expression";
-	case CP_DEM_TYPE_KIND_member_expression: return "member_expression";
-	case CP_DEM_TYPE_KIND_new_expression: return "new_expression";
-	case CP_DEM_TYPE_KIND_index_expression: return "index_expression";
-	case CP_DEM_TYPE_KIND_range_begin_expression: return "range_begin_expression";
-	case CP_DEM_TYPE_KIND_range_end_expression: return "range_end_expression";
-	case CP_DEM_TYPE_KIND_instantiation_dependent_expression: return "inst_dep_expression";
-	case CP_DEM_TYPE_KIND_instantiation_dependent_array_bound_expression: return "inst_dep_array_bound_expr";
-	case CP_DEM_TYPE_KIND_initializer: return "initializer";
+	case CP_DEM_TYPE_KIND_EXPRESSION: return "expression";
+	case CP_DEM_TYPE_KIND_EXPR_PRIMARY: return "expr_primary";
+	case CP_DEM_TYPE_KIND_INTEGER_LITERAL: return "integer_literal";
+	case CP_DEM_TYPE_KIND_BRACED_EXPRESSION: return "braced_expression";
+	case CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION: return "braced_range_expression";
+	case CP_DEM_TYPE_KIND_INIT_LIST_EXPRESSION: return "init_list_expression";
+	case CP_DEM_TYPE_KIND_FOLD_EXPRESSION: return "fold_expression";
+	case CP_DEM_TYPE_KIND_PREFIX_EXPRESSION: return "prefix_expression";
+	case CP_DEM_TYPE_KIND_BINARY_EXPRESSION: return "binary_expression";
+	case CP_DEM_TYPE_KIND_MEMBER_EXPRESSION: return "member_expression";
+	case CP_DEM_TYPE_KIND_NEW_EXPRESSION: return "new_expression";
+	case CP_DEM_TYPE_KIND_INDEX_EXPRESSION: return "index_expression";
+	case CP_DEM_TYPE_KIND_RANGE_BEGIN_EXPRESSION: return "range_begin_expression";
+	case CP_DEM_TYPE_KIND_RANGE_END_EXPRESSION: return "range_end_expression";
+	case CP_DEM_TYPE_KIND_INSTANTIATION_DEPENDENT_EXPRESSION: return "inst_dep_expression";
+	case CP_DEM_TYPE_KIND_INSTANTIATION_DEPENDENT_ARRAY_BOUND_EXPRESSION: return "inst_dep_array_bound_expr";
+	case CP_DEM_TYPE_KIND_INITIALIZER: return "initializer";
 
 	// Qualifiers
-	case CP_DEM_TYPE_KIND_qualified_type: return "qualified_type";
-	case CP_DEM_TYPE_KIND_qualifiers: return "qualifiers";
-	case CP_DEM_TYPE_KIND_top_level_cv_qualifiers: return "top_level_cv_qualifiers";
-	case CP_DEM_TYPE_KIND_extended_qualifier: return "extended_qualifier";
-	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type: return "vendor_ext_qualified";
+	case CP_DEM_TYPE_KIND_QUALIFIED_TYPE: return "qualified_type";
+	case CP_DEM_TYPE_KIND_QUALIFIERS: return "qualifiers";
+	case CP_DEM_TYPE_KIND_TOP_LEVEL_CV_QUALIFIERS: return "top_level_cv_qualifiers";
+	case CP_DEM_TYPE_KIND_EXTENDED_QUALIFIER: return "extended_qualifier";
+	case CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE: return "vendor_ext_qualified";
 
 	// Array/Pointer types
-	case CP_DEM_TYPE_KIND_vector_type: return "vector_type";
-	case CP_DEM_TYPE_KIND_array_type: return "array_type";
-	case CP_DEM_TYPE_KIND_array_bound_number: return "array_bound_number";
-	case CP_DEM_TYPE_KIND_element_type: return "element_type";
-	case CP_DEM_TYPE_KIND_pointer_to_member_type: return "ptr_member_type";
+	case CP_DEM_TYPE_KIND_VECTOR_TYPE: return "vector_type";
+	case CP_DEM_TYPE_KIND_ARRAY_TYPE: return "array_type";
+	case CP_DEM_TYPE_KIND_ARRAY_BOUND_NUMBER: return "array_bound_number";
+	case CP_DEM_TYPE_KIND_ELEMENT_TYPE: return "element_type";
+	case CP_DEM_TYPE_KIND_POINTER_TO_MEMBER_TYPE: return "ptr_member_type";
 
 	// Numbers and values
-	case CP_DEM_TYPE_KIND_number: return "number";
-	case CP_DEM_TYPE_KIND_non_negative_number: return "non_negative_number";
-	case CP_DEM_TYPE_KIND_non_neg_number: return "non_neg_number";
-	case CP_DEM_TYPE_KIND_offset_number: return "offset_number";
-	case CP_DEM_TYPE_KIND_digit: return "digit";
-	case CP_DEM_TYPE_KIND_nv_digit: return "nv_digit";
-	case CP_DEM_TYPE_KIND_nv_offset: return "nv_offset";
-	case CP_DEM_TYPE_KIND_v_offset: return "v_offset";
-	case CP_DEM_TYPE_KIND_virtual_offset_number: return "virtual_offset_number";
-	case CP_DEM_TYPE_KIND_seq_id: return "seq_id";
+	case CP_DEM_TYPE_KIND_NUMBER: return "number";
+	case CP_DEM_TYPE_KIND_NON_NEGATIVE_NUMBER: return "non_negative_number";
+	case CP_DEM_TYPE_KIND_NON_NEG_NUMBER: return "non_neg_number";
+	case CP_DEM_TYPE_KIND_OFFSET_NUMBER: return "offset_number";
+	case CP_DEM_TYPE_KIND_DIGIT: return "digit";
+	case CP_DEM_TYPE_KIND_NV_DIGIT: return "nv_digit";
+	case CP_DEM_TYPE_KIND_NV_OFFSET: return "nv_offset";
+	case CP_DEM_TYPE_KIND_V_OFFSET: return "v_offset";
+	case CP_DEM_TYPE_KIND_VIRTUAL_OFFSET_NUMBER: return "virtual_offset_number";
+	case CP_DEM_TYPE_KIND_SEQ_ID: return "seq_id";
 
 	// Float related
-	case CP_DEM_TYPE_KIND_float: return "float";
-	case CP_DEM_TYPE_KIND_value_float: return "value_float";
-	case CP_DEM_TYPE_KIND_real_part_float: return "real_part_float";
-	case CP_DEM_TYPE_KIND_imag_part_float: return "imag_part_float";
-	case CP_DEM_TYPE_KIND_value_number: return "value_number";
+	case CP_DEM_TYPE_KIND_FLOAT: return "float";
+	case CP_DEM_TYPE_KIND_VALUE_FLOAT: return "value_float";
+	case CP_DEM_TYPE_KIND_REAL_PART_FLOAT: return "real_part_float";
+	case CP_DEM_TYPE_KIND_IMAG_PART_FLOAT: return "imag_part_float";
+	case CP_DEM_TYPE_KIND_VALUE_NUMBER: return "value_number";
 
 	// Unresolved names
-	case CP_DEM_TYPE_KIND_unresolved_name: return "unresolved_name";
-	case CP_DEM_TYPE_KIND_unresolved_type: return "unresolved_type";
-	case CP_DEM_TYPE_KIND_unresolved_qualifier_level: return "unresolved_qualifier_level";
-	case CP_DEM_TYPE_KIND_base_unresolved_name: return "base_unresolved_name";
-	case CP_DEM_TYPE_KIND_simple_id: return "simple_id";
+	case CP_DEM_TYPE_KIND_UNRESOLVED_NAME: return "unresolved_name";
+	case CP_DEM_TYPE_KIND_UNRESOLVED_TYPE: return "unresolved_type";
+	case CP_DEM_TYPE_KIND_UNRESOLVED_QUALIFIER_LEVEL: return "unresolved_qualifier_level";
+	case CP_DEM_TYPE_KIND_BASE_UNRESOLVED_NAME: return "base_unresolved_name";
+	case CP_DEM_TYPE_KIND_SIMPLE_ID: return "simple_id";
 
 	// ABI and special
-	case CP_DEM_TYPE_KIND_call_offset: return "call_offset";
-	case CP_DEM_TYPE_KIND_discriminator: return "discriminator";
-	case CP_DEM_TYPE_KIND_vendor_specific_suffix: return "vendor_specific_suffix";
+	case CP_DEM_TYPE_KIND_CALL_OFFSET: return "call_offset";
+	case CP_DEM_TYPE_KIND_DISCRIMINATOR: return "discriminator";
+	case CP_DEM_TYPE_KIND_VENDOR_SPECIFIC_SUFFIX: return "vendor_specific_suffix";
 
 	// Misc
-	case CP_DEM_TYPE_KIND_substitution: return "substitution";
-	case CP_DEM_TYPE_KIND_many: return "many";
-	case CP_DEM_TYPE_KIND_encoding: return "encoding";
-	case CP_DEM_TYPE_KIND_base_encoding: return "base_encoding";
-	case CP_DEM_TYPE_KIND_mangled_name: return "mangled_name";
-	case CP_DEM_TYPE_KIND_closure_ty_name: return "closure_ty_name";
-	case CP_DEM_TYPE_KIND_module_name: return "module_name";
-	case CP_DEM_TYPE_KIND_class_enum_type: return "class_enum_type";
-	case CP_DEM_TYPE_KIND_decltype: return "decltype";
-	case CP_DEM_TYPE_KIND_conv_op_ty: return "conv_op_ty";
-	case CP_DEM_TYPE_KIND_abi_tag_ty: return "abi_tag_ty";
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion: return "parameter_pack_expansion";
-	case CP_DEM_TYPE_KIND_parameter_pack: return "template_parameter_pack";
-	case CP_DEM_TYPE_KIND_special_substitution: return "special_substitution";
-	case CP_DEM_TYPE_KIND_expanded_special_substitution: return "expanded_special_substitution";
+	case CP_DEM_TYPE_KIND_SUBSTITUTION: return "substitution";
+	case CP_DEM_TYPE_KIND_MANY: return "many";
+	case CP_DEM_TYPE_KIND_ENCODING: return "encoding";
+	case CP_DEM_TYPE_KIND_BASE_ENCODING: return "base_encoding";
+	case CP_DEM_TYPE_KIND_MANGLED_NAME: return "mangled_name";
+	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME: return "closure_ty_name";
+	case CP_DEM_TYPE_KIND_MODULE_NAME: return "module_name";
+	case CP_DEM_TYPE_KIND_CLASS_ENUM_TYPE: return "class_enum_type";
+	case CP_DEM_TYPE_KIND_DECLTYPE: return "decltype";
+	case CP_DEM_TYPE_KIND_CONV_OP_TY: return "conv_op_ty";
+	case CP_DEM_TYPE_KIND_ABI_TAG_TY: return "abi_tag_ty";
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION: return "parameter_pack_expansion";
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK: return "template_parameter_pack";
+	case CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION: return "special_substitution";
+	case CP_DEM_TYPE_KIND_EXPANDED_SPECIAL_SUBSTITUTION: return "expanded_special_substitution";
 
 	default: return "unknown";
 	}
@@ -151,136 +151,136 @@ static const char *get_node_type_name(CpDemTypeKind tag) {
 static const char *get_node_shape(CpDemTypeKind tag) {
 	switch (tag) {
 	// Basic types - oval
-	case CP_DEM_TYPE_KIND_primitive_ty: return "oval";
-	case CP_DEM_TYPE_KIND_builtin_type: return "oval";
-	case CP_DEM_TYPE_KIND_class_type: return "oval";
-	case CP_DEM_TYPE_KIND_pointer_type: return "oval";
-	case CP_DEM_TYPE_KIND_string_type: return "oval";
-	case CP_DEM_TYPE_KIND_signature_type: return "oval";
+	case CP_DEM_TYPE_KIND_PRIMITIVE_TY: return "oval";
+	case CP_DEM_TYPE_KIND_BUILTIN_TYPE: return "oval";
+	case CP_DEM_TYPE_KIND_CLASS_TYPE: return "oval";
+	case CP_DEM_TYPE_KIND_POINTER_TYPE: return "oval";
+	case CP_DEM_TYPE_KIND_STRING_TYPE: return "oval";
+	case CP_DEM_TYPE_KIND_SIGNATURE_TYPE: return "oval";
 
 	// Function related - box
-	case CP_DEM_TYPE_KIND_function_type: return "box";
-	case CP_DEM_TYPE_KIND_bare_function_type: return "box";
-	case CP_DEM_TYPE_KIND_function_param: return "box";
-	case CP_DEM_TYPE_KIND_function_encoding: return "box";
-	case CP_DEM_TYPE_KIND_exception_spec: return "box";
-	case CP_DEM_TYPE_KIND_noexcept_spec: return "box";
-	case CP_DEM_TYPE_KIND_dynamic_exception_spec: return "box";
+	case CP_DEM_TYPE_KIND_FUNCTION_TYPE: return "box";
+	case CP_DEM_TYPE_KIND_BARE_FUNCTION_TYPE: return "box";
+	case CP_DEM_TYPE_KIND_FUNCTION_PARAM: return "box";
+	case CP_DEM_TYPE_KIND_FUNCTION_ENCODING: return "box";
+	case CP_DEM_TYPE_KIND_EXCEPTION_SPEC: return "box";
+	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC: return "box";
+	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC: return "box";
 
 	// Template related - hexagon
-	case CP_DEM_TYPE_KIND_template_args: return "hexagon";
-	case CP_DEM_TYPE_KIND_template_param: return "hexagon";
-	case CP_DEM_TYPE_KIND_template_arg: return "hexagon";
-	case CP_DEM_TYPE_KIND_template_argument_pack: return "hexagon";
-	case CP_DEM_TYPE_KIND_template_param_decl: return "hexagon";
-	case CP_DEM_TYPE_KIND_template_template_param: return "hexagon";
-	case CP_DEM_TYPE_KIND_fwd_template_ref: return "doublecircle";
-	case CP_DEM_TYPE_KIND_name_with_template_args: return "tab";
-	case CP_DEM_TYPE_KIND_unscoped_template_name: return "hexagon";
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGS: return "hexagon";
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM: return "hexagon";
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARG: return "hexagon";
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK: return "hexagon";
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL: return "hexagon";
+	case CP_DEM_TYPE_KIND_TEMPLATE_TEMPLATE_PARAM: return "hexagon";
+	case CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF: return "doublecircle";
+	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS: return "tab";
+	case CP_DEM_TYPE_KIND_UNSCOPED_TEMPLATE_NAME: return "hexagon";
 
 	// Names - ellipse
-	case CP_DEM_TYPE_KIND_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_nested_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_unqualified_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_unscoped_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_source_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_field_source_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_operator_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_special_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_local_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_unnamed_type_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_data_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_entity_name: return "ellipse";
-	case CP_DEM_TYPE_KIND_function_name: return "ellipse";
+	case CP_DEM_TYPE_KIND_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_NESTED_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_UNQUALIFIED_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_UNSCOPED_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_SOURCE_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_FIELD_SOURCE_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_OPERATOR_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_SPECIAL_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_LOCAL_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_UNNAMED_TYPE_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_DATA_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_ENTITY_NAME: return "ellipse";
+	case CP_DEM_TYPE_KIND_FUNCTION_NAME: return "ellipse";
 
 	// Constructor/Destructor - octagon
-	case CP_DEM_TYPE_KIND_ctor_dtor_name: return "octagon";
-	case CP_DEM_TYPE_KIND_ctor_name: return "octagon";
-	case CP_DEM_TYPE_KIND_dtor_name: return "octagon";
-	case CP_DEM_TYPE_KIND_destructor_name: return "octagon";
+	case CP_DEM_TYPE_KIND_CTOR_DTOR_NAME: return "octagon";
+	case CP_DEM_TYPE_KIND_CTOR_NAME: return "octagon";
+	case CP_DEM_TYPE_KIND_DTOR_NAME: return "octagon";
+	case CP_DEM_TYPE_KIND_DESTRUCTOR_NAME: return "octagon";
 
 	// Expression related - diamond
-	case CP_DEM_TYPE_KIND_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_expr_primary: return "diamond";
-	case CP_DEM_TYPE_KIND_integer_literal: return "diamond";
-	case CP_DEM_TYPE_KIND_braced_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_braced_range_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_init_list_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_fold_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_prefix_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_binary_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_member_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_new_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_index_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_range_begin_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_range_end_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_instantiation_dependent_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_instantiation_dependent_array_bound_expression: return "diamond";
-	case CP_DEM_TYPE_KIND_initializer: return "diamond";
+	case CP_DEM_TYPE_KIND_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_EXPR_PRIMARY: return "diamond";
+	case CP_DEM_TYPE_KIND_INTEGER_LITERAL: return "diamond";
+	case CP_DEM_TYPE_KIND_BRACED_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_INIT_LIST_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_FOLD_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_PREFIX_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_BINARY_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_MEMBER_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_NEW_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_INDEX_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_RANGE_BEGIN_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_RANGE_END_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_INSTANTIATION_DEPENDENT_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_INSTANTIATION_DEPENDENT_ARRAY_BOUND_EXPRESSION: return "diamond";
+	case CP_DEM_TYPE_KIND_INITIALIZER: return "diamond";
 
 	// Qualifiers - house
-	case CP_DEM_TYPE_KIND_qualified_type: return "house";
-	case CP_DEM_TYPE_KIND_qualifiers: return "house";
-	case CP_DEM_TYPE_KIND_top_level_cv_qualifiers: return "house";
-	case CP_DEM_TYPE_KIND_extended_qualifier: return "house";
-	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type: return "house";
+	case CP_DEM_TYPE_KIND_QUALIFIED_TYPE: return "house";
+	case CP_DEM_TYPE_KIND_QUALIFIERS: return "house";
+	case CP_DEM_TYPE_KIND_TOP_LEVEL_CV_QUALIFIERS: return "house";
+	case CP_DEM_TYPE_KIND_EXTENDED_QUALIFIER: return "house";
+	case CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE: return "house";
 
 	// Array/Pointer types - box3d/cds
-	case CP_DEM_TYPE_KIND_array_type: return "box3d";
-	case CP_DEM_TYPE_KIND_array_bound_number: return "box3d";
-	case CP_DEM_TYPE_KIND_element_type: return "box3d";
-	case CP_DEM_TYPE_KIND_pointer_to_member_type: return "cds";
+	case CP_DEM_TYPE_KIND_ARRAY_TYPE: return "box3d";
+	case CP_DEM_TYPE_KIND_ARRAY_BOUND_NUMBER: return "box3d";
+	case CP_DEM_TYPE_KIND_ELEMENT_TYPE: return "box3d";
+	case CP_DEM_TYPE_KIND_POINTER_TO_MEMBER_TYPE: return "cds";
 
 	// Numbers and values - plain box
-	case CP_DEM_TYPE_KIND_number: return "plaintext";
-	case CP_DEM_TYPE_KIND_non_negative_number: return "plaintext";
-	case CP_DEM_TYPE_KIND_non_neg_number: return "plaintext";
-	case CP_DEM_TYPE_KIND_offset_number: return "plaintext";
-	case CP_DEM_TYPE_KIND_digit: return "plaintext";
-	case CP_DEM_TYPE_KIND_nv_digit: return "plaintext";
-	case CP_DEM_TYPE_KIND_nv_offset: return "plaintext";
-	case CP_DEM_TYPE_KIND_v_offset: return "plaintext";
-	case CP_DEM_TYPE_KIND_virtual_offset_number: return "plaintext";
-	case CP_DEM_TYPE_KIND_seq_id: return "plaintext";
-	case CP_DEM_TYPE_KIND_value_number: return "plaintext";
+	case CP_DEM_TYPE_KIND_NUMBER: return "plaintext";
+	case CP_DEM_TYPE_KIND_NON_NEGATIVE_NUMBER: return "plaintext";
+	case CP_DEM_TYPE_KIND_NON_NEG_NUMBER: return "plaintext";
+	case CP_DEM_TYPE_KIND_OFFSET_NUMBER: return "plaintext";
+	case CP_DEM_TYPE_KIND_DIGIT: return "plaintext";
+	case CP_DEM_TYPE_KIND_NV_DIGIT: return "plaintext";
+	case CP_DEM_TYPE_KIND_NV_OFFSET: return "plaintext";
+	case CP_DEM_TYPE_KIND_V_OFFSET: return "plaintext";
+	case CP_DEM_TYPE_KIND_VIRTUAL_OFFSET_NUMBER: return "plaintext";
+	case CP_DEM_TYPE_KIND_SEQ_ID: return "plaintext";
+	case CP_DEM_TYPE_KIND_VALUE_NUMBER: return "plaintext";
 
 	// Float related - circle
-	case CP_DEM_TYPE_KIND_float: return "circle";
-	case CP_DEM_TYPE_KIND_value_float: return "circle";
-	case CP_DEM_TYPE_KIND_real_part_float: return "circle";
-	case CP_DEM_TYPE_KIND_imag_part_float: return "circle";
+	case CP_DEM_TYPE_KIND_FLOAT: return "circle";
+	case CP_DEM_TYPE_KIND_VALUE_FLOAT: return "circle";
+	case CP_DEM_TYPE_KIND_REAL_PART_FLOAT: return "circle";
+	case CP_DEM_TYPE_KIND_IMAG_PART_FLOAT: return "circle";
 
 	// Unresolved names - trapezium
-	case CP_DEM_TYPE_KIND_unresolved_name: return "trapezium";
-	case CP_DEM_TYPE_KIND_unresolved_type: return "trapezium";
-	case CP_DEM_TYPE_KIND_unresolved_qualifier_level: return "trapezium";
-	case CP_DEM_TYPE_KIND_base_unresolved_name: return "trapezium";
-	case CP_DEM_TYPE_KIND_simple_id: return "trapezium";
+	case CP_DEM_TYPE_KIND_UNRESOLVED_NAME: return "trapezium";
+	case CP_DEM_TYPE_KIND_UNRESOLVED_TYPE: return "trapezium";
+	case CP_DEM_TYPE_KIND_UNRESOLVED_QUALIFIER_LEVEL: return "trapezium";
+	case CP_DEM_TYPE_KIND_BASE_UNRESOLVED_NAME: return "trapezium";
+	case CP_DEM_TYPE_KIND_SIMPLE_ID: return "trapezium";
 
 	// Type - parallelogram
-	case CP_DEM_TYPE_KIND_type: return "parallelogram";
+	case CP_DEM_TYPE_KIND_TYPE: return "parallelogram";
 
 	// ABI and special - note/triangle
-	case CP_DEM_TYPE_KIND_call_offset: return "triangle";
-	case CP_DEM_TYPE_KIND_discriminator: return "triangle";
-	case CP_DEM_TYPE_KIND_vendor_specific_suffix: return "note";
+	case CP_DEM_TYPE_KIND_CALL_OFFSET: return "triangle";
+	case CP_DEM_TYPE_KIND_DISCRIMINATOR: return "triangle";
+	case CP_DEM_TYPE_KIND_VENDOR_SPECIFIC_SUFFIX: return "note";
 
 	// Misc
-	case CP_DEM_TYPE_KIND_substitution: return "triangle";
-	case CP_DEM_TYPE_KIND_many: return "note";
-	case CP_DEM_TYPE_KIND_encoding: return "component";
-	case CP_DEM_TYPE_KIND_base_encoding: return "component";
-	case CP_DEM_TYPE_KIND_mangled_name: return "component";
-	case CP_DEM_TYPE_KIND_closure_ty_name: return "invhouse";
-	case CP_DEM_TYPE_KIND_module_name: return "folder";
-	case CP_DEM_TYPE_KIND_class_enum_type: return "oval";
-	case CP_DEM_TYPE_KIND_decltype: return "parallelogram";
-	case CP_DEM_TYPE_KIND_conv_op_ty: return "doubleoctagon";
-	case CP_DEM_TYPE_KIND_abi_tag_ty: return "tab";
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion: return "septagon";
-	case CP_DEM_TYPE_KIND_parameter_pack: return "septagon";
-	case CP_DEM_TYPE_KIND_special_substitution: return "invtriangle";
-	case CP_DEM_TYPE_KIND_expanded_special_substitution: return "invtrapezium";
+	case CP_DEM_TYPE_KIND_SUBSTITUTION: return "triangle";
+	case CP_DEM_TYPE_KIND_MANY: return "note";
+	case CP_DEM_TYPE_KIND_ENCODING: return "component";
+	case CP_DEM_TYPE_KIND_BASE_ENCODING: return "component";
+	case CP_DEM_TYPE_KIND_MANGLED_NAME: return "component";
+	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME: return "invhouse";
+	case CP_DEM_TYPE_KIND_MODULE_NAME: return "folder";
+	case CP_DEM_TYPE_KIND_CLASS_ENUM_TYPE: return "oval";
+	case CP_DEM_TYPE_KIND_DECLTYPE: return "parallelogram";
+	case CP_DEM_TYPE_KIND_CONV_OP_TY: return "doubleoctagon";
+	case CP_DEM_TYPE_KIND_ABI_TAG_TY: return "tab";
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION: return "septagon";
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK: return "septagon";
+	case CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION: return "invtriangle";
+	case CP_DEM_TYPE_KIND_EXPANDED_SPECIAL_SUBSTITUTION: return "invtrapezium";
 
 	default: return "ellipse";
 	}
@@ -289,134 +289,134 @@ static const char *get_node_shape(CpDemTypeKind tag) {
 static const char *get_node_color(CpDemTypeKind tag) {
 	switch (tag) {
 	// Basic types - lightblue
-	case CP_DEM_TYPE_KIND_primitive_ty: return "lightblue";
-	case CP_DEM_TYPE_KIND_builtin_type: return "lightblue";
-	case CP_DEM_TYPE_KIND_class_type: return "lightblue";
-	case CP_DEM_TYPE_KIND_pointer_type: return "lightcyan";
-	case CP_DEM_TYPE_KIND_string_type: return "lightblue";
-	case CP_DEM_TYPE_KIND_signature_type: return "lightblue";
-	case CP_DEM_TYPE_KIND_type: return "lightgray";
+	case CP_DEM_TYPE_KIND_PRIMITIVE_TY: return "lightblue";
+	case CP_DEM_TYPE_KIND_BUILTIN_TYPE: return "lightblue";
+	case CP_DEM_TYPE_KIND_CLASS_TYPE: return "lightblue";
+	case CP_DEM_TYPE_KIND_POINTER_TYPE: return "lightcyan";
+	case CP_DEM_TYPE_KIND_STRING_TYPE: return "lightblue";
+	case CP_DEM_TYPE_KIND_SIGNATURE_TYPE: return "lightblue";
+	case CP_DEM_TYPE_KIND_TYPE: return "lightgray";
 
 	// Function related - lightgreen
-	case CP_DEM_TYPE_KIND_function_type: return "lightgreen";
-	case CP_DEM_TYPE_KIND_bare_function_type: return "lightgreen";
-	case CP_DEM_TYPE_KIND_function_param: return "lightgreen";
-	case CP_DEM_TYPE_KIND_function_encoding: return "green";
-	case CP_DEM_TYPE_KIND_exception_spec: return "lightgreen";
-	case CP_DEM_TYPE_KIND_noexcept_spec: return "lightgreen";
-	case CP_DEM_TYPE_KIND_dynamic_exception_spec: return "lightgreen";
+	case CP_DEM_TYPE_KIND_FUNCTION_TYPE: return "lightgreen";
+	case CP_DEM_TYPE_KIND_BARE_FUNCTION_TYPE: return "lightgreen";
+	case CP_DEM_TYPE_KIND_FUNCTION_PARAM: return "lightgreen";
+	case CP_DEM_TYPE_KIND_FUNCTION_ENCODING: return "green";
+	case CP_DEM_TYPE_KIND_EXCEPTION_SPEC: return "lightgreen";
+	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC: return "lightgreen";
+	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC: return "lightgreen";
 
 	// Template related - yellow
-	case CP_DEM_TYPE_KIND_template_args: return "yellow";
-	case CP_DEM_TYPE_KIND_template_param: return "yellow";
-	case CP_DEM_TYPE_KIND_template_arg: return "yellow";
-	case CP_DEM_TYPE_KIND_template_argument_pack: return "yellow";
-	case CP_DEM_TYPE_KIND_template_param_decl: return "yellow";
-	case CP_DEM_TYPE_KIND_template_template_param: return "yellow";
-	case CP_DEM_TYPE_KIND_fwd_template_ref: return "greenyellow";
-	case CP_DEM_TYPE_KIND_name_with_template_args: return "lightcyan";
-	case CP_DEM_TYPE_KIND_unscoped_template_name: return "yellow";
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGS: return "yellow";
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM: return "yellow";
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARG: return "yellow";
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK: return "yellow";
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL: return "yellow";
+	case CP_DEM_TYPE_KIND_TEMPLATE_TEMPLATE_PARAM: return "yellow";
+	case CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF: return "greenyellow";
+	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS: return "lightcyan";
+	case CP_DEM_TYPE_KIND_UNSCOPED_TEMPLATE_NAME: return "yellow";
 
 	// Names - orange
-	case CP_DEM_TYPE_KIND_name: return "orange";
-	case CP_DEM_TYPE_KIND_nested_name: return "orange";
-	case CP_DEM_TYPE_KIND_unqualified_name: return "orange";
-	case CP_DEM_TYPE_KIND_unscoped_name: return "orange";
-	case CP_DEM_TYPE_KIND_source_name: return "orange";
-	case CP_DEM_TYPE_KIND_field_source_name: return "orange";
-	case CP_DEM_TYPE_KIND_operator_name: return "orange";
-	case CP_DEM_TYPE_KIND_special_name: return "orange";
-	case CP_DEM_TYPE_KIND_local_name: return "orange";
-	case CP_DEM_TYPE_KIND_unnamed_type_name: return "orange";
-	case CP_DEM_TYPE_KIND_data_name: return "orange";
-	case CP_DEM_TYPE_KIND_entity_name: return "orange";
-	case CP_DEM_TYPE_KIND_function_name: return "orange";
+	case CP_DEM_TYPE_KIND_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_NESTED_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_UNQUALIFIED_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_UNSCOPED_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_SOURCE_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_FIELD_SOURCE_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_OPERATOR_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_SPECIAL_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_LOCAL_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_UNNAMED_TYPE_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_DATA_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_ENTITY_NAME: return "orange";
+	case CP_DEM_TYPE_KIND_FUNCTION_NAME: return "orange";
 
 	// Constructor/Destructor - coral
-	case CP_DEM_TYPE_KIND_ctor_dtor_name: return "coral";
-	case CP_DEM_TYPE_KIND_ctor_name: return "coral";
-	case CP_DEM_TYPE_KIND_dtor_name: return "coral";
-	case CP_DEM_TYPE_KIND_destructor_name: return "coral";
+	case CP_DEM_TYPE_KIND_CTOR_DTOR_NAME: return "coral";
+	case CP_DEM_TYPE_KIND_CTOR_NAME: return "coral";
+	case CP_DEM_TYPE_KIND_DTOR_NAME: return "coral";
+	case CP_DEM_TYPE_KIND_DESTRUCTOR_NAME: return "coral";
 
 	// Expression related - pink
-	case CP_DEM_TYPE_KIND_expression: return "pink";
-	case CP_DEM_TYPE_KIND_expr_primary: return "pink";
-	case CP_DEM_TYPE_KIND_integer_literal: return "pink";
-	case CP_DEM_TYPE_KIND_braced_expression: return "pink";
-	case CP_DEM_TYPE_KIND_braced_range_expression: return "pink";
-	case CP_DEM_TYPE_KIND_init_list_expression: return "pink";
-	case CP_DEM_TYPE_KIND_fold_expression: return "pink";
-	case CP_DEM_TYPE_KIND_prefix_expression: return "pink";
-	case CP_DEM_TYPE_KIND_binary_expression: return "pink";
-	case CP_DEM_TYPE_KIND_member_expression: return "pink";
-	case CP_DEM_TYPE_KIND_new_expression: return "pink";
-	case CP_DEM_TYPE_KIND_index_expression: return "pink";
-	case CP_DEM_TYPE_KIND_range_begin_expression: return "pink";
-	case CP_DEM_TYPE_KIND_range_end_expression: return "pink";
-	case CP_DEM_TYPE_KIND_instantiation_dependent_expression: return "pink";
-	case CP_DEM_TYPE_KIND_instantiation_dependent_array_bound_expression: return "pink";
-	case CP_DEM_TYPE_KIND_initializer: return "pink";
+	case CP_DEM_TYPE_KIND_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_EXPR_PRIMARY: return "pink";
+	case CP_DEM_TYPE_KIND_INTEGER_LITERAL: return "pink";
+	case CP_DEM_TYPE_KIND_BRACED_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_INIT_LIST_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_FOLD_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_PREFIX_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_BINARY_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_MEMBER_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_NEW_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_INDEX_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_RANGE_BEGIN_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_RANGE_END_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_INSTANTIATION_DEPENDENT_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_INSTANTIATION_DEPENDENT_ARRAY_BOUND_EXPRESSION: return "pink";
+	case CP_DEM_TYPE_KIND_INITIALIZER: return "pink";
 
 	// Qualifiers - brown
-	case CP_DEM_TYPE_KIND_qualified_type: return "brown";
-	case CP_DEM_TYPE_KIND_qualifiers: return "brown";
-	case CP_DEM_TYPE_KIND_top_level_cv_qualifiers: return "brown";
-	case CP_DEM_TYPE_KIND_extended_qualifier: return "brown";
-	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type: return "brown";
+	case CP_DEM_TYPE_KIND_QUALIFIED_TYPE: return "brown";
+	case CP_DEM_TYPE_KIND_QUALIFIERS: return "brown";
+	case CP_DEM_TYPE_KIND_TOP_LEVEL_CV_QUALIFIERS: return "brown";
+	case CP_DEM_TYPE_KIND_EXTENDED_QUALIFIER: return "brown";
+	case CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE: return "brown";
 
 	// Array/Pointer types - cyan/purple
-	case CP_DEM_TYPE_KIND_array_type: return "cyan";
-	case CP_DEM_TYPE_KIND_array_bound_number: return "cyan";
-	case CP_DEM_TYPE_KIND_element_type: return "cyan";
-	case CP_DEM_TYPE_KIND_pointer_to_member_type: return "purple";
+	case CP_DEM_TYPE_KIND_ARRAY_TYPE: return "cyan";
+	case CP_DEM_TYPE_KIND_ARRAY_BOUND_NUMBER: return "cyan";
+	case CP_DEM_TYPE_KIND_ELEMENT_TYPE: return "cyan";
+	case CP_DEM_TYPE_KIND_POINTER_TO_MEMBER_TYPE: return "purple";
 
 	// Numbers and values - wheat
-	case CP_DEM_TYPE_KIND_number: return "wheat";
-	case CP_DEM_TYPE_KIND_non_negative_number: return "wheat";
-	case CP_DEM_TYPE_KIND_non_neg_number: return "wheat";
-	case CP_DEM_TYPE_KIND_offset_number: return "wheat";
-	case CP_DEM_TYPE_KIND_digit: return "wheat";
-	case CP_DEM_TYPE_KIND_nv_digit: return "wheat";
-	case CP_DEM_TYPE_KIND_nv_offset: return "wheat";
-	case CP_DEM_TYPE_KIND_v_offset: return "wheat";
-	case CP_DEM_TYPE_KIND_virtual_offset_number: return "wheat";
-	case CP_DEM_TYPE_KIND_seq_id: return "wheat";
-	case CP_DEM_TYPE_KIND_value_number: return "wheat";
+	case CP_DEM_TYPE_KIND_NUMBER: return "wheat";
+	case CP_DEM_TYPE_KIND_NON_NEGATIVE_NUMBER: return "wheat";
+	case CP_DEM_TYPE_KIND_NON_NEG_NUMBER: return "wheat";
+	case CP_DEM_TYPE_KIND_OFFSET_NUMBER: return "wheat";
+	case CP_DEM_TYPE_KIND_DIGIT: return "wheat";
+	case CP_DEM_TYPE_KIND_NV_DIGIT: return "wheat";
+	case CP_DEM_TYPE_KIND_NV_OFFSET: return "wheat";
+	case CP_DEM_TYPE_KIND_V_OFFSET: return "wheat";
+	case CP_DEM_TYPE_KIND_VIRTUAL_OFFSET_NUMBER: return "wheat";
+	case CP_DEM_TYPE_KIND_SEQ_ID: return "wheat";
+	case CP_DEM_TYPE_KIND_VALUE_NUMBER: return "wheat";
 
 	// Float related - lightyellow
-	case CP_DEM_TYPE_KIND_float: return "lightyellow";
-	case CP_DEM_TYPE_KIND_value_float: return "lightyellow";
-	case CP_DEM_TYPE_KIND_real_part_float: return "lightyellow";
-	case CP_DEM_TYPE_KIND_imag_part_float: return "lightyellow";
+	case CP_DEM_TYPE_KIND_FLOAT: return "lightyellow";
+	case CP_DEM_TYPE_KIND_VALUE_FLOAT: return "lightyellow";
+	case CP_DEM_TYPE_KIND_REAL_PART_FLOAT: return "lightyellow";
+	case CP_DEM_TYPE_KIND_IMAG_PART_FLOAT: return "lightyellow";
 
 	// Unresolved names - salmon
-	case CP_DEM_TYPE_KIND_unresolved_name: return "salmon";
-	case CP_DEM_TYPE_KIND_unresolved_type: return "salmon";
-	case CP_DEM_TYPE_KIND_unresolved_qualifier_level: return "salmon";
-	case CP_DEM_TYPE_KIND_base_unresolved_name: return "salmon";
-	case CP_DEM_TYPE_KIND_simple_id: return "salmon";
+	case CP_DEM_TYPE_KIND_UNRESOLVED_NAME: return "salmon";
+	case CP_DEM_TYPE_KIND_UNRESOLVED_TYPE: return "salmon";
+	case CP_DEM_TYPE_KIND_UNRESOLVED_QUALIFIER_LEVEL: return "salmon";
+	case CP_DEM_TYPE_KIND_BASE_UNRESOLVED_NAME: return "salmon";
+	case CP_DEM_TYPE_KIND_SIMPLE_ID: return "salmon";
 
 	// ABI and special - gold/khaki
-	case CP_DEM_TYPE_KIND_call_offset: return "khaki";
-	case CP_DEM_TYPE_KIND_discriminator: return "khaki";
-	case CP_DEM_TYPE_KIND_vendor_specific_suffix: return "gold";
+	case CP_DEM_TYPE_KIND_CALL_OFFSET: return "khaki";
+	case CP_DEM_TYPE_KIND_DISCRIMINATOR: return "khaki";
+	case CP_DEM_TYPE_KIND_VENDOR_SPECIFIC_SUFFIX: return "gold";
 
 	// Misc
-	case CP_DEM_TYPE_KIND_substitution: return "red";
-	case CP_DEM_TYPE_KIND_many: return "gold";
-	case CP_DEM_TYPE_KIND_encoding: return "darkgreen";
-	case CP_DEM_TYPE_KIND_base_encoding: return "darkgreen";
-	case CP_DEM_TYPE_KIND_mangled_name: return "darkgreen";
-	case CP_DEM_TYPE_KIND_closure_ty_name: return "violet";
-	case CP_DEM_TYPE_KIND_module_name: return "khaki";
-	case CP_DEM_TYPE_KIND_class_enum_type: return "lightblue";
-	case CP_DEM_TYPE_KIND_decltype: return "lightgray";
-	case CP_DEM_TYPE_KIND_conv_op_ty: return "mediumpurple";
-	case CP_DEM_TYPE_KIND_abi_tag_ty: return "plum";
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion: return "palegreen";
-	case CP_DEM_TYPE_KIND_parameter_pack: return "paleturquoise";
-	case CP_DEM_TYPE_KIND_special_substitution: return "orangered";
-	case CP_DEM_TYPE_KIND_expanded_special_substitution: return "tomato";
+	case CP_DEM_TYPE_KIND_SUBSTITUTION: return "red";
+	case CP_DEM_TYPE_KIND_MANY: return "gold";
+	case CP_DEM_TYPE_KIND_ENCODING: return "darkgreen";
+	case CP_DEM_TYPE_KIND_BASE_ENCODING: return "darkgreen";
+	case CP_DEM_TYPE_KIND_MANGLED_NAME: return "darkgreen";
+	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME: return "violet";
+	case CP_DEM_TYPE_KIND_MODULE_NAME: return "khaki";
+	case CP_DEM_TYPE_KIND_CLASS_ENUM_TYPE: return "lightblue";
+	case CP_DEM_TYPE_KIND_DECLTYPE: return "lightgray";
+	case CP_DEM_TYPE_KIND_CONV_OP_TY: return "mediumpurple";
+	case CP_DEM_TYPE_KIND_ABI_TAG_TY: return "plum";
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION: return "palegreen";
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK: return "paleturquoise";
+	case CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION: return "orangered";
+	case CP_DEM_TYPE_KIND_EXPANDED_SPECIAL_SUBSTITUTION: return "tomato";
 
 	default: return "white";
 	}
@@ -574,14 +574,14 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 
 	// Add field-specific information based on node tag
 	switch (node->tag) {
-	case CP_DEM_TYPE_KIND_primitive_ty:
+	case CP_DEM_TYPE_KIND_PRIMITIVE_TY:
 		if (node->primitive_ty.name.buf) {
 			dem_string_append(&label, "\\n");
 			dem_string_append(&label, node->primitive_ty.name.buf);
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_function_type:
+	case CP_DEM_TYPE_KIND_FUNCTION_TYPE:
 		if (node->fn_ty.cv_qualifiers.is_const) {
 			dem_string_append(&label, "\\nconst");
 		}
@@ -593,7 +593,7 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_qualified_type:
+	case CP_DEM_TYPE_KIND_QUALIFIED_TYPE:
 		if (node->qualified_ty.qualifiers.is_const) {
 			dem_string_append(&label, "\\nconst");
 		}
@@ -605,14 +605,14 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type:
+	case CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE:
 		if (node->vendor_ext_qualified_ty.vendor_ext.buf) {
 			dem_string_append(&label, "\\n");
 			dem_string_append(&label, node->vendor_ext_qualified_ty.vendor_ext.buf);
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_many:
+	case CP_DEM_TYPE_KIND_MANY:
 		if (node->many_ty.sep) {
 			dem_string_append(&label, "\\nsep: ");
 			dem_string_append(&label, node->many_ty.sep);
@@ -624,27 +624,27 @@ void dot_graph_add_node(DotGraph *dot, DemNode *node, int node_id) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_closure_ty_name:
+	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME:
 		if (node->closure_ty_name.count.buf && node->closure_ty_name.count.len > 0) {
 			dem_string_append(&label, "\\ncount: ");
 			dem_string_append_n(&label, node->closure_ty_name.count.buf, node->closure_ty_name.count.len);
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_module_name:
+	case CP_DEM_TYPE_KIND_MODULE_NAME:
 		if (node->module_name_ty.IsPartition) {
 			dem_string_append(&label, "\\npartition");
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_abi_tag_ty:
+	case CP_DEM_TYPE_KIND_ABI_TAG_TY:
 		if (node->abi_tag_ty.tag.buf && node->abi_tag_ty.tag.len > 0) {
 			dem_string_append(&label, "\\ntag: ");
 			dem_string_append_n(&label, node->abi_tag_ty.tag.buf, node->abi_tag_ty.tag.len);
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_member_expression:
+	case CP_DEM_TYPE_KIND_MEMBER_EXPRESSION:
 		if (node->member_expr.op.buf && node->member_expr.op.len > 0) {
 			dem_string_append(&label, "\\nop: ");
 			dem_string_append_n(&label, node->member_expr.op.buf, node->member_expr.op.len);
@@ -706,15 +706,15 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 
 	// Process children based on node tag, similar to ast_pp logic
 	switch (node->tag) {
-	case CP_DEM_TYPE_KIND_primitive_ty:
+	case CP_DEM_TYPE_KIND_PRIMITIVE_TY:
 		// Primitive types have no additional fields to traverse
 		break;
 
-	case CP_DEM_TYPE_KIND_integer_literal:
+	case CP_DEM_TYPE_KIND_INTEGER_LITERAL:
 		// Integer literals have only DemStringView fields (type, value), no child nodes
 		break;
 
-	case CP_DEM_TYPE_KIND_function_type:
+	case CP_DEM_TYPE_KIND_FUNCTION_TYPE:
 		if (node->fn_ty.ret) {
 			dot_graph_traverse_ast(dot, node->fn_ty.ret, current_id, "ret", "solid");
 		}
@@ -732,13 +732,13 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_qualified_type:
+	case CP_DEM_TYPE_KIND_QUALIFIED_TYPE:
 		if (node->qualified_ty.inner_type) {
 			dot_graph_traverse_ast(dot, node->qualified_ty.inner_type, current_id, "inner_type", "solid");
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type:
+	case CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE:
 		if (node->vendor_ext_qualified_ty.inner_type) {
 			dot_graph_traverse_ast(dot, node->vendor_ext_qualified_ty.inner_type, current_id, "inner_type", "solid");
 		}
@@ -747,7 +747,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_closure_ty_name:
+	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME:
 		if (node->closure_ty_name.template_params) {
 			dot_graph_traverse_ast(dot, node->closure_ty_name.template_params, current_id, "template_params", "solid");
 		}
@@ -756,7 +756,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_module_name:
+	case CP_DEM_TYPE_KIND_MODULE_NAME:
 		if (node->module_name_ty.pare) {
 			dot_graph_traverse_ast(dot, node->module_name_ty.pare, current_id, "parent", "solid");
 		}
@@ -765,7 +765,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_name_with_template_args:
+	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS:
 		if (node->name_with_template_args.name) {
 			dot_graph_traverse_ast(dot, node->name_with_template_args.name, current_id, "name", "solid");
 		}
@@ -774,7 +774,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_nested_name:
+	case CP_DEM_TYPE_KIND_NESTED_NAME:
 		if (node->nested_name.qual) {
 			dot_graph_traverse_ast(dot, node->nested_name.qual, current_id, "qualifier", "solid");
 		}
@@ -783,7 +783,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_local_name:
+	case CP_DEM_TYPE_KIND_LOCAL_NAME:
 		if (node->local_name.encoding) {
 			dot_graph_traverse_ast(dot, node->local_name.encoding, current_id, "encoding", "solid");
 		}
@@ -792,44 +792,44 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_ctor_dtor_name:
+	case CP_DEM_TYPE_KIND_CTOR_DTOR_NAME:
 		if (node->ctor_dtor_name.name) {
 			dot_graph_traverse_ast(dot, node->ctor_dtor_name.name, current_id, "name", "solid");
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_conv_op_ty:
+	case CP_DEM_TYPE_KIND_CONV_OP_TY:
 		if (node->conv_op_ty.ty) {
 			dot_graph_traverse_ast(dot, node->conv_op_ty.ty, current_id, "type", "solid");
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_template_args:
-	case CP_DEM_TYPE_KIND_template_argument_pack:
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
-	case CP_DEM_TYPE_KIND_noexcept_spec:
-	case CP_DEM_TYPE_KIND_dynamic_exception_spec:
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGS:
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK:
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION:
+	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC:
+	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC:
 		// These types use child pointer
 		if (node->child) {
 			dot_graph_traverse_ast(dot, node->child, current_id, "child", "solid");
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_parameter_pack:
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK:
 		// parameter_pack uses child_ref (const pointer to many node)
 		if (node->child_ref) {
 			dot_graph_traverse_ast(dot, (DemNode *)node->child_ref, current_id, "pack_ref", "dashed");
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_abi_tag_ty:
+	case CP_DEM_TYPE_KIND_ABI_TAG_TY:
 		if (node->abi_tag_ty.ty) {
 			dot_graph_traverse_ast(dot, node->abi_tag_ty.ty, current_id, "type", "solid");
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_vector_type:
-	case CP_DEM_TYPE_KIND_array_type:
+	case CP_DEM_TYPE_KIND_VECTOR_TYPE:
+	case CP_DEM_TYPE_KIND_ARRAY_TYPE:
 		if (node->array_ty.inner_ty) {
 			dot_graph_traverse_ast(dot, node->array_ty.inner_ty, current_id, "inner_type", "solid");
 		}
@@ -838,7 +838,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_member_expression:
+	case CP_DEM_TYPE_KIND_MEMBER_EXPRESSION:
 		if (node->member_expr.lhs) {
 			dot_graph_traverse_ast(dot, node->member_expr.lhs, current_id, "lhs", "solid");
 		}
@@ -847,7 +847,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_fold_expression:
+	case CP_DEM_TYPE_KIND_FOLD_EXPRESSION:
 		if (node->fold_expr.pack) {
 			dot_graph_traverse_ast(dot, node->fold_expr.pack, current_id, "pack", "solid");
 		}
@@ -856,7 +856,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_braced_expression:
+	case CP_DEM_TYPE_KIND_BRACED_EXPRESSION:
 		if (node->braced_expr.elem) {
 			dot_graph_traverse_ast(dot, node->braced_expr.elem, current_id, "elem", "solid");
 		}
@@ -865,7 +865,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_braced_range_expression:
+	case CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION:
 		if (node->braced_range_expr.first) {
 			dot_graph_traverse_ast(dot, node->braced_range_expr.first, current_id, "first", "solid");
 		}
@@ -877,7 +877,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_init_list_expression:
+	case CP_DEM_TYPE_KIND_INIT_LIST_EXPRESSION:
 		if (node->init_list_expr.ty) {
 			dot_graph_traverse_ast(dot, node->init_list_expr.ty, current_id, "ty", "solid");
 		}
@@ -886,7 +886,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_binary_expression:
+	case CP_DEM_TYPE_KIND_BINARY_EXPRESSION:
 		if (node->binary_expr.lhs) {
 			dot_graph_traverse_ast(dot, node->binary_expr.lhs, current_id, "lhs", "solid");
 		}
@@ -895,13 +895,13 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_prefix_expression:
+	case CP_DEM_TYPE_KIND_PREFIX_EXPRESSION:
 		if (node->prefix_expr.inner) {
 			dot_graph_traverse_ast(dot, node->prefix_expr.inner, current_id, "inner", "solid");
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_new_expression:
+	case CP_DEM_TYPE_KIND_NEW_EXPRESSION:
 		if (node->new_expr.expr_list) {
 			dot_graph_traverse_ast(dot, node->new_expr.expr_list, current_id, "expr_list", "solid");
 		}
@@ -913,7 +913,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_many:
+	case CP_DEM_TYPE_KIND_MANY:
 		// This type uses the generic children vector
 		if (node->children) {
 			size_t child_count = VecPDemNode_len(node->children);
@@ -928,7 +928,7 @@ int dot_graph_traverse_ast(DotGraph *dot, DemNode *node, int parent_id, const ch
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_fwd_template_ref:
+	case CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF:
 		// Forward template reference: traverse fwd->ref as its child
 		if (node->fwd_template_ref && node->fwd_template_ref->ref) {
 			DemNode *ref_node = (DemNode *)node->fwd_template_ref->ref;

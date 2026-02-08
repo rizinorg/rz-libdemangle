@@ -44,7 +44,7 @@ bool match_many(
 		r->error = DEM_ERR_OUT_OF_MEMORY;
 		return false;
 	}
-	many_node->tag = CP_DEM_TYPE_KIND_many;
+	many_node->tag = CP_DEM_TYPE_KIND_MANY;
 	many_node->val.buf = p->cur;
 
 	// Allocate children vector

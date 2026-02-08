@@ -53,7 +53,7 @@ void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out, PPContext *ctx)
 }
 
 void pp_array_type_dimension(DemNode *node, DemString *out, PDemNode *pbase_ty, PPContext *ctx) {
-	if (!node || !(node->tag == CP_DEM_TYPE_KIND_array_type || node->tag == CP_DEM_TYPE_KIND_vector_type)) {
+	if (!node || !(node->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE || node->tag == CP_DEM_TYPE_KIND_VECTOR_TYPE)) {
 		return;
 	}
 	size_t count = 0;
@@ -65,7 +65,7 @@ void pp_array_type_dimension(DemNode *node, DemString *out, PDemNode *pbase_ty, 
 		dem_string_appends(out, "]");
 		base_ty = array_ty.inner_ty;
 		count++;
-	} while (base_ty && (base_ty->tag == CP_DEM_TYPE_KIND_array_type || base_ty->tag == CP_DEM_TYPE_KIND_vector_type));
+	} while (base_ty && (base_ty->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE || base_ty->tag == CP_DEM_TYPE_KIND_VECTOR_TYPE));
 	if (count == 0) {
 		dem_string_append(out, "[]");
 	}
@@ -89,9 +89,9 @@ static void pp_array_type(PDemNode node, DemString *out, PPContext *ctx) {
 
 static bool pp_init_list_as_string(PDemNode node, DemString *out, PPContext *ctx, PDemNode elems) {
 	PDemNode base_node = node->array_ty.inner_ty;
-	if ((base_node->tag == CP_DEM_TYPE_KIND_primitive_ty &&
+	if ((base_node->tag == CP_DEM_TYPE_KIND_PRIMITIVE_TY &&
 		    strncmp(base_node->primitive_ty.name.buf, "char", base_node->primitive_ty.name.len) == 0) ||
-		(base_node->tag == CP_DEM_TYPE_KIND_builtin_type && AST_(base_node, 0) &&
+		(base_node->tag == CP_DEM_TYPE_KIND_BUILTIN_TYPE && AST_(base_node, 0) &&
 			strncmp(AST_(base_node, 0)->primitive_ty.name.buf, "char", AST_(base_node, 0)->primitive_ty.name.len) == 0)) {
 		dem_string_append(out, "\"");
 		// Reconstruct string content from IntegerLiteral children
@@ -103,7 +103,7 @@ static bool pp_init_list_as_string(PDemNode node, DemString *out, PPContext *ctx
 					continue;
 				}
 				PDemNode child = *child_ptr;
-				if (child->tag != CP_DEM_TYPE_KIND_integer_literal) {
+				if (child->tag != CP_DEM_TYPE_KIND_INTEGER_LITERAL) {
 					continue;
 				}
 				// Parse the integer value from the mangled representation
@@ -146,7 +146,7 @@ static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_ta
 		return;
 	}
 
-	if (node->tag == CP_DEM_TYPE_KIND_type && node->subtag != SUB_TAG_INVALID) {
+	if (node->tag == CP_DEM_TYPE_KIND_TYPE && node->subtag != SUB_TAG_INVALID) {
 		// Recurse first to get inner decorators
 		if (AST(0)) {
 			pp_type_quals(AST(0), out, target_tag, pbase_ty, ctx);
@@ -169,11 +169,11 @@ static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_ta
 		}
 		return;
 	}
-	if (node->tag == CP_DEM_TYPE_KIND_qualified_type) {
+	if (node->tag == CP_DEM_TYPE_KIND_QUALIFIED_TYPE) {
 		// Check if this qualified type wraps an array - if so, stop here
 		// and return the qualified_type node as the base (qualifiers apply to array elements)
 		if (node->qualified_ty.inner_type &&
-			node->qualified_ty.inner_type->tag == CP_DEM_TYPE_KIND_array_type) {
+			node->qualified_ty.inner_type->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE) {
 			if (pbase_ty) {
 				*pbase_ty = node;
 			}
@@ -269,9 +269,9 @@ static void pp_type_with_quals(PDemNode node, DemString *out, PPContext *ctx) {
 	DemString qualifiers_string = { 0 };
 	dem_string_init(&qualifiers_string);
 	PDemNode base_node = NULL;
-	pp_type_quals(node, &qualifiers_string, CP_DEM_TYPE_KIND_unknown, &base_node, ctx);
+	pp_type_quals(node, &qualifiers_string, CP_DEM_TYPE_KIND_UNKNOWN, &base_node, ctx);
 
-	if (base_node && base_node->tag == CP_DEM_TYPE_KIND_array_type) {
+	if (base_node && base_node->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE) {
 		DemString array_dem_string = { 0 };
 		dem_string_init(&array_dem_string);
 		PDemNode array_inner_base = NULL;
@@ -288,9 +288,9 @@ static void pp_type_with_quals(PDemNode node, DemString *out, PPContext *ctx) {
 			dem_string_concat(out, &array_dem_string);
 		}
 		dem_string_deinit(&array_dem_string);
-	} else if (base_node && base_node->tag == CP_DEM_TYPE_KIND_qualified_type &&
+	} else if (base_node && base_node->tag == CP_DEM_TYPE_KIND_QUALIFIED_TYPE &&
 		base_node->qualified_ty.inner_type &&
-		base_node->qualified_ty.inner_type->tag == CP_DEM_TYPE_KIND_array_type) {
+		base_node->qualified_ty.inner_type->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE) {
 		// Handle qualified array: print element type with qualifiers, then ref, then array dimension
 		DemString array_dem_string = { 0 };
 		dem_string_init(&array_dem_string);
@@ -343,7 +343,7 @@ static void pp_type_with_quals(PDemNode node, DemString *out, PPContext *ctx) {
 }
 
 bool pp_parameter_pack(PDemNode node, DemString *out, PPContext *pp_ctx) {
-	if (!(node->tag == CP_DEM_TYPE_KIND_parameter_pack && node->child_ref && node->child_ref->tag == CP_DEM_TYPE_KIND_many)) {
+	if (!(node->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK && node->child_ref && node->child_ref->tag == CP_DEM_TYPE_KIND_MANY)) {
 		return false;
 	}
 	const DemNode *many_node = node->child_ref;
@@ -365,7 +365,7 @@ bool pp_parameter_pack(PDemNode node, DemString *out, PPContext *pp_ctx) {
 
 // Print all elements of a parameter_pack comma-separated (for fold expressions)
 static void pp_pack_all_elements(PDemNode node, DemString *out, PPContext *pp_ctx) {
-	if (node->tag == CP_DEM_TYPE_KIND_parameter_pack && node->child_ref && node->child_ref->tag == CP_DEM_TYPE_KIND_many) {
+	if (node->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK && node->child_ref && node->child_ref->tag == CP_DEM_TYPE_KIND_MANY) {
 		const DemNode *many_node = node->child_ref;
 		size_t count = VecPDemNode_len(many_node->children);
 		for (size_t i = 0; i < count; i++) {
@@ -423,27 +423,27 @@ static bool node_base_name(PDemNode node, DemStringView *out) {
 	}
 
 	switch (node->tag) {
-	case CP_DEM_TYPE_KIND_abi_tag_ty:
+	case CP_DEM_TYPE_KIND_ABI_TAG_TY:
 		// Unwrap abi_tag_ty to get the inner type
 		if (node->abi_tag_ty.ty) {
 			return node_base_name(node->abi_tag_ty.ty, out);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_name_with_template_args:
+	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS:
 		// Unwrap template args to get the base name
 		if (node->name_with_template_args.name) {
 			return node_base_name(node->name_with_template_args.name, out);
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_nested_name:
+	case CP_DEM_TYPE_KIND_NESTED_NAME:
 		// Get the final name component (not the qualifier)
 		if (node->nested_name.name) {
 			return node_base_name(node->nested_name.name, out);
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_expanded_special_substitution:
+	case CP_DEM_TYPE_KIND_EXPANDED_SPECIAL_SUBSTITUTION:
 		switch (node->subtag) {
 		case SPECIAL_SUBSTITUTION_ALLOCATOR:
 			return sv_form_cstr(out, "allocator");
@@ -462,7 +462,7 @@ static bool node_base_name(PDemNode node, DemStringView *out) {
 		}
 		return false;
 
-	case CP_DEM_TYPE_KIND_special_substitution:
+	case CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION:
 		switch (node->subtag) {
 		case SPECIAL_SUBSTITUTION_ALLOCATOR:
 			return sv_form_cstr(out, "allocator");
@@ -481,7 +481,7 @@ static bool node_base_name(PDemNode node, DemStringView *out) {
 		}
 		return false;
 
-	case CP_DEM_TYPE_KIND_primitive_ty:
+	case CP_DEM_TYPE_KIND_PRIMITIVE_TY:
 		return sv_form_cstr(out, node->primitive_ty.name.buf);
 	default:
 		return node_base_name(node, out);
@@ -517,18 +517,18 @@ static bool extract_function_type(DemNode *node, DemNode **out_func_node) {
 		return false;
 	}
 
-	if (node->tag == CP_DEM_TYPE_KIND_function_type) {
+	if (node->tag == CP_DEM_TYPE_KIND_FUNCTION_TYPE) {
 		if (out_func_node) {
 			*out_func_node = node;
 		}
 		return true;
 	}
 
-	if (node->tag == CP_DEM_TYPE_KIND_type && AST(0)) {
+	if (node->tag == CP_DEM_TYPE_KIND_TYPE && AST(0)) {
 		return extract_function_type(AST(0), out_func_node);
 	}
 
-	if (node->tag == CP_DEM_TYPE_KIND_qualified_type && node->qualified_ty.inner_type) {
+	if (node->tag == CP_DEM_TYPE_KIND_QUALIFIED_TYPE && node->qualified_ty.inner_type) {
 		return extract_function_type(node->qualified_ty.inner_type, out_func_node);
 	}
 
@@ -630,7 +630,7 @@ static void pp_function_ty_quals(PPFnContext *ctx, DemString *out) {
 	}
 	DemString quals_str = { 0 };
 	dem_string_init(&quals_str);
-	pp_type_quals(ctx->quals, &quals_str, CP_DEM_TYPE_KIND_function_type, NULL, ctx->pp_ctx);
+	pp_type_quals(ctx->quals, &quals_str, CP_DEM_TYPE_KIND_FUNCTION_TYPE, NULL, ctx->pp_ctx);
 	reorder_qualifiers_for_array_fn_ref(&quals_str);
 	dem_string_concat(out, &quals_str);
 	dem_string_deinit(&quals_str);
@@ -691,21 +691,21 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 	}
 
 	switch (node->tag) {
-	case CP_DEM_TYPE_KIND_primitive_ty:
+	case CP_DEM_TYPE_KIND_PRIMITIVE_TY:
 		// Primitive type nodes contain literal strings
 		if (node->primitive_ty.name.buf) {
 			dem_string_append(out, node->primitive_ty.name.buf);
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_special_substitution:
+	case CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION:
 		pp_special_substitution(node, out);
 		break;
-	case CP_DEM_TYPE_KIND_expanded_special_substitution:
+	case CP_DEM_TYPE_KIND_EXPANDED_SPECIAL_SUBSTITUTION:
 		pp_expanded_special_substitution(node, out, ctx);
 		break;
 
-	case CP_DEM_TYPE_KIND_abi_tag_ty:
+	case CP_DEM_TYPE_KIND_ABI_TAG_TY:
 		ast_pp(node->abi_tag_ty.ty, out, ctx);
 		dem_string_append(out, "[abi:");
 		dem_string_append_n(out,
@@ -714,23 +714,23 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		dem_string_append(out, "]");
 		break;
 
-	case CP_DEM_TYPE_KIND_noexcept_spec:
+	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC:
 		dem_string_append(out, "noexcept");
 		print_open(out, ctx);
 		ast_pp(node->child, out, ctx);
 		print_close(out, ctx);
 		break;
-	case CP_DEM_TYPE_KIND_dynamic_exception_spec:
+	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC:
 		dem_string_append(out, "throw");
 		print_open(out, ctx);
 		ast_pp(node->child, out, ctx);
 		print_close(out, ctx);
 		break;
-	case CP_DEM_TYPE_KIND_function_type: {
+	case CP_DEM_TYPE_KIND_FUNCTION_TYPE: {
 		pp_function_ty(node, out, ctx);
 		break;
 	}
-	case CP_DEM_TYPE_KIND_module_name:
+	case CP_DEM_TYPE_KIND_MODULE_NAME:
 		if (node->module_name_ty.pare) {
 			ast_pp(node->module_name_ty.pare, out, ctx);
 		}
@@ -741,7 +741,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			ast_pp(node->module_name_ty.name, out, ctx);
 		}
 		break;
-	case CP_DEM_TYPE_KIND_template_args:
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGS:
 		dem_string_append(out, "<");
 
 		// Set inside_template flag when printing template arguments
@@ -752,7 +752,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 
 		dem_string_append(out, ">");
 		break;
-	case CP_DEM_TYPE_KIND_name_with_template_args:
+	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS:
 		if (node->name_with_template_args.name) {
 			ast_pp(node->name_with_template_args.name, out, ctx);
 		}
@@ -761,14 +761,14 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_qualified_type:
+	case CP_DEM_TYPE_KIND_QUALIFIED_TYPE:
 		if (node->qualified_ty.inner_type) {
 			ast_pp(node->qualified_ty.inner_type, out, ctx);
 			pp_cv_qualifiers(node->qualified_ty.qualifiers, out, ctx);
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_vendor_ext_qualified_type:
+	case CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE:
 		if (node->vendor_ext_qualified_ty.inner_type) {
 			ast_pp(node->vendor_ext_qualified_ty.inner_type, out, ctx);
 			if (node->vendor_ext_qualified_ty.vendor_ext.buf) {
@@ -783,12 +783,12 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_conv_op_ty:
+	case CP_DEM_TYPE_KIND_CONV_OP_TY:
 		dem_string_append(out, "operator ");
 		ast_pp(node->conv_op_ty.ty, out, ctx);
 		break;
 
-	case CP_DEM_TYPE_KIND_many:
+	case CP_DEM_TYPE_KIND_MANY:
 		// Print children with separator
 		if (!node->children) {
 			break;
@@ -814,7 +814,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		});
 		break;
 
-	case CP_DEM_TYPE_KIND_nested_name:
+	case CP_DEM_TYPE_KIND_NESTED_NAME:
 		// Nested names are separated by "::"
 		if (node->nested_name.qual) {
 			ast_pp(node->nested_name.qual, out, ctx);
@@ -825,13 +825,13 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_local_name:
+	case CP_DEM_TYPE_KIND_LOCAL_NAME:
 		ast_pp(node->local_name.encoding, out, ctx);
 		dem_string_append(out, "::");
 		ast_pp(node->local_name.entry, out, ctx);
 		break;
 
-	case CP_DEM_TYPE_KIND_ctor_dtor_name:
+	case CP_DEM_TYPE_KIND_CTOR_DTOR_NAME:
 		if (node->ctor_dtor_name.is_dtor) {
 			dem_string_append(out, "~");
 		}
@@ -842,7 +842,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_closure_ty_name:
+	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME:
 		// Closure types are lambda expressions: 'lambda'(params)#count
 		dem_string_append(out, "'lambda");
 		if (node->closure_ty_name.template_params) {
@@ -861,7 +861,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_type: {
+	case CP_DEM_TYPE_KIND_TYPE: {
 		// Check if this is a function pointer (or pointer/reference/qualified wrapping a function pointer)
 		DemNode *func_node = NULL;
 		if (extract_function_type(node, &func_node)) {
@@ -883,11 +883,11 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		}
 	} break;
 
-	case CP_DEM_TYPE_KIND_array_type:
+	case CP_DEM_TYPE_KIND_ARRAY_TYPE:
 		pp_array_type(node, out, ctx);
 		break;
 
-	case CP_DEM_TYPE_KIND_vector_type: {
+	case CP_DEM_TYPE_KIND_VECTOR_TYPE: {
 		DemString dem = { 0 };
 		dem_string_init(&dem);
 		PDemNode inner_ty = NULL;
@@ -901,17 +901,17 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		break;
 	}
 
-	case CP_DEM_TYPE_KIND_template_argument_pack:
+	case CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK:
 		ast_pp(node->child, out, ctx);
 		break;
-	case CP_DEM_TYPE_KIND_parameter_pack:
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK:
 		pp_parameter_pack(node, out, ctx);
 		break;
-	case CP_DEM_TYPE_KIND_parameter_pack_expansion:
+	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION:
 		pp_pack_expansion(node, out, ctx);
 		break;
 
-	case CP_DEM_TYPE_KIND_fwd_template_ref:
+	case CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF:
 		if (node->fwd_template_ref) {
 			ast_pp((PDemNode)node->fwd_template_ref->ref, out, ctx);
 		} else {
@@ -919,11 +919,11 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_pointer_to_member_type:
+	case CP_DEM_TYPE_KIND_POINTER_TO_MEMBER_TYPE:
 		// Member pointer: M <class-type> <member-type>
 		// For member function pointers: return_type (Class::*)(params) cv-qualifiers ref-qualifiers
 		// For member data pointers: type Class::*
-		if (AST(1) && AST(1)->tag == CP_DEM_TYPE_KIND_function_type) {
+		if (AST(1) && AST(1)->tag == CP_DEM_TYPE_KIND_FUNCTION_TYPE) {
 			PPFnContext pp_fn_context = {
 				.pp_mod = pp_function_ty_mod_pointer_to_member_type,
 				.mod = AST(0),
@@ -943,16 +943,16 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			dem_string_append(out, "::*");
 		}
 		break;
-	case CP_DEM_TYPE_KIND_member_expression:
+	case CP_DEM_TYPE_KIND_MEMBER_EXPRESSION:
 		pp_as_operand_ex(node->member_expr.lhs, out, node->prec, true, ctx);
 		dem_string_append_sv(out, node->member_expr.op);
 		pp_as_operand_ex(node->member_expr.rhs, out, node->prec, false, ctx);
 		break;
-	case CP_DEM_TYPE_KIND_fold_expression: {
+	case CP_DEM_TYPE_KIND_FOLD_EXPRESSION: {
 		print_open(out, ctx);
 		if (!node->fold_expr.is_left_fold || node->fold_expr.init) {
 			if (node->fold_expr.is_left_fold) {
-				pp_as_operand_ex(node->fold_expr.init, out, Cast, true, ctx);
+				pp_as_operand_ex(node->fold_expr.init, out, CAST, true, ctx);
 			} else {
 				print_open(out, ctx);
 				pp_pack_all_elements(node->fold_expr.pack, out, ctx);
@@ -972,13 +972,13 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 				pp_pack_all_elements(node->fold_expr.pack, out, ctx);
 				print_close(out, ctx);
 			} else {
-				pp_as_operand_ex(node->fold_expr.init, out, Cast, true, ctx);
+				pp_as_operand_ex(node->fold_expr.init, out, CAST, true, ctx);
 			}
 		}
 		print_close(out, ctx);
 		break;
 	}
-	case CP_DEM_TYPE_KIND_braced_expression: {
+	case CP_DEM_TYPE_KIND_BRACED_EXPRESSION: {
 		if (node->braced_expr.is_array) {
 			dem_string_append(out, "[");
 			ast_pp(node->braced_expr.elem, out, ctx);
@@ -987,28 +987,28 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			dem_string_append(out, ".");
 			ast_pp(node->braced_expr.elem, out, ctx);
 		}
-		if (node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_expression && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_range_expression) {
+		if (node->braced_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_EXPRESSION && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION) {
 			dem_string_append(out, " = ");
 		}
 		ast_pp(node->braced_expr.init, out, ctx);
 		break;
 	}
-	case CP_DEM_TYPE_KIND_braced_range_expression: {
+	case CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION: {
 		dem_string_append(out, "[");
 		ast_pp(node->braced_range_expr.first, out, ctx);
 		dem_string_append(out, "...");
 		ast_pp(node->braced_range_expr.last, out, ctx);
 		dem_string_append(out, "]");
-		if (node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_expression && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_braced_range_expression) {
+		if (node->braced_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_EXPRESSION && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION) {
 			dem_string_append(out, " = ");
 		}
 		ast_pp(node->braced_expr.init, out, ctx);
 		break;
 	}
-	case CP_DEM_TYPE_KIND_init_list_expression: {
+	case CP_DEM_TYPE_KIND_INIT_LIST_EXPRESSION: {
 		DemNode *ty = node->init_list_expr.ty;
 		if (ty) {
-			if (ty->tag == CP_DEM_TYPE_KIND_array_type && pp_init_list_as_string(ty, out, ctx, node->init_list_expr.inits)) {
+			if (ty->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE && pp_init_list_as_string(ty, out, ctx, node->init_list_expr.inits)) {
 				break;
 			}
 			ast_pp(ty, out, ctx);
@@ -1019,15 +1019,15 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		break;
 	}
 
-	case CP_DEM_TYPE_KIND_binary_expression: {
+	case CP_DEM_TYPE_KIND_BINARY_EXPRESSION: {
 		// Don't add parentheses around > or >> when we're already inside template arguments
 		bool paren_all = ctx->paren_depth <= 0 &&
 			(sv_eq_cstr(&node->binary_expr.op, ">") || sv_eq_cstr(&node->binary_expr.op, ">>"));
 		if (paren_all) {
 			print_open(out, ctx);
 		}
-		bool is_assign = node->prec == Assign;
-		pp_as_operand_ex(node->binary_expr.lhs, out, is_assign ? OrIf : node->prec, !is_assign, ctx);
+		bool is_assign = node->prec == ASSIGN;
+		pp_as_operand_ex(node->binary_expr.lhs, out, is_assign ? ORIF : node->prec, !is_assign, ctx);
 		if (!sv_eq_cstr(&node->binary_expr.op, ",")) {
 			dem_string_append(out, " ");
 		}
@@ -1039,12 +1039,12 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		}
 		break;
 	}
-	case CP_DEM_TYPE_KIND_prefix_expression: {
+	case CP_DEM_TYPE_KIND_PREFIX_EXPRESSION: {
 		dem_string_append_sv(out, node->prefix_expr.prefix);
 		pp_as_operand_ex(node->prefix_expr.inner, out, node->prec, false, ctx);
 		break;
 	}
-	case CP_DEM_TYPE_KIND_new_expression: {
+	case CP_DEM_TYPE_KIND_NEW_EXPRESSION: {
 		if (node->new_expr.is_global) {
 			dem_string_append(out, "::");
 		}
@@ -1066,7 +1066,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		break;
 	}
 
-	case CP_DEM_TYPE_KIND_integer_literal: {
+	case CP_DEM_TYPE_KIND_INTEGER_LITERAL: {
 		DemStringView ty = node->integer_literal_expr.type;
 		DemStringView val = node->integer_literal_expr.value;
 		// Determine if this type uses cast notation (e.g. "(char)104") or suffix notation (e.g. "5u")
@@ -1281,7 +1281,7 @@ bool parse_seq_id(DemParser *p, DemNode **pp_out_node) {
 }
 
 bool rule_vendor_specific_suffix(DemParser *p, DemResult *r) {
-	RULE_HEAD(vendor_specific_suffix);
+	RULE_HEAD(VENDOR_SPECIFIC_SUFFIX);
 	// Handle _ptr suffix (should be ignored, not output)
 	if (READ_STR("ptr")) {
 		// Consume but don't output anything
@@ -1306,7 +1306,7 @@ bool rule_vendor_specific_suffix(DemParser *p, DemResult *r) {
 }
 
 bool rule_number(DemParser *p, DemResult *r) {
-	RULE_HEAD(number);
+	RULE_HEAD(NUMBER);
 	if (!(isdigit(PEEK()) || (PEEK() == 'n' && isdigit(PEEK_AT(1))))) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -1323,10 +1323,10 @@ bool rule_number(DemParser *p, DemResult *r) {
 }
 
 bool rule_ctor_dtor_name(DemParser *p, DemResult *r, NameState *ns, PDemNode scope) {
-	RULE_HEAD(ctor_dtor_name);
+	RULE_HEAD(CTOR_DTOR_NAME);
 
-	if (scope && scope->tag == CP_DEM_TYPE_KIND_special_substitution) {
-		scope->tag = CP_DEM_TYPE_KIND_expanded_special_substitution;
+	if (scope && scope->tag == CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION) {
+		scope->tag = CP_DEM_TYPE_KIND_EXPANDED_SPECIAL_SUBSTITUTION;
 	}
 
 	// NOTE: reference taken from https://github.com/rizinorg/rz-libdemangle/blob/c2847137398cf8d378d46a7510510aaefcffc8c6/src/cxx/cp-demangle.c#L2143
@@ -1372,7 +1372,7 @@ bool parse_module_name(DemParser *p, PDemNode *pmodule) {
 
 		DemNode *Sub = result.output;
 		result.output = NULL;
-		DemNode *sub_module = DemNode_ctor(CP_DEM_TYPE_KIND_module_name, ctx.saved_pos, CUR() - ctx.saved_pos);
+		DemNode *sub_module = DemNode_ctor(CP_DEM_TYPE_KIND_MODULE_NAME, ctx.saved_pos, CUR() - ctx.saved_pos);
 		if (!sub_module) {
 			DemResult_deinit(&result);
 			return false;
@@ -1394,7 +1394,7 @@ PDemNode parse_abi_tags(DemParser *p, PDemNode node) {
 		if (!parse_base_source_name(p, &tag.buf, &tag.len)) {
 			return NULL;
 		}
-		PDemNode tagged = DemNode_ctor(CP_DEM_TYPE_KIND_abi_tag_ty, tag.buf, tag.len);
+		PDemNode tagged = DemNode_ctor(CP_DEM_TYPE_KIND_ABI_TAG_TY, tag.buf, tag.len);
 		if (!tagged) {
 			return NULL;
 		}
@@ -1407,7 +1407,7 @@ PDemNode parse_abi_tags(DemParser *p, PDemNode node) {
 
 bool rule_unqualified_name(DemParser *p, DemResult *r,
 	NameState *ns, DemNode *scope, DemNode *module) {
-	RULE_HEAD(unqualified_name);
+	RULE_HEAD(UNQUALIFIED_NAME);
 
 	if (!parse_module_name(p, &module)) {
 		TRACE_RETURN_FAILURE();
@@ -1421,7 +1421,7 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 		CALL_MANY1_N(result, rule_source_name, ", ", 'E');
 		if (result) {
 			// Wrap structured binding names in brackets: [a1, a2]
-			DemNode *wrapper = DemNode_ctor(CP_DEM_TYPE_KIND_many, result->val.buf, result->val.len);
+			DemNode *wrapper = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, result->val.buf, result->val.len);
 			if (!wrapper) {
 				TRACE_RETURN_FAILURE();
 			}
@@ -1446,7 +1446,7 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 
 	if (result && module) {
 		// Attach module name: name@module
-		DemNode *wrapper = DemNode_ctor(CP_DEM_TYPE_KIND_many, result->val.buf, result->val.len);
+		DemNode *wrapper = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, result->val.buf, result->val.len);
 		if (!wrapper) {
 			DemNode_dtor(result);
 			DemNode_dtor(module);
@@ -1465,7 +1465,7 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 		// TODO: MemberLikeFriendName
 		DEM_UNREACHABLE;
 	} else if (result && scope) {
-		node->tag = CP_DEM_TYPE_KIND_nested_name;
+		node->tag = CP_DEM_TYPE_KIND_NESTED_NAME;
 		node->nested_name.qual = scope;
 		node->nested_name.name = result;
 		TRACE_RETURN_SUCCESS;
@@ -1478,7 +1478,7 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 }
 
 bool rule_unresolved_name(DemParser *p, DemResult *r) {
-	RULE_HEAD(unresolved_name);
+	RULE_HEAD(UNRESOLVED_NAME);
 	if (READ_STR("srN")) {
 		MUST_MATCH((CALL_RULE(rule_unresolved_type)) &&
 			(PEEK() == 'I' ? CALL_RULE(rule_template_args) : true));
@@ -1515,7 +1515,7 @@ bool rule_unresolved_name(DemParser *p, DemResult *r) {
 }
 
 bool rule_unscoped_name(DemParser *p, DemResult *r, NameState *ns, bool *is_subst) {
-	RULE_HEAD(unscoped_name);
+	RULE_HEAD(UNSCOPED_NAME);
 
 	DemNode *std_node = NULL;
 	if (READ_STR("St")) {
@@ -1530,7 +1530,7 @@ bool rule_unscoped_name(DemParser *p, DemResult *r, NameState *ns, bool *is_subs
 	if (PEEK() == 'S') {
 		DemNode *subst = NULL;
 		MUST_MATCH(CALL_RULE_N(subst, rule_substitution));
-		if (subst->tag == CP_DEM_TYPE_KIND_module_name) {
+		if (subst->tag == CP_DEM_TYPE_KIND_MODULE_NAME) {
 			module = subst;
 		} else if (is_subst && !std_node) {
 			*is_subst = true;
@@ -1554,7 +1554,7 @@ bool rule_unscoped_name(DemParser *p, DemResult *r, NameState *ns, bool *is_subs
 }
 
 bool rule_unresolved_type(DemParser *p, DemResult *r) {
-	RULE_HEAD(unresolved_type);
+	RULE_HEAD(UNRESOLVED_TYPE);
 	TRY_MATCH((CALL_RULE(rule_template_param)) && (((CALL_RULE(rule_template_args))) || true) && AST_APPEND_TYPE);
 	TRY_MATCH((CALL_RULE(rule_decltype)) && AST_APPEND_TYPE);
 	TRY_MATCH(CALL_RULE(rule_substitution));
@@ -1562,13 +1562,13 @@ bool rule_unresolved_type(DemParser *p, DemResult *r) {
 }
 
 bool rule_unresolved_qualifier_level(DemParser *p, DemResult *r) {
-	RULE_HEAD(unresolved_qualifier_level);
+	RULE_HEAD(UNRESOLVED_QUALIFIER_LEVEL);
 	TRY_MATCH(CALL_RULE(rule_simple_id));
 	RULE_FOOT(unresolved_qualifier_level);
 }
 
 bool rule_decltype(DemParser *p, DemResult *r) {
-	RULE_HEAD(decltype);
+	RULE_HEAD(DECLTYPE);
 	if (!(READ_STR("Dt") || READ_STR("DT"))) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -1581,7 +1581,7 @@ bool rule_decltype(DemParser *p, DemResult *r) {
 }
 
 bool rule_array_type(DemParser *p, DemResult *r) {
-	RULE_HEAD(array_type);
+	RULE_HEAD(ARRAY_TYPE);
 	MUST_MATCH(READ('A'));
 	node->subtag = ARRAY_TYPE;
 	if (PEEK() == '_') {
@@ -1599,7 +1599,7 @@ bool rule_array_type(DemParser *p, DemResult *r) {
 }
 
 bool rule_vector_type(DemParser *p, DemResult *r) {
-	RULE_HEAD(vector_type);
+	RULE_HEAD(VECTOR_TYPE);
 	MUST_MATCH(READ_STR("Dv"));
 	if (isdigit(PEEK())) {
 		MUST_MATCH(CALL_RULE_N(node->array_ty.dimension, rule_number) && READ('_'));
@@ -1609,7 +1609,7 @@ bool rule_vector_type(DemParser *p, DemResult *r) {
 			AST_APPEND_STR("pixel vector[");
 			AST_APPEND_NODE(dim);
 			AST_APPEND_STR("]");
-			node->tag = CP_DEM_TYPE_KIND_type;
+			node->tag = CP_DEM_TYPE_KIND_TYPE;
 			TRACE_RETURN_SUCCESS;
 		}
 	} else if (!READ('_')) {
@@ -1647,84 +1647,84 @@ typedef struct {
 
 static const OperatorInfo Ops[] = {
 	// Keep ordered by encoding
-	{ "aN", Binary, false, Assign, "operator&=" },
-	{ "aS", Binary, false, Assign, "operator=" },
-	{ "aa", Binary, false, AndIf, "operator&&" },
-	{ "ad", Prefix, false, Unary, "operator&" },
-	{ "an", Binary, false, And, "operator&" },
-	{ "at", OfIdOp, /*Type*/ true, Unary, "alignof " },
-	{ "aw", NameOnly, false, Primary,
+	{ "aN", Binary, false, ASSIGN, "operator&=" },
+	{ "aS", Binary, false, ASSIGN, "operator=" },
+	{ "aa", Binary, false, ANDIF, "operator&&" },
+	{ "ad", Prefix, false, UNARY, "operator&" },
+	{ "an", Binary, false, AND, "operator&" },
+	{ "at", OfIdOp, /*Type*/ true, UNARY, "alignof " },
+	{ "aw", NameOnly, false, PRIMARY,
 		"operator co_await" },
-	{ "az", OfIdOp, /*Type*/ false, Unary, "alignof " },
-	{ "cc", NamedCast, false, PPostfix, "const_cast" },
-	{ "cl", Call, /*Paren*/ false, PPostfix,
+	{ "az", OfIdOp, /*Type*/ false, UNARY, "alignof " },
+	{ "cc", NamedCast, false, PPOSTFIX, "const_cast" },
+	{ "cl", Call, /*Paren*/ false, PPOSTFIX,
 		"operator()" },
-	{ "cm", Binary, false, Comma, "operator," },
-	{ "co", Prefix, false, Unary, "operator~" },
-	{ "cp", Call, /*Paren*/ true, PPostfix,
+	{ "cm", Binary, false, COMMA, "operator," },
+	{ "co", Prefix, false, UNARY, "operator~" },
+	{ "cp", Call, /*Paren*/ true, PPOSTFIX,
 		"operator()" },
-	{ "cv", CCast, false, Cast, "operator" }, // C Cast
-	{ "dV", Binary, false, Assign, "operator/=" },
-	{ "da", Del, /*Ary*/ true, Unary,
+	{ "cv", CCast, false, CAST, "operator" }, // C CAST
+	{ "dV", Binary, false, ASSIGN, "operator/=" },
+	{ "da", Del, /*Ary*/ true, UNARY,
 		"operator delete[]" },
-	{ "dc", NamedCast, false, PPostfix, "dynamic_cast" },
-	{ "de", Prefix, false, Unary, "operator*" },
-	{ "dl", Del, /*Ary*/ false, Unary,
+	{ "dc", NamedCast, false, PPOSTFIX, "dynamic_cast" },
+	{ "de", Prefix, false, UNARY, "operator*" },
+	{ "dl", Del, /*Ary*/ false, UNARY,
 		"operator delete" },
-	{ "ds", Member, /*Named*/ false, PtrMem,
+	{ "ds", Member, /*Named*/ false, PTRMEM,
 		"operator.*" },
-	{ "dt", Member, /*Named*/ false, PPostfix,
+	{ "dt", Member, /*Named*/ false, PPOSTFIX,
 		"operator." },
-	{ "dv", Binary, false, Assign, "operator/" },
-	{ "eO", Binary, false, Assign, "operator^=" },
-	{ "eo", Binary, false, Xor, "operator^" },
-	{ "eq", Binary, false, Equality, "operator==" },
-	{ "ge", Binary, false, Relational, "operator>=" },
-	{ "gt", Binary, false, Relational, "operator>" },
-	{ "ix", Array, false, PPostfix, "operator[]" },
-	{ "lS", Binary, false, Assign, "operator<<=" },
-	{ "le", Binary, false, Relational, "operator<=" },
-	{ "ls", Binary, false, Shift, "operator<<" },
-	{ "lt", Binary, false, Relational, "operator<" },
-	{ "mI", Binary, false, Assign, "operator-=" },
-	{ "mL", Binary, false, Assign, "operator*=" },
-	{ "mi", Binary, false, Additive, "operator-" },
-	{ "ml", Binary, false, Multiplicative,
+	{ "dv", Binary, false, ASSIGN, "operator/" },
+	{ "eO", Binary, false, ASSIGN, "operator^=" },
+	{ "eo", Binary, false, XOR, "operator^" },
+	{ "eq", Binary, false, EQUALITY, "operator==" },
+	{ "ge", Binary, false, RELATIONAL, "operator>=" },
+	{ "gt", Binary, false, RELATIONAL, "operator>" },
+	{ "ix", Array, false, PPOSTFIX, "operator[]" },
+	{ "lS", Binary, false, ASSIGN, "operator<<=" },
+	{ "le", Binary, false, RELATIONAL, "operator<=" },
+	{ "ls", Binary, false, SHIFT, "operator<<" },
+	{ "lt", Binary, false, RELATIONAL, "operator<" },
+	{ "mI", Binary, false, ASSIGN, "operator-=" },
+	{ "mL", Binary, false, ASSIGN, "operator*=" },
+	{ "mi", Binary, false, ADDITIVE, "operator-" },
+	{ "ml", Binary, false, MULTIPLICATIVE,
 		"operator*" },
-	{ "mm", Postfix, false, PPostfix, "operator--" },
-	{ "na", New, /*Ary*/ true, Unary,
+	{ "mm", Postfix, false, PPOSTFIX, "operator--" },
+	{ "na", New, /*Ary*/ true, UNARY,
 		"operator new[]" },
-	{ "ne", Binary, false, Equality, "operator!=" },
-	{ "ng", Prefix, false, Unary, "operator-" },
-	{ "nt", Prefix, false, Unary, "operator!" },
-	{ "nw", New, /*Ary*/ false, Unary, "operator new" },
-	{ "oR", Binary, false, Assign, "operator|=" },
-	{ "oo", Binary, false, OrIf, "operator||" },
-	{ "or", Binary, false, Ior, "operator|" },
-	{ "pL", Binary, false, Assign, "operator+=" },
-	{ "pl", Binary, false, Additive, "operator+" },
-	{ "pm", Member, /*Named*/ true, PtrMem,
+	{ "ne", Binary, false, EQUALITY, "operator!=" },
+	{ "ng", Prefix, false, UNARY, "operator-" },
+	{ "nt", Prefix, false, UNARY, "operator!" },
+	{ "nw", New, /*Ary*/ false, UNARY, "operator new" },
+	{ "oR", Binary, false, ASSIGN, "operator|=" },
+	{ "oo", Binary, false, ORIF, "operator||" },
+	{ "or", Binary, false, IOR, "operator|" },
+	{ "pL", Binary, false, ASSIGN, "operator+=" },
+	{ "pl", Binary, false, ADDITIVE, "operator+" },
+	{ "pm", Member, /*Named*/ true, PTRMEM,
 		"operator->*" },
-	{ "pp", Postfix, false, PPostfix, "operator++" },
-	{ "ps", Prefix, false, Unary, "operator+" },
-	{ "pt", Member, /*Named*/ true, PPostfix,
+	{ "pp", Postfix, false, PPOSTFIX, "operator++" },
+	{ "ps", Prefix, false, UNARY, "operator+" },
+	{ "pt", Member, /*Named*/ true, PPOSTFIX,
 		"operator->" },
-	{ "qu", Conditional, false, PConditional,
+	{ "qu", Conditional, false, PCONDITIONAL,
 		"operator?" },
-	{ "rM", Binary, false, Assign, "operator%=" },
-	{ "rS", Binary, false, Assign, "operator>>=" },
-	{ "rc", NamedCast, false, PPostfix,
+	{ "rM", Binary, false, ASSIGN, "operator%=" },
+	{ "rS", Binary, false, ASSIGN, "operator>>=" },
+	{ "rc", NamedCast, false, PPOSTFIX,
 		"reinterpret_cast" },
-	{ "rm", Binary, false, Multiplicative,
+	{ "rm", Binary, false, MULTIPLICATIVE,
 		"operator%" },
-	{ "rs", Binary, false, Shift, "operator>>" },
-	{ "sc", NamedCast, false, PPostfix, "static_cast" },
-	{ "ss", Binary, false, Spaceship, "operator<=>" },
-	{ "st", OfIdOp, /*Type*/ true, Unary, "sizeof " },
-	{ "sz", OfIdOp, /*Type*/ false, Unary, "sizeof " },
-	{ "te", OfIdOp, /*Type*/ false, PPostfix,
+	{ "rs", Binary, false, SHIFT, "operator>>" },
+	{ "sc", NamedCast, false, PPOSTFIX, "static_cast" },
+	{ "ss", Binary, false, SPACESHIP, "operator<=>" },
+	{ "st", OfIdOp, /*Type*/ true, UNARY, "sizeof " },
+	{ "sz", OfIdOp, /*Type*/ false, UNARY, "sizeof " },
+	{ "te", OfIdOp, /*Type*/ false, PPOSTFIX,
 		"typeid " },
-	{ "ti", OfIdOp, /*Type*/ true, PPostfix, "typeid " },
+	{ "ti", OfIdOp, /*Type*/ true, PPOSTFIX, "typeid " },
 };
 static const size_t NumOps = sizeof(Ops) / sizeof(Ops[0]);
 
@@ -1764,7 +1764,7 @@ const char *opinfo_get_symbol(const OperatorInfo *opinfo) {
 }
 
 bool rule_operator_name(DemParser *p, DemResult *r, NameState *ns) {
-	RULE_HEAD(operator_name);
+	RULE_HEAD(OPERATOR_NAME);
 	const OperatorInfo *Op = parse_operator_info(p);
 	if (Op) {
 		if (Op->Kind == CCast) {
@@ -1784,7 +1784,7 @@ bool rule_operator_name(DemParser *p, DemResult *r, NameState *ns) {
 			if (ns) {
 				ns->is_conversion_ctor_dtor = true;
 			}
-			node->tag = CP_DEM_TYPE_KIND_conv_op_ty;
+			node->tag = CP_DEM_TYPE_KIND_CONV_OP_TY;
 			TRACE_RETURN_SUCCESS;
 		}
 		if (Op->Kind >= Unnameable) {
@@ -1821,7 +1821,7 @@ bool rule_operator_name(DemParser *p, DemResult *r, NameState *ns) {
 }
 
 bool rule_expr_primary(DemParser *p, DemResult *r) {
-	RULE_HEAD(expr_primary);
+	RULE_HEAD(EXPR_PRIMARY);
 	if (!READ('L')) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -1910,7 +1910,7 @@ bool rule_expr_primary(DemParser *p, DemResult *r) {
 		ut64 num = 0;
 		if (parse_non_neg_integer(p, &num) && READ('E')) {
 			const char *value_end = CUR() - 1; // exclude 'E'
-			node->tag = CP_DEM_TYPE_KIND_integer_literal;
+			node->tag = CP_DEM_TYPE_KIND_INTEGER_LITERAL;
 			node->integer_literal_expr.type.buf = type_name;
 			node->integer_literal_expr.type.len = type_name_len;
 			node->integer_literal_expr.value.buf = value_begin;
@@ -1949,12 +1949,12 @@ bool rule_expr_primary(DemParser *p, DemResult *r) {
 }
 
 bool rule_braced_expression(DemParser *p, DemResult *r) {
-	RULE_HEAD(braced_expression);
+	RULE_HEAD(BRACED_EXPRESSION);
 	if (PEEK() == 'd') {
 		switch (PEEK_AT(1)) {
 		case 'X':
 			ADV_BY(2);
-			node->tag = CP_DEM_TYPE_KIND_braced_range_expression;
+			node->tag = CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION;
 			MUST_MATCH(CALL_RULE_N(node->braced_range_expr.first, rule_expression));
 			MUST_MATCH(CALL_RULE_N(node->braced_range_expr.last, rule_expression));
 			MUST_MATCH(CALL_RULE_N(node->braced_range_expr.init, rule_braced_expression));
@@ -1985,7 +1985,7 @@ static void swap(void **a, void **b) {
 }
 
 bool rule_fold_expression(DemParser *p, DemResult *r) {
-	RULE_HEAD(fold_expression);
+	RULE_HEAD(FOLD_EXPRESSION);
 	if (!READ('f')) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -2035,7 +2035,7 @@ bool rule_fold_expression(DemParser *p, DemResult *r) {
 }
 
 bool rule_prefix_expression(DemParser *p, DemResult *r, const OperatorInfo *op) {
-	RULE_HEAD(prefix_expression);
+	RULE_HEAD(PREFIX_EXPRESSION);
 	MUST_MATCH(CALL_RULE_N(node->prefix_expr.inner, rule_expression));
 	sv_form_cstr(&node->prefix_expr.prefix, opinfo_get_symbol(op));
 	node->prec = op->Prec;
@@ -2043,7 +2043,7 @@ bool rule_prefix_expression(DemParser *p, DemResult *r, const OperatorInfo *op) 
 }
 
 bool rule_binary_expression(DemParser *p, DemResult *r, const OperatorInfo *op) {
-	RULE_HEAD(binary_expression);
+	RULE_HEAD(BINARY_EXPRESSION);
 	MUST_MATCH(CALL_RULE_N(node->binary_expr.lhs, rule_expression));
 	sv_form_cstr(&node->binary_expr.op, opinfo_get_symbol(op));
 	MUST_MATCH(CALL_RULE_N(node->binary_expr.rhs, rule_expression));
@@ -2052,7 +2052,7 @@ bool rule_binary_expression(DemParser *p, DemResult *r, const OperatorInfo *op) 
 }
 
 bool rule_expression(DemParser *p, DemResult *r) {
-	RULE_HEAD(expression);
+	RULE_HEAD(EXPRESSION);
 
 	bool is_global = READ_STR("gs");
 	const OperatorInfo *Op = parse_operator_info(p);
@@ -2080,7 +2080,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			sv_form_cstr(&node->member_expr.op, opinfo_get_symbol(Op));
 			MUST_MATCH(CALL_RULE_N(node->member_expr.rhs, rule_expression));
 			node->prec = Op->Prec;
-			node->tag = CP_DEM_TYPE_KIND_member_expression;
+			node->tag = CP_DEM_TYPE_KIND_MEMBER_EXPRESSION;
 			TRACE_RETURN_SUCCESS;
 		case New: // nw/na
 			node->new_expr.is_global = is_global;
@@ -2096,7 +2096,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 				MUST_MATCH(CALL_MANY_N(node->new_expr.init_list, rule_expression, ", ", 'E'));
 			}
 			node->prec = Op->Prec;
-			node->tag = CP_DEM_TYPE_KIND_new_expression;
+			node->tag = CP_DEM_TYPE_KIND_NEW_EXPRESSION;
 			TRACE_RETURN_SUCCESS;
 		case Del: // dl/da
 			if (is_global) {
@@ -2182,11 +2182,11 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		RETURN_SUCCESS_OR_FAIL(CALL_RULE(rule_fold_expression));
 	}
 	if (READ_STR("il")) {
-		node->tag = CP_DEM_TYPE_KIND_init_list_expression;
+		node->tag = CP_DEM_TYPE_KIND_INIT_LIST_EXPRESSION;
 		RETURN_SUCCESS_OR_FAIL(CALL_MANY_N(node->init_list_expr.inits, rule_expression, ", ", 'E'));
 	}
 	if (READ_STR("tl")) {
-		node->tag = CP_DEM_TYPE_KIND_init_list_expression;
+		node->tag = CP_DEM_TYPE_KIND_INIT_LIST_EXPRESSION;
 		RETURN_SUCCESS_OR_FAIL(CALL_RULE_N(node->init_list_expr.ty, rule_type) && CALL_MANY_N(node->init_list_expr.inits, rule_braced_expression, ", ", 'E'));
 	}
 	if (READ_STR("nx")) {
@@ -2206,7 +2206,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 	}
 	if (READ_STR("sp")) {
 		MUST_MATCH(CALL_RULE_N(node->child, rule_expression));
-		node->tag = CP_DEM_TYPE_KIND_parameter_pack_expansion;
+		node->tag = CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION;
 		TRACE_RETURN_SUCCESS;
 	}
 	if (READ('u')) {
@@ -2234,7 +2234,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			if (!uuid) {
 				TRACE_RETURN_FAILURE();
 			}
-			args = DemNode_ctor(CP_DEM_TYPE_KIND_many, name->val.buf, CUR() - name->val.buf);
+			args = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, name->val.buf, CUR() - name->val.buf);
 			if (!args) {
 				TRACE_RETURN_FAILURE();
 			}
@@ -2253,13 +2253,13 @@ bool rule_expression(DemParser *p, DemResult *r) {
 }
 
 bool rule_simple_id(DemParser *p, DemResult *r) {
-	RULE_HEAD(simple_id);
+	RULE_HEAD(SIMPLE_ID);
 	TRY_MATCH((CALL_RULE(rule_source_name)) && (((CALL_RULE(rule_template_args))) || true));
 	RULE_FOOT(simple_id);
 }
 
 bool rule_template_param(DemParser *p, DemResult *r) {
-	RULE_HEAD(template_param);
+	RULE_HEAD(TEMPLATE_PARAM);
 	if (!(READ('T'))) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -2295,7 +2295,7 @@ bool rule_template_param(DemParser *p, DemResult *r) {
 		}
 
 		node->fwd_template_ref = fwd;
-		node->tag = CP_DEM_TYPE_KIND_fwd_template_ref;
+		node->tag = CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF;
 
 		if (p->trace) {
 			fprintf(stderr, "[template_param] Created forward ref L%" PRIu64 "_%" PRIu64 " to %p\n",
@@ -2309,7 +2309,7 @@ bool rule_template_param(DemParser *p, DemResult *r) {
 }
 
 bool rule_call_offset(DemParser *p, DemResult *r) {
-	RULE_HEAD(call_offset);
+	RULE_HEAD(CALL_OFFSET);
 	if (READ('h')) {
 		if (!READ('n')) {
 			TRACE_RETURN_FAILURE();
@@ -2358,7 +2358,7 @@ bool rule_call_offset(DemParser *p, DemResult *r) {
 	  ::= TH <object name> # Thread-local initialization
 */
 bool rule_special_name(DemParser *p, DemResult *r) {
-	RULE_HEAD(special_name);
+	RULE_HEAD(SPECIAL_NAME);
 	switch (PEEK()) {
 	case 'T':
 		ADV();
@@ -2459,7 +2459,7 @@ bool rule_special_name(DemParser *p, DemResult *r) {
 }
 
 bool rule_function_type(DemParser *p, DemResult *r) {
-	RULE_HEAD(function_type);
+	RULE_HEAD(FUNCTION_TYPE);
 	// This rule only handles F...E (bare function type)
 	// P prefix is handled in the type rule, which properly inserts * for function pointers
 	parse_cv_qualifiers(p, &node->fn_ty.cv_qualifiers);
@@ -2472,7 +2472,7 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 	} else if (READ_STR("DO")) {
 		PDemNode spec = NULL;
 		MUST_MATCH(CALL_RULE_N(spec, rule_expression) && READ('E'));
-		node->fn_ty.exception_spec = DemNode_ctor(CP_DEM_TYPE_KIND_noexcept_spec, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
+		node->fn_ty.exception_spec = DemNode_ctor(CP_DEM_TYPE_KIND_NOEXCEPT_SPEC, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
 		if (!node->fn_ty.exception_spec) {
 			TRACE_RETURN_FAILURE();
 		}
@@ -2480,7 +2480,7 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 	} else if (READ_STR("Dw")) {
 		PDemNode spec = NULL;
 		MUST_MATCH(CALL_MANY_N(spec, rule_type, ", ", 'E'));
-		node->fn_ty.exception_spec = DemNode_ctor(CP_DEM_TYPE_KIND_dynamic_exception_spec, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
+		node->fn_ty.exception_spec = DemNode_ctor(CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
 		if (!node->fn_ty.exception_spec) {
 			TRACE_RETURN_FAILURE();
 		}
@@ -2492,7 +2492,7 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 	READ('Y');
 	MUST_MATCH(CALL_RULE_N(node->fn_ty.ret, rule_type));
 
-	node->fn_ty.params = DemNode_ctor(CP_DEM_TYPE_KIND_many, CUR(), 0);
+	node->fn_ty.params = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, CUR(), 0);
 	if (!node->fn_ty.params) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -2521,7 +2521,7 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 }
 
 bool rule_function_param(DemParser *p, DemResult *r) {
-	RULE_HEAD(function_param);
+	RULE_HEAD(FUNCTION_PARAM);
 	if (READ_STR("PT")) {
 		TRACE_RETURN_SUCCESS;
 	}
@@ -2543,7 +2543,7 @@ bool rule_function_param(DemParser *p, DemResult *r) {
 }
 
 bool rule_builtin_type(DemParser *p, DemResult *r) {
-	RULE_HEAD(builtin_type);
+	RULE_HEAD(BUILTIN_TYPE);
 	TRY_MATCH(READ_STR("DF") && AST_APPEND_STR("_Float") && (CALL_RULE(rule_number)) && READ('_'));
 	TRY_MATCH(READ_STR("DF") && AST_APPEND_STR("_Float") && (CALL_RULE(rule_number)) && READ('x') && AST_APPEND_STR("x"));
 	TRY_MATCH(READ_STR("DF") && AST_APPEND_STR("std::bfloat") && (CALL_RULE(rule_number)) && READ('b') && AST_APPEND_STR("_t"));
@@ -2591,7 +2591,7 @@ bool rule_builtin_type(DemParser *p, DemResult *r) {
 }
 
 bool rule_source_name(DemParser *p, DemResult *r) {
-	RULE_HEAD(source_name);
+	RULE_HEAD(SOURCE_NAME);
 	/* positive number providing length of name followed by it */
 	size_t name_len = 0;
 	const char *name = NULL;
@@ -2607,7 +2607,7 @@ bool rule_source_name(DemParser *p, DemResult *r) {
 }
 
 bool rule_class_enum_type(DemParser *p, DemResult *r) {
-	RULE_HEAD(class_enum_type);
+	RULE_HEAD(CLASS_ENUM_TYPE);
 	if (READ_STR("Ts") || READ_STR("Tu") || READ_STR("Te")) {
 		DEM_UNREACHABLE;
 	}
@@ -2615,7 +2615,7 @@ bool rule_class_enum_type(DemParser *p, DemResult *r) {
 }
 
 bool rule_mangled_name(DemParser *p, DemResult *r) {
-	RULE_HEAD(mangled_name);
+	RULE_HEAD(MANGLED_NAME);
 
 	if (!READ_STR("_Z")) {
 		TRACE_RETURN_FAILURE();
@@ -2632,7 +2632,7 @@ bool rule_mangled_name(DemParser *p, DemResult *r) {
 }
 
 bool rule_qualified_type(DemParser *p, DemResult *r) {
-	RULE_HEAD(qualified_type);
+	RULE_HEAD(QUALIFIED_TYPE);
 	if (PEEK() == 'U') {
 		ADV();
 		MUST_MATCH(parse_base_source_name(p, &node->vendor_ext_qualified_ty.vendor_ext.buf, &node->vendor_ext_qualified_ty.vendor_ext.len));
@@ -2640,7 +2640,7 @@ bool rule_qualified_type(DemParser *p, DemResult *r) {
 			MUST_MATCH(CALL_RULE_N(node->vendor_ext_qualified_ty.template_args, rule_template_args));
 		}
 		MUST_MATCH(CALL_RULE_N(node->vendor_ext_qualified_ty.inner_type, rule_qualified_type));
-		node->tag = CP_DEM_TYPE_KIND_vendor_ext_qualified_type;
+		node->tag = CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE;
 		TRACE_RETURN_SUCCESS;
 	}
 
@@ -2650,7 +2650,7 @@ bool rule_qualified_type(DemParser *p, DemResult *r) {
 }
 
 bool rule_type(DemParser *p, DemResult *r) {
-	RULE_HEAD(type);
+	RULE_HEAD(TYPE);
 	const char *before_builtin = CUR();
 	if (CALL_RULE_REPLACE_NODE(rule_builtin_type)) {
 		// Vendor-extended types (u<length><name>) should be added to substitution table
@@ -2714,7 +2714,7 @@ bool rule_type(DemParser *p, DemResult *r) {
 		//   && + & = &
 		//   && + && = &&
 		// In other words, if either is an lvalue ref, the result is lvalue ref.
-		if (AST(0) && AST(0)->tag == CP_DEM_TYPE_KIND_type &&
+		if (AST(0) && AST(0)->tag == CP_DEM_TYPE_KIND_TYPE &&
 			(AST(0)->subtag == REFERENCE_TYPE || AST(0)->subtag == RVALUE_REFERENCE_TYPE)) {
 			if (subtag == REFERENCE_TYPE || AST(0)->subtag == REFERENCE_TYPE) {
 				// Collapse to lvalue reference: unwrap the inner ref
@@ -2746,7 +2746,7 @@ bool rule_type(DemParser *p, DemResult *r) {
 		if (PEEK_AT(1) == 'p') {
 			ADV_BY(2);
 			MUST_MATCH(CALL_RULE_N(node->child, rule_type));
-			node->tag = CP_DEM_TYPE_KIND_parameter_pack_expansion;
+			node->tag = CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION;
 			break;
 		}
 		if (PEEK_AT(1) == 'v') {
@@ -2769,7 +2769,7 @@ bool rule_type(DemParser *p, DemResult *r) {
 		if (PEEK() == 'I' && !p->not_parse_template_args) {
 			AST_APPEND_TYPE;
 			CALL_RULE_N(template_args_node, rule_template_args);
-			node->tag = CP_DEM_TYPE_KIND_name_with_template_args;
+			node->tag = CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS;
 			node->name_with_template_args.name = template_param_node;
 			node->name_with_template_args.template_args = template_args_node;
 		} else {
@@ -2797,7 +2797,7 @@ bool rule_type(DemParser *p, DemResult *r) {
 					DemNode_dtor(result);
 					TRACE_RETURN_FAILURE();
 				}
-				node->tag = CP_DEM_TYPE_KIND_name_with_template_args;
+				node->tag = CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS;
 				node->name_with_template_args.name = result;
 				node->name_with_template_args.template_args = ta;
 			} else if (is_subst) {
@@ -2827,7 +2827,7 @@ beach:
 }
 
 bool rule_base_unresolved_name(DemParser *p, DemResult *r) {
-	RULE_HEAD(base_unresolved_name);
+	RULE_HEAD(BASE_UNRESOLVED_NAME);
 	TRY_MATCH((CALL_RULE(rule_simple_id)));
 	if (READ_STR("dn")) {
 		MUST_MATCH(CALL_RULE(rule_destructor_name));
@@ -2842,7 +2842,7 @@ bool rule_base_unresolved_name(DemParser *p, DemResult *r) {
 }
 
 bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
-	RULE_HEAD(local_name);
+	RULE_HEAD(LOCAL_NAME);
 	if (!READ('Z')) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -2883,7 +2883,7 @@ bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
 }
 
 bool rule_substitution(DemParser *p, DemResult *r) {
-	RULE_HEAD(substitution);
+	RULE_HEAD(SUBSTITUTION);
 	if (!READ('S')) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -2900,12 +2900,12 @@ bool rule_substitution(DemParser *p, DemResult *r) {
 		default: TRACE_RETURN_FAILURE();
 		}
 		ADV();
-		PDemNode special_subst = DemNode_ctor(CP_DEM_TYPE_KIND_special_substitution, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
+		PDemNode special_subst = DemNode_ctor(CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
 		if (!special_subst) {
 			TRACE_RETURN_FAILURE();
 		}
 		special_subst->subtag = kind;
-		special_subst->tag = CP_DEM_TYPE_KIND_special_substitution;
+		special_subst->tag = CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION;
 
 		PDemNode with_tags = parse_abi_tags(p, special_subst);
 		if (with_tags && with_tags != special_subst) {
@@ -2925,7 +2925,7 @@ bool rule_substitution(DemParser *p, DemResult *r) {
 }
 
 bool rule_float(DemParser *p, DemResult *r) {
-	RULE_HEAD(float);
+	RULE_HEAD(FLOAT);
 	while (IS_DIGIT(PEEK()) || ('a' <= PEEK() && PEEK() <= 'f')) {
 		ADV();
 	}
@@ -2933,14 +2933,14 @@ bool rule_float(DemParser *p, DemResult *r) {
 }
 
 bool rule_destructor_name(DemParser *p, DemResult *r) {
-	RULE_HEAD(destructor_name);
+	RULE_HEAD(DESTRUCTOR_NAME);
 	TRY_MATCH(CALL_RULE(rule_unresolved_type));
 	TRY_MATCH(CALL_RULE(rule_simple_id));
 	RULE_FOOT(destructor_name);
 }
 
 bool rule_name(DemParser *p, DemResult *r, NameState *ns) {
-	RULE_HEAD(name);
+	RULE_HEAD(NAME);
 	if (PEEK() == 'N') {
 		RETURN_SUCCESS_OR_FAIL(CALL_RULE_VA_REPLACE_NODE(rule_nested_name, ns));
 	}
@@ -2969,7 +2969,7 @@ bool rule_name(DemParser *p, DemResult *r, NameState *ns) {
 		if (ns) {
 			ns->end_with_template_args = true;
 		}
-		node->tag = CP_DEM_TYPE_KIND_name_with_template_args;
+		node->tag = CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS;
 		node->name_with_template_args.name = result;
 		node->name_with_template_args.template_args = ta;
 		TRACE_RETURN_SUCCESS;
@@ -2982,7 +2982,7 @@ bool rule_name(DemParser *p, DemResult *r, NameState *ns) {
 }
 
 bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
-	RULE_HEAD(nested_name);
+	RULE_HEAD(NESTED_NAME);
 	if (!READ('N')) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -3009,7 +3009,7 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 			if (ast_node == NULL) {
 				TRACE_RETURN_FAILURE();
 			}
-			if (ast_node->tag == CP_DEM_TYPE_KIND_name_with_template_args) {
+			if (ast_node->tag == CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS) {
 				goto fail;
 			}
 			DemNode *ta = NULL;
@@ -3037,7 +3037,7 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 				} else {
 					CALL_RULE_N(subst, rule_substitution);
 				}
-				if (subst->tag == CP_DEM_TYPE_KIND_module_name) {
+				if (subst->tag == CP_DEM_TYPE_KIND_MODULE_NAME) {
 					module = subst;
 				} else if (ast_node) {
 					DemNode_dtor(subst);
@@ -3078,7 +3078,7 @@ bool is_template_param_decl(DemParser *p) {
 }
 
 bool rule_template_arg(DemParser *p, DemResult *r) {
-	RULE_HEAD(template_arg);
+	RULE_HEAD(TEMPLATE_ARG);
 	switch (PEEK()) {
 	case 'X': {
 		ADV();
@@ -3088,7 +3088,7 @@ bool rule_template_arg(DemParser *p, DemResult *r) {
 	case 'J': {
 		ADV();
 		MUST_MATCH(CALL_MANY_N(node->child, rule_template_arg, ", ", 'E'));
-		node->tag = CP_DEM_TYPE_KIND_template_argument_pack;
+		node->tag = CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK;
 		TRACE_RETURN_SUCCESS;
 	}
 	case 'L': {
@@ -3119,7 +3119,7 @@ bool rule_template_args(DemParser *p, DemResult *r) {
 }
 
 bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
-	RULE_HEAD(template_args);
+	RULE_HEAD(TEMPLATE_ARGS);
 	if (!READ('I')) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -3128,7 +3128,7 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 		VecPNodeList_append(&p->template_params, &p->outer_template_params);
 		VecPDemNode_clear(p->outer_template_params);
 	}
-	PDemNode many_node = DemNode_ctor(CP_DEM_TYPE_KIND_many, saved_ctx_rule.saved_pos, 1);
+	PDemNode many_node = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, saved_ctx_rule.saved_pos, 1);
 	if (!many_node) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -3139,8 +3139,8 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 		}
 		if (tag_templates) {
 			DemNode *entry = arg;
-			if (arg->tag == CP_DEM_TYPE_KIND_template_argument_pack) {
-				entry = DemNode_ctor(CP_DEM_TYPE_KIND_parameter_pack, arg->val.buf, arg->val.len);
+			if (arg->tag == CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK) {
+				entry = DemNode_ctor(CP_DEM_TYPE_KIND_PARAMETER_PACK, arg->val.buf, arg->val.len);
 				if (entry) {
 					entry->child_ref = arg->child;
 				}
@@ -3166,7 +3166,7 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 }
 
 bool rule_template_param_decl(DemParser *p, DemResult *r) {
-	RULE_HEAD(template_param_decl);
+	RULE_HEAD(TEMPLATE_PARAM_DECL);
 	if (!READ('T')) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -3175,7 +3175,7 @@ bool rule_template_param_decl(DemParser *p, DemResult *r) {
 }
 
 bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
-	RULE_HEAD(unnamed_type_name);
+	RULE_HEAD(UNNAMED_TYPE_NAME);
 	if (READ_STR("Ut")) {
 		ut64 tidx = 0;
 		if (!parse_non_neg_integer(p, &tidx)) {
@@ -3212,7 +3212,7 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 		if (!READ('_')) {
 			TRACE_RETURN_FAILURE();
 		}
-		node->tag = CP_DEM_TYPE_KIND_closure_ty_name;
+		node->tag = CP_DEM_TYPE_KIND_CLOSURE_TY_NAME;
 		node->closure_ty_name.params = params;
 		TRACE_RETURN_SUCCESS;
 	}
@@ -3220,7 +3220,7 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 }
 
 bool rule_pointer_to_member_type(DemParser *p, DemResult *r) {
-	RULE_HEAD(pointer_to_member_type);
+	RULE_HEAD(POINTER_TO_MEMBER_TYPE);
 	if (!READ('M')) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -3253,14 +3253,14 @@ bool is_end_of_encoding(const DemParser *p) {
 };
 
 bool rule_encoding(DemParser *p, DemResult *r) {
-	RULE_HEAD(encoding);
+	RULE_HEAD(ENCODING);
 	// Handle special names (G=guard variable, T=typeinfo/vtable)
 	// These have different structure than function signatures
 	if (PEEK() == 'G' || PEEK() == 'T') {
 		RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_special_name));
 	}
 	// Override tag to function_type since encoding produces function signatures
-	node->tag = CP_DEM_TYPE_KIND_function_type;
+	node->tag = CP_DEM_TYPE_KIND_FUNCTION_TYPE;
 	// Parse: name, [return_type], parameters
 	NameState ns = { 0 };
 	NameState_init(&ns, p);
