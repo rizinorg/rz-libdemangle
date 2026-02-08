@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: 2025 RizinOrg <info@rizin.re>
 // SPDX-FileCopyrightText: 2025 Siddharth Mishra <admin@brightprogrammer.in>
+// SPDX-FileCopyrightText: 2025-2026 RizinOrg <info@rizin.re>
+// SPDX-FileCopyrightText: 2025-2026 Billow <billow.fun@gmail.com>
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #ifndef CP_DEMANGLE_H
