@@ -17,7 +17,6 @@
 #include "v3_pp.h"
 #include "../demangle.h"
 #include "demangler_util.h"
-#include "dot_graph.h"
 #include "macros.h"
 #include "parser_combinator.h"
 #include "types.h"
@@ -3350,19 +3349,6 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 	ast_pp(output_node, &ctx->output, &pp_ctx);
 	if (ctx->parser.options & DEM_OPT_SIMPLE) {
 		dem_simplify(&ctx->output);
-	}
-
-	// Generate DOT graph if tracing is enabled
-	if (trace && ctx->result.output) {
-		DotGraph dot_graph = { 0 };
-		// Use mangled name as input and demangled result (ctx->output) as output
-		const char *demangled = ctx->output.buf ? ctx->output.buf : "unknown";
-		dot_graph_init(&dot_graph, pp_ctx, mangled, demangled);
-		if (dot_graph.enabled) {
-			dot_graph_generate(&dot_graph, ctx->result.output);
-			dot_graph_finish(&dot_graph);
-		}
-		dot_graph_cleanup(&dot_graph);
 	}
 
 	return true;

@@ -15,7 +15,6 @@ libdemangle_src = [
     'src' / 'cplusplus' / 'v3' / 'meta.c',
     'src' / 'cplusplus' / 'v3' / 'parser_combinator.c',
     'src' / 'cplusplus' / 'v3' / 'ast.c',
-    'src' / 'cplusplus' / 'v3' / 'dot_graph.c',
     'src' / 'cplusplus' / 'v3' / 'v3.c',
 
     'src' / 'demangler.c',
