@@ -451,7 +451,7 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 	case CP_DEM_TYPE_KIND_many:
 		// Deep copy many type fields
 		dst->many_ty.sep = src->many_ty.sep; // Separator is a string literal
-		// Fall through to copy children
+		break;
 	default:
 		break;
 	}

@@ -1271,9 +1271,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 			}
 		}
 
-		if (base_typename) {
-			free(base_typename);
-		}
+		free(base_typename);
 
 		break;
 	}
