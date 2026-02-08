@@ -10,3 +10,6 @@ ____Z20InstallSignalHandlerv_block_invoke_2,InstallSignalHandler() block_invoke_
 ____ZN10screenshot29TryPromptUserForScreenCaptureEv_block_invoke,screenshot::TryPromptUserForScreenCapture() block_invoke
 _ZNV3$_35test9Ev,$_3::test9() volatile
 _ZN5Test8I3$_2EC1ES0_,Test8<$_2>::Test8($_2)
+_ZNKSt3__110__function6__funcIZN4DLCL8DLFutureIP15AnalysenManagerE3setINS_8functionIFS5_vEEEJEEEvT_DpOT0_EUlvE_NS_9allocatorISF_EEFvvEE7__cloneEv,"std::__1::__function::__func<void DLCL::DLFuture<AnalysenManager*>::set<std::__1::function<AnalysenManager* ()>>(std::__1::function<AnalysenManager* ()>)::'lambda'(), std::__1::allocator<void DLCL::DLFuture<AnalysenManager*>::set<std::__1::function<AnalysenManager* ()>>(std::__1::function<AnalysenManager* ()>)::'lambda'()>, void ()>::__clone() const"
+_ZN1C1fIiEEvDTtlNS_UlT_TL0__E_EEE,"void C::f<int>(decltype (C::'lambda'(int, auto){}))"
+_ZN3xxx3yyyIvNS_1AILm0EEEZNS_2bb2cc2ddILNS_1eE1EEEvRKNS_1fERKNS_1g1hINS_1iEEERKNS_1jEfRKNS_1kEiPhEUlvE_JEEEvT1_DpT2_,"void xxx::yyy<void, xxx::A<0ul>, void xxx::bb::cc::dd<(xxx::e)1>(xxx::f const&, xxx::g::h<xxx::i> const&, xxx::j const&, float, xxx::k const&, int, unsigned char*)::'lambda'()>(void xxx::bb::cc::dd<(xxx::e)1>(xxx::f const&, xxx::g::h<xxx::i> const&, xxx::j const&, float, xxx::k const&, int, unsigned char*)::'lambda'())"
