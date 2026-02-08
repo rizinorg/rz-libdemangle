@@ -237,6 +237,7 @@ typedef struct {
 
 typedef struct {
 	PDemNode template_params;
+	PDemNode requires1, requires2;
 	PDemNode params;
 	DemStringView count;
 } ClosureTyName;

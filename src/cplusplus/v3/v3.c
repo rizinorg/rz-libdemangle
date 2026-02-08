@@ -906,25 +906,36 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		}
 		break;
 
-	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME:
-		// Closure types are lambda expressions: 'lambda'(params)#count
+	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME: {
+		// Closure types are lambda expressions: 'lambda[count]'<template_params> [ requires expr ] (params) [ requires expr ]
+		const ClosureTyName *ctn = &node->closure_ty_name;
 		dem_string_append(out, "'lambda");
-		if (node->closure_ty_name.template_params && node->closure_ty_name.template_params->children) {
+		if (ctn->count.buf && ctn->count.len > 0) {
+			dem_string_append_sv(out, ctn->count);
+		}
+		dem_string_append(out, "'");
+
+		if (ctn->template_params && ctn->template_params->children) {
 			dem_string_append(out, "<");
 			ast_pp(node->closure_ty_name.template_params, out, ctx);
 			dem_string_append(out, ">");
 		}
-		dem_string_append(out, "'(");
+		if (ctn->requires1) {
+			dem_string_append(out, " requires ");
+			ast_pp(ctn->requires1, out, ctx);
+		}
+
+		print_open(out, ctx);
 		if (node->closure_ty_name.params) {
 			ast_pp(node->closure_ty_name.params, out, ctx);
 		}
-		dem_string_append(out, ")");
-		if (node->closure_ty_name.count.buf && node->closure_ty_name.count.len > 0) {
-			dem_string_append(out, "#");
-			dem_string_append_n(out, node->closure_ty_name.count.buf, node->closure_ty_name.count.len);
+		print_close(out, ctx);
+		if (ctn->requires2) {
+			dem_string_append(out, " requires ");
+			ast_pp(ctn->requires2, out, ctx);
 		}
 		break;
-
+	}
 	case CP_DEM_TYPE_KIND_TYPE: {
 		// Check if this is a function pointer (or pointer/reference/qualified wrapping a function pointer)
 		DemNode *func_node = NULL;
@@ -3187,7 +3198,7 @@ bool rule_template_arg(DemParser *p, DemResult *r) {
 		if (!is_template_param_decl(p)) {
 			RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_type));
 		}
-		DEM_UNREACHABLE;
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_template_param_decl));
 	}
 	default:
 		RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_type));
@@ -3238,7 +3249,14 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 		}
 		Node_append(many_node, arg);
 		if (READ('Q')) {
-			DEM_UNREACHABLE;
+			// C++20 constraint expression attached to the template argument.
+			// Minimal support: parse it as an expression and ignore it.
+			// (Pretty-printing a per-argument constraint isn't currently supported.)
+			PDemNode constraint_expr = NULL;
+			if (!(CALL_RULE_N(constraint_expr, rule_expression) && READ('E'))) {
+				TRACE_RETURN_FAILURE();
+			}
+			DemNode_dtor(constraint_expr);
 		}
 	}
 	many_node->many_ty.sep = ", ";
@@ -3320,21 +3338,35 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 		TRACE_RETURN_SUCCESS;
 	}
 	if (READ_STR("Ul")) {
-		while (is_template_param_decl(p)) {
-			// TODO: Handle template_param_decl
-			DEM_UNREACHABLE;
+		// Ul <template-param-decl>* [Q <constraint-expr> E] <lambda-sig> [Q <constraint-expr> E] E <number> _
+		PDemNode template_params = NULL;
+		if (is_template_param_decl(p)) {
+			if (!CALL_MANY1_N(template_params, rule_template_param_decl, ", ", '\0')) {
+				TRACE_RETURN_FAILURE();
+			}
 		}
+		if (template_params && VecPDemNode_empty(template_params->children)) {
+			VecPNodeList_pop(&p->template_params);
+		}
+
+		PDemNode requires1 = NULL;
 		if (READ('Q')) {
-			// TODO: Handle ConstraintExpr
-			DEM_UNREACHABLE;
+			// C++20 constraint expression (templated lambda) - minimal support: parse & ignore.
+			MUST_MATCH(CALL_RULE_N(requires1, rule_expression) && READ('E'));
+			if (!requires1) {
+				TRACE_RETURN_FAILURE();
+			}
 		}
 		DemNode *params = NULL;
 		if (!READ('v')) {
-			CALL_MANY1_N(params, rule_type, ", ", 'E');
+			CALL_MANY1_N(params, rule_type, ", ", '\0');
 		}
+		PDemNode requires2 = NULL;
 		if (READ('Q')) {
-			// TODO: Handle ConstraintExpr
-			DEM_UNREACHABLE;
+			MUST_MATCH(CALL_RULE_N(requires2, rule_expression) && READ('E'));
+			if (!requires2) {
+				TRACE_RETURN_FAILURE();
+			}
 		}
 		if (!READ('E')) {
 			TRACE_RETURN_FAILURE();
@@ -3346,7 +3378,10 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 			TRACE_RETURN_FAILURE();
 		}
 		node->tag = CP_DEM_TYPE_KIND_CLOSURE_TY_NAME;
+		node->closure_ty_name.template_params = template_params;
 		node->closure_ty_name.params = params;
+		node->closure_ty_name.requires1 = requires1;
+		node->closure_ty_name.requires2 = requires2;
 		TRACE_RETURN_SUCCESS;
 	}
 	RULE_FOOT(unnamed_type_name);

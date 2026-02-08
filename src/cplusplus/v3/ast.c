@@ -156,6 +156,12 @@ void DemNode_deinit(DemNode *xs) {
 		if (xs->closure_ty_name.template_params) {
 			DemNode_dtor(xs->closure_ty_name.template_params);
 		}
+		if (xs->closure_ty_name.requires1) {
+			DemNode_dtor(xs->closure_ty_name.requires1);
+		}
+		if (xs->closure_ty_name.requires2) {
+			DemNode_dtor(xs->closure_ty_name.requires2);
+		}
 		if (xs->closure_ty_name.params) {
 			DemNode_dtor(xs->closure_ty_name.params);
 		}
@@ -374,6 +380,8 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 		break;
 	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME:
 		dst->closure_ty_name.template_params = src->closure_ty_name.template_params ? DemNode_clone(src->closure_ty_name.template_params) : NULL;
+		dst->closure_ty_name.requires1 = src->closure_ty_name.requires1 ? DemNode_clone(src->closure_ty_name.requires1) : NULL;
+		dst->closure_ty_name.requires2 = src->closure_ty_name.requires2 ? DemNode_clone(src->closure_ty_name.requires2) : NULL;
 		dst->closure_ty_name.params = src->closure_ty_name.params ? DemNode_clone(src->closure_ty_name.params) : NULL;
 		dst->closure_ty_name.count = src->closure_ty_name.count; // DemStringView, shallow copy
 		break;

@@ -13387,7 +13387,7 @@ _ZN5clang16CompilerInstance23createDefaultOutputFileEbN4llvm9StringRefES2_,"clan
 _ZN12FilteredView5matchERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES7__ptr,"FilteredView::match(std::string const&, std::string const&)"
 _ZNKSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEE3strEv_ptr,std::stringbuf::str() const
 _ZNSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEE7_M_syncEPcmm_ptr,"std::stringbuf::_M_sync(char*, unsigned long, unsigned long)"
-_ZNSt9basic_iosIcSt11char_traitsIcEE4initEPSt15basic_streambufIcS1_E_ptr,std::ios::init(std::streambuf*)
+_ZNSt9basic_iosIcSt11char_traitsIcEE4initEPSt15basic_streambufIcS1_E_ptr,"std::ios::init(std::basic_streambuf<char, std::char_traits<char>>*)"
 _ZNKSt7__cxx1111basic_regexIcNS_12regex_traitsIcEEE5flagsEv,std::regex::flags() const
 _ZNSt7__cxx1111basic_regexIcNS_12regex_traitsIcEEE10_M_compileEPKcS5_NSt15regex_constants18syntax_option_typeE,"std::regex::_M_compile(char const*, char const*, std::regex_constants::syntax_option_type)"
 _ZZN12_GLOBAL__N_115ARMDAGToDAGISel6SelectEPN4llvm6SDNodeEE7Opcodes8,(anonymous namespace)::ARMDAGToDAGISel::Select(llvm::SDNode*)::Opcodes
