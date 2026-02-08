@@ -422,40 +422,6 @@ static const char *get_node_color(CpDemTypeKind tag) {
 	}
 }
 
-__attribute__((unused)) static char *sanitize_label(const char *str, size_t len) {
-	if (!str || len == 0) {
-		return dem_str_ndup("\"\"", 2);
-	}
-
-	// Allocate buffer for escaped string (worst case: every char needs escaping)
-	char *escaped = malloc(len * 2 + 3); // +2 for quotes, +1 for null terminator
-	if (!escaped) {
-		return dem_str_ndup("\"\"", 2);
-	}
-
-	int j = 0;
-	escaped[j++] = '"';
-
-	for (size_t i = 0; i < len && str[i]; i++) {
-		char c = str[i];
-		if (c == '"' || c == '\\' || c == '\n' || c == '\r' || c == '\t') {
-			escaped[j++] = '\\';
-		}
-		escaped[j++] = c;
-
-		// Limit label length to avoid huge graphs
-		if (j > 100) {
-			memcpy(escaped + j, "...\"", 5);
-			return escaped;
-		}
-	}
-
-	escaped[j++] = '"';
-	escaped[j] = '\0';
-
-	return escaped;
-}
-
 // Helper function to sanitize filename - replace invalid characters with underscore
 static void sanitize_filename(char *str) {
 	if (!str) {

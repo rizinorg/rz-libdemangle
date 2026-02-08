@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2025-2026 RizinOrg <info@rizin.re>
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#ifndef CPDEM_param_H
-#define CPDEM_param_H
+#ifndef CPDEM_PARAM_H
+#define CPDEM_PARAM_H
 
 #include "cplusplus/vec.h"
 #include "demangler_util.h"
@@ -107,4 +107,4 @@ typedef VecT(Param) ParamVec;
 Param *param_append_to_dem_string(Param *p, DemString *ds);
 ParamVec *param_vec_append_to_dem_string(ParamVec *pv, DemString *ds);
 
-#endif // CPDEM_param_H
+#endif // CPDEM_PARAM_H

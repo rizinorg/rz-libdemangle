@@ -1522,10 +1522,3 @@ cleanup_and_return:
 	VecParam_deinit(&tparams);
 	return NULL;
 }
-
-// Restore GCC diagnostic settings
-#ifdef __GNUC__
-#ifndef __clang__
-#pragma GCC diagnostic pop
-#endif
-#endif
