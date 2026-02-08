@@ -27,8 +27,6 @@ static inline void PPContext_init(PPContext *ctx, CpDemOptions options) {
 	ctx->current_pack_max = UT32_MAX;
 }
 
-
-
 void ast_pp(DemNode *node, DemString *out, PPContext *ctx);
 void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out, PPContext *ctx);
 void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out, PPContext *ctx);

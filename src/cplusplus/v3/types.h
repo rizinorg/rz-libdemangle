@@ -121,7 +121,6 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC,
 } CpDemTypeKind;
 
-
 typedef struct {
 	const char *buf;
 	size_t len;
@@ -165,6 +164,11 @@ enum {
 	SPECIAL_SUBSTITUTION_ISTREAM,
 	SPECIAL_SUBSTITUTION_OSTREAM,
 	SPECIAL_SUBSTITUTION_IOSTREAM,
+	TEMPLATE_PARAM_DECL_TYPE, // Ty - type parameter
+	TEMPLATE_PARAM_DECL_NON_TYPE, // Tn <type> - non-type parameter
+	TEMPLATE_PARAM_DECL_TEMPLATE, // Tt <template-param-decl>* E - template template parameter
+	TEMPLATE_PARAM_DECL_PACK, // Tp <template-param-decl> - parameter pack
+	TEMPLATE_PARAM_DECL_CONSTRAINED, // Tk <name> [<template-args>] - constrained parameter
 };
 
 struct DemNode_t;
@@ -173,7 +177,7 @@ struct DemNode_t;
 typedef struct ForwardTemplateRef {
 	ut64 level; // Template parameter level
 	ut64 index; // Template parameter index
-	const void *ref;
+	struct DemNode_t *ref;
 } ForwardTemplateRef;
 
 typedef ForwardTemplateRef *PForwardTemplateRef;

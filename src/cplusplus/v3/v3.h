@@ -52,6 +52,7 @@ DECL_RULE(template_template_param);
 DECL_RULE(digit);
 DECL_RULE(template_args);
 DECL_RULE(template_arg);
+DECL_RULE(template_param_decl);
 DECL_RULE(substitution);
 DECL_RULE(seq_id);
 DECL_RULE(discriminator);

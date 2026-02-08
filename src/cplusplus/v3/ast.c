@@ -194,6 +194,7 @@ void DemNode_deinit(DemNode *xs) {
 	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION:
 	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC:
 	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC:
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL:
 		DemNode_dtor(xs->child);
 		break;
 	case CP_DEM_TYPE_KIND_ABI_TAG_TY:
@@ -364,6 +365,7 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION:
 	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC:
 	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC:
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL:
 		dst->child = src->child ? DemNode_clone(src->child) : NULL;
 		break;
 	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS:

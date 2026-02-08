@@ -684,6 +684,68 @@ static inline void pp_as_operand_ex(DemNode *node, DemString *out, Prec prec, bo
 	}
 }
 
+static void pp_template_param_decl(DemNode *node, DemString *out, PPContext *ctx) {
+	if (!node || !out) {
+		return;
+	}
+	switch (node->subtag) {
+	case TEMPLATE_PARAM_DECL_TYPE:
+		dem_string_append(out, "typename $T");
+		break;
+	case TEMPLATE_PARAM_DECL_NON_TYPE:
+		// Non-type parameter: print the type followed by $N placeholder
+		if (node->child) {
+			ast_pp(node->child, out, ctx);
+			dem_string_append(out, " $N");
+		}
+		break;
+	case TEMPLATE_PARAM_DECL_TEMPLATE:
+		// Template template parameter: template<inner-params> typename $TT
+		dem_string_append(out, "template<");
+		if (node->child) {
+			ast_pp(node->child, out, ctx);
+		}
+		dem_string_append(out, "> typename $TT");
+		break;
+	case TEMPLATE_PARAM_DECL_PACK:
+		// Parameter pack: render inner decl but with ... prefix on the name
+		if (node->child) {
+			// Render inner decl and modify to add ...
+			switch (node->child->subtag) {
+			case TEMPLATE_PARAM_DECL_TYPE:
+				dem_string_append(out, "typename ...$T");
+				break;
+			case TEMPLATE_PARAM_DECL_NON_TYPE:
+				if (node->child->child) {
+					ast_pp(node->child->child, out, ctx);
+					dem_string_append(out, " ...$N");
+				}
+				break;
+			case TEMPLATE_PARAM_DECL_TEMPLATE:
+				dem_string_append(out, "template<");
+				if (node->child->child) {
+					ast_pp(node->child->child, out, ctx);
+				}
+				dem_string_append(out, "> typename ...$TT");
+				break;
+			default:
+				dem_string_append(out, "...");
+				break;
+			}
+		}
+		break;
+	case TEMPLATE_PARAM_DECL_CONSTRAINED:
+		// Constrained parameter: just print the constraint name (concept)
+		if (node->child) {
+			ast_pp(node->child, out, ctx);
+		}
+		dem_string_append(out, " $T");
+		break;
+	default:
+		break;
+	}
+}
+
 void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 	if (!node || !out || !ctx) {
 		return;
@@ -750,6 +812,9 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		ctx->inside_template = old_inside_template;
 
 		dem_string_append(out, ">");
+		break;
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL:
+		pp_template_param_decl(node, out, ctx);
 		break;
 	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS:
 		if (node->name_with_template_args.name) {
@@ -844,7 +909,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME:
 		// Closure types are lambda expressions: 'lambda'(params)#count
 		dem_string_append(out, "'lambda");
-		if (node->closure_ty_name.template_params) {
+		if (node->closure_ty_name.template_params && node->closure_ty_name.template_params->children) {
 			dem_string_append(out, "<");
 			ast_pp(node->closure_ty_name.template_params, out, ctx);
 			dem_string_append(out, ">");
@@ -911,8 +976,8 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		break;
 
 	case CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF:
-		if (node->fwd_template_ref) {
-			ast_pp((PDemNode)node->fwd_template_ref->ref, out, ctx);
+		if (node->fwd_template_ref && node->fwd_template_ref->ref) {
+			ast_pp(node->fwd_template_ref->ref, out, ctx);
 		} else {
 			dem_string_append(out, "T_?_?");
 		}
@@ -1129,10 +1194,12 @@ static const DemSimpleEntry simple_entries[] = {
 	{ "basic_iostream<char, std::char_traits<char>, std::allocator<char>>", "iostream" },
 	{ "basic_istream<char, std::char_traits<char>, std::allocator<char>>", "istream" },
 	{ "basic_ostream<char, std::char_traits<char>, std::allocator<char>>", "ostream" },
+	{ "basic_streambuf<char, std::char_traits<char>, std::allocator<char>>", "streambuf" },
 	{ "basic_string<char, std::char_traits<char>>", "string" },
 	{ "basic_iostream<char, std::char_traits<char>>", "iostream" },
 	{ "basic_istream<char, std::char_traits<char>>", "istream" },
 	{ "basic_ostream<char, std::char_traits<char>>", "ostream" },
+	{ "basic_streambuf<char, std::char_traits<char>>", "streambuf" },
 	{ "unsigned long long", "uint64_t" },
 	{ "long long", "int64_t" },
 };
@@ -2607,10 +2674,26 @@ bool rule_source_name(DemParser *p, DemResult *r) {
 
 bool rule_class_enum_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(CLASS_ENUM_TYPE);
-	if (READ_STR("Ts") || READ_STR("Tu") || READ_STR("Te")) {
-		DEM_UNREACHABLE;
+	const char *elab_prefix = NULL;
+	if (READ_STR("Ts")) {
+		elab_prefix = "struct ";
+	} else if (READ_STR("Tu")) {
+		elab_prefix = "union ";
+	} else if (READ_STR("Te")) {
+		elab_prefix = "enum ";
 	}
-	RETURN_SUCCESS_OR_FAIL(CALL_RULE_VA_REPLACE_NODE(rule_name, NULL));
+	DemNode *name = NULL;
+	if (!CALL_RULE_N_VA(name, rule_name, NULL)) {
+		TRACE_RETURN_FAILURE();
+	}
+	if (elab_prefix) {
+		AST_APPEND_STR(elab_prefix);
+		AST_APPEND_NODE(name);
+	} else {
+		DemNode_dtor(node);
+		node = name;
+	}
+	TRACE_RETURN_SUCCESS;
 }
 
 bool rule_mangled_name(DemParser *p, DemResult *r) {
@@ -3169,7 +3252,58 @@ bool rule_template_param_decl(DemParser *p, DemResult *r) {
 	if (!READ('T')) {
 		TRACE_RETURN_FAILURE();
 	}
-	// TODO: Handle different kinds of template parameters
+	switch (PEEK()) {
+	case 'y': {
+		// Ty - type parameter
+		ADV();
+		node->subtag = TEMPLATE_PARAM_DECL_TYPE;
+		TRACE_RETURN_SUCCESS;
+	}
+	case 'n': {
+		// Tn <type> - non-type parameter
+		ADV();
+		node->subtag = TEMPLATE_PARAM_DECL_NON_TYPE;
+		MUST_MATCH(CALL_RULE_N(node->child, rule_type));
+		TRACE_RETURN_SUCCESS;
+	}
+	case 't': {
+		// Tt <template-param-decl>* E - template template parameter
+		ADV();
+		node->subtag = TEMPLATE_PARAM_DECL_TEMPLATE;
+		DemNode *inner_params = NULL;
+		CALL_MANY_N(inner_params, rule_template_param_decl, ", ", 'E');
+		node->child = inner_params;
+		if (!READ('E')) {
+			TRACE_RETURN_FAILURE();
+		}
+		TRACE_RETURN_SUCCESS;
+	}
+	case 'p': {
+		// Tp <template-param-decl> - parameter pack
+		ADV();
+		node->subtag = TEMPLATE_PARAM_DECL_PACK;
+		MUST_MATCH(CALL_RULE_N(node->child, rule_template_param_decl));
+		TRACE_RETURN_SUCCESS;
+	}
+	case 'k': {
+		// Tk <name> [<template-args>] - constrained parameter (concept)
+		ADV();
+		node->subtag = TEMPLATE_PARAM_DECL_CONSTRAINED;
+		// Parse the constraint name (source_name or nested name)
+		MUST_MATCH(CALL_RULE_N(node->child, rule_source_name));
+		// Optionally parse template args for the constraint
+		// (template args start with 'I')
+		if (PEEK() == 'I') {
+			DemNode *targs = NULL;
+			if (CALL_RULE_N(targs, rule_template_args)) {
+				Node_append(node, targs);
+			}
+		}
+		TRACE_RETURN_SUCCESS;
+	}
+	default:
+		TRACE_RETURN_FAILURE();
+	}
 	RULE_FOOT(template_param_decl);
 }
 
