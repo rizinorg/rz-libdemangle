@@ -688,62 +688,7 @@ static void pp_template_param_decl(DemNode *node, DemString *out, PPContext *ctx
 	if (!node || !out) {
 		return;
 	}
-	switch (node->subtag) {
-	case TEMPLATE_PARAM_DECL_TYPE:
-		dem_string_append(out, "typename $T");
-		break;
-	case TEMPLATE_PARAM_DECL_NON_TYPE:
-		// Non-type parameter: print the type followed by $N placeholder
-		if (node->child) {
-			ast_pp(node->child, out, ctx);
-			dem_string_append(out, " $N");
-		}
-		break;
-	case TEMPLATE_PARAM_DECL_TEMPLATE:
-		// Template template parameter: template<inner-params> typename $TT
-		dem_string_append(out, "template<");
-		if (node->child) {
-			ast_pp(node->child, out, ctx);
-		}
-		dem_string_append(out, "> typename $TT");
-		break;
-	case TEMPLATE_PARAM_DECL_PACK:
-		// Parameter pack: render inner decl but with ... prefix on the name
-		if (node->child) {
-			// Render inner decl and modify to add ...
-			switch (node->child->subtag) {
-			case TEMPLATE_PARAM_DECL_TYPE:
-				dem_string_append(out, "typename ...$T");
-				break;
-			case TEMPLATE_PARAM_DECL_NON_TYPE:
-				if (node->child->child) {
-					ast_pp(node->child->child, out, ctx);
-					dem_string_append(out, " ...$N");
-				}
-				break;
-			case TEMPLATE_PARAM_DECL_TEMPLATE:
-				dem_string_append(out, "template<");
-				if (node->child->child) {
-					ast_pp(node->child->child, out, ctx);
-				}
-				dem_string_append(out, "> typename ...$TT");
-				break;
-			default:
-				dem_string_append(out, "...");
-				break;
-			}
-		}
-		break;
-	case TEMPLATE_PARAM_DECL_CONSTRAINED:
-		// Constrained parameter: just print the constraint name (concept)
-		if (node->child) {
-			ast_pp(node->child, out, ctx);
-		}
-		dem_string_append(out, " $T");
-		break;
-	default:
-		break;
-	}
+
 }
 
 void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
@@ -1845,23 +1790,20 @@ bool rule_operator_name(DemParser *p, DemResult *r, NameState *ns) {
 	const OperatorInfo *Op = parse_operator_info(p);
 	if (Op) {
 		if (Op->Kind == CCast) {
-			bool old_not_parse = p->not_parse_template_args;
+			bool saved_not_parse = p->not_parse_template_args;
+			bool saved_permit_forward_template_refs = p->permit_forward_template_refs;
 			p->not_parse_template_args = true;
-			// Save and clear template_params so that T_ inside the
-			// conversion type creates a forward reference instead of
-			// resolving to the enclosing class's template parameters.
-			// The forward reference will be resolved later when the
-			// conversion operator's own template args (I<args>E) are parsed.
-			size_t saved_tparams_len = p->template_params.length;
-			p->template_params.length = 0;
-			bool cv_type_ok = CALL_RULE_N(node->conv_op_ty.ty, rule_type);
-			p->template_params.length = saved_tparams_len;
-			p->not_parse_template_args = old_not_parse;
-			MUST_MATCH(cv_type_ok);
+			p->permit_forward_template_refs = saved_permit_forward_template_refs || ns != NULL;
+
+			MUST_MATCH(CALL_RULE_N(node->conv_op_ty.ty, rule_type));
+
 			if (ns) {
 				ns->is_conversion_ctor_dtor = true;
 			}
 			node->tag = CP_DEM_TYPE_KIND_CONV_OP_TY;
+
+			p->not_parse_template_args = saved_not_parse;
+			p->permit_forward_template_refs = saved_permit_forward_template_refs;
 			TRACE_RETURN_SUCCESS;
 		}
 		if (Op->Kind >= Unnameable) {
@@ -2355,10 +2297,7 @@ bool rule_template_param(DemParser *p, DemResult *r) {
 		index++;
 	}
 
-	DemNode *t = template_param_get(p, level, index);
-	if (!t) {
-		// If substitution failed, create a forward reference
-		// Use a placeholder that will be resolved later
+	if (p->permit_forward_template_refs && level == 0) {
 		PForwardTemplateRef fwd = calloc(sizeof(ForwardTemplateRef), 1);
 		if (!fwd) {
 			TRACE_RETURN_FAILURE();
@@ -2378,10 +2317,25 @@ bool rule_template_param(DemParser *p, DemResult *r) {
 			fprintf(stderr, "[template_param] Created forward ref L%" PRIu64 "_%" PRIu64 " to %p\n",
 				level, index, (void *)node);
 		}
-	} else {
-		DemNode_copy(node, t);
+		TRACE_RETURN_SUCCESS;
 	}
 
+	if (level >= VecPNodeList_len(&p->template_params) || VecPNodeList_at(&p->template_params, level) == NULL || index >= VecPDemNode_len(*VecPNodeList_at(&p->template_params, level))) {
+		if (p->parse_lambda_params_at_level == level && level <= VecPNodeList_len(&p->template_params)) {
+			if (level == VecPNodeList_len(&p->template_params)) {
+				VecPNodeList_append(&p->template_params, NULL);
+			}
+			PRIMITIVE_TYPE("auto");
+			TRACE_RETURN_FAILURE();
+		}
+		TRACE_RETURN_FAILURE();
+	}
+
+	DemNode *t = template_param_get(p, level, index);
+	if (!t) {
+		TRACE_RETURN_FAILURE();
+	}
+	DemNode_copy(node, t);
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -3265,64 +3219,38 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_template_param_decl(DemParser *p, DemResult *r) {
-	RULE_HEAD(TEMPLATE_PARAM_DECL);
+DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 	if (!READ('T')) {
-		TRACE_RETURN_FAILURE();
+		return NULL;
 	}
 	switch (PEEK()) {
 	case 'y': {
 		// Ty - type parameter
 		ADV();
-		node->subtag = TEMPLATE_PARAM_DECL_TYPE;
-		TRACE_RETURN_SUCCESS;
+
 	}
 	case 'n': {
 		// Tn <type> - non-type parameter
 		ADV();
-		node->subtag = TEMPLATE_PARAM_DECL_NON_TYPE;
-		MUST_MATCH(CALL_RULE_N(node->child, rule_type));
-		TRACE_RETURN_SUCCESS;
+
 	}
 	case 't': {
 		// Tt <template-param-decl>* E - template template parameter
 		ADV();
-		node->subtag = TEMPLATE_PARAM_DECL_TEMPLATE;
-		DemNode *inner_params = NULL;
-		CALL_MANY_N(inner_params, rule_template_param_decl, ", ", 'E');
-		node->child = inner_params;
-		if (!READ('E')) {
-			TRACE_RETURN_FAILURE();
-		}
-		TRACE_RETURN_SUCCESS;
+
 	}
 	case 'p': {
 		// Tp <template-param-decl> - parameter pack
 		ADV();
-		node->subtag = TEMPLATE_PARAM_DECL_PACK;
-		MUST_MATCH(CALL_RULE_N(node->child, rule_template_param_decl));
-		TRACE_RETURN_SUCCESS;
 	}
 	case 'k': {
 		// Tk <name> [<template-args>] - constrained parameter (concept)
 		ADV();
-		node->subtag = TEMPLATE_PARAM_DECL_CONSTRAINED;
-		// Parse the constraint name (source_name or nested name)
-		MUST_MATCH(CALL_RULE_N(node->child, rule_source_name));
-		// Optionally parse template args for the constraint
-		// (template args start with 'I')
-		if (PEEK() == 'I') {
-			DemNode *targs = NULL;
-			if (CALL_RULE_N(targs, rule_template_args)) {
-				Node_append(node, targs);
-			}
-		}
-		TRACE_RETURN_SUCCESS;
 	}
 	default:
-		TRACE_RETURN_FAILURE();
+		break;
 	}
-	RULE_FOOT(template_param_decl);
+	return NULL;
 }
 
 bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
@@ -3339,13 +3267,20 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 	}
 	if (READ_STR("Ul")) {
 		// Ul <template-param-decl>* [Q <constraint-expr> E] <lambda-sig> [Q <constraint-expr> E] E <number> _
-		PDemNode template_params = NULL;
-		if (is_template_param_decl(p)) {
-			if (!CALL_MANY1_N(template_params, rule_template_param_decl, ", ", '\0')) {
-				TRACE_RETURN_FAILURE();
-			}
+
+		size_t saved_parse_lambda_params_at_level = p->parse_lambda_params_at_level;
+		p->parse_lambda_params_at_level = VecPNodeList_len(&p->template_params);
+
+		size_t saved_template_params_len = VecPNodeList_len(&p->template_params);
+		PNodeList lambda_template_params = VecPDemNode_ctor();
+		VecPNodeList_append(&p->template_params, &lambda_template_params);
+
+		PDemNode temp_params = NULL;
+		while (is_template_param_decl(p)) {
+			// TODO:
+			DEM_UNREACHABLE;
 		}
-		if (template_params && VecPDemNode_empty(template_params->children)) {
+		if (temp_params && VecPDemNode_empty(temp_params->children)) {
 			VecPNodeList_pop(&p->template_params);
 		}
 
@@ -3378,10 +3313,14 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 			TRACE_RETURN_FAILURE();
 		}
 		node->tag = CP_DEM_TYPE_KIND_CLOSURE_TY_NAME;
-		node->closure_ty_name.template_params = template_params;
+		node->closure_ty_name.template_params = temp_params;
 		node->closure_ty_name.params = params;
 		node->closure_ty_name.requires1 = requires1;
 		node->closure_ty_name.requires2 = requires2;
+
+		p->parse_lambda_params_at_level = saved_parse_lambda_params_at_level;
+		VecPNodeList_resize(&p->template_params, saved_template_params_len);
+		VecPDemNode_dtor(lambda_template_params);
 		TRACE_RETURN_SUCCESS;
 	}
 	RULE_FOOT(unnamed_type_name);

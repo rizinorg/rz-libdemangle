@@ -64,6 +64,10 @@ void DemParser_init(DemParser *p, CpDemOptions options, const char *input) {
 	VecPDemNode_init(&p->names);
 	VecPNodeList_init(&p->template_params);
 	VecPForwardTemplateRef_init(&p->forward_template_refs);
+
+	p->parse_lambda_params_at_level = SIZE_MAX;
+	p->permit_forward_template_refs = false;
+
 }
 
 void DemParser_deinit(DemParser *p) {

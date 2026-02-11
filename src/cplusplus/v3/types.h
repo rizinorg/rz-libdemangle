@@ -119,6 +119,7 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_EXPANDED_SPECIAL_SUBSTITUTION,
 	CP_DEM_TYPE_KIND_NOEXCEPT_SPEC,
 	CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC,
+	CP_DEM_TYPE_KIND_SYNTHETIC_TEMPLATE_PARAM_NAME,
 } CpDemTypeKind;
 
 typedef struct {
@@ -164,11 +165,6 @@ enum {
 	SPECIAL_SUBSTITUTION_ISTREAM,
 	SPECIAL_SUBSTITUTION_OSTREAM,
 	SPECIAL_SUBSTITUTION_IOSTREAM,
-	TEMPLATE_PARAM_DECL_TYPE, // Ty - type parameter
-	TEMPLATE_PARAM_DECL_NON_TYPE, // Tn <type> - non-type parameter
-	TEMPLATE_PARAM_DECL_TEMPLATE, // Tt <template-param-decl>* E - template template parameter
-	TEMPLATE_PARAM_DECL_PACK, // Tp <template-param-decl> - parameter pack
-	TEMPLATE_PARAM_DECL_CONSTRAINED, // Tk <name> [<template-args>] - constrained parameter
 };
 
 struct DemNode_t;
@@ -320,6 +316,17 @@ typedef struct {
 } IntegerLiteralExpr;
 
 typedef enum {
+	TEMPLATEPARAMKIND_TYPE,
+	TEMPLATEPARAMKIND_NONTYPE,
+	TEMPLATEPARAMKIND_TEMPLATE
+} TemplateParamKind;
+
+typedef struct {
+	TemplateParamKind kind;
+	size_t index;
+} SyntheticTemplateParamName;
+
+typedef enum {
 	PRIMARY,
 	PPOSTFIX,
 	UNARY,
@@ -382,6 +389,7 @@ typedef struct DemNode_t {
 		PrefixExpr prefix_expr;
 		NewExpr new_expr;
 		IntegerLiteralExpr integer_literal_expr;
+		SyntheticTemplateParamName synthetic_template_param_name;
 	};
 } DemNode;
 
@@ -445,7 +453,10 @@ typedef struct DemParser {
 	VecT(PNodeList) template_params;
 	VecT(PForwardTemplateRef) forward_template_refs;
 	bool not_parse_template_args;
+	bool permit_forward_template_refs;
 	bool trace;
+	size_t parse_lambda_params_at_level;
+	unsigned num_synthetic_template_parameters[3];
 
 	CpDemOptions options;
 } DemParser;
