@@ -104,6 +104,10 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_SIGNATURE_TYPE,
 	CP_DEM_TYPE_KIND_NV_DIGIT,
 	CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL,
+	CP_DEM_TYPE_KIND_TEMPLATE_PARAM_PACK_DECL,
+	CP_DEM_TYPE_KIND_TYPE_TEMPLATE_PARAM_DECL,
+	CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL,
+	CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL,
 	CP_DEM_TYPE_KIND_PARAMETER_PACK,
 	CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK,
 	CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION,
@@ -326,6 +330,22 @@ typedef struct {
 	size_t index;
 } SyntheticTemplateParamName;
 
+typedef struct {
+	PDemNode name, ty;
+} NonTypeTemplateParamDecl;
+
+typedef struct {
+	PDemNode name, ty;
+} TypeTemplateParamDecl;
+
+typedef struct {
+	PDemNode name, constraint;
+} ConstrainedTypeTemplateParamDecl;
+
+typedef struct {
+	PDemNode name, params, requires_node;
+} TemplateParamDecl;
+
 typedef enum {
 	PRIMARY,
 	PPOSTFIX,
@@ -390,6 +410,9 @@ typedef struct DemNode_t {
 		NewExpr new_expr;
 		IntegerLiteralExpr integer_literal_expr;
 		SyntheticTemplateParamName synthetic_template_param_name;
+		NonTypeTemplateParamDecl non_type_template_param_decl;
+		ConstrainedTypeTemplateParamDecl constrained_type_template_param_decl;
+		TemplateParamDecl template_param_decl;
 	};
 } DemNode;
 

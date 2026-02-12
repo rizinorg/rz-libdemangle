@@ -688,7 +688,6 @@ static void pp_template_param_decl(DemNode *node, DemString *out, PPContext *ctx
 	if (!node || !out) {
 		return;
 	}
-
 }
 
 void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
@@ -3219,7 +3218,17 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 	TRACE_RETURN_SUCCESS;
 }
 
+static DemNode *append_synthetic_template_parameter(DemParser *p, NodeList *params, TemplateParamKind kind) {
+	size_t index = p->num_synthetic_template_parameters[(size_t)kind]++;
+	DemNode *param = DemNode_ctor(CP_DEM_TYPE_KIND_SYNTHETIC_TEMPLATE_PARAM_NAME, CUR(), 0);
+	if (param && params) {
+		VecPDemNode_append(params, &param);
+	}
+	return param;
+}
+
 DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
+	const char *saved_pos = CUR();
 	if (!READ('T')) {
 		return NULL;
 	}
@@ -3227,26 +3236,123 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 	case 'y': {
 		// Ty - type parameter
 		ADV();
-
-	}
-	case 'n': {
-		// Tn <type> - non-type parameter
-		ADV();
-
-	}
-	case 't': {
-		// Tt <template-param-decl>* E - template template parameter
-		ADV();
-
-	}
-	case 'p': {
-		// Tp <template-param-decl> - parameter pack
-		ADV();
+		DemNode *name = append_synthetic_template_parameter(p, params, TEMPLATEPARAMKIND_TYPE);
+		if (!name) {
+			return NULL;
+		}
+		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_TYPE_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
+		if (!decl) {
+			return NULL;
+		}
+		decl->child = name;
+		return decl;
 	}
 	case 'k': {
 		// Tk <name> [<template-args>] - constrained parameter (concept)
 		ADV();
+		PDemNode constraint = NULL;
+		{
+			DemResult result = { 0 };
+			if (!rule_name(p, &result, NULL) || !result.output) {
+				DemNode_dtor(name);
+				return NULL;
+			}
+			constraint = result.output;
+		}
+		DemNode *name = append_synthetic_template_parameter(p, params, TEMPLATEPARAMKIND_TYPE);
+		if (!name) {
+			return NULL;
+		}
+		PDemNode decl = DemNode_ctor(CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL,  saved_pos, CUR() - saved_pos);
+		if (!decl) {
+			DemNode_dtor(name);
+			DemNode_dtor(constraint);
+			return NULL;
+		}
+		decl->constrained_type_template_param_decl.name = name;
+		decl->constrained_type_template_param_decl.constraint = constraint;
+		return decl;
 	}
+	case 'n': {
+		// Tn <type> - non-type parameter
+		ADV();
+		DemNode *name = append_synthetic_template_parameter(p, params, TEMPLATEPARAMKIND_NONTYPE);
+		if (!name) {
+			return NULL;
+		}
+		DemResult result = { 0 };
+		if (!rule_type(p, &result) || !result.output) {
+			DemNode_dtor(name);
+			return NULL;
+		}
+		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL,  saved_pos, CUR() - saved_pos);
+		if (!decl) {
+			return NULL;
+		}
+		decl->non_type_template_param_decl.name = name;
+		decl->non_type_template_param_decl.ty = ty;
+		return decl;
+	}
+	case 't': {
+		// Tt <template-param-decl>* E - template template parameter
+		ADV();
+		PDemNode inner_params = DemNode_ctor(CP_DEM_TYPE_KIND_MANY,  CUR(), 0);
+		if (!inner_params) {
+			return NULL;
+		}
+		PDemNode requires_node = NULL;
+		while (!READ('E')) {
+			PDemNode param = parse_template_param_decl(p, NULL);
+			if (!param) {
+				DemNode_dtor(inner_params);
+				return NULL;
+			}
+			Node_append(inner_params, param);
+			if (READ('Q')) {
+				DemResult requires_result = { 0 };
+				if (!rule_expression(p, &requires_result) && READ('E')) {
+					DemNode_dtor(inner_params);
+					return NULL;
+				}
+			}
+		}
+		inner_params->many_ty.sep = ", ";
+		inner_params->val.len = CUR() - inner_params->val.buf;
+
+		DemNode *name = append_synthetic_template_parameter(p, params, TEMPLATEPARAMKIND_NONTYPE);
+		if (!name) {
+			DemNode_dtor(inner_params);
+			DemNode_dtor(requires_node);
+			return NULL;
+		}
+		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL,  saved_pos, CUR() - saved_pos);
+		if (!decl) {
+			DemNode_dtor(name);
+			DemNode_dtor(inner_params);
+			DemNode_dtor(requires_node);
+			return NULL;
+		}
+		decl->template_param_decl.name = name;
+		decl->template_param_decl.params = inner_params;
+		decl->template_param_decl.requires_node = requires_node;
+		return decl;
+	}
+	case 'p': {
+		// Tp <template-param-decl> - parameter pack
+		ADV();
+		PDemNode param = parse_template_param_decl(p, NULL);
+		if (!param) {
+			return NULL;
+		}
+		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_TEMPLATE_PARAM_PACK_DECL, CUR(), 0);
+		if (!decl) {
+			DemNode_dtor(param);
+			return NULL;
+		}
+		decl->child = param;
+		return decl;
+	}
+
 	default:
 		break;
 	}
