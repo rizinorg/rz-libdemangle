@@ -527,4 +527,4 @@ __ZTIZL10vpn_statusvE3$_0,typeinfo for vpn_status()::$_0
 __ZTIZL11ztna_statusiE3$_1,typeinfo for ztna_status(int)::$_1
 __ZTIZN8sbconfig12LoadFromFileERNS_6sbconfEE3$_0,typeinfo for sbconfig::LoadFromFile(sbconfig::sbconf&)::$_0
 __ZTIZN8sbconfig12ModifyConfigERKNS_6sbconfEE3$_1,typeinfo for sbconfig::ModifyConfig(sbconfig::sbconf const&)::$_1
-_ZTSz,typeinfo name for ellipsis
+_ZTSz,typeinfo name for ...

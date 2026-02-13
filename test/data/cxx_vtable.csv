@@ -1489,10 +1489,10 @@ _ZTVN4llvm2cl3optIbLb0ENS0_6parserIbEEEE,"vtable for llvm::cl::opt<bool, false, 
 _ZTVN4llvm2cl3optIN12_GLOBAL__N_114VersionPrinterELb1ENS0_6parserIbEEEE,"vtable for llvm::cl::opt<(anonymous namespace)::VersionPrinter, true, llvm::cl::parser<bool>>"
 _ZTVN4llvm2cl3optIN12_GLOBAL__N_111HelpPrinterELb1ENS0_6parserIbEEEE,"vtable for llvm::cl::opt<(anonymous namespace)::HelpPrinter, true, llvm::cl::parser<bool>>"
 _ZTVN4llvm2cl3optISsLb1ENS0_6parserISsEEEE,"vtable for llvm::cl::opt<std::string, true, llvm::cl::parser<std::string>>"
-_ZTTNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr,VTT for std::stringstream
-_ZTTNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEE_ptr,VTT for std::istringstream
-_ZTTNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEE_ptr,VTT for std::ostringstream
-_ZTVNSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEEE_ptr,vtable for std::stringbuf
-_ZTVNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr,vtable for std::stringstream
-_ZTVNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEE_ptr,vtable for std::istringstream
-_ZTVNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEE_ptr,vtable for std::ostringstream
+_ZTTNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr,"VTT for std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char>>"
+_ZTTNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEE_ptr,"VTT for std::__cxx11::basic_istringstream<char, std::char_traits<char>, std::allocator<char>>"
+_ZTTNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEE_ptr,"VTT for std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char>>"
+_ZTVNSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEEE_ptr,"vtable for std::__cxx11::basic_stringbuf<char, std::char_traits<char>, std::allocator<char>>"
+_ZTVNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEE_ptr,"vtable for std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char>>"
+_ZTVNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEE_ptr,"vtable for std::__cxx11::basic_istringstream<char, std::char_traits<char>, std::allocator<char>>"
+_ZTVNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEE_ptr,"vtable for std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char>>"

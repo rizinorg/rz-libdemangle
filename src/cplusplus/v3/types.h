@@ -124,6 +124,7 @@ typedef enum CpDemTypeKind_t {
 	CP_DEM_TYPE_KIND_NOEXCEPT_SPEC,
 	CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC,
 	CP_DEM_TYPE_KIND_SYNTHETIC_TEMPLATE_PARAM_NAME,
+	CP_DEM_TYPE_KIND_CONSTRAINED_PLACEHOLDER,
 } CpDemTypeKind;
 
 typedef struct {
@@ -209,8 +210,10 @@ typedef struct {
 	PDemNode name;
 	PDemNode requires_node;
 	PDemNode exception_spec;
+	PDemNode enable_if_attrs; // Ua9enable_if vendor attribute: [enable_if:cond1, cond2]
 	CvQualifiers cv_qualifiers;
 	RefQualifiers ref_qualifiers;
+	bool has_explicit_object_param; // C++23 deducing this: first param printed with "this " prefix
 } FunctionTy;
 
 typedef struct {
@@ -475,8 +478,11 @@ typedef struct DemParser {
 	PNodeList outer_template_params;
 	VecT(PNodeList) template_params;
 	VecT(PForwardTemplateRef) forward_template_refs;
+	NodeList orphan_nodes; // Nodes orphaned by nested encoding save/restore (freed at deinit)
+	VecT(PForwardTemplateRef) orphan_fwd_refs; // ForwardTemplateRefs orphaned by nested encoding (freed at deinit)
 	bool not_parse_template_args;
 	bool permit_forward_template_refs;
+	bool in_constraint_expr; // When true, unresolvable template params are printed as raw names (e.g., TL0_)
 	bool trace;
 	size_t parse_lambda_params_at_level;
 	unsigned num_synthetic_template_parameters[3];
@@ -487,6 +493,7 @@ typedef struct DemParser {
 typedef struct {
 	bool is_conversion_ctor_dtor;
 	bool end_with_template_args;
+	bool has_explicit_object_param; // C++23 deducing this: H after N in nested-name
 	size_t fwd_template_ref_begin;
 	CvQualifiers cv_qualifiers;
 	RefQualifiers ref_qualifiers;

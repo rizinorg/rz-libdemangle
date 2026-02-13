@@ -62,8 +62,10 @@ void DemParser_init(DemParser *p, CpDemOptions options, const char *input) {
 	p->outer_template_params = VecF(PDemNode, ctor)();
 	VecPDemNode_init(&p->detected_types);
 	VecPDemNode_init(&p->names);
+	VecPDemNode_init(&p->orphan_nodes);
 	VecPNodeList_init(&p->template_params);
 	VecPForwardTemplateRef_init(&p->forward_template_refs);
+	VecPForwardTemplateRef_init(&p->orphan_fwd_refs);
 
 	p->parse_lambda_params_at_level = SIZE_MAX;
 	p->permit_forward_template_refs = false;
@@ -78,9 +80,11 @@ void DemParser_deinit(DemParser *p) {
 	// Deinitialize metadata fields
 	VecF(PDemNode, deinit)(&p->detected_types);
 	VecF(PDemNode, deinit)(&p->names);
+	VecF(PDemNode, deinit)(&p->orphan_nodes);
 	VecF(PDemNode, dtor)(p->outer_template_params);
 	VecF(PNodeList, deinit)(&p->template_params);
 	VecF(PForwardTemplateRef, deinit)(&p->forward_template_refs);
+	VecF(PForwardTemplateRef, deinit)(&p->orphan_fwd_refs);
 
 	memset(p, 0, sizeof(DemParser));
 }

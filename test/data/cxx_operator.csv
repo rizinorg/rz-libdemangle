@@ -19,7 +19,7 @@ _ZNK9QDateTimeltERKS__ptr,QDateTime::operator<(QDateTime const&) const
 _ZNSolsEPSt15basic_streambufIcSt11char_traitsIcEE_ptr,"std::ostream::operator<<(std::basic_streambuf<char, std::char_traits<char>>*)"
 _Znwm_ptr,operator new(unsigned long)
 _ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc_ptr,"std::basic_ostream<char, std::char_traits<char>>& std::operator<<<std::char_traits<char>>(std::basic_ostream<char, std::char_traits<char>>&, char const*)"
-___ZZN12foonamespace3Foo13inside_lambdaEvENKUlvE_clEv_block_invoke_7636,foonamespace::Foo::inside_lambda()::'lambda'()::operator()() const block_invoke_7636
+___ZZN12foonamespace3Foo13inside_lambdaEvENKUlvE_clEv_block_invoke_7636,invocation function for block in foonamespace::Foo::inside_lambda()::'lambda'()::operator()() const
 _ZN1SgtEi,S::operator>(int)
 _ZrsI1QEiT_i,"int operator>><Q>(Q, int)"
 _ZdlPv,operator delete(void*)
@@ -325,9 +325,9 @@ _ZN1XIZ1fIiEvOT_EUlOT_DpT0_E_EclIJEEEvDpT_,"void X<void f<int>(int&&)::'lambda'(
 _ZN1XIZ1fIiEvOT_EUlS2_DpT0_E_EclIJEEEvDpT_,"void X<void f<int>(int&&)::'lambda'(int&&, auto...)>::operator()<>()"
 _ZZZZN6abcdef9abcdefghi29abcdefabcdefabcdefabcefabcdef27xxxxxxxxxxxxxxxxxxxxxxxxxxxEN4absl8DurationERKNSt3__u12basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEEPNS1_19yyyyyyyyyyyyyyyyyyyEENK3$_5clEvENKUlvE_clEvE6zzzzzz,"abcdef::abcdefghi::abcdefabcdefabcdefabcefabcdef::xxxxxxxxxxxxxxxxxxxxxxxxxxx(absl::Duration, std::__u::basic_string<char, std::__u::char_traits<char>, std::__u::allocator<char>> const&, abcdef::abcdefghi::abcdefabcdefabcdefabcefabcdef::yyyyyyyyyyyyyyyyyyy*)::$_5::operator()() const::'lambda'()::operator()() const::zzzzzz"
 _Zcv1BIRT_EIS1_E,operator B<><>
-_ZZN5test71fIiEEvvENKUlTyQaa1CIT_E1CITL0__ET0_E_clIiiEEDaS3_Q1CIDtfp_EE,"auto void test7::f<int>()::'lambda'<typename $T> requires C<T> && C<TL0_> (auto)::operator()<int, int>(auto) const requires C<decltype (fp)>"
-_ZZN5test71fIiEEvvENKUlTyQaa1CIT_E1CITL0__ET0_E0_clIiiEEDaS3_Qaa1CIDtfp_EELb1E,"auto void test7::f<int>()::'lambda0'<typename $T> requires C<T> && C<TL0_> (auto)::operator()<int, int>(auto) const requires C<decltype (fp)> && true"
-_ZZN5test71fIiEEvvENKUlTyQaa1CIT_E1CITL0__ET0_E1_clIiiEEDaS3_Q1CIDtfp_EE,"auto void test7::f<int>()::'lambda1'<typename $T> requires C<T> && C<TL0_> (auto)::operator()<int, int>(auto) const requires C<decltype (fp)>"
+_ZZN5test71fIiEEvvENKUlTyQaa1CIT_E1CITL0__ET0_E_clIiiEEDaS3_Q1CIDtfp_EE,"auto void test7::f<int>()::'lambda'<typename $T> requires C<T> && C<TL0_> (auto)::operator()<int, int>(auto) const requires C<decltype(fp)>"
+_ZZN5test71fIiEEvvENKUlTyQaa1CIT_E1CITL0__ET0_E0_clIiiEEDaS3_Qaa1CIDtfp_EELb1E,"auto void test7::f<int>()::'lambda0'<typename $T> requires C<T> && C<TL0_> (auto)::operator()<int, int>(auto) const requires C<decltype(fp)> && true"
+_ZZN5test71fIiEEvvENKUlTyQaa1CIT_E1CITL0__ET0_E1_clIiiEEDaS3_Q1CIDtfp_EE,"auto void test7::f<int>()::'lambda1'<typename $T> requires C<T> && C<TL0_> (auto)::operator()<int, int>(auto) const requires C<decltype(fp)>"
 _ZZN5test71fIiEEvvENKUlTyT0_E_clIiiEEDaS1_,"auto void test7::f<int>()::'lambda'<typename $T>(auto)::operator()<int, int>(auto) const"
 _ZNH3FooclERKS_,Foo::operator()(this Foo const&)
 __ZNKSt3__19nullptr_tcvPT_IcEEv,std::__1::nullptr_t::operator char*<char>() const

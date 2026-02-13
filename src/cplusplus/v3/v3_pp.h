@@ -14,6 +14,10 @@ typedef struct {
 
 	ut32 current_pack_index;
 	ut32 current_pack_max;
+
+	int recursion_depth; // Guard against infinite recursion in AST printing
+
+	const void *resolving_fwd_ref; // Currently resolving FWD_TEMPLATE_REF (cycle detection)
 } PPContext;
 
 static inline void PPContext_init(PPContext *ctx, CpDemOptions options) {
@@ -25,6 +29,7 @@ static inline void PPContext_init(PPContext *ctx, CpDemOptions options) {
 	ctx->inside_template = false;
 	ctx->current_pack_index = UT32_MAX;
 	ctx->current_pack_max = UT32_MAX;
+	ctx->recursion_depth = 0;
 }
 
 void ast_pp(DemNode *node, DemString *out, PPContext *ctx);

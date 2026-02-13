@@ -131,7 +131,31 @@ static bool pp_init_list_as_string(PDemNode node, DemString *out, PPContext *ctx
 	return false;
 }
 
-// Helper to print pointer/reference/qualifier decorators
+// Check if a node is an ObjC "id<Proto>" type:
+// vendor-ext-qualified with "objcproto" prefix and inner type "objc_object".
+// In ObjC, id is already a pointer (objc_object*), so pointer decorators should be suppressed.
+static bool is_objc_id_protocol_type(PDemNode node) {
+	if (!node || node->tag != CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE) {
+		return false;
+	}
+	const char *vext = node->vendor_ext_qualified_ty.vendor_ext.buf;
+	size_t vext_len = node->vendor_ext_qualified_ty.vendor_ext.len;
+	if (!vext || vext_len <= 9 || memcmp(vext, "objcproto", 9) != 0) {
+		return false;
+	}
+	// The inner type may be wrapped in a QUALIFIED_TYPE from rule_qualified_type.
+	// Unwrap it to find the actual type name.
+	DemNode *inner = node->vendor_ext_qualified_ty.inner_type;
+	if (inner && inner->tag == CP_DEM_TYPE_KIND_QUALIFIED_TYPE) {
+		inner = inner->qualified_ty.inner_type;
+	}
+	return (inner &&
+		inner->tag == CP_DEM_TYPE_KIND_PRIMITIVE_TY &&
+		inner->primitive_ty.name.len == 11 &&
+		inner->primitive_ty.name.buf &&
+		memcmp(inner->primitive_ty.name.buf, "objc_object", 11) == 0);
+}
+
 static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_tag, PDemNode *pbase_ty, PPContext *ctx) {
 	if (!node || !out) {
 		return;
@@ -154,7 +178,11 @@ static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_ta
 		// Then add our decorator
 		switch (node->subtag) {
 		case POINTER_TYPE:
-			dem_string_append(out, "*");
+			// Suppress pointer decorator for ObjC id<Proto> types:
+			// id is already a pointer (objc_object*), so P+objcproto+objc_object = id<Proto>
+			if (!is_objc_id_protocol_type(AST(0))) {
+				dem_string_append(out, "*");
+			}
 			break;
 		case REFERENCE_TYPE:
 			dem_string_append(out, "&");
@@ -309,13 +337,20 @@ static void pp_type_with_quals(PDemNode node, DemString *out, PPContext *ctx) {
 		}
 		dem_string_deinit(&array_dem_string);
 	} else {
+		size_t saved_len = dem_string_length(out);
 		ast_pp(base_node, out, ctx);
-		if (dem_string_non_empty(&qualifiers_string)) {
+		size_t out_len = dem_string_length(out);
+		// If the base type produced no output (e.g., due to a circular forward template
+		// reference cycle being detected), skip qualifiers too - the entire type wrapper
+		// including its pointer/reference qualifier is implicit/deduced.
+		if (out_len == saved_len && base_node &&
+			base_node->tag == CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF) {
+			// Skip qualifiers - cycle was detected inside
+		} else if (dem_string_non_empty(&qualifiers_string)) {
 			// Reference collapsing (C++ rules):
 			// When a reference qualifier is about to be appended and the base type
 			// already ends with a reference (e.g., from a pack expansion element),
 			// apply collapsing: & + & = &, & + && = &, && + & = &, && + && = &&.
-			size_t out_len = dem_string_length(out);
 			size_t q_len = qualifiers_string.len;
 			bool out_ends_with_ref = (out_len >= 1 && out->buf[out_len - 1] == '&');
 			bool quals_is_ref = (q_len >= 1 && qualifiers_string.buf[0] == '&');
@@ -382,20 +417,40 @@ static void pp_pack_all_elements(PDemNode node, DemString *out, PPContext *pp_ct
 }
 
 // Resolve a PARAMETER_PACK node to its current element during pack expansion.
-// Returns the resolved element node, or NULL if not in pack expansion or not a pack.
+// Returns the resolved element node, or NULL if not a pack or pack is empty.
+// When current_pack_index == UT32_MAX (initial iteration), peeks at element 0
+// to determine the type without advancing the iteration state.
+// Also follows FWD_TEMPLATE_REF indirection to find the underlying pack.
 static PDemNode resolve_pack_element(PDemNode node, PPContext *pp_ctx) {
-	if (!node || node->tag != CP_DEM_TYPE_KIND_PARAMETER_PACK) {
+	if (!node) {
+		return NULL;
+	}
+	// Follow FWD_TEMPLATE_REF to the resolved node
+	if (node->tag == CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF) {
+		if (node->fwd_template_ref && node->fwd_template_ref->ref) {
+			node = node->fwd_template_ref->ref;
+		} else {
+			return NULL;
+		}
+	}
+	if (node->tag != CP_DEM_TYPE_KIND_PARAMETER_PACK) {
 		return NULL;
 	}
 	if (!node->child_ref || node->child_ref->tag != CP_DEM_TYPE_KIND_MANY) {
 		return NULL;
 	}
-	if (pp_ctx->current_pack_index == UT32_MAX) {
+	const DemNode *many_node = node->child_ref;
+	size_t count = VecPDemNode_len(many_node->children);
+	if (count == 0) {
 		return NULL;
 	}
-	const DemNode *many_node = node->child_ref;
-	if (pp_ctx->current_pack_index < VecPDemNode_len(many_node->children)) {
-		PDemNode *child = VecPDemNode_at(many_node->children, pp_ctx->current_pack_index);
+	ut32 idx = pp_ctx->current_pack_index;
+	if (idx == UT32_MAX) {
+		// Initial iteration: peek at first element
+		idx = 0;
+	}
+	if (idx < count) {
+		PDemNode *child = VecPDemNode_at(many_node->children, idx);
 		if (child && *child) {
 			return *child;
 		}
@@ -556,6 +611,28 @@ static bool extract_function_type(DemNode *node, DemNode **out_func_node) {
 	return false;
 }
 
+/// Check if a type is pointer/reference to an array type.
+/// Returns true if the outermost non-qualified wrapper is a pointer/reference to an array.
+static bool is_pointer_to_array_type(DemNode *node) {
+	if (!node) {
+		return false;
+	}
+	if (node->tag == CP_DEM_TYPE_KIND_TYPE && node->subtag != SUB_TAG_INVALID && AST(0)) {
+		DemNode *inner = AST(0);
+		if (inner->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE) {
+			return true;
+		}
+		if (inner->tag == CP_DEM_TYPE_KIND_QUALIFIED_TYPE &&
+			inner->qualified_ty.inner_type &&
+			inner->qualified_ty.inner_type->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE) {
+			return true;
+		}
+		// Nested pointer/reference to array
+		return is_pointer_to_array_type(inner);
+	}
+	return false;
+}
+
 static void pp_function_ty_mod_return_fn(PPFnContext *, DemString *);
 static void pp_function_ty_quals(PPFnContext *ctx, DemString *out);
 
@@ -615,6 +692,10 @@ static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out) {
 	// Print parameters
 	dem_string_append(out, "(");
 	if (ft->params && (ctx->pp_ctx->opts & DEM_OPT_PARAMS)) {
+		// C++23 deducing this: prefix first parameter with "this "
+		if (ft->has_explicit_object_param) {
+			dem_string_append(out, "this ");
+		}
 		ast_pp(ft->params, out, ctx->pp_ctx);
 	}
 	dem_string_append(out, ")");
@@ -627,6 +708,19 @@ static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out) {
 	if (ft->exception_spec) {
 		dem_string_append(out, " ");
 		ast_pp(ft->exception_spec, out, ctx->pp_ctx);
+	}
+
+	// Print enable_if attribute: [enable_if:cond1, cond2]
+	if (ft->enable_if_attrs) {
+		dem_string_append(out, " [enable_if:");
+		ast_pp(ft->enable_if_attrs, out, ctx->pp_ctx);
+		dem_string_append(out, "]");
+	}
+
+	// Print requires clause
+	if (ft->requires_node) {
+		dem_string_append(out, " requires ");
+		ast_pp(ft->requires_node, out, ctx->pp_ctx);
 	}
 }
 
@@ -712,38 +806,82 @@ static void pp_template_param_decl_inner(DemNode *node, DemString *out, PPContex
 	}
 	switch (node->tag) {
 	case CP_DEM_TYPE_KIND_TYPE_TEMPLATE_PARAM_DECL:
-		dem_string_append(out, "typename");
+		dem_string_append(out, "typename ");
 		if (is_pack) {
-			dem_string_append(out, " ...");
-		} else {
-			dem_string_append(out, " ");
+			dem_string_append(out, "...");
 		}
 		ast_pp(node->child, out, ctx);
 		break;
 	case CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL:
 		if (node->constrained_type_template_param_decl.constraint) {
 			ast_pp(node->constrained_type_template_param_decl.constraint, out, ctx);
+			dem_string_append(out, " ");
 		}
 		if (is_pack) {
-			dem_string_append(out, " ...");
-		} else {
-			dem_string_append(out, " ");
+			dem_string_append(out, "...");
 		}
 		if (node->constrained_type_template_param_decl.name) {
 			ast_pp(node->constrained_type_template_param_decl.name, out, ctx);
 		}
 		break;
 	case CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL:
-		if (node->non_type_template_param_decl.ty) {
-			ast_pp(node->non_type_template_param_decl.ty, out, ctx);
-		}
-		if (is_pack) {
-			dem_string_append(out, " ...");
+		if (node->non_type_template_param_decl.ty &&
+			is_pointer_to_array_type(node->non_type_template_param_decl.ty)) {
+			// Pointer/reference to array with a name: need C declarator syntax
+			// e.g. int (*$N) [3] instead of int (*) [3] $N
+			PDemNode ty = node->non_type_template_param_decl.ty;
+			DemString qualifiers_string = { 0 };
+			dem_string_init(&qualifiers_string);
+			PDemNode base_node = NULL;
+			pp_type_quals(ty, &qualifiers_string, CP_DEM_TYPE_KIND_UNKNOWN, &base_node, ctx);
+
+			DemString array_dem_string = { 0 };
+			dem_string_init(&array_dem_string);
+			PDemNode array_inner_base = NULL;
+			PDemNode array_node = base_node;
+			if (base_node && base_node->tag == CP_DEM_TYPE_KIND_QUALIFIED_TYPE &&
+				base_node->qualified_ty.inner_type &&
+				base_node->qualified_ty.inner_type->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE) {
+				array_node = base_node->qualified_ty.inner_type;
+			}
+			pp_array_type_dimension(array_node, &array_dem_string, &array_inner_base, ctx);
+			ast_pp(array_inner_base, out, ctx);
+			if (base_node && base_node->tag == CP_DEM_TYPE_KIND_QUALIFIED_TYPE) {
+				pp_cv_qualifiers(base_node->qualified_ty.qualifiers, out, ctx);
+			}
+			if (dem_string_non_empty(&qualifiers_string) ||
+				is_pack ||
+				node->non_type_template_param_decl.name) {
+				dem_string_append(out, " (");
+				if (dem_string_non_empty(&qualifiers_string)) {
+					reorder_qualifiers_for_array_fn_ref(&qualifiers_string);
+					dem_string_concat(out, &qualifiers_string);
+				}
+				if (is_pack) {
+					dem_string_append(out, "...");
+				}
+				if (node->non_type_template_param_decl.name) {
+					ast_pp(node->non_type_template_param_decl.name, out, ctx);
+				}
+				dem_string_append(out, ")");
+			}
+			if (dem_string_non_empty(&array_dem_string)) {
+				dem_string_append(out, " ");
+				dem_string_concat(out, &array_dem_string);
+			}
+			dem_string_deinit(&array_dem_string);
+			dem_string_deinit(&qualifiers_string);
 		} else {
-			dem_string_append(out, " ");
-		}
-		if (node->non_type_template_param_decl.name) {
-			ast_pp(node->non_type_template_param_decl.name, out, ctx);
+			if (node->non_type_template_param_decl.ty) {
+				ast_pp(node->non_type_template_param_decl.ty, out, ctx);
+				dem_string_append(out, " ");
+			}
+			if (is_pack) {
+				dem_string_append(out, "...");
+			}
+			if (node->non_type_template_param_decl.name) {
+				ast_pp(node->non_type_template_param_decl.name, out, ctx);
+			}
 		}
 		break;
 	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL:
@@ -751,11 +889,9 @@ static void pp_template_param_decl_inner(DemNode *node, DemString *out, PPContex
 		if (node->template_param_decl.params) {
 			ast_pp(node->template_param_decl.params, out, ctx);
 		}
-		dem_string_append(out, "> typename");
+		dem_string_append(out, "> typename ");
 		if (is_pack) {
-			dem_string_append(out, " ...");
-		} else {
-			dem_string_append(out, " ");
+			dem_string_append(out, "...");
 		}
 		if (node->template_param_decl.name) {
 			ast_pp(node->template_param_decl.name, out, ctx);
@@ -773,9 +909,8 @@ static void pp_template_param_decl(DemNode *node, DemString *out, PPContext *ctx
 	if (!node || !out) {
 		return;
 	}
-	// When inside template args, template param decls define the parameter kind
-	// but should not be displayed (only the actual arguments are shown).
-	// They are only displayed in lambda/closure template parameter lists.
+	// In template args context, param decls define parameter kinds
+	// but produce no output (only actual args are shown).
 	if (ctx->inside_template) {
 		return;
 	}
@@ -786,6 +921,11 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 	if (!node || !out || !ctx) {
 		return;
 	}
+	// Guard against infinite recursion (e.g. from circular template refs)
+	if (ctx->recursion_depth > 256) {
+		return;
+	}
+	ctx->recursion_depth++;
 
 	switch (node->tag) {
 	case CP_DEM_TYPE_KIND_PRIMITIVE_TY:
@@ -873,11 +1013,8 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			break;
 		}
 		dem_string_append(out, prefix);
-		size_t idx = node->synthetic_template_param_name.index;
-		if (idx > 0) {
-			char buf[32];
-			snprintf(buf, sizeof(buf), "%zu", idx - 1);
-			dem_string_append(out, buf);
+		if (node->synthetic_template_param_name.index > 0) {
+			dem_string_appendf(out, "%zu", node->synthetic_template_param_name.index - 1);
 		}
 		break;
 	}
@@ -899,12 +1036,55 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 
 	case CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE:
 		if (node->vendor_ext_qualified_ty.inner_type) {
-			ast_pp(node->vendor_ext_qualified_ty.inner_type, out, ctx);
-			if (node->vendor_ext_qualified_ty.vendor_ext.buf) {
-				dem_string_append(out, " ");
-				dem_string_append_n(out,
-					node->vendor_ext_qualified_ty.vendor_ext.buf,
-					node->vendor_ext_qualified_ty.vendor_ext.len);
+			const char *vext = node->vendor_ext_qualified_ty.vendor_ext.buf;
+			size_t vext_len = node->vendor_ext_qualified_ty.vendor_ext.len;
+			// Detect ObjC protocol qualifier: "objcproto<source-name>"
+			// e.g. "objcproto1A" encodes protocol "A".
+			// When inner type is "objc_object", print as "id<Proto>",
+			// otherwise print as "InnerType<Proto>".
+			if (vext && vext_len > 9 && memcmp(vext, "objcproto", 9) == 0) {
+				const char *proto_start = vext + 9;
+				size_t proto_remaining = vext_len - 9;
+				// Parse the length prefix of the protocol name
+				size_t proto_name_len = 0;
+				size_t digits = 0;
+				while (digits < proto_remaining && proto_start[digits] >= '0' && proto_start[digits] <= '9') {
+					proto_name_len = proto_name_len * 10 + (proto_start[digits] - '0');
+					digits++;
+				}
+				const char *proto_name = proto_start + digits;
+				if (digits > 0 && digits + proto_name_len <= proto_remaining) {
+					DemNode *inner = node->vendor_ext_qualified_ty.inner_type;
+					// Unwrap QUALIFIED_TYPE wrapper if present
+					DemNode *actual_inner = inner;
+					if (actual_inner && actual_inner->tag == CP_DEM_TYPE_KIND_QUALIFIED_TYPE) {
+						actual_inner = actual_inner->qualified_ty.inner_type;
+					}
+					bool is_id = (actual_inner &&
+						actual_inner->tag == CP_DEM_TYPE_KIND_PRIMITIVE_TY &&
+						actual_inner->primitive_ty.name.len == 11 &&
+						actual_inner->primitive_ty.name.buf &&
+						memcmp(actual_inner->primitive_ty.name.buf, "objc_object", 11) == 0);
+					if (is_id) {
+						dem_string_append(out, "id");
+					} else {
+						ast_pp(inner, out, ctx);
+					}
+					dem_string_append(out, "<");
+					dem_string_append_n(out, proto_name, proto_name_len);
+					dem_string_append(out, ">");
+				} else {
+					// Fallback: can't parse protocol name
+					ast_pp(node->vendor_ext_qualified_ty.inner_type, out, ctx);
+					dem_string_append(out, " ");
+					dem_string_append_n(out, vext, vext_len);
+				}
+			} else {
+				ast_pp(node->vendor_ext_qualified_ty.inner_type, out, ctx);
+				if (vext) {
+					dem_string_append(out, " ");
+					dem_string_append_n(out, vext, vext_len);
+				}
 			}
 			if (node->vendor_ext_qualified_ty.template_args) {
 				ast_pp(node->vendor_ext_qualified_ty.template_args, out, ctx);
@@ -973,13 +1153,20 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		break;
 
 	case CP_DEM_TYPE_KIND_CLOSURE_TY_NAME: {
-		// Closure types are lambda expressions: 'lambda[count]'<template_params> [ requires expr ] (params) [ requires expr ]
+		// Closure types are lambda expressions
 		const ClosureTyName *ctn = &node->closure_ty_name;
-		dem_string_append(out, "'lambda");
-		if (ctn->count.buf && ctn->count.len > 0) {
-			dem_string_append_sv(out, ctn->count);
+		bool is_literal = node->subtag == 1;
+		if (is_literal) {
+			// Literal lambda: []<template-params>(params){...}
+			dem_string_append(out, "[]");
+		} else {
+			// Named lambda: 'lambda[count]'
+			dem_string_append(out, "'lambda");
+			if (ctn->count.buf && ctn->count.len > 0) {
+				dem_string_append_sv(out, ctn->count);
+			}
+			dem_string_append(out, "'");
 		}
-		dem_string_append(out, "'");
 
 		if (ctn->template_params && ctn->template_params->children) {
 			dem_string_append(out, "<");
@@ -989,6 +1176,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		if (ctn->requires1) {
 			dem_string_append(out, " requires ");
 			ast_pp(ctn->requires1, out, ctx);
+			dem_string_append(out, " ");
 		}
 
 		print_open(out, ctx);
@@ -1000,9 +1188,23 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			dem_string_append(out, " requires ");
 			ast_pp(ctn->requires2, out, ctx);
 		}
+		if (is_literal) {
+			dem_string_append(out, "{...}");
+		}
 		break;
 	}
 	case CP_DEM_TYPE_KIND_TYPE: {
+		// Check if this TYPE wraps a FWD_TEMPLATE_REF that would create a cycle.
+		// This happens in conversion operators where T_ resolves to a type containing T_ itself.
+		// In such cases, the entire type wrapper (including pointer/reference qualifiers) is implicit.
+		if (node->subtag != SUB_TAG_INVALID && AST(0) && ctx->resolving_fwd_ref) {
+			PDemNode inner = AST(0);
+			if (inner->tag == CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF &&
+				inner->fwd_template_ref &&
+				inner->fwd_template_ref->ref == ctx->resolving_fwd_ref) {
+				break;
+			}
+		}
 		// Check if this is a function pointer (or pointer/reference/qualified wrapping a function pointer)
 		DemNode *func_node = NULL;
 		if (extract_function_type(node, &func_node)) {
@@ -1019,37 +1221,54 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			// resolves to a function type or array type during pack expansion.
 			// In that case, we need proper C declarator syntax: int (*)() not int ()*.
 			PDemNode resolved = resolve_pack_element(AST(0), ctx);
-			if (resolved && resolved->tag == CP_DEM_TYPE_KIND_FUNCTION_TYPE) {
-				PPFnContext pp_fn_context = {
-					.fn = resolved,
-					.quals = node,
-					.pp_quals = pp_function_ty_quals,
-					.pp_ctx = ctx,
-				};
-				pp_function_ty_with_context(&pp_fn_context, out);
-			} else if (resolved && resolved->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE) {
-				// Pointer/reference to array: int (*) []
-				DemString qualifiers_string = { 0 };
-				dem_string_init(&qualifiers_string);
-				PDemNode base_node = NULL;
-				pp_type_quals(node, &qualifiers_string, CP_DEM_TYPE_KIND_UNKNOWN, &base_node, ctx);
-				DemString array_dem_string = { 0 };
-				dem_string_init(&array_dem_string);
-				PDemNode array_inner_base = NULL;
-				pp_array_type_dimension(resolved, &array_dem_string, &array_inner_base, ctx);
-				ast_pp(array_inner_base, out, ctx);
-				if (dem_string_non_empty(&qualifiers_string)) {
-					reorder_qualifiers_for_array_fn_ref(&qualifiers_string);
-					dem_string_append(out, " (");
-					dem_string_concat(out, &qualifiers_string);
-					dem_string_append(out, ")");
+			if (resolved && (resolved->tag == CP_DEM_TYPE_KIND_FUNCTION_TYPE || resolved->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE)) {
+				// Initialize pack state if this is the first iteration
+				// (pp_parameter_pack would normally do this, but we're bypassing it)
+				// Follow FWD_TEMPLATE_REF to the actual PARAMETER_PACK for pack state
+				PDemNode pack_node = AST(0);
+				if (pack_node->tag == CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF &&
+					pack_node->fwd_template_ref && pack_node->fwd_template_ref->ref) {
+					pack_node = pack_node->fwd_template_ref->ref;
 				}
-				if (dem_string_non_empty(&array_dem_string)) {
-					dem_string_append(out, " ");
-					dem_string_concat(out, &array_dem_string);
+				if (ctx->current_pack_index == UT32_MAX &&
+					pack_node->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK &&
+					pack_node->child_ref &&
+					pack_node->child_ref->tag == CP_DEM_TYPE_KIND_MANY) {
+					ctx->current_pack_index = 0;
+					ctx->current_pack_max = VecPDemNode_len(pack_node->child_ref->children);
 				}
-				dem_string_deinit(&array_dem_string);
-				dem_string_deinit(&qualifiers_string);
+				if (resolved->tag == CP_DEM_TYPE_KIND_FUNCTION_TYPE) {
+					PPFnContext pp_fn_context = {
+						.fn = resolved,
+						.quals = node,
+						.pp_quals = pp_function_ty_quals,
+						.pp_ctx = ctx,
+					};
+					pp_function_ty_with_context(&pp_fn_context, out);
+				} else {
+					// Pointer/reference to array: int (*) []
+					DemString qualifiers_string = { 0 };
+					dem_string_init(&qualifiers_string);
+					PDemNode base_node = NULL;
+					pp_type_quals(node, &qualifiers_string, CP_DEM_TYPE_KIND_UNKNOWN, &base_node, ctx);
+					DemString array_dem_string = { 0 };
+					dem_string_init(&array_dem_string);
+					PDemNode array_inner_base = NULL;
+					pp_array_type_dimension(resolved, &array_dem_string, &array_inner_base, ctx);
+					ast_pp(array_inner_base, out, ctx);
+					if (dem_string_non_empty(&qualifiers_string)) {
+						reorder_qualifiers_for_array_fn_ref(&qualifiers_string);
+						dem_string_append(out, " (");
+						dem_string_concat(out, &qualifiers_string);
+						dem_string_append(out, ")");
+					}
+					if (dem_string_non_empty(&array_dem_string)) {
+						dem_string_append(out, " ");
+						dem_string_concat(out, &array_dem_string);
+					}
+					dem_string_deinit(&array_dem_string);
+					dem_string_deinit(&qualifiers_string);
+				}
 			} else {
 				pp_type_with_quals(node, out, ctx);
 			}
@@ -1091,9 +1310,33 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 
 	case CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF:
 		if (node->fwd_template_ref && node->fwd_template_ref->ref) {
+			// Detect circular forward template references (e.g. in conversion operators
+			// where T_ resolves to a type that contains T_ itself).
+			// In such cases, produce no output (the param is implicit/deduced).
+			if (ctx->resolving_fwd_ref == node->fwd_template_ref->ref) {
+				// Cycle detected - skip to avoid infinite recursion
+				break;
+			}
+			const void *prev_resolving = ctx->resolving_fwd_ref;
+			ctx->resolving_fwd_ref = node->fwd_template_ref->ref;
 			ast_pp(node->fwd_template_ref->ref, out, ctx);
+			ctx->resolving_fwd_ref = prev_resolving;
 		} else {
 			dem_string_append(out, "T_?_?");
+		}
+		break;
+
+	case CP_DEM_TYPE_KIND_CONSTRAINED_PLACEHOLDER:
+		// Dk <name> -> "<name> auto"
+		// DK <name> -> "<name> decltype(auto)"
+		if (node->child) {
+			ast_pp(node->child, out, ctx);
+			dem_string_append(out, " ");
+		}
+		if (node->subtag) {
+			dem_string_append(out, "decltype(auto)");
+		} else {
+			dem_string_append(out, "auto");
 		}
 		break;
 
@@ -1127,6 +1370,11 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		pp_as_operand_ex(node->member_expr.rhs, out, node->prec, false, ctx);
 		break;
 	case CP_DEM_TYPE_KIND_FOLD_EXPRESSION: {
+		// Check if pack is a multi-element expanded pack
+		bool pack_is_expanded = (node->fold_expr.pack &&
+			node->fold_expr.pack->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK &&
+			node->fold_expr.pack->child_ref &&
+			node->fold_expr.pack->child_ref->tag == CP_DEM_TYPE_KIND_MANY);
 		print_open(out, ctx);
 		if (!node->fold_expr.is_left_fold || node->fold_expr.init) {
 			if (node->fold_expr.is_left_fold) {
@@ -1134,6 +1382,9 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			} else {
 				print_open(out, ctx);
 				pp_pack_all_elements(node->fold_expr.pack, out, ctx);
+				if (!pack_is_expanded) {
+					dem_string_append(out, "...");
+				}
 				print_close(out, ctx);
 			}
 			dem_string_append(out, " ");
@@ -1148,6 +1399,9 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			if (node->fold_expr.is_left_fold) {
 				print_open(out, ctx);
 				pp_pack_all_elements(node->fold_expr.pack, out, ctx);
+				if (!pack_is_expanded) {
+					dem_string_append(out, "...");
+				}
 				print_close(out, ctx);
 			} else {
 				pp_as_operand_ex(node->fold_expr.init, out, CAST, true, ctx);
@@ -1174,13 +1428,13 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 	case CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION: {
 		dem_string_append(out, "[");
 		ast_pp(node->braced_range_expr.first, out, ctx);
-		dem_string_append(out, "...");
+		dem_string_append(out, " ... ");
 		ast_pp(node->braced_range_expr.last, out, ctx);
 		dem_string_append(out, "]");
-		if (node->braced_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_EXPRESSION && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION) {
+		if (node->braced_range_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_EXPRESSION && node->braced_range_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION) {
 			dem_string_append(out, " = ");
 		}
-		ast_pp(node->braced_expr.init, out, ctx);
+		ast_pp(node->braced_range_expr.init, out, ctx);
 		break;
 	}
 	case CP_DEM_TYPE_KIND_INIT_LIST_EXPRESSION: {
@@ -1198,9 +1452,13 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 	}
 
 	case CP_DEM_TYPE_KIND_BINARY_EXPRESSION: {
-		// Don't add parentheses around > or >> when we're already inside template arguments
-		bool paren_all = ctx->paren_depth <= 0 &&
-			(sv_eq_cstr(&node->binary_expr.op, ">") || sv_eq_cstr(&node->binary_expr.op, ">>"));
+		// Add parentheses around > or >> (to prevent template ambiguity)
+		// when we're not already inside parentheses.
+		// Add parentheses around , (comma) when inside template arguments
+		// to prevent confusion with the template arg separator.
+		bool paren_all = (ctx->paren_depth <= 0 &&
+			((sv_eq_cstr(&node->binary_expr.op, ">") || sv_eq_cstr(&node->binary_expr.op, ">>")) ||
+				(ctx->inside_template && sv_eq_cstr(&node->binary_expr.op, ","))));
 		if (paren_all) {
 			print_open(out, ctx);
 		}
@@ -1296,6 +1554,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		}
 		break;
 	}
+	ctx->recursion_depth--;
 }
 
 typedef struct {
@@ -1304,6 +1563,10 @@ typedef struct {
 } DemSimpleEntry;
 
 static const DemSimpleEntry simple_entries[] = {
+	{ "std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char>>", "std::stringstream" },
+	{ "std::__cxx11::basic_istringstream<char, std::char_traits<char>, std::allocator<char>>", "std::istringstream" },
+	{ "std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char>>", "std::ostringstream" },
+	{ "std::__cxx11::basic_stringbuf<char, std::char_traits<char>, std::allocator<char>>", "std::stringbuf" },
 	{ "basic_string<char, std::char_traits<char>, std::allocator<char>>", "string" },
 	{ "basic_iostream<char, std::char_traits<char>, std::allocator<char>>", "iostream" },
 	{ "basic_istream<char, std::char_traits<char>, std::allocator<char>>", "istream" },
@@ -1372,6 +1635,10 @@ bool parse_number(
 
 bool parse_non_neg_integer(
 	DemParser *p, ut64 *out) {
+	ut64 dummy = 0;
+	if (!out) {
+		out = &dummy;
+	}
 	*out = 0;
 	if (PEEK() < '0' || PEEK() > '9') {
 		return false;
@@ -1410,12 +1677,38 @@ bool parse_ref_qualifiers(DemParser *p, RefQualifiers *quals) {
 }
 
 bool parse_discriminator(DemParser *p) {
-	if (!(READ('_'))) {
+	// <discriminator> := _ <non-negative number>      # when number < 10
+	//                 := __ <non-negative number> _   # when number >= 10
+	//  extension      := decimal-digit+               # at the end of string
+	if (READ('_')) {
+		if (IN_RANGE(CUR()) && isdigit(PEEK())) {
+			ADV();
+			return true;
+		}
+		if (READ('_')) {
+			while (IN_RANGE(CUR()) && isdigit(PEEK())) {
+				ADV();
+			}
+			if (READ('_')) {
+				return true;
+			}
+		}
 		return false;
 	}
-	READ('_');
-	parse_number(p, NULL, false);
-	return true;
+	// Extension: bare digits at end of string
+	if (IN_RANGE(CUR()) && isdigit(PEEK())) {
+		const char *start = CUR();
+		while (IN_RANGE(CUR()) && isdigit(PEEK())) {
+			ADV();
+		}
+		if (!IN_RANGE(CUR())) {
+			// Consumed digits until end of string — valid extension discriminator
+			return true;
+		}
+		// Not at end of string, revert — these digits are not a discriminator
+		p->cur = start;
+	}
+	return false;
 }
 
 bool parse_base_source_name(DemParser *p, const char **pout, size_t *plen) {
@@ -1642,8 +1935,23 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 		result = parse_abi_tags(p, result);
 	}
 	if (result && is_member_like_friend) {
-		// TODO: MemberLikeFriendName
-		DEM_UNREACHABLE;
+		// MemberLikeFriendName: scope::friend name
+		DemNode *friend_prefix = make_primitive_type(CUR(), CUR(), "friend ", 7);
+		if (!friend_prefix) {
+			TRACE_RETURN_FAILURE();
+		}
+		DemNode *wrapper = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, result->val.buf, result->val.len);
+		if (!wrapper) {
+			DemNode_dtor(friend_prefix);
+			TRACE_RETURN_FAILURE();
+		}
+		wrapper->many_ty.sep = "";
+		Node_append(wrapper, friend_prefix);
+		Node_append(wrapper, result);
+		node->tag = CP_DEM_TYPE_KIND_NESTED_NAME;
+		node->nested_name.qual = scope;
+		node->nested_name.name = wrapper;
+		TRACE_RETURN_SUCCESS;
 	} else if (result && scope) {
 		node->tag = CP_DEM_TYPE_KIND_NESTED_NAME;
 		node->nested_name.qual = scope;
@@ -2004,8 +2312,46 @@ bool rule_expr_primary(DemParser *p, DemResult *r) {
 	}
 	TRY_MATCH(PEEK() == 'P' && AST_APPEND_STR("(") && (CALL_RULE(rule_type)) &&
 		AST_APPEND_STR(")") && READ('0') && AST_APPEND_STR("0") && READ('E'));
-	TRY_MATCH(READ_STR("_Z") && (CALL_RULE(rule_encoding)) && READ('E'));
+	// L _Z <encoding> E — extern name literal.
+	// Save/restore template_params AND outer_template_params since recursive
+	// rule_encoding modifies both (outer_template_params is aliased by
+	// template_params entries, so clearing it corrupts saved state).
+	// Matches LLVM's SaveTemplateParams in parseExprPrimary.
+	if (PEEK() == '_' && PEEK_AT(1) == 'Z') {
+		context_save(lz_literal);
+		VecPNodeList saved_template_params_lz = p->template_params;
+		NodeList *saved_outer_template_params_lz = p->outer_template_params;
+		VecPNodeList_init(&p->template_params);
+		p->outer_template_params = VecF(PDemNode, ctor)();
+		bool lz_ok = READ_STR("_Z") && CALL_RULE(rule_encoding) && READ('E');
+		VecPNodeList_deinit(&p->template_params);
+		VecF(PDemNode, dtor)(p->outer_template_params);
+		p->template_params = saved_template_params_lz;
+		p->outer_template_params = saved_outer_template_params_lz;
+		if (lz_ok) {
+			TRACE_RETURN_SUCCESS;
+		}
+		context_restore_parser(lz_literal);
+	}
+	TRY_MATCH(READ_STR("DnE") && AST_APPEND_STR("nullptr"));
 	TRY_MATCH(READ_STR("Dn0E") && AST_APPEND_STR("nullptr"));
+
+	// Lambda/closure type literal: L <closure-type> E
+	// Closure types start with Ul or Ut
+	if (PEEK() == 'U' && (PEEK_AT(1) == 'l' || PEEK_AT(1) == 't')) {
+		context_save(closure_literal);
+		DemNode *closure = NULL;
+		CALL_RULE_N(closure, rule_unnamed_type_name);
+		if (closure && READ('E')) {
+			// Mark as literal lambda (subtag=1) for different formatting: [](...){...}
+			closure->subtag = 1;
+			DemNode_dtor(node);
+			node = closure;
+			TRACE_RETURN_SUCCESS;
+		}
+		DemNode_dtor(closure);
+		context_restore(closure_literal);
+	}
 
 	// Non-type template parameter: L<type><value>E
 	// For bool: Lb0E -> false, Lb1E -> true
@@ -2189,7 +2535,9 @@ bool rule_fold_expression(DemParser *p, DemResult *r) {
 	if (!Op) {
 		TRACE_RETURN_FAILURE();
 	}
-	if (!(Op->Kind == Binary || (Op->Kind == Member && *opinfo_get_symbol(Op) == '*'))) {
+	const char *sym = opinfo_get_symbol(Op);
+	size_t sym_len = strlen(sym);
+	if (!(Op->Kind == Binary || (Op->Kind == Member && sym_len > 0 && sym[sym_len - 1] == '*'))) {
 		TRACE_RETURN_FAILURE();
 	}
 
@@ -2260,17 +2608,16 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			node->tag = CP_DEM_TYPE_KIND_MEMBER_EXPRESSION;
 			TRACE_RETURN_SUCCESS;
 		case New: // nw/na
+			// [gs] nw <expression>* _ <type> [pi <expression>*] E
 			node->new_expr.is_global = is_global;
 			sv_form_cstr(&node->new_expr.op, opinfo_get_symbol(Op));
 			MUST_MATCH(CALL_MANY_N(node->new_expr.expr_list, rule_expression, ", ", '_'));
 			MUST_MATCH(CALL_RULE_N(node->new_expr.ty, rule_type));
 
-			bool has_inits = READ_STR("pi");
-			if (PEEK() != 'E') {
-				if (!has_inits) {
-					TRACE_RETURN_FAILURE();
-				}
+			if (READ_STR("pi")) {
 				MUST_MATCH(CALL_MANY_N(node->new_expr.init_list, rule_expression, ", ", 'E'));
+			} else {
+				MUST_MATCH(READ('E'));
 			}
 			node->prec = Op->Prec;
 			node->tag = CP_DEM_TYPE_KIND_NEW_EXPRESSION;
@@ -2376,14 +2723,170 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("throw"));
 	}
 	if (READ_STR("sZ")) {
-		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("sizeof...(") && (CALL_RULE(rule_template_param) || CALL_RULE(rule_function_param)) && AST_APPEND_STR(")"));
+		// sizeof...(pack) — when the param resolves to a pack, expand all elements
+		PDemNode sz_param = NULL;
+		if (!CALL_RULE_N(sz_param, rule_template_param) && !CALL_RULE_N(sz_param, rule_function_param)) {
+			TRACE_RETURN_FAILURE();
+		}
+		AST_APPEND_STR("sizeof...(");
+		if (sz_param->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK && sz_param->child_ref &&
+			sz_param->child_ref->tag == CP_DEM_TYPE_KIND_MANY) {
+			// Expand all pack elements comma-separated
+			const DemNode *many = sz_param->child_ref;
+			size_t count = VecPDemNode_len(many->children);
+			for (size_t i = 0; i < count; i++) {
+				if (i > 0) {
+					AST_APPEND_STR(", ");
+				}
+				PDemNode *child = VecPDemNode_at(many->children, i);
+				if (child && *child) {
+					PDemNode cloned = DemNode_clone(*child);
+					if (!cloned) {
+						DemNode_dtor(sz_param);
+						TRACE_RETURN_FAILURE();
+					}
+					AST_APPEND_NODE(cloned);
+				}
+			}
+			DemNode_dtor(sz_param);
+		} else {
+			AST_APPEND_NODE(sz_param);
+		}
+		AST_APPEND_STR(")");
+		TRACE_RETURN_SUCCESS;
 	}
 	if (READ_STR("sP")) {
-		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("sizeof...(") && CALL_MANY(rule_template_arg, "", 'E') && AST_APPEND_STR(")"));
+		RETURN_SUCCESS_OR_FAIL(AST_APPEND_STR("sizeof... (") && CALL_MANY(rule_template_arg, ", ", 'E') && AST_APPEND_STR(")"));
 	}
 	if (READ_STR("sp")) {
 		MUST_MATCH(CALL_RULE_N(node->child, rule_expression));
 		node->tag = CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION;
+		TRACE_RETURN_SUCCESS;
+	}
+	// rq: requires expression (no params)
+	// rQ: requires expression (with params)
+	// <expression> ::= rq <requirement>+ E
+	// <expression> ::= rQ <bare-function-type> _ <requirement>+ E
+	if (PEEK() == 'r' && (PEEK_AT(1) == 'q' || PEEK_AT(1) == 'Q')) {
+		bool has_params = (PEEK_AT(1) == 'Q');
+		ADV();
+		ADV();
+		AST_APPEND_STR("requires");
+		if (has_params) {
+			AST_APPEND_STR(" (");
+			bool first_param = true;
+			while (!READ('_')) {
+				if (!first_param) {
+					AST_APPEND_STR(", ");
+				}
+				MUST_MATCH(CALL_RULE(rule_type));
+				first_param = false;
+			}
+			AST_APPEND_STR(")");
+		}
+		AST_APPEND_STR(" { ");
+		// Parse requirements until E
+		while (!READ('E')) {
+			if (READ('X')) {
+				// Expression requirement: X <expression> [N] [R <name>]
+				bool req_noexcept = false;
+				PDemNode req_type_constraint = NULL;
+				PDemNode req_expr = NULL;
+				MUST_MATCH(CALL_RULE_N(req_expr, rule_expression));
+				req_noexcept = READ('N');
+				if (READ('R')) {
+					MUST_MATCH(CALL_RULE_N_VA(req_type_constraint, rule_name, NULL));
+				}
+				if (req_noexcept || req_type_constraint) {
+					// Compound requirement: {<expr>} [noexcept] [-> <type>];
+					AST_APPEND_STR("{");
+					AST_APPEND_NODE(req_expr);
+					AST_APPEND_STR("}");
+					if (req_noexcept) {
+						AST_APPEND_STR(" noexcept");
+					}
+					if (req_type_constraint) {
+						AST_APPEND_STR(" -> ");
+						AST_APPEND_NODE(req_type_constraint);
+					}
+				} else {
+					// Simple expression requirement: <expr>;
+					AST_APPEND_NODE(req_expr);
+				}
+				AST_APPEND_STR("; ");
+			} else if (READ('T')) {
+				// Type requirement: T <type>
+				AST_APPEND_STR("typename ");
+				MUST_MATCH(CALL_RULE(rule_type));
+				AST_APPEND_STR("; ");
+			} else if (READ('Q')) {
+				// Nested requirement: Q <constraint-expression> E
+				AST_APPEND_STR("requires ");
+				MUST_MATCH(CALL_RULE(rule_expression));
+				AST_APPEND_STR("; ");
+			} else {
+				TRACE_RETURN_FAILURE();
+			}
+		}
+		AST_APPEND_STR("}");
+		TRACE_RETURN_SUCCESS;
+	}
+	if (READ_STR("mc")) {
+		// mc <type> <expression> <offset number> E
+		// Pointer-to-member conversion: (type)(expr)
+		PDemNode mc_ty = NULL;
+		MUST_MATCH(CALL_RULE_N(mc_ty, rule_type));
+		PDemNode mc_expr = NULL;
+		MUST_MATCH(CALL_RULE_N(mc_expr, rule_expression));
+		// Parse offset (not printed): optional 'n' prefix for negative, then digits
+		READ('n');
+		while (PEEK() >= '0' && PEEK() <= '9') {
+			ADV();
+		}
+		MUST_MATCH(READ('E'));
+		AST_APPEND_STR("(");
+		AST_APPEND_NODE(mc_ty);
+		AST_APPEND_STR(")(");
+		AST_APPEND_NODE(mc_expr);
+		AST_APPEND_STR(")");
+		TRACE_RETURN_SUCCESS;
+	}
+	if (READ_STR("so")) {
+		// <expr-primary> ::= so <type> <expr> <offset number> [ <union-selector>* ] [p] E
+		// Prints: <expr>.<type at offset N>
+		PDemNode so_ty = NULL;
+		MUST_MATCH(CALL_RULE_N(so_ty, rule_type));
+		PDemNode so_expr = NULL;
+		MUST_MATCH(CALL_RULE_N(so_expr, rule_expression));
+		// Parse offset: optional 'n' prefix for negative, then digits
+		bool offset_negative = READ('n');
+		const char *digits_start = CUR();
+		while (PEEK() >= '0' && PEEK() <= '9') {
+			ADV();
+		}
+		size_t digits_len = (size_t)(CUR() - digits_start);
+		// Skip union selectors: _<number> ...
+		while (READ('_')) {
+			while (PEEK() >= '0' && PEEK() <= '9') {
+				ADV();
+			}
+		}
+		READ('p'); // optional one-past-the-end marker
+		MUST_MATCH(READ('E'));
+		// Print: <expr>.<type at offset N>
+		AST_APPEND_NODE(so_expr);
+		AST_APPEND_STR(".<");
+		AST_APPEND_NODE(so_ty);
+		AST_APPEND_STR(" at offset ");
+		if (digits_len == 0) {
+			AST_APPEND_STR("0");
+		} else if (offset_negative) {
+			AST_APPEND_STR("-");
+			AST_APPEND_STRN(digits_start, digits_len);
+		} else {
+			AST_APPEND_STRN(digits_start, digits_len);
+		}
+		AST_APPEND_STR(">");
 		TRACE_RETURN_SUCCESS;
 	}
 	if (READ('u')) {
@@ -2455,43 +2958,80 @@ bool rule_template_param(DemParser *p, DemResult *r) {
 		index++;
 	}
 
-	if (p->permit_forward_template_refs && level == 0) {
-		PForwardTemplateRef fwd = calloc(sizeof(ForwardTemplateRef), 1);
-		if (!fwd) {
-			TRACE_RETURN_FAILURE();
-		}
-		fwd->level = level;
-		fwd->index = index;
-		PForwardTemplateRef *pfwd = VecF(PForwardTemplateRef, append)(&p->forward_template_refs, &fwd);
-		if (!pfwd) {
-			free(fwd);
-			TRACE_RETURN_FAILURE();
-		}
+	// Check if this is a lambda auto parameter (must be checked before forward ref creation)
+	bool can_resolve = level < VecPNodeList_len(&p->template_params) &&
+		VecPNodeList_at(&p->template_params, level) != NULL &&
+		index < VecPDemNode_len(*VecPNodeList_at(&p->template_params, level));
 
-		node->fwd_template_ref = fwd;
-		node->tag = CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF;
+	if (!can_resolve && p->parse_lambda_params_at_level == level && level <= VecPNodeList_len(&p->template_params)) {
+		if (level == VecPNodeList_len(&p->template_params)) {
+			VecPNodeList_append(&p->template_params, NULL);
+		}
+		PRIMITIVE_TYPE("auto");
+		TRACE_RETURN_SUCCESS;
+	}
 
-		if (p->trace) {
-			fprintf(stderr, "[template_param] Created forward ref L%" PRIu64 "_%" PRIu64 " to %p\n",
-				level, index, (void *)node);
+	// In constraint expressions, all template params are printed as their
+	// mangled representation minus the trailing underscore, because we don't
+	// track enclosing template parameter levels reliably enough to substitute
+	// them (matching LLVM behavior).
+	// e.g., T_ → T, T0_ → T0, TL0__ → TL0_
+	if (p->in_constraint_expr) {
+		size_t raw_len = (size_t)(p->cur - 1 - saved_ctx_rule.saved_pos);
+		if (raw_len > 0) {
+			AST_APPEND_STRN(saved_ctx_rule.saved_pos, raw_len);
 		}
 		TRACE_RETURN_SUCCESS;
 	}
 
-	if (level >= VecPNodeList_len(&p->template_params) || VecPNodeList_at(&p->template_params, level) == NULL || index >= VecPDemNode_len(*VecPNodeList_at(&p->template_params, level))) {
-		if (p->parse_lambda_params_at_level == level && level <= VecPNodeList_len(&p->template_params)) {
-			if (level == VecPNodeList_len(&p->template_params)) {
-				VecPNodeList_append(&p->template_params, NULL);
+	if (p->permit_forward_template_refs) {
+		// Create a forward ref when the param doesn't exist, or unconditionally
+		// at level 0 when not parsing lambda params (matching LLVM). The level 0
+		// case handles conversion operators where T_ refers to the operator's
+		// own template args rather than the enclosing class's template args.
+		bool is_lambda_context = (p->parse_lambda_params_at_level != SIZE_MAX);
+		if (!can_resolve || (level == 0 && !is_lambda_context)) {
+			PForwardTemplateRef fwd = calloc(sizeof(ForwardTemplateRef), 1);
+			if (!fwd) {
+				TRACE_RETURN_FAILURE();
 			}
-			PRIMITIVE_TYPE("auto");
-			TRACE_RETURN_FAILURE();
+			fwd->level = level;
+			fwd->index = index;
+			PForwardTemplateRef *pfwd = VecF(PForwardTemplateRef, append)(&p->forward_template_refs, &fwd);
+			if (!pfwd) {
+				free(fwd);
+				TRACE_RETURN_FAILURE();
+			}
+
+			node->fwd_template_ref = fwd;
+			node->tag = CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF;
+
+			if (p->trace) {
+				fprintf(stderr, "[template_param] Created forward ref L%" PRIu64 "_%" PRIu64 " to %p\n",
+					level, index, (void *)node);
+			}
+			TRACE_RETURN_SUCCESS;
 		}
+	}
+
+	if (!can_resolve) {
 		TRACE_RETURN_FAILURE();
 	}
 
 	DemNode *t = template_param_get(p, level, index);
 	if (!t) {
 		TRACE_RETURN_FAILURE();
+	}
+	if (p->trace) {
+		fprintf(stderr, "[template_param] Resolved T L%" PRIu64 "_%" PRIu64 " => tag=%d, permit_fwd=%d\n",
+			level, index, t->tag, p->permit_forward_template_refs);
+		if (t->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK) {
+			fprintf(stderr, "[template_param] Is PARAMETER_PACK, child_ref=%p\n", (void *)t->child_ref);
+			if (t->child_ref && t->child_ref->tag == CP_DEM_TYPE_KIND_MANY) {
+				fprintf(stderr, "[template_param] MANY children count=%zu\n",
+					t->child_ref->children ? VecPDemNode_len(t->child_ref->children) : 0);
+			}
+		}
 	}
 	DemNode_copy(node, t);
 	TRACE_RETURN_SUCCESS;
@@ -2580,7 +3120,7 @@ bool rule_special_name(DemParser *p, DemResult *r) {
 			break;
 		case 'T':
 			ADV();
-			MUST_MATCH(AST_APPEND_STR("VTT structure for ") && CALL_RULE(rule_type));
+			MUST_MATCH(AST_APPEND_STR("VTT for ") && CALL_RULE(rule_type));
 			break;
 		case 'I':
 			ADV();
@@ -2622,8 +3162,14 @@ bool rule_special_name(DemParser *p, DemResult *r) {
 			ADV();
 			AST_APPEND_STR("reference temporary for ");
 			MUST_MATCH(CALL_RULE_VA(rule_name, NULL));
-			parse_seq_id(p, NULL);
-			MUST_MATCH(READ('_'));
+			// Consume optional seq-id (base36 digits) followed by _
+			// The seq-id + _ may be absent when the name consumes the entire input
+			if (IN_RANGE(CUR())) {
+				while (IN_RANGE(CUR()) && (IS_DIGIT(PEEK()) || IS_UPPER(PEEK()))) {
+					ADV();
+				}
+				MUST_MATCH(READ('_'));
+			}
 			break;
 		case 'V':
 			ADV();
@@ -2652,6 +3198,7 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 	// This rule only handles F...E (bare function type)
 	// P prefix is handled in the type rule, which properly inserts * for function pointers
 	parse_cv_qualifiers(p, &node->fn_ty.cv_qualifiers);
+	parse_ref_qualifiers(p, &node->fn_ty.ref_qualifiers);
 
 	if (READ_STR("Do")) {
 		node->fn_ty.exception_spec = MAKE_PRIMITIVE_TYPE(CUR() - 2, CUR(), "noexcept");
@@ -2721,13 +3268,21 @@ bool rule_function_param(DemParser *p, DemResult *r) {
 	MUST_MATCH(READ('f'));
 	CvQualifiers qualifiers = { 0 };
 	if (READ('L')) {
-		MUST_MATCH(CALL_RULE(rule_number));
+		ut64 level = 0;
+		if (!parse_non_neg_integer(p, &level)) {
+			TRACE_RETURN_FAILURE();
+		}
 	}
 	MUST_MATCH(READ('p'));
 	parse_cv_qualifiers(p, &qualifiers);
-	AST_APPEND_STR(" ");
-	CALL_RULE(rule_number);
-	READ('_');
+	AST_APPEND_STR("fp");
+	ut64 param_idx = 0;
+	if (parse_non_neg_integer(p, &param_idx)) {
+		char buf[64];
+		snprintf(buf, sizeof(buf), "%llu", (unsigned long long)param_idx);
+		AST_APPEND_STR(buf);
+	}
+	MUST_MATCH(READ('_'));
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -2740,7 +3295,46 @@ bool rule_builtin_type(DemParser *p, DemResult *r) {
 	TRY_MATCH(READ_STR("DB") && AST_APPEND_STR("signed _BitInt(") && (CALL_RULE(rule_expression)) && AST_APPEND_STR(")") && READ('_'));
 	TRY_MATCH(READ_STR("DU") && AST_APPEND_STR("unsigned _BitInt(") && (CALL_RULE(rule_number)) && AST_APPEND_STR(")") && READ('_'));
 	TRY_MATCH(READ_STR("DU") && AST_APPEND_STR("unsigned _BitInt(") && (CALL_RULE(rule_expression)) && AST_APPEND_STR(")") && READ('_'));
-	TRY_MATCH(READ('u') && (CALL_RULE(rule_source_name)) && (((CALL_RULE(rule_template_args))) || true));
+	// Vendor extended type: u <source-name> [<template-args>]
+	// For vendor type traits (names starting with "__"), use () instead of <>
+	do {
+		context_save(vendor_ext_type);
+		if (READ('u')) {
+			const char *name_start = p->cur;
+			// Skip past the length digits to find the actual name chars
+			while (*name_start >= '0' && *name_start <= '9') {
+				name_start++;
+			}
+			bool is_type_trait = (name_start[0] == '_' && name_start[1] == '_');
+			if (CALL_RULE(rule_source_name)) {
+				if (is_type_trait && PEEK() == 'I') {
+					// Parse template args but use () notation
+					AST_APPEND_STR("(");
+					ADV(); // skip 'I'
+					bool first_arg = true;
+					while (!READ('E')) {
+						if (!first_arg) {
+							AST_APPEND_STR(", ");
+						}
+						first_arg = false;
+						PDemNode arg = NULL;
+						if (!CALL_RULE_N(arg, rule_template_arg)) {
+							context_restore(vendor_ext_type);
+							goto vendor_ext_type_failed;
+						}
+						AST_APPEND_NODE(arg);
+					}
+					AST_APPEND_STR(")");
+				} else {
+					// Normal template args with <> or no template args
+					CALL_RULE(rule_template_args); // optional
+				}
+				TRACE_RETURN_SUCCESS;
+			}
+		}
+		context_restore(vendor_ext_type);
+	vendor_ext_type_failed:;
+	} while (0);
 	TRY_MATCH(READ_STR("DS") && READ_STR("DA") && AST_APPEND_STR("_Sat _Accum"));
 	TRY_MATCH(READ_STR("DS") && READ_STR("DR") && AST_APPEND_STR("_Sat _Fract"));
 	TRY_MATCH(READ('v') && AST_APPEND_STR("void"));
@@ -2872,8 +3466,19 @@ bool rule_type(DemParser *p, DemResult *r) {
 	case 'r':
 	case 'V':
 	case 'K':
-	case 'U': {
 		MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_qualified_type));
+		break;
+	case 'U': {
+		// Ul is an unnamed lambda type (closure type).
+		// Ut followed by digit or _ is an unnamed type (anonymous struct/union).
+		// Ub is a block literal (Apple/Objective-C extension).
+		// Other U<source-name> patterns are vendor-extended qualifiers.
+		if (PEEK_AT(1) == 'l' || PEEK_AT(1) == 'b' ||
+			(PEEK_AT(1) == 't' && (PEEK_AT(2) == '_' || (PEEK_AT(2) >= '0' && PEEK_AT(2) <= '9')))) {
+			MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_class_enum_type));
+		} else {
+			MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_qualified_type));
+		}
 		break;
 	}
 	case 'M':
@@ -2960,6 +3565,18 @@ bool rule_type(DemParser *p, DemResult *r) {
 		}
 		if (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T') {
 			MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_decltype));
+			break;
+		}
+		if (PEEK_AT(1) == 'k' || PEEK_AT(1) == 'K') {
+			// Dk <type-constraint>  # constrained auto placeholder
+			// DK <type-constraint>  # constrained decltype(auto) placeholder
+			ut32 is_decltype_auto = (PEEK_AT(1) == 'K') ? 1 : 0;
+			ADV_BY(2);
+			PDemNode constraint = NULL;
+			MUST_MATCH(CALL_RULE_N_VA(constraint, rule_name, NULL));
+			node->tag = CP_DEM_TYPE_KIND_CONSTRAINED_PLACEHOLDER;
+			node->subtag = is_decltype_auto;
+			node->child = constraint;
 			break;
 		}
 		// fallthrough
@@ -3052,7 +3669,70 @@ bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
 		TRACE_RETURN_FAILURE();
 	}
 
+	// Save/restore template_params, outer_template_params, and
+	// forward_template_refs since recursive rule_encoding modifies all three
+	// (outer_template_params is aliased by template_params entries, so
+	// clearing it corrupts saved state). Matches LLVM's SaveTemplateParams.
+	VecPNodeList saved_template_params_ln = p->template_params;
+	NodeList *saved_outer_template_params_ln = p->outer_template_params;
+	VecT(PForwardTemplateRef) saved_forward_refs_ln = p->forward_template_refs;
+	VecPNodeList_init(&p->template_params);
+	p->outer_template_params = VecF(PDemNode, ctor)();
+	VecF(PForwardTemplateRef, init)(&p->forward_template_refs);
+
 	CALL_RULE_N(node->local_name.encoding, rule_encoding);
+
+	// Transfer inner template state to deferred-cleanup lists so that
+	// ForwardTemplateRef->ref pointers (which point into these nodes)
+	// remain valid until DemParser_deinit.
+
+	// 1. Move inner outer_template_params DemNode entries to orphan_nodes
+	for (ut64 i = 0; i < VecPDemNode_len(p->outer_template_params); i++) {
+		PDemNode *pn = VecPDemNode_at(p->outer_template_params, i);
+		if (pn && *pn) {
+			VecF(PDemNode, append)(&p->orphan_nodes, pn);
+		}
+	}
+	free(p->outer_template_params->data);
+	p->outer_template_params->data = NULL;
+	p->outer_template_params->length = 0;
+	p->outer_template_params->capacity = 0;
+	free(p->outer_template_params);
+
+	// 2. Move inner template_params NodeList entries (level > 0) to
+	//    orphan_nodes, then free the NodeList structs.
+	for (ut64 i = 1; i < VecPNodeList_len(&p->template_params); i++) {
+		PNodeList *ppnl = VecPNodeList_at(&p->template_params, i);
+		if (ppnl && *ppnl) {
+			NodeList *nl = *ppnl;
+			for (ut64 j = 0; j < VecPDemNode_len(nl); j++) {
+				PDemNode *pn = VecPDemNode_at(nl, j);
+				if (pn && *pn) {
+					VecF(PDemNode, append)(&p->orphan_nodes, pn);
+				}
+			}
+			free(nl->data);
+			free(nl);
+		}
+	}
+	free(p->template_params.data);
+
+	// 3. Move inner forward_template_refs entries to orphan_fwd_refs
+	//    (they will be freed by DemParser_deinit). We cannot move them
+	//    to the outer forward_template_refs because the outer encoding's
+	//    resolve_forward_template_refs would re-resolve them incorrectly.
+	for (ut64 i = 0; i < VecPForwardTemplateRef_len(&p->forward_template_refs); i++) {
+		PForwardTemplateRef *pfwd = VecPForwardTemplateRef_at(&p->forward_template_refs, i);
+		if (pfwd && *pfwd) {
+			VecF(PForwardTemplateRef, append)(&p->orphan_fwd_refs, pfwd);
+		}
+	}
+	free(p->forward_template_refs.data);
+
+	p->template_params = saved_template_params_ln;
+	p->outer_template_params = saved_outer_template_params_ln;
+	p->forward_template_refs = saved_forward_refs_ln;
+
 	if (!node->local_name.encoding || !READ('E')) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -3067,23 +3747,39 @@ bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
 		node->local_name.entry = string_lit;
 		TRACE_RETURN_SUCCESS;
 	}
+
+	// The template parameters of the inner entity name are unrelated to those
+	// of the enclosing encoding context (matching LLVM's SaveTemplateParams).
+	VecPNodeList saved_template_params = p->template_params;
+	VecPNodeList_init(&p->template_params);
+
 	if (READ('d')) {
 		CALL_RULE(rule_number);
 		parse_number(p, NULL, true);
 		if (!READ('_')) {
+			VecPNodeList_deinit(&p->template_params);
+			p->template_params = saved_template_params;
 			TRACE_RETURN_FAILURE();
 		}
 		CALL_RULE_N_VA(node->local_name.entry, rule_name, ns);
 		if (!node->local_name.entry) {
+			VecPNodeList_deinit(&p->template_params);
+			p->template_params = saved_template_params;
 			TRACE_RETURN_FAILURE();
 		}
+		VecPNodeList_deinit(&p->template_params);
+		p->template_params = saved_template_params;
 		TRACE_RETURN_SUCCESS;
 	}
 	CALL_RULE_N_VA(node->local_name.entry, rule_name, ns);
 	if (!node->local_name.entry) {
+		VecPNodeList_deinit(&p->template_params);
+		p->template_params = saved_template_params;
 		TRACE_RETURN_FAILURE();
 	}
 	parse_discriminator(p);
+	VecPNodeList_deinit(&p->template_params);
+	p->template_params = saved_template_params;
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -3191,13 +3887,21 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 	if (!READ('N')) {
 		TRACE_RETURN_FAILURE();
 	}
-	CvQualifiers cv_quals = { 0 };
-	RefQualifiers ref_qual = { 0 };
-	if (parse_cv_qualifiers(p, &cv_quals) && ns) {
-		ns->cv_qualifiers = cv_quals;
-	}
-	if (parse_ref_qualifiers(p, &ref_qual) && ns) {
-		ns->ref_qualifiers = ref_qual;
+	// C++23 deducing this: 'H' after 'N' indicates explicit object parameter.
+	// When present, there are no CV/ref qualifiers on the function.
+	if (READ('H')) {
+		if (ns) {
+			ns->has_explicit_object_param = true;
+		}
+	} else {
+		CvQualifiers cv_quals = { 0 };
+		RefQualifiers ref_qual = { 0 };
+		if (parse_cv_qualifiers(p, &cv_quals) && ns) {
+			ns->cv_qualifiers = cv_quals;
+		}
+		if (parse_ref_qualifiers(p, &ref_qual) && ns) {
+			ns->ref_qualifiers = ref_qual;
+		}
 	}
 
 	DemNode *ast_node = NULL;
@@ -3282,6 +3986,8 @@ bool is_template_param_decl(DemParser *p) {
 	return PEEK() == 'T' && strchr("yptnk", PEEK_AT(1)) != NULL;
 }
 
+DemNode *parse_template_param_decl(DemParser *p, NodeList *params);
+
 bool rule_template_arg(DemParser *p, DemResult *r) {
 	RULE_HEAD(TEMPLATE_ARG);
 	switch (PEEK()) {
@@ -3310,7 +4016,16 @@ bool rule_template_arg(DemParser *p, DemResult *r) {
 		if (!is_template_param_decl(p)) {
 			RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_type));
 		}
-		RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_template_param_decl));
+		// Template param decl is a prefix to the actual arg:
+		// <template-arg> ::= <template-param-decl> <template-arg>
+		// Parse the decl for side effects (registers the param), then
+		// discard it and parse the actual arg that follows.
+		DemNode *decl = parse_template_param_decl(p, NULL);
+		if (!decl) {
+			TRACE_RETURN_FAILURE();
+		}
+		DemNode_dtor(decl);
+		RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_template_arg));
 	}
 	default:
 		RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_type));
@@ -3362,13 +4077,17 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 		Node_append(many_node, arg);
 		if (READ('Q')) {
 			// C++20 constraint expression attached to the template argument.
-			// Minimal support: parse it as an expression and ignore it.
-			// (Pretty-printing a per-argument constraint isn't currently supported.)
+			// Parse it and discard — LLVM doesn't print these either.
+			bool saved_in_constraint_expr = p->in_constraint_expr;
+			p->in_constraint_expr = true;
 			PDemNode constraint_expr = NULL;
-			if (!(CALL_RULE_N(constraint_expr, rule_expression) && READ('E'))) {
+			bool ok = CALL_RULE_N(constraint_expr, rule_expression) && READ('E');
+			p->in_constraint_expr = saved_in_constraint_expr;
+			if (!ok) {
 				TRACE_RETURN_FAILURE();
 			}
 			DemNode_dtor(constraint_expr);
+			break; // Q...E terminates the template arg list
 		}
 	}
 	many_node->many_ty.sep = ", ";
@@ -3415,8 +4134,17 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 		ADV();
 		PDemNode constraint = NULL;
 		{
+			// Template param references inside the concept's template args
+			// (e.g. T_ in True<T_>) cannot be resolved at this point because
+			// the template parameter scope hasn't been set up yet.  Treat them
+			// as constraint expressions so they are printed as raw names
+			// (e.g. "T"), matching LLVM/libc++abi behavior.
+			bool saved_in_constraint_expr = p->in_constraint_expr;
+			p->in_constraint_expr = true;
 			DemResult result = { 0 };
-			if (!rule_name(p, &result, NULL) || !result.output) {
+			bool ok = rule_name(p, &result, NULL) && result.output;
+			p->in_constraint_expr = saved_in_constraint_expr;
+			if (!ok) {
 				return NULL;
 			}
 			constraint = result.output;
@@ -3462,10 +4190,21 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 		if (!inner_params) {
 			return NULL;
 		}
+		// Push a new template param scope for the Tt's inner params so that
+		// TL references can resolve them (TL0_ = this Tt's params).
+		PNodeList tt_template_params = VecPDemNode_ctor();
+		VecPNodeList_append(&p->template_params, &tt_template_params);
+		size_t saved_tt_len = VecPNodeList_len(&p->template_params);
+
 		PDemNode requires_node = NULL;
 		while (!READ('E')) {
-			PDemNode param = parse_template_param_decl(p, NULL);
+			PDemNode param = parse_template_param_decl(p, tt_template_params);
 			if (!param) {
+				VecPNodeList_resize(&p->template_params, saved_tt_len - 1);
+				if (tt_template_params) {
+					free(tt_template_params->data);
+					free(tt_template_params);
+				}
 				DemNode_dtor(inner_params);
 				return NULL;
 			}
@@ -3473,15 +4212,26 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 			if (READ('Q')) {
 				DemResult requires_result = { 0 };
 				if (!rule_expression(p, &requires_result) && READ('E')) {
+					VecPNodeList_resize(&p->template_params, saved_tt_len - 1);
+					if (tt_template_params) {
+						free(tt_template_params->data);
+						free(tt_template_params);
+					}
 					DemNode_dtor(inner_params);
 					return NULL;
 				}
 			}
 		}
+		// Pop the Tt's template param scope
+		VecPNodeList_resize(&p->template_params, saved_tt_len - 1);
+		if (tt_template_params) {
+			free(tt_template_params->data);
+			free(tt_template_params);
+		}
 		inner_params->many_ty.sep = ", ";
 		inner_params->val.len = CUR() - inner_params->val.buf;
 
-		DemNode *name = append_synthetic_template_parameter(p, params, TEMPLATEPARAMKIND_NONTYPE);
+		DemNode *name = append_synthetic_template_parameter(p, params, TEMPLATEPARAMKIND_TEMPLATE);
 		if (!name) {
 			DemNode_dtor(inner_params);
 			DemNode_dtor(requires_node);
@@ -3534,16 +4284,28 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 	RULE_HEAD(UNNAMED_TYPE_NAME);
 	if (READ_STR("Ut")) {
 		ut64 tidx = 0;
-		if (!parse_non_neg_integer(p, &tidx)) {
-			tidx = 0;
-		}
+		bool has_index = parse_non_neg_integer(p, &tidx);
 		if (!READ('_')) {
 			TRACE_RETURN_FAILURE();
 		}
+		if (has_index) {
+			char buf[32];
+			int len = snprintf(buf, sizeof(buf), "'unnamed%" PRIu64 "'", tidx);
+			AST_APPEND_STRN(buf, len);
+		} else {
+			AST_APPEND_STR("'unnamed'");
+		}
+		TRACE_RETURN_SUCCESS;
+	}
+	if (READ_STR("Ub")) {
+		// Ub <number> _ — block literal (Apple/Objective-C extension)
+		parse_non_neg_integer(p, NULL);
+		MUST_MATCH(READ('_'));
+		AST_APPEND_STR("'block-literal'");
 		TRACE_RETURN_SUCCESS;
 	}
 	if (READ_STR("Ul")) {
-		// Ul <template-param-decl>* [Q <constraint-expr> E] <lambda-sig> [Q <constraint-expr> E] E <number> _
+		// Ul <template-param-decl>* [Q <constraint-expr>] <lambda-sig> [Q <constraint-expr>] E <number> _
 
 		size_t saved_parse_lambda_params_at_level = p->parse_lambda_params_at_level;
 		p->parse_lambda_params_at_level = VecPNodeList_len(&p->template_params);
@@ -3552,20 +4314,43 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 		PNodeList lambda_template_params = VecPDemNode_ctor();
 		VecPNodeList_append(&p->template_params, &lambda_template_params);
 
+		bool saved_permit_forward_template_refs = p->permit_forward_template_refs;
+		p->permit_forward_template_refs = true;
+
 		PDemNode temp_params = NULL;
 		while (is_template_param_decl(p)) {
-			// TODO:
-			DEM_UNREACHABLE;
+			PDemNode param = parse_template_param_decl(p, lambda_template_params);
+			if (!param) {
+				TRACE_RETURN_FAILURE();
+			}
+			if (!temp_params) {
+				temp_params = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, param->val.buf, 0);
+				if (!temp_params) {
+					DemNode_dtor(param);
+					TRACE_RETURN_FAILURE();
+				}
+				temp_params->many_ty.sep = ", ";
+			}
+			Node_append(temp_params, param);
 		}
-		if (temp_params && VecPDemNode_empty(temp_params->children)) {
+		if (temp_params) {
+			temp_params->val.len = CUR() - temp_params->val.buf;
+		}
+		if (!temp_params) {
 			VecPNodeList_pop(&p->template_params);
 		}
 
 		PDemNode requires1 = NULL;
 		if (READ('Q')) {
-			// C++20 constraint expression (templated lambda) - minimal support: parse & ignore.
-			MUST_MATCH(CALL_RULE_N(requires1, rule_expression) && READ('E'));
-			if (!requires1) {
+			// C++20 constraint expression (templated lambda).
+			// Template params are printed as raw names (e.g. T, TL0_) since we
+			// can't reliably resolve cross-scope references.
+			// No trailing 'E' — the expression is self-delimiting.
+			bool saved_in_constraint_expr = p->in_constraint_expr;
+			p->in_constraint_expr = true;
+			bool ok_r1 = CALL_RULE_N(requires1, rule_expression);
+			p->in_constraint_expr = saved_in_constraint_expr;
+			if (!ok_r1 || !requires1) {
 				TRACE_RETURN_FAILURE();
 			}
 		}
@@ -3575,8 +4360,11 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 		}
 		PDemNode requires2 = NULL;
 		if (READ('Q')) {
-			MUST_MATCH(CALL_RULE_N(requires2, rule_expression) && READ('E'));
-			if (!requires2) {
+			bool saved_in_constraint_expr2 = p->in_constraint_expr;
+			p->in_constraint_expr = true;
+			bool ok_r2 = CALL_RULE_N(requires2, rule_expression);
+			p->in_constraint_expr = saved_in_constraint_expr2;
+			if (!ok_r2 || !requires2) {
 				TRACE_RETURN_FAILURE();
 			}
 		}
@@ -3595,9 +4383,18 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 		node->closure_ty_name.requires1 = requires1;
 		node->closure_ty_name.requires2 = requires2;
 
+		// Resolve forward template refs while lambda template params are still available.
+		resolve_forward_template_refs(p, node);
+
+		p->permit_forward_template_refs = saved_permit_forward_template_refs;
 		p->parse_lambda_params_at_level = saved_parse_lambda_params_at_level;
 		VecPNodeList_resize(&p->template_params, saved_template_params_len);
-		VecPDemNode_dtor(lambda_template_params);
+		// Free the vector structure but NOT the nodes inside it.
+		// The nodes are owned by the template param decl nodes in the AST tree.
+		if (lambda_template_params) {
+			free(lambda_template_params->data);
+			free(lambda_template_params);
+		}
 		TRACE_RETURN_SUCCESS;
 	}
 	RULE_FOOT(unnamed_type_name);
@@ -3653,6 +4450,15 @@ bool rule_encoding(DemParser *p, DemResult *r) {
 		TRACE_RETURN_FAILURE();
 	}
 
+	// Vendor-extended Ua9enable_if attribute: Ua9enable_ifI <template-arg>* E
+	// Appears after the name, before return type and parameters.
+	// Printed as " [enable_if:cond1, cond2]" after the function signature.
+	if (READ_STR("Ua9enable_ifI")) {
+		if (!CALL_MANY_N(node->fn_ty.enable_if_attrs, rule_template_arg, ", ", 'E')) {
+			TRACE_RETURN_FAILURE();
+		}
+	}
+
 	if (is_end_of_encoding(p)) {
 		PDemNode name = node->fn_ty.name;
 		node->fn_ty.name = NULL;
@@ -3673,8 +4479,20 @@ bool rule_encoding(DemParser *p, DemResult *r) {
 		}
 	}
 
+	// C++23 requires clause: Q <constraint-expression>
+	if (READ('Q')) {
+		bool saved_in_constraint_expr = p->in_constraint_expr;
+		p->in_constraint_expr = true;
+		bool ok = CALL_RULE_N(node->fn_ty.requires_node, rule_expression);
+		p->in_constraint_expr = saved_in_constraint_expr;
+		if (!ok) {
+			TRACE_RETURN_FAILURE();
+		}
+	}
+
 	node->fn_ty.cv_qualifiers = ns.cv_qualifiers;
 	node->fn_ty.ref_qualifiers = ns.ref_qualifiers;
+	node->fn_ty.has_explicit_object_param = ns.has_explicit_object_param;
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -3749,6 +4567,9 @@ char *cp_demangle_v3(const char *mangled, CpDemOptions opts) {
 	// Handle vendor-specific prefixes (Apple/Objective-C extensions)
 	// These appear as multiple underscores before the actual _Z symbol
 	const char *p = mangled;
+	bool is_block_invoke = false;
+	const char *dot_suffix = NULL; // Points to ".eh", ".cold", etc. suffix
+
 	// Count leading underscores
 	while (*p == '_') {
 		p++;
@@ -3758,14 +4579,111 @@ char *cp_demangle_v3(const char *mangled, CpDemOptions opts) {
 		// p points to 'Z', so p-1 points to '_', which is the start of "_Z"
 		p = p - 1;
 	}
+
+	// Detect _block_invoke suffix before parsing.
+	// Block invoke symbols: ___Z<mangled>_block_invoke[N][.N]
+	// Expected output: "invocation function for block in <demangled>"
+	const char *block_invoke = strstr(p, "_block_invoke");
+	size_t parse_len = 0;
+	char *parse_buf = NULL;
+	if (block_invoke && block_invoke > p) {
+		// Verify everything after _block_invoke is [_]digits or .digits (discriminator)
+		const char *after = block_invoke + strlen("_block_invoke");
+		// Optional underscore before discriminator number
+		if (*after == '_') {
+			after++;
+		}
+		while (*after >= '0' && *after <= '9') {
+			after++;
+		}
+		if (*after == '.') {
+			after++;
+			while (*after >= '0' && *after <= '9') {
+				after++;
+			}
+		}
+		if (*after == '\0') {
+			is_block_invoke = true;
+			// Create a trimmed copy without the _block_invoke suffix
+			parse_len = (size_t)(block_invoke - p);
+			parse_buf = malloc(parse_len + 1);
+			if (!parse_buf) {
+				return NULL;
+			}
+			memcpy(parse_buf, p, parse_len);
+			parse_buf[parse_len] = '\0';
+			p = parse_buf;
+		}
+	}
+
+	// Detect dot-suffix (e.g., ".eh", ".cold") before parsing.
+	// These are vendor extensions appended after the mangled name.
+	// LLVM outputs them as " (.eh)".
+	// Only look for dot-suffix if we didn't already detect block_invoke.
+	if (!is_block_invoke) {
+		// Find the last dot in the symbol
+		const char *last_dot = strrchr(p, '.');
+		if (last_dot && last_dot > p + 2) {
+			// Verify that everything after the dot is alphanumeric (not a number-only discriminator)
+			const char *check = last_dot + 1;
+			bool all_digits = true;
+			bool has_chars = false;
+			while (*check) {
+				if (!(*check >= '0' && *check <= '9')) {
+					all_digits = false;
+				}
+				has_chars = true;
+				check++;
+			}
+			// Only treat as dot-suffix if it has non-digit chars (e.g., ".eh", ".cold")
+			// Pure digit suffixes like ".25" are discriminators handled elsewhere
+			if (has_chars && !all_digits) {
+				dot_suffix = last_dot;
+				parse_len = (size_t)(last_dot - p);
+				parse_buf = realloc(parse_buf, parse_len + 1);
+				if (!parse_buf) {
+					return NULL;
+				}
+				memcpy(parse_buf, p, parse_len);
+				parse_buf[parse_len] = '\0';
+				p = parse_buf;
+			}
+		}
+	}
+
 	DemContext ctx = { 0 };
 	if (!parse_rule(&ctx, p, rule_mangled_name, opts)) {
 		DemContext_deinit(&ctx);
+		free(parse_buf);
 		return NULL;
 	}
+
+	if (is_block_invoke) {
+		// Wrap result: "invocation function for block in <demangled>"
+		DemString wrapped = { 0 };
+		dem_string_append(&wrapped, "invocation function for block in ");
+		char *inner = dem_string_drain_no_free(&ctx.output);
+		if (inner) {
+			dem_string_append(&wrapped, inner);
+			free(inner);
+		}
+		ctx.output = (DemString){ 0 };
+		DemContext_deinit(&ctx);
+		free(parse_buf);
+		return dem_string_drain_no_free(&wrapped);
+	}
+
+	if (dot_suffix) {
+		// Append dot-suffix in parentheses: " (.eh)"
+		dem_string_append(&ctx.output, " (");
+		dem_string_append(&ctx.output, dot_suffix);
+		dem_string_append(&ctx.output, ")");
+	}
+
 	char *result = dem_string_drain_no_free(&ctx.output);
 	// Clear the output buffer so DemContext_deinit doesn't double-free it
 	ctx.output = (DemString){ 0 };
 	DemContext_deinit(&ctx);
+	free(parse_buf);
 	return result;
 }
