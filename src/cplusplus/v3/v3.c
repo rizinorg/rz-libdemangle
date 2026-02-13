@@ -381,6 +381,28 @@ static void pp_pack_all_elements(PDemNode node, DemString *out, PPContext *pp_ct
 	}
 }
 
+// Resolve a PARAMETER_PACK node to its current element during pack expansion.
+// Returns the resolved element node, or NULL if not in pack expansion or not a pack.
+static PDemNode resolve_pack_element(PDemNode node, PPContext *pp_ctx) {
+	if (!node || node->tag != CP_DEM_TYPE_KIND_PARAMETER_PACK) {
+		return NULL;
+	}
+	if (!node->child_ref || node->child_ref->tag != CP_DEM_TYPE_KIND_MANY) {
+		return NULL;
+	}
+	if (pp_ctx->current_pack_index == UT32_MAX) {
+		return NULL;
+	}
+	const DemNode *many_node = node->child_ref;
+	if (pp_ctx->current_pack_index < VecPDemNode_len(many_node->children)) {
+		PDemNode *child = VecPDemNode_at(many_node->children, pp_ctx->current_pack_index);
+		if (child && *child) {
+			return *child;
+		}
+	}
+	return NULL;
+}
+
 bool pp_pack_expansion(PDemNode node, DemString *out, PPContext *pp_ctx) {
 	ut32 saved_pack_index = pp_ctx->current_pack_index;
 	ut32 saved_pack_max = pp_ctx->current_pack_max;
@@ -684,10 +706,80 @@ static inline void pp_as_operand_ex(DemNode *node, DemString *out, Prec prec, bo
 	}
 }
 
+static void pp_template_param_decl_inner(DemNode *node, DemString *out, PPContext *ctx, bool is_pack) {
+	if (!node || !out) {
+		return;
+	}
+	switch (node->tag) {
+	case CP_DEM_TYPE_KIND_TYPE_TEMPLATE_PARAM_DECL:
+		dem_string_append(out, "typename");
+		if (is_pack) {
+			dem_string_append(out, " ...");
+		} else {
+			dem_string_append(out, " ");
+		}
+		ast_pp(node->child, out, ctx);
+		break;
+	case CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL:
+		if (node->constrained_type_template_param_decl.constraint) {
+			ast_pp(node->constrained_type_template_param_decl.constraint, out, ctx);
+		}
+		if (is_pack) {
+			dem_string_append(out, " ...");
+		} else {
+			dem_string_append(out, " ");
+		}
+		if (node->constrained_type_template_param_decl.name) {
+			ast_pp(node->constrained_type_template_param_decl.name, out, ctx);
+		}
+		break;
+	case CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL:
+		if (node->non_type_template_param_decl.ty) {
+			ast_pp(node->non_type_template_param_decl.ty, out, ctx);
+		}
+		if (is_pack) {
+			dem_string_append(out, " ...");
+		} else {
+			dem_string_append(out, " ");
+		}
+		if (node->non_type_template_param_decl.name) {
+			ast_pp(node->non_type_template_param_decl.name, out, ctx);
+		}
+		break;
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL:
+		dem_string_append(out, "template<");
+		if (node->template_param_decl.params) {
+			ast_pp(node->template_param_decl.params, out, ctx);
+		}
+		dem_string_append(out, "> typename");
+		if (is_pack) {
+			dem_string_append(out, " ...");
+		} else {
+			dem_string_append(out, " ");
+		}
+		if (node->template_param_decl.name) {
+			ast_pp(node->template_param_decl.name, out, ctx);
+		}
+		break;
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_PACK_DECL:
+		pp_template_param_decl_inner(node->child, out, ctx, true);
+		break;
+	default:
+		break;
+	}
+}
+
 static void pp_template_param_decl(DemNode *node, DemString *out, PPContext *ctx) {
 	if (!node || !out) {
 		return;
 	}
+	// When inside template args, template param decls define the parameter kind
+	// but should not be displayed (only the actual arguments are shown).
+	// They are only displayed in lambda/closure template parameter lists.
+	if (ctx->inside_template) {
+		return;
+	}
+	pp_template_param_decl_inner(node, out, ctx, false);
 }
 
 void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
@@ -758,8 +850,37 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		dem_string_append(out, ">");
 		break;
 	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL:
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_PACK_DECL:
+	case CP_DEM_TYPE_KIND_TYPE_TEMPLATE_PARAM_DECL:
+	case CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL:
+	case CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL:
 		pp_template_param_decl(node, out, ctx);
 		break;
+	case CP_DEM_TYPE_KIND_SYNTHETIC_TEMPLATE_PARAM_NAME: {
+		const char *prefix;
+		switch (node->synthetic_template_param_name.kind) {
+		case TEMPLATEPARAMKIND_TYPE:
+			prefix = "$T";
+			break;
+		case TEMPLATEPARAMKIND_NONTYPE:
+			prefix = "$N";
+			break;
+		case TEMPLATEPARAMKIND_TEMPLATE:
+			prefix = "$TT";
+			break;
+		default:
+			prefix = "$?";
+			break;
+		}
+		dem_string_append(out, prefix);
+		size_t idx = node->synthetic_template_param_name.index;
+		if (idx > 0) {
+			char buf[32];
+			snprintf(buf, sizeof(buf), "%zu", idx - 1);
+			dem_string_append(out, buf);
+		}
+		break;
+	}
 	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS:
 		if (node->name_with_template_args.name) {
 			ast_pp(node->name_with_template_args.name, out, ctx);
@@ -813,11 +934,12 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			}
 			size_t pos_after_sep = dem_string_length(out);
 			ast_pp(child, out, ctx);
-			first = false;
 			if (dem_string_length(out) == pos_after_sep && out->buf) {
 				// No content was added after separator - remove it
 				out->len = saved_pos;
 				out->buf[out->len] = '\0';
+			} else {
+				first = false;
 			}
 		});
 		break;
@@ -893,7 +1015,44 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			};
 			pp_function_ty_with_context(&pp_fn_context, out);
 		} else if (node->subtag != SUB_TAG_INVALID && AST(0)) {
-			pp_type_with_quals(node, out, ctx);
+			// Check if this is a pointer/reference wrapping a parameter pack that
+			// resolves to a function type or array type during pack expansion.
+			// In that case, we need proper C declarator syntax: int (*)() not int ()*.
+			PDemNode resolved = resolve_pack_element(AST(0), ctx);
+			if (resolved && resolved->tag == CP_DEM_TYPE_KIND_FUNCTION_TYPE) {
+				PPFnContext pp_fn_context = {
+					.fn = resolved,
+					.quals = node,
+					.pp_quals = pp_function_ty_quals,
+					.pp_ctx = ctx,
+				};
+				pp_function_ty_with_context(&pp_fn_context, out);
+			} else if (resolved && resolved->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE) {
+				// Pointer/reference to array: int (*) []
+				DemString qualifiers_string = { 0 };
+				dem_string_init(&qualifiers_string);
+				PDemNode base_node = NULL;
+				pp_type_quals(node, &qualifiers_string, CP_DEM_TYPE_KIND_UNKNOWN, &base_node, ctx);
+				DemString array_dem_string = { 0 };
+				dem_string_init(&array_dem_string);
+				PDemNode array_inner_base = NULL;
+				pp_array_type_dimension(resolved, &array_dem_string, &array_inner_base, ctx);
+				ast_pp(array_inner_base, out, ctx);
+				if (dem_string_non_empty(&qualifiers_string)) {
+					reorder_qualifiers_for_array_fn_ref(&qualifiers_string);
+					dem_string_append(out, " (");
+					dem_string_concat(out, &qualifiers_string);
+					dem_string_append(out, ")");
+				}
+				if (dem_string_non_empty(&array_dem_string)) {
+					dem_string_append(out, " ");
+					dem_string_concat(out, &array_dem_string);
+				}
+				dem_string_deinit(&array_dem_string);
+				dem_string_deinit(&qualifiers_string);
+			} else {
+				pp_type_with_quals(node, out, ctx);
+			}
 		} else {
 			// Regular type - print children and add decorator
 			vec_foreach_ptr(PDemNode, node->children, child_ptr, {
@@ -3221,8 +3380,12 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 static DemNode *append_synthetic_template_parameter(DemParser *p, NodeList *params, TemplateParamKind kind) {
 	size_t index = p->num_synthetic_template_parameters[(size_t)kind]++;
 	DemNode *param = DemNode_ctor(CP_DEM_TYPE_KIND_SYNTHETIC_TEMPLATE_PARAM_NAME, CUR(), 0);
-	if (param && params) {
-		VecPDemNode_append(params, &param);
+	if (param) {
+		param->synthetic_template_param_name.kind = kind;
+		param->synthetic_template_param_name.index = index;
+		if (params) {
+			VecPDemNode_append(params, &param);
+		}
 	}
 	return param;
 }
@@ -3254,7 +3417,6 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 		{
 			DemResult result = { 0 };
 			if (!rule_name(p, &result, NULL) || !result.output) {
-				DemNode_dtor(name);
 				return NULL;
 			}
 			constraint = result.output;
@@ -3263,7 +3425,7 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 		if (!name) {
 			return NULL;
 		}
-		PDemNode decl = DemNode_ctor(CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL,  saved_pos, CUR() - saved_pos);
+		PDemNode decl = DemNode_ctor(CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
 		if (!decl) {
 			DemNode_dtor(name);
 			DemNode_dtor(constraint);
@@ -3285,18 +3447,18 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 			DemNode_dtor(name);
 			return NULL;
 		}
-		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL,  saved_pos, CUR() - saved_pos);
+		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
 		if (!decl) {
 			return NULL;
 		}
 		decl->non_type_template_param_decl.name = name;
-		decl->non_type_template_param_decl.ty = ty;
+		decl->non_type_template_param_decl.ty = result.output;
 		return decl;
 	}
 	case 't': {
 		// Tt <template-param-decl>* E - template template parameter
 		ADV();
-		PDemNode inner_params = DemNode_ctor(CP_DEM_TYPE_KIND_MANY,  CUR(), 0);
+		PDemNode inner_params = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, CUR(), 0);
 		if (!inner_params) {
 			return NULL;
 		}
@@ -3325,7 +3487,7 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 			DemNode_dtor(requires_node);
 			return NULL;
 		}
-		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL,  saved_pos, CUR() - saved_pos);
+		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
 		if (!decl) {
 			DemNode_dtor(name);
 			DemNode_dtor(inner_params);
@@ -3357,6 +3519,15 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 		break;
 	}
 	return NULL;
+}
+
+bool rule_template_param_decl(DemParser *p, DemResult *r) {
+	DemNode *result = parse_template_param_decl(p, NULL);
+	if (!result) {
+		return false;
+	}
+	r->output = result;
+	return true;
 }
 
 bool rule_unnamed_type_name(DemParser *p, DemResult *r) {

@@ -52,7 +52,26 @@ DemNode *DemNode_ctor_inplace(DemNode *xs, CpDemTypeKind tag, const char *val_be
 	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION:
 	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC:
 	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC:
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_PACK_DECL:
+	case CP_DEM_TYPE_KIND_TYPE_TEMPLATE_PARAM_DECL:
 		xs->child = NULL;
+		break;
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL:
+		xs->template_param_decl.name = NULL;
+		xs->template_param_decl.params = NULL;
+		xs->template_param_decl.requires_node = NULL;
+		break;
+	case CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL:
+		xs->constrained_type_template_param_decl.name = NULL;
+		xs->constrained_type_template_param_decl.constraint = NULL;
+		break;
+	case CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL:
+		xs->non_type_template_param_decl.name = NULL;
+		xs->non_type_template_param_decl.ty = NULL;
+		break;
+	case CP_DEM_TYPE_KIND_SYNTHETIC_TEMPLATE_PARAM_NAME:
+		xs->synthetic_template_param_name.kind = TEMPLATEPARAMKIND_TYPE;
+		xs->synthetic_template_param_name.index = 0;
 		break;
 	case CP_DEM_TYPE_KIND_PARAMETER_PACK:
 		break;
@@ -193,6 +212,7 @@ void DemNode_deinit(DemNode *xs) {
 		}
 		break;
 	case CP_DEM_TYPE_KIND_PARAMETER_PACK:
+	case CP_DEM_TYPE_KIND_SYNTHETIC_TEMPLATE_PARAM_NAME:
 		// No fields to free
 		break;
 	case CP_DEM_TYPE_KIND_TEMPLATE_ARGS:
@@ -200,8 +220,36 @@ void DemNode_deinit(DemNode *xs) {
 	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION:
 	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC:
 	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC:
-	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL:
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_PACK_DECL:
+	case CP_DEM_TYPE_KIND_TYPE_TEMPLATE_PARAM_DECL:
 		DemNode_dtor(xs->child);
+		break;
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL:
+		if (xs->template_param_decl.name) {
+			DemNode_dtor(xs->template_param_decl.name);
+		}
+		if (xs->template_param_decl.params) {
+			DemNode_dtor(xs->template_param_decl.params);
+		}
+		if (xs->template_param_decl.requires_node) {
+			DemNode_dtor(xs->template_param_decl.requires_node);
+		}
+		break;
+	case CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL:
+		if (xs->constrained_type_template_param_decl.name) {
+			DemNode_dtor(xs->constrained_type_template_param_decl.name);
+		}
+		if (xs->constrained_type_template_param_decl.constraint) {
+			DemNode_dtor(xs->constrained_type_template_param_decl.constraint);
+		}
+		break;
+	case CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL:
+		if (xs->non_type_template_param_decl.name) {
+			DemNode_dtor(xs->non_type_template_param_decl.name);
+		}
+		if (xs->non_type_template_param_decl.ty) {
+			DemNode_dtor(xs->non_type_template_param_decl.ty);
+		}
 		break;
 	case CP_DEM_TYPE_KIND_ABI_TAG_TY:
 		if (xs->abi_tag_ty.ty) {
@@ -366,13 +414,31 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 	case CP_DEM_TYPE_KIND_PARAMETER_PACK:
 		dst->child_ref = src->child_ref;
 		break;
+	case CP_DEM_TYPE_KIND_SYNTHETIC_TEMPLATE_PARAM_NAME:
+		dst->synthetic_template_param_name.kind = src->synthetic_template_param_name.kind;
+		dst->synthetic_template_param_name.index = src->synthetic_template_param_name.index;
+		break;
 	case CP_DEM_TYPE_KIND_TEMPLATE_ARGS:
 	case CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK:
 	case CP_DEM_TYPE_KIND_PARAMETER_PACK_EXPANSION:
 	case CP_DEM_TYPE_KIND_NOEXCEPT_SPEC:
 	case CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC:
-	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL:
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_PACK_DECL:
+	case CP_DEM_TYPE_KIND_TYPE_TEMPLATE_PARAM_DECL:
 		dst->child = src->child ? DemNode_clone(src->child) : NULL;
+		break;
+	case CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL:
+		dst->template_param_decl.name = src->template_param_decl.name ? DemNode_clone(src->template_param_decl.name) : NULL;
+		dst->template_param_decl.params = src->template_param_decl.params ? DemNode_clone(src->template_param_decl.params) : NULL;
+		dst->template_param_decl.requires_node = src->template_param_decl.requires_node ? DemNode_clone(src->template_param_decl.requires_node) : NULL;
+		break;
+	case CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL:
+		dst->constrained_type_template_param_decl.name = src->constrained_type_template_param_decl.name ? DemNode_clone(src->constrained_type_template_param_decl.name) : NULL;
+		dst->constrained_type_template_param_decl.constraint = src->constrained_type_template_param_decl.constraint ? DemNode_clone(src->constrained_type_template_param_decl.constraint) : NULL;
+		break;
+	case CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL:
+		dst->non_type_template_param_decl.name = src->non_type_template_param_decl.name ? DemNode_clone(src->non_type_template_param_decl.name) : NULL;
+		dst->non_type_template_param_decl.ty = src->non_type_template_param_decl.ty ? DemNode_clone(src->non_type_template_param_decl.ty) : NULL;
 		break;
 	case CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS:
 		dst->name_with_template_args.name = src->name_with_template_args.name ? DemNode_clone(src->name_with_template_args.name) : NULL;
