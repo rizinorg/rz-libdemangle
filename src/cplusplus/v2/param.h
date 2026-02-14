@@ -22,47 +22,39 @@ typedef struct {
  *
  * \param p_dst : Pointer to Param object to init clone into.
  * \param p_src : Pointer to Param object to init clone of.
- *
- * \return p_dst on success.
- * \return NULL otherwise.
- * */
-#define param_init_clone(p_dst, p_src) \
-	(((p_dst) && (p_src)) ? (dem_string_init_clone(&(p_dst)->name, &(p_src)->name), \
-					dem_string_init_clone(&(p_dst)->suffix, &(p_src)->suffix), \
-					dem_string_init_clone(&(p_dst)->prefix, &(p_src)->prefix), \
-					(p_dst)) \
-			      : NULL)
+ */
+static inline void param_init_clone(
+	Param *p_dst,
+	const Param *p_src) {
+	if (p_src) {
+		dem_string_init_clone(&p_dst->name, &p_src->name);
+		dem_string_init_clone(&p_dst->suffix, &p_src->suffix);
+		dem_string_init_clone(&p_dst->prefix, &p_src->prefix);
+	}
+}
 
 /**
  * Init object make it usable with other functions (macros).
  *
  * \param p : Pointer to function parameter.
- *
- * \return p on success.
- * \return NULL otherwise.
- * */
-#define param_init(p) \
-	((p) ? ((dem_string_init(&(p)->name) && dem_string_init(&(p)->suffix) && \
-			dem_string_init(&(p)->prefix)) \
-			       ? (p) \
-			       : NULL) \
-	     : NULL)
+ */
+static inline void param_init(Param *p) {
+	dem_string_init(&p->name);
+	dem_string_init(&p->suffix);
+	dem_string_init(&p->prefix);
+}
 
 /**
  * Deinit a given function param object.
  *
  * \param p : Pointer to function param object.
- *
- * \return p on success.
- * \return NULL otherwise.
  */
-#define param_deinit(p) \
-	((p) ? (dem_string_deinit(&(p)->name), \
-		       dem_string_deinit(&(p)->suffix), \
-		       dem_string_deinit(&(p)->prefix), \
-		       memset((p), 0, sizeof(Param)), \
-		       (p)) \
-	     : NULL)
+static inline void param_deinit(Param *p) {
+	dem_string_deinit(&p->name);
+	dem_string_deinit(&p->suffix);
+	dem_string_deinit(&p->prefix);
+	memset(p, 0, sizeof(Param));
+}
 
 /**
  * Append a string to a function param field (name/suffix/prefix)
@@ -70,21 +62,18 @@ typedef struct {
  * \param p    : Pointer to function param.
  * \param field : Name of field to append to.
  * \param val   : Value to pe appended.
- *
- * \return p on success.
- * \return NULL otherwise.
  */
 #define param_append_to(p, field, val) \
-	((p) ? (dem_string_append(&((p)->field), val) ? (p) : NULL) : NULL)
+	do { \
+		dem_string_append(&((p)->field), val); \
+	} while (0)
 
 #define param_appendf_to(p, field, ...) \
 	do { \
-		if (p) { \
-			const char *s = dem_str_newf(__VA_ARGS__); \
-			if (s) { \
-				param_append_to(p, field, s); \
-				free((void *)s); \
-			} \
+		const char *s = dem_str_newf(__VA_ARGS__); \
+		if (s) { \
+			param_append_to(p, field, s); \
+			free((void *)s); \
 		} \
 	} while (0)
 
@@ -94,12 +83,11 @@ typedef struct {
  * \param p    : Pointer to function param.
  * \param field : Name of field to prepend to.
  * \param val   : Value to pe prepended.
- *
- * \return p on success.
- * \return NULL otherwise.
  */
 #define param_prepend_to(p, field, val) \
-	((p) ? (dem_string_append_prefix_n(&((p)->field), val, strlen(val)) ? (p) : NULL) : NULL)
+	do { \
+		dem_string_append_prefix_n(&((p)->field), val, strlen(val)); \
+	} while (0)
 
 VecIMPL(Param, param_deinit);
 typedef VecT(Param) ParamVec;

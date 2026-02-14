@@ -21,7 +21,8 @@
 	do { \
 		size_t I = 0; \
 		T *var = NULL; \
-		if ((v) && (v)->length) { \
+		const void *_vec_p_##var = (v); \
+		if (_vec_p_##var && (v)->length) { \
 			for ((I) = 0; \
 				(I) < (v)->length; \
 				++(I)) { \
