@@ -4687,3 +4687,26 @@ char *cp_demangle_v3(const char *mangled, CpDemOptions opts) {
 	free(parse_buf);
 	return result;
 }
+
+char *cp_demangle_v3_type(const char *mangled, CpDemOptions opts) {
+	if (!mangled || !*mangled) {
+		return NULL;
+	}
+
+	DemContext ctx = { 0 };
+	if (!parse_rule(&ctx, mangled, rule_type, opts)) {
+		DemContext_deinit(&ctx);
+		return NULL;
+	}
+
+	// Ensure the entire input was consumed
+	if (*ctx.parser.cur != '\0') {
+		DemContext_deinit(&ctx);
+		return NULL;
+	}
+
+	char *result = dem_string_drain_no_free(&ctx.output);
+	ctx.output = (DemString){ 0 };
+	DemContext_deinit(&ctx);
+	return result;
+}

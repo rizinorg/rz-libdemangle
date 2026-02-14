@@ -37,7 +37,13 @@ char *cp_demangle(const char *mangled, CpDemOptions opts) {
 	/* if it does not start with "_Z" or v3 demangling failed */
 	if (!res) {
 		/* match : _ */
-		return cp_demangle_v2(mangled, opts);
+		res = cp_demangle_v2(mangled, opts);
 	}
+
+	/* if v2 also failed, try as a bare type (no _Z prefix) */
+	if (!res) {
+		res = cp_demangle_v3_type(mangled, opts);
+	}
+
 	return res;
 }
