@@ -4,16 +4,6 @@
 
 #include <stdio.h>
 
-// Suppress GCC-specific warnings from macros in vec.h and param.h
-// These warnings are triggered when macros check addresses of stack-allocated variables
-#ifdef __GNUC__
-#ifndef __clang__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Waddress"
-#pragma GCC diagnostic ignored "-Wunused-value"
-#endif
-#endif
-
 #include "cplusplus/v2/common.h"
 
 // See issue :
@@ -381,7 +371,8 @@ CpDem *cpdem_public_name(CpDem *dem) {
 
 			/* continue from here to parse names, qualifiers, etc... like usual */
 		} else if (cpdem_qualifiers_list(dem)) {
-			if (IS_TERM(dem) && ADV()) {
+			if (IS_TERM(dem) && IN_RANGE(CUR() + 1)) {
+				ADV();
 				dem_string_append(&dem->base_name, CUR());
 				return dem;
 			}
@@ -721,6 +712,264 @@ CpDem *cpdem_class_names(CpDem *dem, ClassNameVec *class_names, ut64 qualifiers_
 }
 
 /**
+ * \b Try to match a basic type at the current read position.
+ *
+ * This handles built-in types, unsigned/signed variants, complex types,
+ * qualifier lists, template classes, and named (custom) types.
+ *
+ * \param dem     Demangling context.
+ * \param param   Pointer to param being built (caller-owned).
+ * \param params  Parameter vector to append demangled parameter to.
+ * \param matched Set to true if the current character was recognized as a type
+ *                character (even if parsing subsequently failed). Set to false
+ *                if the character was not recognized, in which case \p param is
+ *                left untouched.
+ *
+ * \return dem on success (param appended to params).
+ * \return NULL on failure (param already deinited by this function).
+ */
+static CpDem *match_type(CpDem *dem, Param *param, ParamVec *params, bool *matched) {
+	*matched = true;
+
+	switch (PEEK()) {
+	case 'b': {
+		ADV();
+		if (dem_string_append(&param->name, "bool") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 'c': {
+		ADV();
+		if (dem_string_append(&param->name, "char") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 'd': {
+		ADV();
+		if (dem_string_append(&param->name, "double") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 'e': {
+		ADV();
+		if (dem_string_append(&param->name, "...") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 'f': {
+		ADV();
+		if (dem_string_append(&param->name, "float") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 'i': {
+		ADV();
+		if (dem_string_append(&param->name, "int") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 'l': {
+		ADV();
+		if (dem_string_append(&param->name, "long") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 'r': {
+		ADV();
+		if (dem_string_append(&param->name, "long double") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 's': {
+		ADV();
+		if (dem_string_append(&param->name, "short") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 't': {
+		ADV();
+		if (cpdem_template_class(dem, &param->name)) {
+			VecParam_append(params, param);
+			return dem;
+		} else {
+			param_deinit(param);
+			return NULL;
+		}
+	}
+	case 'v': {
+		ADV();
+		if (dem_string_append(&param->name, "void") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 'w': {
+		ADV();
+		if (dem_string_append(&param->name, "wchar_t") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 'x': {
+		ADV();
+		if (dem_string_append(&param->name, "long long") && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	case 'U': {
+		ADV();
+		switch (PEEK()) {
+		case 'c':
+			ADV();
+			if (dem_string_append(&param->name, "unsigned char") && VecParam_append(params, param)) {
+				return dem;
+			}
+			param_deinit(param);
+			return NULL;
+		case 's':
+			ADV();
+			if (dem_string_append(&param->name, "unsigned short") && VecParam_append(params, param)) {
+				return dem;
+			}
+			param_deinit(param);
+			return NULL;
+		case 'i':
+			ADV();
+			if (dem_string_append(&param->name, "unsigned int") && VecParam_append(params, param)) {
+				return dem;
+			}
+			param_deinit(param);
+			return NULL;
+		case 'l':
+			ADV();
+			if (dem_string_append(&param->name, "unsigned long") && VecParam_append(params, param)) {
+				return dem;
+			}
+			param_deinit(param);
+			return NULL;
+		case 'x':
+			ADV();
+			if (dem_string_append(&param->name, "unsigned long long") && VecParam_append(params, param)) {
+				return dem;
+			}
+			param_deinit(param);
+			return NULL;
+		default:
+			param_deinit(param);
+			return NULL;
+		}
+	}
+	case 'Q': {
+		ut64 qualifiers_count = cpdem_get_qualifier_count(dem);
+		if (!qualifiers_count) {
+			param_deinit(param);
+			return NULL;
+		}
+
+		ClassNameVec qualifiers = { 0 };
+		VecDemString_init(&qualifiers);
+		if (!cpdem_class_names(dem, &qualifiers, qualifiers_count)) {
+			param_deinit(param);
+			return NULL;
+		}
+
+		vec_foreach_ptr(DemString, &qualifiers, q, {
+			dem_string_concat(&param->name, q);
+			dem_string_append_n(&param->name, "::", 2);
+			dem_string_deinit(q);
+		});
+
+		/* HACK: to remove last two extraneous ":" (colon) symbols */
+		param->name.buf[--param->name.len] = 0;
+		param->name.buf[--param->name.len] = 0;
+		VecDemString_deinit(&qualifiers);
+
+		VecParam_append(params, param);
+		return dem;
+	}
+	case 'S': {
+		ADV();
+		switch (PEEK()) {
+		case 'c':
+			ADV();
+			if (dem_string_append(&param->name, "signed char") && VecParam_append(params, param)) {
+				return dem;
+			}
+			param_deinit(param);
+			return NULL;
+		default:
+			param_deinit(param);
+			return NULL;
+		}
+	}
+	case 'J': {
+		ADV();
+		switch (PEEK()) {
+		case 'f':
+			ADV();
+			if (dem_string_append(&param->name, "__complex__ float") && VecParam_append(params, param)) {
+				return dem;
+			}
+			param_deinit(param);
+			return NULL;
+		case 'd':
+			ADV();
+			if (dem_string_append(&param->name, "__complex__ double") && VecParam_append(params, param)) {
+				return dem;
+			}
+			param_deinit(param);
+			return NULL;
+		default:
+			param_deinit(param);
+			return NULL;
+		}
+	}
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9': {
+		if (cpdem_custom_type_name(dem, &param->name) && VecParam_append(params, param)) {
+			return dem;
+		}
+		param_deinit(param);
+		return NULL;
+	}
+	default: {
+		*matched = false;
+		return NULL;
+	}
+	}
+}
+
+/**
  * \b Get parameter type at current read position, demangle it and add to param vec.
  *    There are different types of parameter vectors. So the caller passes their own
  *    parameter vector to append the demangled parameter to.
@@ -742,191 +991,20 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 	Param param = { 0 };
 	param_init(&param);
 
-#define ADD_PARAM(x) \
-	dem_string_append(&param.name, x) ? (VecParam_append(params, &param) ? dem : (param_deinit(&param), NULL)) : (param_deinit(&param), NULL)
-
-	/** read a custom type from current read position and add it to params vector if success */
-#define ADD_NAMED_PARAM() \
-	cpdem_custom_type_name(dem, &param.name) ? (VecParam_append(params, &param) ? dem : (param_deinit(&param), NULL)) : (param_deinit(&param), NULL)
-
-#define ADD_QUALIFIER_LIST() \
-	do { \
-		ut64 qualifiers_count = cpdem_get_qualifier_count(dem); \
-		if (!qualifiers_count) { \
-			param_deinit(&param); \
-			return NULL; \
-		} \
-\
-		ClassNameVec qualifiers = { 0 }; \
-		VecDemString_init(&qualifiers); \
-		if (!cpdem_class_names(dem, &qualifiers, qualifiers_count)) { \
-			param_deinit(&param); \
-			return NULL; \
-		} \
-\
-		vec_foreach_ptr(DemString, &qualifiers, q, { \
-			dem_string_concat(&param.name, q); \
-			dem_string_append_n(&param.name, "::", 2); \
-			dem_string_deinit(q); \
-		}); \
-\
-		/* HACK: to remove last two extraneous ":" (colon) symbols */ \
-		param.name.buf[--param.name.len] = 0; \
-		param.name.buf[--param.name.len] = 0; \
-		VecDemString_deinit(&qualifiers); \
-\
-		VecParam_append(params, &param); \
-	} while (0)
-
-#define MATCH_TYPE() \
-	case 'b': { \
-		ADV(); \
-		return ADD_PARAM("bool"); \
-	} \
-	case 'c': { \
-		ADV(); \
-		return ADD_PARAM("char"); \
-	} \
-	case 'd': { \
-		ADV(); \
-		return ADD_PARAM("double"); \
-	} \
-	case 'e': { \
-		ADV(); \
-		return ADD_PARAM("..."); \
-	} \
-	case 'f': { \
-		ADV(); \
-		return ADD_PARAM("float"); \
-	} \
-	case 'i': { \
-		ADV(); \
-		return ADD_PARAM("int"); \
-	} \
-	case 'l': { \
-		ADV(); \
-		return ADD_PARAM("long"); \
-	} \
-	case 'r': { \
-		ADV(); \
-		return ADD_PARAM("long double"); \
-	} \
-	case 's': { \
-		ADV(); \
-		return ADD_PARAM("short"); \
-	} \
-	case 't': { \
-		ADV(); \
-		if (cpdem_template_class(dem, &param.name)) { \
-			VecParam_append(params, &param); \
-			return dem; \
-		} else { \
-			param_deinit(&param); \
-			return NULL; \
-		} \
-	} \
-	case 'v': { \
-		ADV(); \
-		return ADD_PARAM("void"); \
-	} \
-	case 'w': { \
-		ADV(); \
-		return ADD_PARAM("wchar_t"); \
-	} \
-	case 'x': { \
-		ADV(); \
-		return ADD_PARAM("long long"); \
-	} \
-	case 'U': { \
-		ADV(); \
-		switch (PEEK()) { \
-			/* Uc */ \
-		case 'c': \
-			ADV(); \
-			return ADD_PARAM("unsigned char"); \
-			/* Us */ \
-		case 's': \
-			ADV(); \
-			return ADD_PARAM("unsigned short"); \
-			/* Ui */ \
-		case 'i': \
-			ADV(); \
-			return ADD_PARAM("unsigned int"); \
-			/* Ul */ \
-		case 'l': \
-			ADV(); \
-			return ADD_PARAM("unsigned long"); \
-			/* Ux */ \
-		case 'x': \
-			ADV(); \
-			return ADD_PARAM("unsigned long long"); \
-		default: \
-			param_deinit(&param); \
-			return NULL; \
-		} \
-		break; \
-	} \
-	case 'Q': { \
-		ADD_QUALIFIER_LIST(); \
-		return dem; \
-	} \
-	case 'S': { \
-		ADV(); \
-		switch (PEEK()) { \
-			/* Sc */ \
-		case 'c': \
-			ADV(); \
-			return ADD_PARAM("signed char"); \
-		default: \
-			param_deinit(&param); \
-			return NULL; \
-		} \
-		break; \
-	} \
-	case 'J': { \
-		ADV(); \
-		switch (PEEK()) { \
-		/* Jf */ \
-		case 'f': \
-			ADV(); \
-			return ADD_PARAM("__complex__ float"); \
-		/* Jd */ \
-		case 'd': \
-			ADV(); \
-			return ADD_PARAM("__complex__ double"); \
-		default: \
-			param_deinit(&param); \
-			return NULL; \
-		} \
-		break; \
-	} \
-	case '0': \
-	case '1': \
-	case '2': \
-	case '3': \
-	case '4': \
-	case '5': \
-	case '6': \
-	case '7': \
-	case '8': \
-	case '9': { \
-		return ADD_NAMED_PARAM(); \
-	} \
-	default: { \
-		/* we tried all combinations but this is an invalid type, cannot continue */ \
-		param_deinit(&param); \
-		return NULL; \
-	}
-
 	st64 num_reps = 1;
 	st64 typeidx = -1;
 	bool is_ref = false;
 	bool is_ptr = false;
 
-	switch (PEEK()) {
-		/* X */
-		MATCH_TYPE();
+	{
+		bool matched;
+		CpDem *result = match_type(dem, &param, params, &matched);
+		if (matched) {
+			return result;
+		}
+	}
 
+	switch (PEEK()) {
 	/* G<LX>X */
 	case 'G': {
 		ADV();
@@ -936,9 +1014,17 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		 * - GQ2<qualifiers>      (ADD_QUALIFIER_LIST())
 		 * G will never appear in case of pointers, references or in template paramter list
 		 * */
-		switch (PEEK()) { MATCH_TYPE(); }
+		{
+			bool matched;
+			CpDem *result = match_type(dem, &param, params, &matched);
+			if (matched) {
+				return result;
+			}
+		}
 
-		break;
+		/* we tried all combinations but this is an invalid type, cannot continue */
+		param_deinit(&param);
+		return NULL;
 	}
 
 	/* R - References */
@@ -948,9 +1034,15 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		param_append_to(&param, suffix, "&");
 		is_ref = true;
 
-		switch (PEEK()) {
-			MATCH_TYPE();
+		{
+			bool matched;
+			CpDem *result = match_type(dem, &param, params, &matched);
+			if (matched) {
+				return result;
+			}
+		}
 
+		switch (PEEK()) {
 		case 'R': {
 			goto case_r;
 		}
@@ -970,6 +1062,11 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		case 'V': {
 			goto logic_intersection_between_case_r_and_v;
 		}
+
+		default: {
+			param_deinit(&param);
+			return NULL;
+		}
 		}
 	}
 
@@ -983,10 +1080,16 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		param_prepend_to(&param, suffix, "*");
 		is_ptr = true;
 
-		switch (PEEK()) {
+		{
 			/* PX or RPX */
-			MATCH_TYPE();
+			bool matched;
+			CpDem *result = match_type(dem, &param, params, &matched);
+			if (matched) {
+				return result;
+			}
+		}
 
+		switch (PEEK()) {
 		case 'P': {
 			goto case_p;
 		}
@@ -1021,10 +1124,21 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 				return NULL;
 			}
 
+			{
+				bool matched;
+				CpDem *result = match_type(dem, &param, params, &matched);
+				if (matched) {
+					return result;
+				}
+			}
+
 			switch (PEEK()) {
-				MATCH_TYPE();
 			case 'A':
 				goto case_a;
+			default: {
+				param_deinit(&param);
+				return NULL;
+			}
 			}
 
 			break;
@@ -1114,6 +1228,11 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		case 'V': {
 			goto logic_intersection_between_case_p_and_v;
 		}
+
+		default: {
+			param_deinit(&param);
+			return NULL;
+		}
 		}
 
 		break;
@@ -1126,10 +1245,16 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		ADV(); /* skip C */
 		param_append_to(&param, prefix, "const");
 
-		switch (PEEK()) {
+		{
 			/* CX */
-			MATCH_TYPE();
+			bool matched;
+			CpDem *result = match_type(dem, &param, params, &matched);
+			if (matched) {
+				return result;
+			}
+		}
 
+		switch (PEEK()) {
 		case 'P': {
 			goto case_p;
 		}
@@ -1137,6 +1262,11 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		/* CVX */
 		case 'V': {
 			goto logic_intersection_between_case_c_and_v;
+		}
+
+		default: {
+			param_deinit(&param);
+			return NULL;
 		}
 		}
 		break;
@@ -1150,11 +1280,18 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		ADV(); /* skip V */
 		param_append_to(&param, prefix, "volatile");
 
-		switch (PEEK()) {
+		{
 			/* VX */
-			MATCH_TYPE();
+			bool matched;
+			CpDem *result = match_type(dem, &param, params, &matched);
+			if (matched) {
+				return result;
+			}
 		}
-		break;
+
+		/* we tried all combinations but this is an invalid type, cannot continue */
+		param_deinit(&param);
+		return NULL;
 	}
 
 		/* repeated names */
@@ -1274,6 +1411,10 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 		free(base_typename);
 
 		break;
+	}
+	default: {
+		param_deinit(&param);
+		return NULL;
 	}
 	}
 

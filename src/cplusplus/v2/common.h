@@ -87,7 +87,7 @@ void cpdem_fini(CpDem *dem);
  * \return CUR() otherwise.
  */
 #define SEEK_TO(target_read_pos) \
-	(dem->original.cur = IN_RANGE(target_read_pos) ? (target_read_pos) : CUR())
+	((void)(dem->original.cur = IN_RANGE(target_read_pos) ? (target_read_pos) : CUR()))
 
 /**
  * Peek one character from current read position in demangling context.
@@ -114,7 +114,7 @@ void cpdem_fini(CpDem *dem);
  * \return updated read position on success.
  * \return NULL otherwise.
  */
-#define ADV() (IN_RANGE(CUR() + 1) ? dem->original.cur++ : NULL)
+#define ADV() ((void)(IN_RANGE(CUR() + 1) ? dem->original.cur++ : NULL))
 
 /**
  * \b Advance current read position by "n" characters, if this next
@@ -123,7 +123,7 @@ void cpdem_fini(CpDem *dem);
  * \return updated read position on success.
  * \return NULL otherwise.
  */
-#define ADV_BY(n) (IN_RANGE(CUR() + n) ? (dem->original.cur = dem->original.cur + (n)) : NULL)
+#define ADV_BY(n) ((void)(IN_RANGE(CUR() + n) ? (dem->original.cur = dem->original.cur + (n)) : NULL))
 
 /**
  * \b Save current read position in demangling context to restore it later.
