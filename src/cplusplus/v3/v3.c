@@ -4563,10 +4563,18 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 }
 
 /**
+ * \brief Demangle a C++ symbol using the IA-64 / Itanium ABI v3 mangling scheme.
  *
- * @param mangled
- * @param opts
- * @return
+ * Handles symbols beginning with "_Z" (possibly preceded by vendor-specific
+ * underscore prefixes). Also recognises Apple/Objective-C block-invoke suffixes
+ * ("_block_invoke[_N][.N]") and vendor dot-suffixes (".eh", ".cold", etc.),
+ * appending them to the demangled output in the appropriate format.
+ *
+ * \param mangled NUL-terminated mangled symbol string. May contain leading
+ *                underscores before the "_Z" prefix.
+ * \param opts    Demangling options controlling output verbosity (see \ref CpDemOptions).
+ * \return Newly allocated demangled string on success, or NULL on failure.
+ *         The caller is responsible for freeing the returned string.
  */
 char *cp_demangle_v3(const char *mangled, CpDemOptions opts) {
 	// Handle vendor-specific prefixes (Apple/Objective-C extensions)
@@ -4693,6 +4701,18 @@ char *cp_demangle_v3(const char *mangled, CpDemOptions opts) {
 	return result;
 }
 
+/**
+ * \brief Demangle a bare C++ type (without a "_Z" prefix) using the v3 scheme.
+ *
+ * Parses \p mangled as a standalone Itanium ABI type encoding (e.g. "i" for
+ * \c int, "PKc" for <tt>char const*</tt>). The entire input must be consumed
+ * for the demangling to succeed.
+ *
+ * \param mangled NUL-terminated mangled type string. Must not be NULL or empty.
+ * \param opts    Demangling options controlling output verbosity (see \ref CpDemOptions).
+ * \return Newly allocated demangled type string on success, or NULL on failure.
+ *         The caller is responsible for freeing the returned string.
+ */
 char *cp_demangle_v3_type(const char *mangled, CpDemOptions opts) {
 	if (!mangled || !*mangled) {
 		return NULL;

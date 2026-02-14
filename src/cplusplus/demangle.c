@@ -6,16 +6,20 @@
 #include "demangle.h"
 
 /**
- * \b Demangle given "mangled" declaration using either GNU v2 or GNU v3 grammar.
+ * \brief Demangle a C++ symbol, automatically selecting the appropriate scheme.
  *
- * The returned string is allocated and hence must be freed by caller after use.
+ * Tries demangling strategies in the following order:
+ *   1. If the symbol contains a "_Z" pattern (with possible leading underscores),
+ *      attempt v3 (Itanium ABI) demangling via \ref cp_demangle_v3.
+ *   2. If v3 fails or the pattern is absent, attempt v2 (legacy) demangling
+ *      via \ref cp_demangle_v2.
+ *   3. If v2 also fails, attempt bare-type demangling via \ref cp_demangle_v3_type.
  *
- * \p mangled : A C++ declaration mangled using either GNU v2 or GNU v3 grammar scheme.
- * \p opts
- *
- * \return Demangled name on success.
- * \return NULL otherwise.
- * */
+ * \param mangled NUL-terminated mangled symbol string. Must not be NULL.
+ * \param opts    Demangling options controlling output verbosity (see \ref CpDemOptions).
+ * \return Newly allocated demangled string on success, or NULL if all strategies fail.
+ *         The caller is responsible for freeing the returned string.
+ */
 char *cp_demangle(const char *mangled, CpDemOptions opts) {
 	if (!mangled) {
 		return NULL;
