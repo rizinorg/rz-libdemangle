@@ -4217,9 +4217,14 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 						free(tt_template_params->data);
 						free(tt_template_params);
 					}
+					DemNode_dtor(requires_node);
 					DemNode_dtor(inner_params);
 					return NULL;
 				}
+				if (requires_node) {
+					DemNode_dtor(requires_node);
+				}
+				requires_node = requires_result.output;
 			}
 		}
 		// Pop the Tt's template param scope
