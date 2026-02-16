@@ -3946,6 +3946,9 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 				} else {
 					CALL_RULE_N(subst, rule_substitution);
 				}
+				if (!subst) {
+					goto fail;
+				}
 				if (subst->tag == CP_DEM_TYPE_KIND_MODULE_NAME) {
 					module = subst;
 				} else if (ast_node) {
