@@ -1,0 +1,80 @@
+mangled,demangled
+_ZThn8_N5clang9ASTReader24ReadPreprocessedEntitiesEv,non-virtual thunk to clang::ASTReader::ReadPreprocessedEntities()
+_ZThn8_N5clang9ASTReader22ReadPreprocessedEntityEy,non-virtual thunk to clang::ASTReader::ReadPreprocessedEntity(unsigned long long)
+_ZThn16_N5clang9ASTReader15GetExternalDeclEj,non-virtual thunk to clang::ASTReader::GetExternalDecl(unsigned int)
+_ZThn16_N5clang9ASTReader28GetExternalCXXBaseSpecifiersEy,non-virtual thunk to clang::ASTReader::GetExternalCXXBaseSpecifiers(unsigned long long)
+_ZThn16_N5clang9ASTReader19GetExternalDeclStmtEy,non-virtual thunk to clang::ASTReader::GetExternalDeclStmt(unsigned long long)
+_ZThn16_N5clang9ASTReader24FindExternalLexicalDeclsEPKNS_11DeclContextEPFbNS_4Decl4KindEERN4llvm15SmallVectorImplIPS4_EE,"non-virtual thunk to clang::ASTReader::FindExternalLexicalDecls(clang::DeclContext const*, bool (*)(clang::Decl::Kind), llvm::SmallVectorImpl<clang::Decl*>&)"
+_ZThn16_N5clang9ASTReader30FindExternalVisibleDeclsByNameEPKNS_11DeclContextENS_15DeclarationNameE,"non-virtual thunk to clang::ASTReader::FindExternalVisibleDeclsByName(clang::DeclContext const*, clang::DeclarationName)"
+_ZThn16_N5clang9ASTReader23MaterializeVisibleDeclsEPKNS_11DeclContextE,non-virtual thunk to clang::ASTReader::MaterializeVisibleDecls(clang::DeclContext const*)
+_ZThn16_N5clang9ASTReader20StartTranslationUnitEPNS_11ASTConsumerE,non-virtual thunk to clang::ASTReader::StartTranslationUnit(clang::ASTConsumer*)
+_ZThn16_N5clang9ASTReader10PrintStatsEv,non-virtual thunk to clang::ASTReader::PrintStats()
+_ZThn16_N5clang9ASTReader14InitializeSemaERNS_4SemaE,non-virtual thunk to clang::ASTReader::InitializeSema(clang::Sema&)
+_ZThn32_NK5clang9ASTReader14getIdentifiersEv,non-virtual thunk to clang::ASTReader::getIdentifiers() const
+_ZThn16_N5clang9ASTReader14ReadMethodPoolENS_8SelectorE,non-virtual thunk to clang::ASTReader::ReadMethodPool(clang::Selector)
+_ZThn48_N5clang9ASTReader13ReadSLocEntryEj,non-virtual thunk to clang::ASTReader::ReadSLocEntry(unsigned int)
+_ZThn16_N5clang9ASTReader19GetExternalSelectorEj,non-virtual thunk to clang::ASTReader::GetExternalSelector(unsigned int)
+_ZThn16_N5clang9ASTReader23GetNumExternalSelectorsEv,non-virtual thunk to clang::ASTReader::GetNumExternalSelectors()
+_ZThn16_N5clang9ASTReader21FinishedDeserializingEv,non-virtual thunk to clang::ASTReader::FinishedDeserializing()
+_ZThn16_N5clang9ASTReader20StartedDeserializingEv,non-virtual thunk to clang::ASTReader::StartedDeserializing()
+_ZThn16_N5clang9ASTReader10ForgetSemaEv,non-virtual thunk to clang::ASTReader::ForgetSema()
+_ZThn32_N5clang9ASTReader3getEN4llvm9StringRefE,non-virtual thunk to clang::ASTReader::get(llvm::StringRef)
+_ZThn40_N5clang9ASTReader13GetIdentifierEj,non-virtual thunk to clang::ASTReader::GetIdentifier(unsigned int)
+_ZThn8_N5clang9ASTWriter22CompletedTagDefinitionEPKNS_7TagDeclE,non-virtual thunk to clang::ASTWriter::CompletedTagDefinition(clang::TagDecl const*)
+_ZThn8_N5clang9ASTWriter16AddedVisibleDeclEPKNS_11DeclContextEPKNS_4DeclE,"non-virtual thunk to clang::ASTWriter::AddedVisibleDecl(clang::DeclContext const*, clang::Decl const*)"
+_ZThn8_N5clang9ASTWriter22AddedCXXImplicitMemberEPKNS_13CXXRecordDeclEPKNS_4DeclE,"non-virtual thunk to clang::ASTWriter::AddedCXXImplicitMember(clang::CXXRecordDecl const*, clang::Decl const*)"
+_ZThn8_N5clang9ASTWriter30AddedCXXTemplateSpecializationEPKNS_17ClassTemplateDeclEPKNS_31ClassTemplateSpecializationDeclE,"non-virtual thunk to clang::ASTWriter::AddedCXXTemplateSpecialization(clang::ClassTemplateDecl const*, clang::ClassTemplateSpecializationDecl const*)"
+_ZThn32_NK4llvm24SimpleRegisterCoalescing16getAnalysisUsageERNS_13AnalysisUsageE,non-virtual thunk to llvm::SimpleRegisterCoalescing::getAnalysisUsage(llvm::AnalysisUsage&) const
+_ZThn32_N4llvm24SimpleRegisterCoalescing16coalesceFunctionERNS_15MachineFunctionERNS_13RegallocQueryE,"non-virtual thunk to llvm::SimpleRegisterCoalescing::coalesceFunction(llvm::MachineFunction&, llvm::RegallocQuery&)"
+_ZThn32_NK12_GLOBAL__N_114BasicCallGraph22getExternalCallingNodeEv,non-virtual thunk to (anonymous namespace)::BasicCallGraph::getExternalCallingNode() const
+_ZThn32_NK12_GLOBAL__N_114BasicCallGraph20getCallsExternalNodeEv,non-virtual thunk to (anonymous namespace)::BasicCallGraph::getCallsExternalNode() const
+_ZThn32_N12_GLOBAL__N_114BasicCallGraph7getRootEv,non-virtual thunk to (anonymous namespace)::BasicCallGraph::getRoot()
+_ZThn32_NK12_GLOBAL__N_114BasicCallGraph7getRootEv,non-virtual thunk to (anonymous namespace)::BasicCallGraph::getRoot() const
+_ZThn32_N12_GLOBAL__N_114BasicCallGraph7destroyEv,non-virtual thunk to (anonymous namespace)::BasicCallGraph::destroy()
+_ZThn32_N12_GLOBAL__N_113CGPassManager9getAsPassEv,non-virtual thunk to (anonymous namespace)::CGPassManager::getAsPass()
+_ZThn32_NK12_GLOBAL__N_113CGPassManager18getPassManagerTypeEv,non-virtual thunk to (anonymous namespace)::CGPassManager::getPassManagerType() const
+_ZThn32_NK12_GLOBAL__N_118BasicAliasAnalysis16getAnalysisUsageERN4llvm13AnalysisUsageE,non-virtual thunk to (anonymous namespace)::BasicAliasAnalysis::getAnalysisUsage(llvm::AnalysisUsage&) const
+_ZThn32_N12_GLOBAL__N_118BasicAliasAnalysis5aliasERKN4llvm13AliasAnalysis8LocationES5_,"non-virtual thunk to (anonymous namespace)::BasicAliasAnalysis::alias(llvm::AliasAnalysis::Location const&, llvm::AliasAnalysis::Location const&)"
+_ZThn32_N12_GLOBAL__N_118BasicAliasAnalysis22pointsToConstantMemoryERKN4llvm13AliasAnalysis8LocationEb,"non-virtual thunk to (anonymous namespace)::BasicAliasAnalysis::pointsToConstantMemory(llvm::AliasAnalysis::Location const&, bool)"
+_ZThn32_N12_GLOBAL__N_118BasicAliasAnalysis17getModRefBehaviorEN4llvm17ImmutableCallSiteE,non-virtual thunk to (anonymous namespace)::BasicAliasAnalysis::getModRefBehavior(llvm::ImmutableCallSite)
+_ZThn32_N12_GLOBAL__N_118BasicAliasAnalysis17getModRefBehaviorEPKN4llvm8FunctionE,non-virtual thunk to (anonymous namespace)::BasicAliasAnalysis::getModRefBehavior(llvm::Function const*)
+_ZThn32_N12_GLOBAL__N_118BasicAliasAnalysis13getModRefInfoEN4llvm17ImmutableCallSiteERKNS1_13AliasAnalysis8LocationE,"non-virtual thunk to (anonymous namespace)::BasicAliasAnalysis::getModRefInfo(llvm::ImmutableCallSite, llvm::AliasAnalysis::Location const&)"
+_ZThn32_N12_GLOBAL__N_118BasicAliasAnalysis13getModRefInfoEN4llvm17ImmutableCallSiteES2_,"non-virtual thunk to (anonymous namespace)::BasicAliasAnalysis::getModRefInfo(llvm::ImmutableCallSite, llvm::ImmutableCallSite)"
+_ZThn32_N4llvm13LPPassManager9getAsPassEv,non-virtual thunk to llvm::LPPassManager::getAsPass()
+_ZThn32_NK4llvm13LPPassManager18getPassManagerTypeEv,non-virtual thunk to llvm::LPPassManager::getPassManagerType() const
+_ZThn32_NK12_GLOBAL__N_14NoAA16getAnalysisUsageERN4llvm13AnalysisUsageE,non-virtual thunk to (anonymous namespace)::NoAA::getAnalysisUsage(llvm::AnalysisUsage&) const
+_ZThn32_N12_GLOBAL__N_14NoAA5aliasERKN4llvm13AliasAnalysis8LocationES5_,"non-virtual thunk to (anonymous namespace)::NoAA::alias(llvm::AliasAnalysis::Location const&, llvm::AliasAnalysis::Location const&)"
+_ZThn32_N12_GLOBAL__N_14NoAA22pointsToConstantMemoryERKN4llvm13AliasAnalysis8LocationEb,"non-virtual thunk to (anonymous namespace)::NoAA::pointsToConstantMemory(llvm::AliasAnalysis::Location const&, bool)"
+_ZThn32_N12_GLOBAL__N_14NoAA17getModRefBehaviorEN4llvm17ImmutableCallSiteE,non-virtual thunk to (anonymous namespace)::NoAA::getModRefBehavior(llvm::ImmutableCallSite)
+_ZThn32_N12_GLOBAL__N_14NoAA17getModRefBehaviorEPKN4llvm8FunctionE,non-virtual thunk to (anonymous namespace)::NoAA::getModRefBehavior(llvm::Function const*)
+_ZThn32_N12_GLOBAL__N_14NoAA13getModRefInfoEN4llvm17ImmutableCallSiteERKNS1_13AliasAnalysis8LocationE,"non-virtual thunk to (anonymous namespace)::NoAA::getModRefInfo(llvm::ImmutableCallSite, llvm::AliasAnalysis::Location const&)"
+_ZThn32_N12_GLOBAL__N_14NoAA13getModRefInfoEN4llvm17ImmutableCallSiteES2_,"non-virtual thunk to (anonymous namespace)::NoAA::getModRefInfo(llvm::ImmutableCallSite, llvm::ImmutableCallSite)"
+_ZThn32_N12_GLOBAL__N_14NoAA11deleteValueEPN4llvm5ValueE,non-virtual thunk to (anonymous namespace)::NoAA::deleteValue(llvm::Value*)
+_ZThn32_N12_GLOBAL__N_14NoAA9copyValueEPN4llvm5ValueES3_,"non-virtual thunk to (anonymous namespace)::NoAA::copyValue(llvm::Value*, llvm::Value*)"
+_ZThn32_N12_GLOBAL__N_14NoAA14addEscapingUseERN4llvm3UseE,non-virtual thunk to (anonymous namespace)::NoAA::addEscapingUse(llvm::Use&)
+_ZThn32_NK12_GLOBAL__N_122TypeBasedAliasAnalysis16getAnalysisUsageERN4llvm13AnalysisUsageE,non-virtual thunk to (anonymous namespace)::TypeBasedAliasAnalysis::getAnalysisUsage(llvm::AnalysisUsage&) const
+_ZThn32_N12_GLOBAL__N_122TypeBasedAliasAnalysis5aliasERKN4llvm13AliasAnalysis8LocationES5_,"non-virtual thunk to (anonymous namespace)::TypeBasedAliasAnalysis::alias(llvm::AliasAnalysis::Location const&, llvm::AliasAnalysis::Location const&)"
+_ZThn32_N12_GLOBAL__N_122TypeBasedAliasAnalysis22pointsToConstantMemoryERKN4llvm13AliasAnalysis8LocationEb,"non-virtual thunk to (anonymous namespace)::TypeBasedAliasAnalysis::pointsToConstantMemory(llvm::AliasAnalysis::Location const&, bool)"
+_ZThn32_N12_GLOBAL__N_122TypeBasedAliasAnalysis17getModRefBehaviorEN4llvm17ImmutableCallSiteE,non-virtual thunk to (anonymous namespace)::TypeBasedAliasAnalysis::getModRefBehavior(llvm::ImmutableCallSite)
+_ZThn32_N12_GLOBAL__N_122TypeBasedAliasAnalysis17getModRefBehaviorEPKN4llvm8FunctionE,non-virtual thunk to (anonymous namespace)::TypeBasedAliasAnalysis::getModRefBehavior(llvm::Function const*)
+_ZThn32_N12_GLOBAL__N_122TypeBasedAliasAnalysis13getModRefInfoEN4llvm17ImmutableCallSiteERKNS1_13AliasAnalysis8LocationE,"non-virtual thunk to (anonymous namespace)::TypeBasedAliasAnalysis::getModRefInfo(llvm::ImmutableCallSite, llvm::AliasAnalysis::Location const&)"
+_ZThn32_N12_GLOBAL__N_122TypeBasedAliasAnalysis13getModRefInfoEN4llvm17ImmutableCallSiteES2_,"non-virtual thunk to (anonymous namespace)::TypeBasedAliasAnalysis::getModRefInfo(llvm::ImmutableCallSite, llvm::ImmutableCallSite)"
+_ZThn16_NK4llvm14PassNameParser15printOptionInfoERKNS_2cl6OptionEm,"non-virtual thunk to llvm::PassNameParser::printOptionInfo(llvm::cl::Option const&, unsigned long) const"
+_ZThn32_N4llvm13MPPassManager25addLowerLevelRequiredPassEPNS_4PassES2_,"non-virtual thunk to llvm::MPPassManager::addLowerLevelRequiredPass(llvm::Pass*, llvm::Pass*)"
+_ZThn32_N4llvm13MPPassManager15getOnTheFlyPassEPNS_4PassEPKvRNS_8FunctionE,"non-virtual thunk to llvm::MPPassManager::getOnTheFlyPass(llvm::Pass*, void const*, llvm::Function&)"
+_ZThn392_NK12_GLOBAL__N_113BBPassManager11getPassNameEv,non-virtual thunk to (anonymous namespace)::BBPassManager::getPassName() const
+_ZThn392_NK12_GLOBAL__N_113BBPassManager16getAnalysisUsageERN4llvm13AnalysisUsageE,non-virtual thunk to (anonymous namespace)::BBPassManager::getAnalysisUsage(llvm::AnalysisUsage&) const
+_ZThn392_N12_GLOBAL__N_113BBPassManager18getAsPMDataManagerEv,non-virtual thunk to (anonymous namespace)::BBPassManager::getAsPMDataManager()
+_ZThn392_N12_GLOBAL__N_113BBPassManager17dumpPassStructureEj,non-virtual thunk to (anonymous namespace)::BBPassManager::dumpPassStructure(unsigned int)
+_ZThn392_N12_GLOBAL__N_113BBPassManager16doInitializationERN4llvm6ModuleE,non-virtual thunk to (anonymous namespace)::BBPassManager::doInitialization(llvm::Module&)
+_ZThn392_N12_GLOBAL__N_113BBPassManager13runOnFunctionERN4llvm8FunctionE,non-virtual thunk to (anonymous namespace)::BBPassManager::runOnFunction(llvm::Function&)
+_ZThn392_N12_GLOBAL__N_113BBPassManager14doFinalizationERN4llvm6ModuleE,non-virtual thunk to (anonymous namespace)::BBPassManager::doFinalization(llvm::Module&)
+_ZThn32_N4llvm13FPPassManager9getAsPassEv,non-virtual thunk to llvm::FPPassManager::getAsPass()
+_ZThn32_NK4llvm13FPPassManager18getPassManagerTypeEv,non-virtual thunk to llvm::FPPassManager::getPassManagerType() const
+_ZThn32_N4llvm13MPPassManager9getAsPassEv,non-virtual thunk to llvm::MPPassManager::getAsPass()
+_ZThn32_NK4llvm13MPPassManager18getPassManagerTypeEv,non-virtual thunk to llvm::MPPassManager::getPassManagerType() const
+_ZThn32_N4llvm15PassManagerImpl9getAsPassEv,non-virtual thunk to llvm::PassManagerImpl::getAsPass()
+_ZThn432_N4llvm15PassManagerImpl15addTopLevelPassEPNS_4PassE,non-virtual thunk to llvm::PassManagerImpl::addTopLevelPass(llvm::Pass*)
+_ZThn32_N4llvm23FunctionPassManagerImpl9getAsPassEv,non-virtual thunk to llvm::FunctionPassManagerImpl::getAsPass()
+_ZThn432_N4llvm23FunctionPassManagerImpl15addTopLevelPassEPNS_4PassE,non-virtual thunk to llvm::FunctionPassManagerImpl::addTopLevelPass(llvm::Pass*)
+_ZThn1912_N12_GLOBAL__N_126PrecompilePreambleConsumer28SerializedPreprocessedEntityEPN5clang18PreprocessedEntityEy,"non-virtual thunk to (anonymous namespace)::PrecompilePreambleConsumer::SerializedPreprocessedEntity(clang::PreprocessedEntity*, unsigned long long)"

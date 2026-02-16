@@ -14,26 +14,14 @@ jobs:
       uses: actions/checkout@v2
     - name: Install meson and ninja
       run: pip3 install --user meson ninja
+      env:
+        PIP_BREAK_SYSTEM_PACKAGES: 1
     - name: Run Unit Tests
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=release -Denable_cli=true build
+        meson -Dbuildtype=release -Denable_cli=true --werror build
         ninja -C build test
-        ./test/test-cli.sh ./build/demangle
-
-  Normal-No-GPL:
-    runs-on: ubuntu-24.04
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - name: Install meson and ninja
-      run: pip3 install --user meson ninja
-    - name: Run Unit Tests
-      run: |
-        export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=release -Denable_cli=true -Duse_gpl=false build-nogpl
-        ninja -C build-nogpl test
-        ./test/test-cli.sh ./build-nogpl/demangle
+        ./test/test-cli.sh ./build/rz-demangle
 
   Normal-Minimal:
     runs-on: ubuntu-24.04
@@ -42,12 +30,14 @@ jobs:
       uses: actions/checkout@v2
     - name: Install meson and ninja
       run: pip3 install --user meson ninja
+      env:
+        PIP_BREAK_SYSTEM_PACKAGES: 1
     - name: Run Unit Tests
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=release -Denable_cli=true -Duse_gpl=false -Duse_swift_demangler=false build-no-min
+        meson -Dbuildtype=release -Denable_cli=true -Duse_swift_demangler=false --werror build-no-min
         ninja -C build-no-min test
-        ./test/test-cli.sh ./build-no-min/demangle
+        ./test/test-cli.sh ./build-no-min/rz-demangle
 
   Asan:
     runs-on: ubuntu-24.04
@@ -56,11 +46,37 @@ jobs:
       uses: actions/checkout@v2
     - name: Install meson and ninja
       run: pip3 install --user meson ninja
+      env:
+        PIP_BREAK_SYSTEM_PACKAGES: 1
     - name: Run Unit Tests with ASAN
       env:
         ASAN_OPTIONS: detect_leaks=0,detect_odr_violation=0,allocator_may_return_null=1
       run: |
         export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-        meson -Dbuildtype=debugoptimized -Denable_cli=true -Db_sanitize=address,undefined build-asan
+        meson -Dbuildtype=debugoptimized -Denable_cli=true -Db_sanitize=address,undefined --werror build-asan
         ninja -C build-asan test
-        ./test/test-cli.sh ./build-asan/demangle
+        ./test/test-cli.sh ./build-asan/rz-demangle
+
+  Asan-Trace:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        pip3 install --user meson ninja
+        sudo apt-get update
+        sudo apt-get install -y graphviz
+      env:
+        PIP_BREAK_SYSTEM_PACKAGES: 1
+    - name: Run Unit Tests with ASAN and DEMANGLE_TRACE
+      env:
+        ASAN_OPTIONS: detect_leaks=1,detect_odr_violation=0,allocator_may_return_null=1
+        DEMANGLE_TRACE: 1
+      run: |
+        export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
+        meson -Dbuildtype=debugoptimized -Denable_cli=true -Db_sanitize=address,undefined --werror build-asan-trace
+        ninja -C build-asan-trace test
+        # Clean up generated DOT and SVG files to save space
+        find build-asan-trace -name "*.dot" -delete
+        find build-asan-trace -name "*.svg" -delete

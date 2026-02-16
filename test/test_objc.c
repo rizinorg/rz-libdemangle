@@ -26,11 +26,7 @@ mu_demangle_tests(objc,
 	mu_demangle_test("___25", NULL),
 	mu_demangle_test("___25-", NULL),
 	mu_demangle_test("___25-[", NULL),
-#if WITH_GPL
 	mu_demangle_test("_Z11GetFileNamePc", "GetFileName(char*)"),
-#else
-	mu_demangle_test("_Z11GetFileNamePc", NULL),
-#endif
 	// end
 );
 

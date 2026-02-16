@@ -15,20 +15,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #define RZ_API
 #include "rz_libdemangle.h"
+
+static const RzDemangleOpts default_opts = 0;
 
 typedef struct mu_demangling_test_s {
 	int line;
 	const char *input;
 	const char *expected;
 } mu_demangling_test_t;
-
-typedef uint8_t ut8;
-typedef int bool;
-#define true  1
-#define false 0
 
 #if __WINDOWS__
 #define TRED

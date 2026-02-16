@@ -32,3 +32,12 @@ demangle -s pascal 'OUTPUT_$$_init'
 meson --prefix=/usr -Dinstall_lib=true build
 ninja -C build install
 ```
+
+## Demangler
+
+## Building
+
+```
+meson -Dbuildtype=debugoptimized -Db_sanitize=address,undefined build
+ninja -C build test
+```

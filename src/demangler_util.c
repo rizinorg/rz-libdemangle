@@ -76,15 +76,12 @@ char *dem_str_replace(char *str, const char *key, const char *val, int g) {
 	return str;
 }
 
-char *dem_str_ndup(const char *ptr, int len) {
-	if (len < 0) {
-		return NULL;
-	}
+char *dem_str_ndup(const char *ptr, size_t len) {
 	char *out = malloc(len + 1);
 	if (!out) {
 		return NULL;
 	}
-	strncpy(out, ptr, len);
+	memcpy(out, ptr, len);
 	out[len] = 0;
 	return out;
 }
@@ -129,11 +126,21 @@ char *dem_str_append(char *ptr, const char *string) {
 	return ptr;
 }
 
+bool dem_str_equals(char *str, const char *other) {
+	if (!str && !other) {
+		return true;
+	}
+	if (!str || !other) {
+		return false;
+	}
+	return strcmp(str, other) == 0;
+}
+
 void dem_string_free(DemString *ds) {
 	if (!ds) {
 		return;
 	}
-	free(ds->buf);
+	dem_string_deinit(ds);
 	free(ds);
 }
 
@@ -159,14 +166,72 @@ DemString *dem_string_new() {
 	return dem_string_new_with_capacity(256);
 }
 
-static bool dem_string_has_enough_capacity(DemString *ds, ssize_t size) {
+/**
+ * Deinitialize given String object. This won't free the
+ * given pointer
+ *
+ * \p ds DemString object to be deinited.
+ */
+void dem_string_deinit(DemString *ds) {
+	if (!ds) {
+		return;
+	}
+	if (ds->buf) {
+		free(ds->buf);
+	}
+	memset(ds, 0, sizeof(DemString));
+}
+
+/**
+ * \b Initialize given DemString object. To be used when allocated
+ * memory is already available.
+ *
+ * \p ds DemString object to be initialized.
+ *
+ * \return ds on success.
+ * \return NULL otherwise.
+ */
+DemString *dem_string_init(DemString *ds) {
+	if (!ds) {
+		return NULL;
+	}
+
+	memset(ds, 0, sizeof(DemString));
+
+	return ds;
+}
+
+/**
+ * \b Init clone of given src into given dst DemString object.
+ *
+ * \p dst Destination.
+ * \p src Source.
+ *
+ * \return dst on success.
+ * \return NULL otherwise.
+ */
+DemString *dem_string_init_clone(DemString *dst, const DemString *src) {
+	if (!dst || !src) {
+		return NULL;
+	}
+
+	if (src->buf) {
+		dst->buf = strdup(src->buf);
+		dst->len = strlen(dst->buf);
+		dst->cap = dst->len;
+	} else {
+		dem_string_init(dst);
+	}
+
+	return dst;
+}
+
+static bool dem_string_has_enough_capacity(DemString *ds, size_t size) {
 	return size < 1 || ((ds->len + size) < ds->cap);
 }
 
-static bool dem_string_increase_capacity(DemString *ds, ssize_t size) {
-	if (size < 0) {
-		return false;
-	} else if (dem_string_has_enough_capacity(ds, size)) {
+static bool dem_string_increase_capacity(DemString *ds, size_t size) {
+	if (dem_string_has_enough_capacity(ds, size)) {
 		return true;
 	}
 	char *tmp = NULL;
@@ -183,28 +248,45 @@ static bool dem_string_increase_capacity(DemString *ds, ssize_t size) {
 	return true;
 }
 
-char *dem_string_drain(DemString *ds) {
+char *dem_string_drain_no_free(DemString *ds) {
 	dem_return_val_if_fail(ds, NULL);
 	char *ret = ds->buf;
-	if ((ds->len + 1) < ds->cap) {
+	if (ds->len + 1 < ds->cap) {
 		// optimise memory space.
 		ret = realloc(ret, ds->len + 1);
 	}
+	ds->buf = NULL;
+	ds->len = 0;
+	ds->cap = 0;
+	return ret;
+}
+
+/**
+ * This will issue a free call on the provided DemString object.
+ * Make sure not to use this on objects that have not been malloc'd
+ *
+ * \param ds DemString object to drain out to a char* buf.
+ *
+ * \return char array containing ds contnents.
+ */
+char *dem_string_drain(DemString *ds) {
+	dem_return_val_if_fail(ds, NULL);
+	char *ret = dem_string_drain_no_free(ds);
 	free(ds);
 	return ret;
 }
 
 bool dem_string_append(DemString *ds, const char *string) {
 	dem_return_val_if_fail(ds && string, false);
-	size_t size = strlen(string);
-	return dem_string_append_n(ds, string, size);
+	return dem_string_append_n(ds, string, strlen(string));
 }
 
 bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size) {
 	dem_return_val_if_fail(ds && string, false);
 	if (!size) {
 		return true;
-	} else if (!dem_string_increase_capacity(ds, size)) {
+	}
+	if (!dem_string_increase_capacity(ds, size)) {
 		return false;
 	}
 	memmove(ds->buf + size, ds->buf, ds->len);
@@ -219,13 +301,34 @@ bool dem_string_append_n(DemString *ds, const char *string, size_t size) {
 	dem_return_val_if_fail(ds && string, false);
 	if (!size) {
 		return true;
-	} else if (!dem_string_increase_capacity(ds, size)) {
+	}
+
+	// Check if we need to reallocate AND string points into our buffer
+	// If both are true, we must copy first because realloc may move ds->buf
+	bool needs_realloc = !dem_string_has_enough_capacity(ds, size);
+	bool string_in_buffer = ds->buf && string >= ds->buf && string < ds->buf + ds->len;
+
+	char *string_copy = NULL;
+	if (needs_realloc && string_in_buffer) {
+		// Must copy before realloc to avoid use-after-free
+		string_copy = dem_str_ndup(string, size);
+		if (!string_copy) {
+			return false;
+		}
+		string = string_copy; // Use the copy instead
+	}
+
+	// Safe to proceed: either no realloc needed, or string is now external (copy)
+	if (!dem_string_increase_capacity(ds, size)) {
+		free(string_copy);
 		return false;
 	}
 
 	memcpy(ds->buf + ds->len, string, size);
 	ds->len += size;
 	ds->buf[ds->len] = 0;
+
+	free(string_copy); // No-op if NULL
 	return true;
 }
 
@@ -233,7 +336,8 @@ bool dem_string_concat(DemString *dst, DemString *src) {
 	dem_return_val_if_fail(dst && src, false);
 	if (!src->len) {
 		return true;
-	} else if (!dem_string_increase_capacity(dst, src->len)) {
+	}
+	if (!dem_string_increase_capacity(dst, src->len)) {
 		return false;
 	}
 
@@ -241,6 +345,25 @@ bool dem_string_concat(DemString *dst, DemString *src) {
 	dst->len += src->len;
 	dst->buf[dst->len] = 0;
 	return true;
+}
+
+bool dem_string_equals(DemString *ds, DemString *other) {
+	dem_return_val_if_fail(ds && other, false);
+	if (!ds->buf && !other->buf) {
+		return true;
+	}
+	if (!ds->buf || !other->buf) {
+		return false;
+	}
+	if (ds->len != other->len) {
+		return false;
+	}
+	return strncmp(ds->buf, other->buf, ds->len) == 0;
+}
+
+bool dem_string_empty(const DemString *ds) {
+	dem_return_val_if_fail(ds, true);
+	return ds->len == 0 || !ds->buf || ds->buf[0] == 0;
 }
 
 bool dem_string_appendf(DemString *ds, const char *fmt, ...) {
@@ -291,6 +414,32 @@ void dem_string_replace_char(DemString *ds, char ch, char rp) {
 		return;
 	}
 	dem_str_replace_char(ds->buf, ds->len, ch, rp);
+}
+
+bool dem_string_replace_all(DemString *ds, const char *a, size_t alen, const char *b, size_t blen) {
+	dem_return_val_if_fail(ds && ds->buf && a && b && alen > 0, true);
+
+	if (alen == blen && strncmp(a, b, alen) == 0) {
+		return true;
+	}
+	char *p = ds->buf;
+	while (true) {
+		p = strstr(p, a);
+		if (!p) {
+			break;
+		}
+		const size_t off = (size_t)(p - ds->buf);
+		if (blen > alen) {
+			if (!dem_string_increase_capacity(ds, blen - alen)) {
+				return false;
+			}
+			p = ds->buf + off;
+		}
+		memmove(p + blen, p + alen, ds->len - (off + alen) + 1);
+		memcpy(p, b, blen);
+		ds->len = ds->len - alen + blen;
+	}
+	return true;
 }
 
 DemList *dem_list_newf(DemListFree f) {

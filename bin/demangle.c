@@ -4,13 +4,8 @@
 
 #include "demangler_util.h"
 #include "rz_libdemangle.h"
-#include "rz_libdemangle.h"
 
-#if WITH_GPL
 #define CPP "c++ (incl. borland, gnu v3 & v2)"
-#else
-#define CPP "c++ (only borland)"
-#endif
 
 #if WITH_SWIFT_DEMANGLER
 #define SWIFT "swift, "
@@ -58,7 +53,7 @@ int main(int argc, char const *argv[]) {
 	const char *symbol = argv[2];
 
 	if (argc == 4) {
-		if (strcmp(argv[1], "-s")) {
+		if (strcmp(argv[1], "-s") != 0) {
 			printf("error: invalid option: '%s'\n", argv[1]);
 			usage(argv[0]);
 			return 1;
@@ -69,7 +64,7 @@ int main(int argc, char const *argv[]) {
 	}
 
 	for (size_t i = 0; i < RZ_ARRAY_SIZE(languages); ++i) {
-		if (strcmp(languages[i].name, lang)) {
+		if (strcmp(languages[i].name, lang) != 0) {
 			continue;
 		}
 		char *result = languages[i].demangle(symbol, opts);

@@ -8,14 +8,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-
-typedef int bool;
-#define true  1
-#define false 0
+#include <stdbool.h>
+#include <inttypes.h>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
 typedef SSIZE_T ssize_t;
+
+// MSVC compatibility: POSIX functions
+#define strdup  _strdup
+#define strndup dem_str_ndup
+
 #endif
 
 #define RZ_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -32,6 +35,11 @@ typedef uint16_t ut16;
 typedef uint32_t ut32;
 typedef uint64_t ut64;
 
+typedef char st8;
+typedef short st16;
+typedef int st32;
+typedef long long st64;
+
 #define UT8_MAX  0xFFu
 #define UT16_MAX 0xFFFFu
 #define UT32_MAX 0xFFFFFFFFu
@@ -47,21 +55,12 @@ typedef uint64_t ut64;
 #define RZ_MIN(x, y)      (((x) > (y)) ? (y) : (x))
 #define RZ_STR_ISEMPTY(x) (!(x) || !*(x))
 
-#if __WINDOWS__
-#define PFMT64x "I64x"
-#define PFMT64u "I64u"
-#define PFMTSZu "Iu"
-#else
-#define PFMT64x "llx"
-#define PFMT64u "llu"
-#define PFMTSZu "zu"
-#endif
-
-char *dem_str_ndup(const char *ptr, int len);
+char *dem_str_ndup(const char *ptr, size_t len);
 char *dem_str_newf(const char *fmt, ...);
 char *dem_str_append(char *ptr, const char *string);
 void dem_str_replace_char(char *string, size_t size, char ch, char rp);
 char *dem_str_replace(char *str, const char *key, const char *val, int g);
+bool dem_str_equals(char *str, const char *other);
 
 typedef struct {
 	char *buf;
@@ -70,8 +69,12 @@ typedef struct {
 } DemString;
 
 void dem_string_free(DemString *ds);
+void dem_string_deinit(DemString *ds);
 DemString *dem_string_new();
 DemString *dem_string_new_with_capacity(size_t cap);
+DemString *dem_string_init(DemString *ds);
+DemString *dem_string_init_clone(DemString *dst, const DemString *src);
+char *dem_string_drain_no_free(DemString *ds);
 char *dem_string_drain(DemString *ds);
 bool dem_string_append(DemString *ds, const char *string);
 bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size);
@@ -79,12 +82,16 @@ bool dem_string_append_n(DemString *ds, const char *string, size_t size);
 bool dem_string_appendf(DemString *ds, const char *fmt, ...);
 bool dem_string_append_char(DemString *ds, const char ch);
 bool dem_string_concat(DemString *dst, DemString *src);
+bool dem_string_equals(DemString *ds, DemString *other);
+bool dem_string_empty(const DemString *ds);
+#define dem_string_non_empty(d)         (!dem_string_empty(d))
 #define dem_string_buffer(d)            (d->buf)
 #define dem_string_length(d)            (d->len)
 #define dem_string_appends(d, s)        dem_string_append_n(d, s, strlen(s))
 #define dem_string_appends_prefix(d, s) dem_string_append_prefix_n(d, s, strlen(s))
 
 void dem_string_replace_char(DemString *ds, char ch, char rp);
+bool dem_string_replace_all(DemString *ds, const char *a, size_t alen, const char *b, size_t blen);
 
 typedef void (*DemListFree)(void *ptr);
 

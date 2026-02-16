@@ -1,0 +1,100 @@
+# Version format
+version: 'git.{build}'
+
+# Skip Github tags
+skip_tags: true
+
+# Environment variables
+environment:
+  VSVARSALLPATH2017: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat'
+  VSVARSALLPATH2019: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat'
+  VSVARSALLPATH2022: 'C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat'
+
+  matrix:
+    # VS2017 64-bit (Static)
+    - builder: vs2017_64_static
+      PYTHON: 'C:\\Python310'
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      BUILD_DIR: build
+      RUN_TESTS: true
+      STATIC_LIB: true
+      ENABLE_CLI: true
+    # VS2017 64-bit (Dynamic)
+    - builder: vs2017_64_dynamic
+      PYTHON: 'C:\\Python310'
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      BUILD_DIR: build
+      RUN_TESTS: true
+      STATIC_LIB: false
+      ENABLE_CLI: true
+    # VS2022 64-bit (Static)
+    - builder: vs2022_64_static
+      PYTHON: 'C:\\Python310-x64'
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+      BUILD_DIR: build
+      RUN_TESTS: true
+      STATIC_LIB: true
+      ENABLE_CLI: true
+    # VS2022 64-bit (Dynamic)
+    - builder: vs2022_64_dynamic
+      PYTHON: 'C:\\Python310-x64'
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+      BUILD_DIR: build
+      RUN_TESTS: true
+      STATIC_LIB: false
+      ENABLE_CLI: true
+    # VS2019 64-bit with Clang-cl
+    - builder: clang_cl_64
+      PYTHON: 'C:\\Python310-x64'
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      BUILD_DIR: build
+      RUN_TESTS: true
+      STATIC_LIB: false
+      ENABLE_CLI: true
+
+only_commits:
+  files:
+    - '**/*.c'
+    - '**/*.h'
+    - '**/*.in'
+    - '**/*.inc'
+    - '**/meson.build'
+    - 'subprojects/**'
+    - 'test/**'
+    - 'bin/**'
+    - 'include/**'
+    - 'src/**'
+    - '.appveyor.yml'
+
+# Required software for building
+install:
+  # Install Python 3.10
+  - cmd: if %builder% == vs2017_64_static ( choco install python --version=3.10.11 )
+  - cmd: if %builder% == vs2017_64_dynamic ( choco install python --version=3.10.11 )
+  # Download required packages
+  - cmd: "%PYTHON%\\python.exe -m pip install --upgrade pip"
+  - cmd: "%PYTHON%\\python.exe -m pip install meson ninja"
+
+# Build scripts
+build_script:
+  - appveyor AddMessage "Building rz-libdemangle (%builder%)"
+
+  - cmd: if %builder% == vs2017_64_static ( call "%VSVARSALLPATH2017%" x64 && %PYTHON%\Scripts\meson setup --buildtype=release --default-library=static -Denable_cli=%ENABLE_CLI% -Db_vscrt=static_from_buildtype build && %PYTHON%\Scripts\ninja -C build )
+
+  - cmd: if %builder% == vs2017_64_dynamic ( call "%VSVARSALLPATH2017%" x64 && %PYTHON%\Scripts\meson setup --buildtype=release --default-library=shared -Denable_cli=%ENABLE_CLI% build && %PYTHON%\Scripts\ninja -C build )
+
+  - cmd: if %builder% == vs2022_64_static ( call "%VSVARSALLPATH2022%" x64 && %PYTHON%\Scripts\meson setup --buildtype=release --default-library=static -Denable_cli=%ENABLE_CLI% -Db_vscrt=static_from_buildtype build && %PYTHON%\Scripts\ninja -C build )
+
+  - cmd: if %builder% == vs2022_64_dynamic ( call "%VSVARSALLPATH2022%" x64 && %PYTHON%\Scripts\meson setup --buildtype=release --default-library=shared -Denable_cli=%ENABLE_CLI% build && %PYTHON%\Scripts\ninja -C build )
+
+  - cmd: if %builder% == clang_cl_64 ( call "%VSVARSALLPATH2019%" x64 && set CC=clang-cl && %PYTHON%\Scripts\meson setup --buildtype=release --default-library=shared -Denable_cli=%ENABLE_CLI% build && %PYTHON%\Scripts\ninja -C build )
+
+# Test scripts
+test_script:
+  - cmd: if %builder% == vs2017_64_static ( call "%VSVARSALLPATH2017%" x64 )
+  - cmd: if %builder% == vs2017_64_dynamic ( call "%VSVARSALLPATH2017%" x64 )
+  - cmd: if %builder% == vs2022_64_static ( call "%VSVARSALLPATH2022%" x64 )
+  - cmd: if %builder% == vs2022_64_dynamic ( call "%VSVARSALLPATH2022%" x64 )
+  - cmd: if %builder% == clang_cl_64 ( call "%VSVARSALLPATH2019%" x64 )
+  - cmd: "%PYTHON%\\Scripts\\meson test -C build --print-errorlogs"
+  - cmd: if %ENABLE_CLI% == true ( test\test-cli.sh build\rz-demangle )

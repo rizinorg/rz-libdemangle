@@ -16,6 +16,8 @@ AllowShortIfStatementsOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortLoopsOnASingleLine: false
+InsertBraces: true
+SeparateDefinitionBlocks: Always
 AlignAfterOpenBracket: DontAlign
 AlignEscapedNewlines: DontAlign
 AlignConsecutiveMacros: true
