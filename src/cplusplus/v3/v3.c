@@ -1597,7 +1597,7 @@ static bool parse_base36(DemParser *p, ut64 *px) {
 	char *pos = NULL;
 	ut64 x = 0;
 	ut64 sz = 0;
-	while ((pos = strchr(base, p->cur[sz]))) {
+	while (p->cur + sz < p->end && ((pos = strchr(base, p->cur[sz])))) {
 		st64 based_val = pos - base;
 		if (x > 0) {
 			x *= 36;
