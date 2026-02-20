@@ -1419,7 +1419,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			dem_string_append(out, ".");
 			ast_pp(node->braced_expr.elem, out, ctx);
 		}
-		if (node->braced_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_EXPRESSION && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION) {
+		if (node->braced_expr.init && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_EXPRESSION && node->braced_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION) {
 			dem_string_append(out, " = ");
 		}
 		ast_pp(node->braced_expr.init, out, ctx);
@@ -1431,7 +1431,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		dem_string_append(out, " ... ");
 		ast_pp(node->braced_range_expr.last, out, ctx);
 		dem_string_append(out, "]");
-		if (node->braced_range_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_EXPRESSION && node->braced_range_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION) {
+		if (node->braced_range_expr.init && node->braced_range_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_EXPRESSION && node->braced_range_expr.init->tag != CP_DEM_TYPE_KIND_BRACED_RANGE_EXPRESSION) {
 			dem_string_append(out, " = ");
 		}
 		ast_pp(node->braced_range_expr.init, out, ctx);
@@ -1847,6 +1847,7 @@ bool parse_module_name(DemParser *p, PDemNode *pmodule) {
 		result.output = NULL;
 		DemNode *sub_module = DemNode_ctor(CP_DEM_TYPE_KIND_MODULE_NAME, ctx.saved_pos, CUR() - ctx.saved_pos);
 		if (!sub_module) {
+			DemNode_dtor(Sub);
 			DemResult_deinit(&result);
 			return false;
 		}
@@ -1865,11 +1866,11 @@ PDemNode parse_abi_tags(DemParser *p, PDemNode node) {
 	while (READ('B')) {
 		DemStringView tag = { 0 };
 		if (!parse_base_source_name(p, &tag.buf, &tag.len)) {
-			return NULL;
+			return node;
 		}
 		PDemNode tagged = DemNode_ctor(CP_DEM_TYPE_KIND_ABI_TAG_TY, tag.buf, tag.len);
 		if (!tagged) {
-			return NULL;
+			return node;
 		}
 		tagged->abi_tag_ty.tag = tag;
 		tagged->abi_tag_ty.ty = node;
@@ -3197,8 +3198,8 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 	RULE_HEAD(FUNCTION_TYPE);
 	// This rule only handles F...E (bare function type)
 	// P prefix is handled in the type rule, which properly inserts * for function pointers
-	parse_cv_qualifiers(p, &node->fn_ty.cv_qualifiers);
-	parse_ref_qualifiers(p, &node->fn_ty.ref_qualifiers);
+	(void)parse_cv_qualifiers(p, &node->fn_ty.cv_qualifiers);
+	(void)parse_ref_qualifiers(p, &node->fn_ty.ref_qualifiers);
 
 	if (READ_STR("Do")) {
 		node->fn_ty.exception_spec = MAKE_PRIMITIVE_TYPE(CUR() - 2, CUR(), "noexcept");
@@ -3223,9 +3224,9 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 		node->fn_ty.exception_spec->child = spec;
 	}
 
-	READ_STR("Dx");
+	(void)READ_STR("Dx");
 	MUST_MATCH(READ('F'));
-	READ('Y');
+	(void)READ('Y');
 	MUST_MATCH(CALL_RULE_N(node->fn_ty.ret, rule_type));
 
 	node->fn_ty.params = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, CUR(), 0);
@@ -3382,9 +3383,13 @@ bool rule_source_name(DemParser *p, DemResult *r) {
 		TRACE_RETURN_FAILURE();
 	}
 	if (strncmp(name, "_GLOBAL__N", sizeof("_GLOBAL__N") - 1) == 0) {
-		node = PRIMITIVE_TYPE("(anonymous namespace)");
+		if (!PRIMITIVE_TYPE("(anonymous namespace)")) {
+			TRACE_RETURN_FAILURE();
+		}
 	} else {
-		PRIMITIVE_TYPEN(name, name_len);
+		if (!PRIMITIVE_TYPEN(name, name_len)) {
+			TRACE_RETURN_FAILURE();
+		}
 	}
 	TRACE_RETURN_SUCCESS;
 }
@@ -3655,7 +3660,7 @@ bool rule_base_unresolved_name(DemParser *p, DemResult *r) {
 		MUST_MATCH(CALL_RULE(rule_destructor_name));
 		TRACE_RETURN_SUCCESS;
 	}
-	READ_STR("on");
+	(void)READ_STR("on");
 	MUST_MATCH(CALL_RULE_VA(rule_operator_name, NULL));
 	if (PEEK() == 'I') {
 		MUST_MATCH(CALL_RULE(rule_template_args));
@@ -4307,7 +4312,7 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 	}
 	if (READ_STR("Ub")) {
 		// Ub <number> _ — block literal (Apple/Objective-C extension)
-		parse_non_neg_integer(p, NULL);
+		(void)parse_non_neg_integer(p, NULL);
 		MUST_MATCH(READ('_'));
 		AST_APPEND_STR("'block-literal'");
 		TRACE_RETURN_SUCCESS;
@@ -4556,6 +4561,9 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 		free(buf_str);
 	}
 	DemNode *output_node = ctx->result.output;
+	if (!output_node) {
+		return false;
+	}
 	PPContext_init(&pp_ctx, opts);
 	ast_pp(output_node, &ctx->output, &pp_ctx);
 	if (ctx->parser.options & DEM_OPT_SIMPLE) {
