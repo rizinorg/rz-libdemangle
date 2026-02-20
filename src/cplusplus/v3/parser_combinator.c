@@ -34,7 +34,9 @@ bool match_many(
 	const char *sep,
 	const char stop) {
 	if (!rule || !r || !p) {
-		r->error = DEM_ERR_INVALID_SYNTAX;
+		if (r) {
+			r->error = DEM_ERR_INVALID_SYNTAX;
+		}
 		return false;
 	}
 

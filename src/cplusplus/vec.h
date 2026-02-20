@@ -95,6 +95,9 @@
 		return VecF(T, at)(self, 0); \
 	} \
 	__attribute__((unused)) static inline T *VecF(T, tail)(Vec##T * self) { \
+		if (VecF(T, empty)(self)) { \
+			return NULL; \
+		} \
 		return VecF(T, at)(self, VecF(T, len)(self) - 1); \
 	} \
 	__attribute__((unused)) static inline bool VecF(T, reserve)(Vec##T * self, size_t new_cap) { \

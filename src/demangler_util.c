@@ -324,6 +324,11 @@ bool dem_string_append_n(DemString *ds, const char *string, size_t size) {
 		return false;
 	}
 
+	if (!ds->buf) {
+		free(string_copy);
+		return false;
+	}
+
 	memcpy(ds->buf + ds->len, string, size);
 	ds->len += size;
 	ds->buf[ds->len] = 0;

@@ -902,8 +902,10 @@ static CpDem *match_type(CpDem *dem, Param *param, ParamVec *params, bool *match
 		});
 
 		/* HACK: to remove last two extraneous ":" (colon) symbols */
-		param->name.buf[--param->name.len] = 0;
-		param->name.buf[--param->name.len] = 0;
+		if (param->name.buf && param->name.len >= 2) {
+			param->name.buf[--param->name.len] = 0;
+			param->name.buf[--param->name.len] = 0;
+		}
 		VecDemString_deinit(&qualifiers);
 
 		VecParam_append(params, param);
@@ -1183,17 +1185,19 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 
 			/* HACK: if return type is a function pointer itself, split it and patch it here
 			 * there may be a better way to do it, but it works for now. */
-			if (strstr(return_type.buf, "(*)")) {
+			if (return_type.buf && strstr(return_type.buf, "(*)")) {
 				char *pivot = strstr(return_type.buf, "(*)");
 
 				/* get return type of functor */
 				char *ftor_ret_type = return_type.buf;
-				ut64 ftor_ret_type_len = pivot - ftor_ret_type - 1;
+				ut64 ftor_ret_type_len = (pivot > ftor_ret_type) ? (ut64)(pivot - ftor_ret_type - 1) : 0;
 
 				/* get param list of functor */
 				char *ftor_param_list = pivot + 3;
 				ut64 ftor_param_list_len =
-					return_type.buf + return_type.len - ftor_param_list;
+					(ftor_param_list <= return_type.buf + return_type.len)
+					? (ut64)(return_type.buf + return_type.len - ftor_param_list)
+					: 0;
 
 				dem_string_append_n(&param.name, ftor_ret_type, ftor_ret_type_len);
 				dem_string_append_n(&param.name, " (*(*)", 6);
@@ -1352,10 +1356,12 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 			});
 
 			/* HACK: to remove extraneous "::" */
-			tname.buf[--tname.len] = 0;
-			tname.buf[--tname.len] = 0;
+			if (tname.buf && tname.len >= 2) {
+				tname.buf[--tname.len] = 0;
+				tname.buf[--tname.len] = 0;
+			}
 
-			base_typename = dem_str_ndup(tname.buf, tname.len);
+			base_typename = tname.buf ? dem_str_ndup(tname.buf, tname.len) : NULL;
 			dem_string_deinit(&tname);
 		}
 
@@ -1390,7 +1396,12 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 			/* for each rep, make clone of a type at previous index and put it at the end in the param vec */
 			for (ut64 r = 0; r < (ut64)num_reps; r++) {
 				Param p = { 0 };
-				param_init_clone(&p, VecParam_at(params, typeidx));
+				Param *src = VecParam_at(params, typeidx);
+				if (!src) {
+					free(base_typename);
+					return NULL;
+				}
+				param_init_clone(&p, src);
 
 				/* if we fell down from R */
 				if (is_ref) {
@@ -1579,6 +1590,8 @@ CpDem *cpdem_template_function_keep_parsing(CpDem *dem) {
 	/* get all template paramter types */
 	ParamVec tparams = { 0 };
 	VecParam_init(&tparams);
+	ParamVec tpf_ret_type = { 0 };
+	VecParam_init(&tpf_ret_type);
 	while (tparam_count-- && cpdem_template_param_type(dem, &tparams)) {
 	}
 	if (tparam_count > 0) {
@@ -1620,7 +1633,11 @@ CpDem *cpdem_template_function_keep_parsing(CpDem *dem) {
 					free(idx_str);
 					if (tparam_idx >= 0) {
 						Param tp_clone = { 0 };
-						param_init_clone(&tp_clone, VecParam_at(&tparams, tparam_idx));
+						Param *tp_src = VecParam_at(&tparams, tparam_idx);
+						if (!tp_src) {
+							goto cleanup_and_return;
+						}
+						param_init_clone(&tp_clone, tp_src);
 						VecParam_append(&dem->func_params, &tp_clone);
 					} else {
 						goto cleanup_and_return;
@@ -1644,8 +1661,6 @@ CpDem *cpdem_template_function_keep_parsing(CpDem *dem) {
 		goto cleanup_and_return;
 	}
 
-	ParamVec tpf_ret_type = { 0 };
-	VecParam_init(&tpf_ret_type);
 	if (cpdem_param_type(dem, &tpf_ret_type) && tpf_ret_type.length) {
 		Param *return_type = VecParam_at(&tpf_ret_type, 0);
 		param_append_to_dem_string(return_type, &dem->prefix);
