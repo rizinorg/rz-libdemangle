@@ -34,6 +34,7 @@ static int tests_passed = 0;
 // Helper to check substitution table
 static int check_subs(const char *input, const char *expected_output, const char **expected_subs, size_t expected_count) {
 	DemContext _ctx = { 0 };
+	DemContext_init(&_ctx);
 	DemContext *ctx = &_ctx;
 	CpDemOptions opt = DEM_OPT_ALL;
 	int result = 0;
@@ -49,20 +50,20 @@ static int check_subs(const char *input, const char *expected_output, const char
 		goto beach;
 	}
 
-	if (VecPDemNode_len(&ctx->parser.detected_types) != expected_count) {
+	if (VecNodeRef_len(&ctx->parser.detected_types) != expected_count) {
 		printf(TBOLD TRED "  Substitution count mismatch:\n" TRESET);
 		printf("    Expected: %zu entries\n", expected_count);
-		printf("    Got:      %zu entries\n", VecPDemNode_len(&ctx->parser.detected_types));
+		printf("    Got:      %zu entries\n", VecNodeRef_len(&ctx->parser.detected_types));
 		goto beach;
 	}
 
 	for (size_t i = 0; i < expected_count; i++) {
-		DemNode **psub_node = VecPDemNode_at(&ctx->parser.detected_types, i);
+		NodeRef *psub_node = VecNodeRef_at(&ctx->parser.detected_types, i);
 		if (!psub_node || !*psub_node) {
 			printf(TBOLD TRED "  Substitution [%zu] is NULL\n" TRESET, i);
 			goto beach;
 		}
-		DemNode *sub_node = *psub_node;
+		NodeRef sub_node = *psub_node;
 		DemString buf = { 0 };
 		dem_string_init(&buf);
 		PPContext pp_ctx = { 0 };
