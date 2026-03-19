@@ -135,7 +135,11 @@ void DemNode_copy(DemNode *dst, const DemNode *src) {
 	memcpy(dst, src, sizeof(DemNode));
 	dst->children = saved_children;
 	if (src->children.data && src->children.length > 0) {
-		VecNodeRef_reserve(&dst->children, src->children.length);
+		if (!VecNodeRef_reserve(&dst->children, src->children.length)) {
+			/* On allocation failure, avoid using a possibly NULL or undersized buffer. */
+			dst->children.length = 0;
+			return;
+		}
 		memcpy(dst->children.data, src->children.data, src->children.length * sizeof(NodeRef));
 		dst->children.length = src->children.length;
 	}

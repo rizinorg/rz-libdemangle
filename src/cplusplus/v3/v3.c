@@ -3834,8 +3834,7 @@ bool rule_substitution(DemParser *p, DemResult *r) {
 	if (!parse_seq_id(p, &child_node)) {
 		TRACE_RETURN_FAILURE();
 	}
-	node = (DemNode *)child_node;
-	TRACE_RETURN_SUCCESS;
+	RETURN_AND_OUTPUT_VAR((DemNode *)child_node);
 }
 
 bool rule_float(DemParser *p, DemResult *r) {

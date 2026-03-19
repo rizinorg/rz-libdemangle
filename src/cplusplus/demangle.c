@@ -26,23 +26,21 @@ char *cp_demangle(const char *mangled, CpDemOptions opts) {
 	}
 
 	char *res = NULL;
-	int tried_v3 = 0;
 
 	const char *p = mangled;
 	while (*p == '_') {
 		p++;
 		if (*p == 'Z') {
 			res = cp_demangle_v3(mangled, opts);
-			tried_v3 = 1;
 			break;
 		}
 	}
 
-	if (!res && !tried_v3) {
+	if (!res) {
 		res = cp_demangle_v2(mangled, opts);
 	}
 
-	if (!res && !tried_v3) {
+	if (!res) {
 		res = cp_demangle_v3_type(mangled, opts);
 	}
 
