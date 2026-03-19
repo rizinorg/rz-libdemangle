@@ -193,8 +193,8 @@ static inline void context_restore_inline(DemParser *p, DemNode *node, const Par
 
 #define RETURN_AND_OUTPUT_VAR(N) \
 	do { \
-		N->val.len = p->cur - N->val.buf; \
-		r->output = N; \
+		(N)->val.len = p->cur - (N)->val.buf; \
+		r->output = (N); \
 		r->error = DEM_ERR_OK; \
 		p->recursion_depth--; \
 		return true; \

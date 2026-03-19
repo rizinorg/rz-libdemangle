@@ -31,14 +31,11 @@ char *cp_demangle(const char *mangled, CpDemOptions opts) {
 	while (*p == '_') {
 		p++;
 		if (*p == 'Z') {
-			res = cp_demangle_v3(mangled, opts);
-			break;
+			return cp_demangle_v3(mangled, opts);
 		}
 	}
 
-	if (!res) {
-		res = cp_demangle_v2(mangled, opts);
-	}
+	res = cp_demangle_v2(mangled, opts);
 
 	if (!res) {
 		res = cp_demangle_v3_type(mangled, opts);
