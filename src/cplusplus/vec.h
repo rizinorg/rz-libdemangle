@@ -124,7 +124,12 @@
 				return false; \
 			} \
 		} \
-		if (new_size > self->length) { \
+		if (new_size < self->length) { \
+			/* Call destructor on elements being removed when shrinking */ \
+			for (size_t _i = new_size; _i < self->length; _i++) { \
+				F(&self->data[_i]); \
+			} \
+		} else if (new_size > self->length) { \
 			memset( \
 				self->data + self->length, \
 				0, \
