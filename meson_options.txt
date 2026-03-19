@@ -2,3 +2,4 @@ option('use_swift_demangler', type: 'boolean', value: true, description: 'If fal
 option('install_lib', type: 'boolean', value: false, description: 'install libdemangle in the specified prefix path.')
 option('enable_cli', type: 'boolean', value: false, description: 'install a cli to demangle symbols.')
 option('enable_tests', type: 'boolean', value: true, description: 'Build unit tests in test/')
+option('enable_fuzz', type: 'boolean', value: false, description: 'Build libFuzzer targets (requires clang with -fsanitize=fuzzer)')

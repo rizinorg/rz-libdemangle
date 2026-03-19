@@ -122,6 +122,31 @@ if get_option('enable_cli')
     )
 endif
 
+if get_option('enable_fuzz')
+    # Build a separate static library with full sanitizer + coverage
+    # instrumentation so libFuzzer can see coverage inside library code.
+    fuzz_sanitize_args = ['-fsanitize=fuzzer-no-link,address,undefined']
+    fuzz_lib = static_library(
+        'demangle_fuzz',
+        libdemangle_src,
+        c_args : common_c_args + libdemangle_c_args + fuzz_sanitize_args,
+        include_directories : include_directories(['include', 'src']),
+        implicit_include_directories : false,
+        install : false,
+    )
+    fuzz_link_args = ['-fsanitize=fuzzer,address,undefined']
+    executable(
+        'fuzz_demangle',
+        'fuzz' / 'fuzz_demangle.c',
+        link_whole : fuzz_lib,
+        include_directories : include_directories(['include', 'src']),
+        c_args : common_c_args + fuzz_sanitize_args,
+        link_args : fuzz_link_args,
+        install : false,
+        implicit_include_directories : false,
+    )
+endif
+
 if get_option('enable_tests') and not meson.is_subproject()
     test_dependencies = []
     if get_option('b_sanitize').contains('address')
