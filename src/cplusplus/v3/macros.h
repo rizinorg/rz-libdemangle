@@ -102,19 +102,20 @@ static inline bool parse_string(DemParser *p, const char *s) {
 	}
 
 #define RULE_HEAD(X) \
-	if (!IN_RANGE(CUR())) { \
+	if (!IN_RANGE(CUR()) || p->recursion_depth > 1024 || p->total_calls > 100000) { \
 		r->error = DEM_ERR_UNEXPECTED_END; \
-		DemNode_dtor(r->output); \
 		return false; \
 	} \
+	p->total_calls++; \
+	p->recursion_depth++; \
 	DemNode *node = NULL; \
 	DECLARE_MACRO_HELPERS(); \
-	node = (DemNode *)malloc(sizeof(DemNode)); \
+	node = DemNode_new(p->context); \
 	if (!node) { \
+		p->recursion_depth--; \
 		r->error = DEM_ERR_OUT_OF_MEMORY; \
 		return false; \
 	} \
-	DemNode_init(node); \
 	node->val.buf = p->cur; \
 	node->tag = CP_DEM_TYPE_KIND_##X; \
 	context_save(rule);
@@ -133,10 +134,10 @@ typedef struct ParseContext {
 static inline ParseContext context_save_inline(DemParser *p, DemNode *node) {
 	ParseContext ctx = { 0 };
 	if (node) {
-		ctx.saved_children_len = node->children ? VecPDemNode_len(node->children) : 0;
+		ctx.saved_children_len = VecNodeRef_len(&node->children);
 		ctx.saved_tag = node->tag;
 	}
-	ctx.saved_types_len = VecPDemNode_len(&p->detected_types);
+	ctx.saved_types_len = VecNodeRef_len(&p->detected_types);
 	ctx.saved_pos = p->cur;
 	return ctx;
 }
@@ -144,17 +145,9 @@ static inline ParseContext context_save_inline(DemParser *p, DemNode *node) {
 // Restore node context
 static inline void context_restore_node_inline(DemNode *node, const ParseContext *ctx) {
 	if (node) {
-		if (node->children) {
-			while (VecPDemNode_len(node->children) > ctx->saved_children_len) {
-				PDemNode *node_ptr = VecPDemNode_pop(node->children);
-				DemNode *child = node_ptr ? *node_ptr : NULL;
-				if (child) {
-					DemNode_dtor(child);
-				}
-			}
-		}
 		node->tag = ctx->saved_tag;
 		node->val.buf = ctx->saved_pos;
+		node->children.length = ctx->saved_children_len;
 	}
 }
 
@@ -163,14 +156,8 @@ static inline void context_restore_parser_inline(DemParser *p, const ParseContex
 	if (!p) {
 		return;
 	}
-	while (VecPDemNode_len(&p->detected_types) > ctx->saved_types_len) {
-		size_t last_idx = VecPDemNode_len(&p->detected_types) - 1;
-		PDemNode *node_ptr = VecPDemNode_at(&p->detected_types, last_idx);
-		DemNode *type_node = node_ptr ? *node_ptr : NULL;
-		if (type_node) {
-			DemNode_dtor(type_node);
-		}
-		VecPDemNode_pop(&p->detected_types);
+	while (VecNodeRef_len(&p->detected_types) > ctx->saved_types_len) {
+		VecNodeRef_pop(&p->detected_types);
 	}
 	p->cur = ctx->saved_pos;
 }
@@ -200,24 +187,25 @@ static inline void context_restore_inline(DemParser *p, DemNode *node, const Par
 		node->val.len = p->cur - node->val.buf; \
 		r->output = node; \
 		r->error = DEM_ERR_OK; \
+		p->recursion_depth--; \
 		return true; \
 	} while (0);
 
 #define RETURN_AND_OUTPUT_VAR(N) \
 	do { \
-		N->val.len = p->cur - N->val.buf; \
-		r->output = N; \
+		(N)->val.len = p->cur - (N)->val.buf; \
+		r->output = (N); \
 		r->error = DEM_ERR_OK; \
-		DemNode_dtor(node); \
+		p->recursion_depth--; \
 		return true; \
 	} while (0)
 
 #define TRACE_RETURN_FAILURE() \
 	do { \
-		DemNode_dtor(node); \
 		r->output = NULL; \
 		r->error = DEM_ERR_INVALID_SYNTAX; \
 		context_restore_parser(rule); \
+		p->recursion_depth--; \
 		return false; \
 	} while (0)
 
@@ -292,16 +280,16 @@ static inline void context_restore_inline(DemParser *p, DemNode *node, const Par
 	(_child_result_macro = (DemResult){ 0 }, \
 		_macro_result = (rule_fn)(p, &_child_result_macro), \
 		(_macro_result && _child_result_macro.output \
-			? (DemNode_dtor(node), node = _child_result_macro.output, _child_result_macro.output = NULL, (void)0) \
-			: (DemResult_deinit(&_child_result_macro), (void)0)), \
+				? (node = _child_result_macro.output, _child_result_macro.output = NULL, (void)0) \
+				: (DemResult_deinit(&_child_result_macro), (void)0)), \
 		_macro_result)
 
 #define CALL_RULE_VA_REPLACE_NODE(rule_fn, ...) \
 	(_child_result_macro = (DemResult){ 0 }, \
 		_macro_result = (rule_fn)(p, &_child_result_macro, __VA_ARGS__), \
 		(_macro_result && _child_result_macro.output \
-			? (DemNode_dtor(node), node = _child_result_macro.output, _child_result_macro.output = NULL, (void)0) \
-			: (DemResult_deinit(&_child_result_macro), (void)0)), \
+				? (node = _child_result_macro.output, _child_result_macro.output = NULL, (void)0) \
+				: (DemResult_deinit(&_child_result_macro), (void)0)), \
 		_macro_result)
 
 // Helper macro for match_many/match_many1 calls
@@ -310,30 +298,25 @@ static inline void context_restore_inline(DemParser *p, DemNode *node, const Par
 #define CALL_MANY_N(N, rule_fn, sep, stop)  CALL_RULE_N_VA(N, match_many, rule_fn, sep, stop)
 #define CALL_MANY1_N(N, rule_fn, sep, stop) CALL_RULE_N_VA(N, match_many1, rule_fn, sep, stop)
 
-static inline DemNode *Node_append(DemNode *node, DemNode *x) {
+static inline NodeRef Node_append(DemNode *node, NodeRef x, void *ctx) {
 	if (!(node && x && node != x)) {
 		return NULL;
 	}
-	if (!node->children) {
-		node->children = VecPDemNode_ctor();
-		if (!node->children) {
-			return NULL;
-		}
-	}
-	DemNode **res = VecPDemNode_append(node->children, &x);
+	(void)ctx;
+	NodeRef *res = VecNodeRef_append(&node->children, &x);
 	return res ? *res : NULL;
 }
 
-#define MAKE_PRIMITIVE_TYPE(A, B, s) make_primitive_type(A, B, s, strlen(s))
-#define AST_APPEND_STR(s)            Node_append(node, make_primitive_type(CUR(), CUR(), s, strlen(s)))
-#define AST_APPEND_STRN(s, N)        Node_append(node, make_primitive_type(CUR(), CUR(), s, N))
+#define MAKE_PRIMITIVE_TYPE(A, B, s) make_primitive_type(p->context, A, B, s, strlen(s))
+#define AST_APPEND_STR(s)            Node_append(node, make_primitive_type(p->context, CUR(), CUR(), s, strlen(s)), p->context)
+#define AST_APPEND_STRN(s, N)        Node_append(node, make_primitive_type(p->context, CUR(), CUR(), s, N), p->context)
 #define PRIMITIVE_TYPE(s)            make_primitive_type_inplace(node, CUR(), CUR(), s, strlen(s))
 #define PRIMITIVE_TYPEN(s, N)        make_primitive_type_inplace(node, CUR(), CUR(), s, N)
 
 #define AST_APPEND_TYPE     append_type(p, node)
 #define AST_APPEND_TYPE1(T) append_type(p, (T))
-#define AST_APPEND_NODE(X)  Node_append(node, (X))
-#define AST_(X, I)          (VecPDemNode_at((X)->children, (I)) ? *VecPDemNode_at((X)->children, (I)) : NULL)
+#define AST_APPEND_NODE(X)  Node_append(node, (X), p->context)
+#define AST_(X, I)          (VecNodeRef_at(&(X)->children, (I)) ? *VecNodeRef_at(&(X)->children, (I)) : NULL)
 #define AST(I)              (AST_(node, I))
 
 #define DEM_UNREACHABLE \

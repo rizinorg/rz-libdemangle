@@ -148,7 +148,7 @@ static inline bool sv_form_cstr(DemStringView *dst, const char *src) {
 	return true;
 }
 
-static inline bool sv_eq_cstr(DemStringView *dst, const char *src) {
+static inline bool sv_eq_cstr(const DemStringView *dst, const char *src) {
 	if (!dst || !src) {
 		return false;
 	}
@@ -178,7 +178,7 @@ struct DemNode_t;
 typedef struct ForwardTemplateRef {
 	ut64 level; // Template parameter level
 	ut64 index; // Template parameter index
-	struct DemNode_t *ref;
+	const struct DemNode_t *ref;
 } ForwardTemplateRef;
 
 typedef ForwardTemplateRef *PForwardTemplateRef;
@@ -204,115 +204,136 @@ typedef struct {
 	bool is_r_value : 1;
 } RefQualifiers;
 
+static inline void free_dummy(void *ref) {
+	// No-op since NodeRef is a pointer to a node owned by the context's node pool
+}
+
+typedef const struct DemNode_t *NodeRef;
+VecIMPL(NodeRef, free_dummy);
+static inline void VecNodeRef_free_inner(void *ptr) {
+	if (ptr) {
+		VecNodeRef *v = (VecNodeRef *)ptr;
+		if (v->data) {
+			free(v->data);
+			v->data = NULL;
+			v->length = 0;
+			v->capacity = 0;
+		}
+	}
+}
+VecIMPL(VecNodeRef, VecNodeRef_free_inner);
+
+
+
 typedef struct {
-	PDemNode params; // Points to a node with tag=many containing parameter nodes
-	PDemNode ret;
-	PDemNode name;
-	PDemNode requires_node;
-	PDemNode exception_spec;
-	PDemNode enable_if_attrs; // Ua9enable_if vendor attribute: [enable_if:cond1, cond2]
+	NodeRef params; // Points to a node with tag=many containing parameter nodes
+	NodeRef ret;
+	NodeRef name;
+	NodeRef requires_node;
+	NodeRef exception_spec;
+	NodeRef enable_if_attrs; // Ua9enable_if vendor attribute: [enable_if:cond1, cond2]
 	CvQualifiers cv_qualifiers;
 	RefQualifiers ref_qualifiers;
 	bool has_explicit_object_param; // C++23 deducing this: first param printed with "this " prefix
 } FunctionTy;
 
 typedef struct {
-	PDemNode inner_type; // The type being qualified (e.g., "QString")
+	NodeRef inner_type; // The type being qualified (e.g., "QString")
 	CvQualifiers qualifiers; // The CV qualifiers (const, volatile, restrict)
 } QualifiedTy;
 
 typedef struct {
-	PDemNode inner_type; // The type being qualified (e.g., "QString")
+	NodeRef inner_type; // The type being qualified (e.g., "QString")
 	DemStringView vendor_ext;
-	PDemNode template_args; // Template arguments node
+	NodeRef template_args; // Template arguments node
 } VendorExtQualifiedTy;
 
 typedef struct {
 	bool IsPartition;
-	PDemNode name;
-	PDemNode pare;
+	NodeRef name;
+	NodeRef pare;
 } ModuleNameTy;
 
 typedef struct {
-	PDemNode name;
-	PDemNode template_args;
+	NodeRef name;
+	NodeRef template_args;
 } NameWithTemplateArgs;
 
 typedef struct {
-	PDemNode template_params;
-	PDemNode requires1, requires2;
-	PDemNode params;
+	NodeRef template_params;
+	NodeRef requires1, requires2;
+	NodeRef params;
 	DemStringView count;
 } ClosureTyName;
 
 typedef struct {
-	PDemNode qual;
-	PDemNode name;
+	NodeRef qual;
+	NodeRef name;
 } NestedName;
 
 typedef struct {
-	PDemNode encoding;
-	PDemNode entry;
+	NodeRef encoding;
+	NodeRef entry;
 } LocalName;
 
 typedef struct {
-	PDemNode name;
+	NodeRef name;
 	bool is_dtor;
 } CtorDtorName;
 
 typedef struct {
-	PDemNode ty;
+	NodeRef ty;
 } ConvOpTy;
 
 typedef struct {
-	PDemNode ty;
+	NodeRef ty;
 	DemStringView tag;
 } AbiTagTy;
 
 typedef struct {
-	PDemNode inner_ty;
-	PDemNode dimension;
+	NodeRef inner_ty;
+	NodeRef dimension;
 } ArrayTy;
 
 typedef struct {
-	PDemNode lhs;
+	NodeRef lhs;
 	DemStringView op;
-	PDemNode rhs;
+	NodeRef rhs;
 } MemberExpr;
 
 typedef struct {
-	PDemNode lhs;
+	NodeRef lhs;
 	DemStringView op;
-	PDemNode rhs;
+	NodeRef rhs;
 } BinaryExpr;
 
 typedef struct {
 	DemStringView prefix;
-	PDemNode inner;
+	NodeRef inner;
 } PrefixExpr;
 
 typedef struct {
-	PDemNode pack, init;
+	NodeRef pack, init;
 	DemStringView op;
 	bool is_left_fold;
 } FoldExpr;
 
 typedef struct {
-	PDemNode elem, init;
+	NodeRef elem, init;
 	bool is_array;
 } BracedExpr;
 
 typedef struct {
-	PDemNode first, last, init;
+	NodeRef first, last, init;
 } BracedRangeExpr;
 
 typedef struct {
-	PDemNode ty;
-	PDemNode inits; // many node
+	NodeRef ty;
+	NodeRef inits; // many node
 } InitListExpr;
 
 typedef struct {
-	PDemNode expr_list, ty, init_list;
+	NodeRef expr_list, ty, init_list;
 	bool is_global;
 	DemStringView op;
 } NewExpr;
@@ -334,19 +355,19 @@ typedef struct {
 } SyntheticTemplateParamName;
 
 typedef struct {
-	PDemNode name, ty;
+	NodeRef name, ty;
 } NonTypeTemplateParamDecl;
 
 typedef struct {
-	PDemNode name, ty;
+	NodeRef name, ty;
 } TypeTemplateParamDecl;
 
 typedef struct {
-	PDemNode name, constraint;
+	NodeRef name, constraint;
 } ConstrainedTypeTemplateParamDecl;
 
 typedef struct {
-	PDemNode name, params, requires_node;
+	NodeRef name, params, requires_node;
 } TemplateParamDecl;
 
 typedef enum {
@@ -377,15 +398,11 @@ typedef struct DemNode_t {
 	CpDemTypeKind tag;
 	Prec prec;
 	ut32 subtag;
-	struct Vec_t(PDemNode) * children; // Moved outside union, used by all types
+	struct Vec_t(NodeRef) children;
 
 	union {
 		struct {
-			const struct DemNode_t *child_ref;
-		};
-
-		struct {
-			struct DemNode_t *child;
+			NodeRef child;
 		};
 
 		const ForwardTemplateRef *fwd_template_ref;
@@ -419,9 +436,12 @@ typedef struct DemNode_t {
 	};
 } DemNode;
 
-DemNode *DemNode_new();
+struct DemContext_t;
+typedef struct DemContext_t *PDemContext;
+
+DemNode *DemNode_new(PDemContext ctx);
 DemNode *DemNode_ctor_inplace(DemNode *asm_node, CpDemTypeKind tag, const char *val_begin, size_t val_len);
-DemNode *DemNode_ctor(CpDemTypeKind tag, const char *val_begin, size_t val_len);
+DemNode *DemNode_ctor(PDemContext ctx, CpDemTypeKind tag, const char *val_begin, size_t val_len);
 void DemNode_dtor(DemNode *dan);
 bool DemNode_init(DemNode *dan);
 void DemNode_deinit(DemNode *dan);
@@ -429,12 +449,11 @@ bool DemNode_is_empty(DemNode *x);
 void DemNode_copy(DemNode *dst, const DemNode *src);
 void DemNode_move(DemNode *dst, DemNode *src);
 void DemNode_init_clone(DemNode *dst, const DemNode *src);
-DemNode *DemNode_clone(const DemNode *src);
 #define DemNode_non_empty(X) (!DemNode_is_empty(X))
 
 DemNode *make_primitive_type_inplace(DemNode *x, const char *begin, const char *end, const char *name, size_t name_len);
-DemNode *make_primitive_type(const char *begin, const char *end, const char *name, size_t name_len);
-DemNode *make_name_with_template_args(const char *begin, const char *end, DemNode *name_node, DemNode *template_args_node);
+DemNode *make_primitive_type(PDemContext ctx, const char *begin, const char *end, const char *name, size_t name_len);
+DemNode *make_name_with_template_args(PDemContext ctx, const char *begin, const char *end, DemNode *name_node, DemNode *template_args_node);
 
 static inline void PDemNode_free(void *ptr) {
 	if (ptr) {
@@ -473,12 +492,12 @@ typedef struct DemParser {
 	const char *end;
 	const char *cur;
 
-	NodeList detected_types;
-	NodeList names;
-	PNodeList outer_template_params;
-	VecT(PNodeList) template_params;
+	VecT(NodeRef) detected_types;
+	VecT(NodeRef) names;
+	VecT(NodeRef) * outer_template_params;
+	VecT(VecNodeRef) template_params;
 	VecT(PForwardTemplateRef) forward_template_refs;
-	NodeList orphan_nodes; // Nodes orphaned by nested encoding save/restore (freed at deinit)
+	VecT(NodeRef) orphan_nodes; // Nodes orphaned by nested encoding save/restore (freed at deinit)
 	VecT(PForwardTemplateRef) orphan_fwd_refs; // ForwardTemplateRefs orphaned by nested encoding (freed at deinit)
 	bool not_parse_template_args;
 	bool permit_forward_template_refs;
@@ -486,8 +505,11 @@ typedef struct DemParser {
 	bool trace;
 	size_t parse_lambda_params_at_level;
 	unsigned num_synthetic_template_parameters[3];
+	size_t recursion_depth;
+	size_t total_calls; // Monotonic counter: total rule invocations (never decremented)
 
 	CpDemOptions options;
+	void *context; // DemContext
 } DemParser;
 
 typedef struct {
@@ -521,12 +543,16 @@ typedef struct DemResult {
 	DemErrorCode error; /**< Error code (on failure) */
 } DemResult;
 
-typedef struct {
+VecIMPL(DemNode, DemNode_deinit);
+
+typedef struct DemContext_t {
+	VecPDemNode node_pool;
 	DemParser parser;
 	DemResult result;
 	DemString output;
 } DemContext;
 
+void DemContext_init(DemContext *ctx);
 void DemContext_deinit(DemContext *ctx);
 
 /**
@@ -545,8 +571,8 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 
 // Helper functions
 bool append_type(DemParser *p, const DemNode *x);
-DemNode *substitute_get(DemParser *p, ut64 id);
-DemNode *template_param_get(DemParser *p, ut64 level, ut64 index);
-bool resolve_forward_template_refs(DemParser *p, DemNode *dan);
+NodeRef substitute_get(DemParser *p, ut64 id);
+NodeRef template_param_get(DemParser *p, ut64 level, ut64 index);
+bool resolve_forward_template_refs(DemParser *p, NodeRef node);
 
 #endif // V3_IMPL_TYPES_H

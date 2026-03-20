@@ -32,7 +32,7 @@ static inline void PPContext_init(PPContext *ctx, CpDemOptions options) {
 	ctx->recursion_depth = 0;
 }
 
-void ast_pp(DemNode *node, DemString *out, PPContext *ctx);
+void ast_pp(NodeRef node, DemString *out, PPContext *ctx);
 void pp_cv_qualifiers(CvQualifiers qualifiers, DemString *out, PPContext *ctx);
 void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out, PPContext *ctx);
 

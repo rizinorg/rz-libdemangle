@@ -9,38 +9,6 @@
 #include "../vec.h"
 #include "v3_pp.h"
 
-void NodeList_copy(NodeList *dst, const NodeList *src) {
-	if (!(src && dst && src != dst)) {
-		return;
-	}
-
-	VecF(PDemNode, deinit)(dst);
-	VecF(PDemNode, init)(dst);
-
-	vec_foreach_ptr(PDemNode, src, node_ptr, {
-		if (!node_ptr || !*node_ptr) {
-			return;
-		}
-		DemNode *cloned = DemNode_clone(*node_ptr);
-		VecF(PDemNode, append)(dst, &cloned);
-	});
-}
-
-NodeList *NodeList_make(NodeList *self, ut64 from, ut64 to) {
-	if (to > VecF(PDemNode, len)(self) || from >= to) {
-		return NULL;
-	}
-	ut64 sz = to - from;
-	NodeList *new_list = VecF(PDemNode, ctor)();
-	if (!new_list) {
-		return NULL;
-	}
-	VecF(PDemNode, reserve)(new_list, sz);
-	memcpy(new_list->data, VecF(PDemNode, at)(self, from), sizeof(PDemNode) * sz);
-	new_list->length = sz;
-	return new_list;
-}
-
 // ============================================================================
 // DemParser functions
 // ============================================================================
@@ -59,17 +27,16 @@ void DemParser_init(DemParser *p, CpDemOptions options, const char *input) {
 	p->options = options;
 
 	// Initialize metadata fields
-	p->outer_template_params = VecF(PDemNode, ctor)();
-	VecPDemNode_init(&p->detected_types);
-	VecPDemNode_init(&p->names);
-	VecPDemNode_init(&p->orphan_nodes);
-	VecPNodeList_init(&p->template_params);
+	p->outer_template_params = VecF(NodeRef, ctor)();
+	VecNodeRef_init(&p->detected_types);
+	VecNodeRef_init(&p->names);
+	VecNodeRef_init(&p->orphan_nodes);
+	VecVecNodeRef_init(&p->template_params);
 	VecPForwardTemplateRef_init(&p->forward_template_refs);
 	VecPForwardTemplateRef_init(&p->orphan_fwd_refs);
 
 	p->parse_lambda_params_at_level = SIZE_MAX;
 	p->permit_forward_template_refs = false;
-
 }
 
 void DemParser_deinit(DemParser *p) {
@@ -78,11 +45,11 @@ void DemParser_deinit(DemParser *p) {
 	}
 
 	// Deinitialize metadata fields
-	VecF(PDemNode, deinit)(&p->detected_types);
-	VecF(PDemNode, deinit)(&p->names);
-	VecF(PDemNode, deinit)(&p->orphan_nodes);
-	VecF(PDemNode, dtor)(p->outer_template_params);
-	VecF(PNodeList, deinit)(&p->template_params);
+	VecF(NodeRef, deinit)(&p->detected_types);
+	VecF(NodeRef, deinit)(&p->names);
+	VecF(NodeRef, deinit)(&p->orphan_nodes);
+	VecF(NodeRef, dtor)(p->outer_template_params);
+	VecF(VecNodeRef, deinit)(&p->template_params);
 	VecF(PForwardTemplateRef, deinit)(&p->forward_template_refs);
 	VecF(PForwardTemplateRef, deinit)(&p->orphan_fwd_refs);
 
@@ -103,10 +70,7 @@ void DemResult_deinit(DemResult *r) {
 	if (!r) {
 		return;
 	}
-	if (r->output) {
-		DemNode_dtor(r->output);
-		r->output = NULL;
-	}
+	r->output = NULL;
 	r->error = DEM_ERR_OK;
 }
 
@@ -120,10 +84,8 @@ bool append_type(DemParser *p, const DemNode *x) {
 		return false;
 	}
 
-	DemNode *new_node = DemNode_clone(x);
-	PDemNode *slot = VecF(PDemNode, append)(&p->detected_types, &new_node);
+	NodeRef *slot = VecF(NodeRef, append)(&p->detected_types, &x);
 	if (!slot) {
-		DemNode_dtor(new_node);
 		if (p->trace) {
 			fprintf(stderr, "[append_type] FAILED to append type\n");
 		}
@@ -132,24 +94,23 @@ bool append_type(DemParser *p, const DemNode *x) {
 	return true;
 }
 
-DemNode *substitute_get(DemParser *p, ut64 id) {
+NodeRef substitute_get(DemParser *p, ut64 id) {
 	if (p->detected_types.length <= id) {
 		return NULL;
 	}
-	PDemNode *type_node_ptr = VecPDemNode_at(&p->detected_types, id);
+	NodeRef *type_node_ptr = VecNodeRef_at(&p->detected_types, id);
 	return type_node_ptr ? *type_node_ptr : NULL;
 }
 
-DemNode *template_param_get(DemParser *p, ut64 level, ut64 index) {
+NodeRef template_param_get(DemParser *p, ut64 level, ut64 index) {
 	if (level >= p->template_params.length) {
 		goto branch_fail;
 	}
-	NodeList **pptparams_at_level = VecPNodeList_at(&p->template_params, level);
-	if (!(pptparams_at_level && *pptparams_at_level && index < (*pptparams_at_level)->length)) {
+	VecNodeRef *pptparams_at_level = VecVecNodeRef_at(&p->template_params, level);
+	if (!(pptparams_at_level  && index < pptparams_at_level->length)) {
 		goto branch_fail;
 	}
-	NodeList *tparams_at_level = *pptparams_at_level;
-	PDemNode *node_ptr = VecPDemNode_at(tparams_at_level, index);
+	NodeRef *node_ptr = VecNodeRef_at(pptparams_at_level, index);
 	return node_ptr ? *node_ptr : NULL;
 
 branch_fail:
@@ -159,8 +120,8 @@ branch_fail:
 	return NULL;
 }
 
-bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
-	if (!p || p->forward_template_refs.length == 0 || !dan) {
+bool resolve_forward_template_refs(DemParser *p, NodeRef node) {
+	if (!p || p->forward_template_refs.length == 0 || !node) {
 		return true;
 	}
 
@@ -173,7 +134,7 @@ bool resolve_forward_template_refs(DemParser *p, DemNode *dan) {
 		ut64 level = fwd_ref->level;
 		ut64 index = fwd_ref->index;
 
-		DemNode *ref_src = template_param_get(p, level, index);
+		NodeRef ref_src = template_param_get(p, level, index);
 		if (!ref_src) {
 			all_resolved = false;
 			continue;

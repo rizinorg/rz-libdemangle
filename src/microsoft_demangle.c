@@ -97,7 +97,8 @@ static inline void sdatatype_fini(SDataType *data_type) {
 	RZ_FREE(data_type->right);
 }
 
-static void sstrinfo_free(SStrInfo *sstrinfo) {
+static void sstrinfo_free(void *ptr) {
+	SStrInfo *sstrinfo = (SStrInfo *)ptr;
 	if (!sstrinfo) {
 		return;
 	}
@@ -848,7 +849,7 @@ static size_t get_template(SAbbrState *abbr, const char *buf, SStrInfo *str_info
 	}
 
 	if (*buf == '?') {
-		DemList *names_l = dem_list_newf((DemListFree)sstrinfo_free);
+		DemList *names_l = dem_list_newf(sstrinfo_free);
 		if (!names_l) {
 			goto get_template_err;
 		}
@@ -937,7 +938,7 @@ static size_t get_namespace_and_name(SAbbrState *abbr, const char *buf, STypeCod
 
 	size_t len = 0, read_len = 0, tmp_len = 0;
 
-	names_l = dem_list_newf((DemListFree)sstrinfo_free);
+	names_l = dem_list_newf(sstrinfo_free);
 
 	if (*buf == '?') {
 		size_t res = get_operator_code(abbr, buf, names_l, memorize);

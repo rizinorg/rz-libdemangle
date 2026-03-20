@@ -27,24 +27,16 @@ char *cp_demangle(const char *mangled, CpDemOptions opts) {
 
 	char *res = NULL;
 
-	// Look for _Z pattern in the string, accounting for vendor-specific prefixes
 	const char *p = mangled;
 	while (*p == '_') {
 		p++;
 		if (*p == 'Z') {
-			// Found _Z pattern after vendor prefix
-			res = cp_demangle_v3(mangled, opts);
-			break;
+			return cp_demangle_v3(mangled, opts);
 		}
 	}
 
-	/* if it does not start with "_Z" or v3 demangling failed */
-	if (!res) {
-		/* match : _ */
-		res = cp_demangle_v2(mangled, opts);
-	}
+	res = cp_demangle_v2(mangled, opts);
 
-	/* if v2 also failed, try as a bare type (no _Z prefix) */
 	if (!res) {
 		res = cp_demangle_v3_type(mangled, opts);
 	}

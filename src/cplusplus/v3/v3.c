@@ -51,12 +51,12 @@ void pp_ref_qualifiers(RefQualifiers qualifiers, DemString *out, PPContext *ctx)
 	}
 }
 
-void pp_array_type_dimension(DemNode *node, DemString *out, PDemNode *pbase_ty, PPContext *ctx) {
+void pp_array_type_dimension(NodeRef node, DemString *out, NodeRef *pbase_ty, PPContext *ctx) {
 	if (!node || !(node->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE || node->tag == CP_DEM_TYPE_KIND_VECTOR_TYPE)) {
 		return;
 	}
 	size_t count = 0;
-	PDemNode base_ty = node;
+	NodeRef base_ty = node;
 	do {
 		ArrayTy array_ty = base_ty->array_ty;
 		dem_string_appends(out, "[");
@@ -73,10 +73,10 @@ void pp_array_type_dimension(DemNode *node, DemString *out, PDemNode *pbase_ty, 
 	}
 }
 
-static void pp_array_type(PDemNode node, DemString *out, PPContext *ctx) {
+static void pp_array_type(NodeRef node, DemString *out, PPContext *ctx) {
 	DemString dim_string = { 0 };
 	dem_string_init(&dim_string);
-	PDemNode base_node = NULL;
+	NodeRef base_node = NULL;
 	pp_array_type_dimension(node, &dim_string, &base_node, ctx);
 	ast_pp(base_node, out, ctx);
 	if (dem_string_non_empty(&dim_string)) {
@@ -86,22 +86,22 @@ static void pp_array_type(PDemNode node, DemString *out, PPContext *ctx) {
 	dem_string_deinit(&dim_string);
 }
 
-static bool pp_init_list_as_string(PDemNode node, DemString *out, PPContext *ctx, PDemNode elems) {
-	PDemNode base_node = node->array_ty.inner_ty;
+static bool pp_init_list_as_string(NodeRef node, DemString *out, PPContext *ctx, NodeRef elems) {
+	NodeRef base_node = node->array_ty.inner_ty;
 	if ((base_node->tag == CP_DEM_TYPE_KIND_PRIMITIVE_TY &&
 		    strncmp(base_node->primitive_ty.name.buf, "char", base_node->primitive_ty.name.len) == 0) ||
 		(base_node->tag == CP_DEM_TYPE_KIND_BUILTIN_TYPE && AST_(base_node, 0) &&
 			strncmp(AST_(base_node, 0)->primitive_ty.name.buf, "char", AST_(base_node, 0)->primitive_ty.name.len) == 0)) {
 		dem_string_append(out, "\"");
 		// Reconstruct string content from IntegerLiteral children
-		if (elems && elems->children) {
-			size_t count = VecPDemNode_len(elems->children);
+		if (elems && elems->children.data) {
+			size_t count = VecNodeRef_len(&elems->children);
 			for (size_t i = 0; i < count; i++) {
-				PDemNode *child_ptr = VecPDemNode_at(elems->children, i);
+				NodeRef *child_ptr = VecNodeRef_at(&elems->children, i);
 				if (!child_ptr || !*child_ptr) {
 					continue;
 				}
-				PDemNode child = *child_ptr;
+				NodeRef child = *child_ptr;
 				if (child->tag != CP_DEM_TYPE_KIND_INTEGER_LITERAL) {
 					continue;
 				}
@@ -134,7 +134,7 @@ static bool pp_init_list_as_string(PDemNode node, DemString *out, PPContext *ctx
 // Check if a node is an ObjC "id<Proto>" type:
 // vendor-ext-qualified with "objcproto" prefix and inner type "objc_object".
 // In ObjC, id is already a pointer (objc_object*), so pointer decorators should be suppressed.
-static bool is_objc_id_protocol_type(PDemNode node) {
+static bool is_objc_id_protocol_type(NodeRef node) {
 	if (!node || node->tag != CP_DEM_TYPE_KIND_VENDOR_EXT_QUALIFIED_TYPE) {
 		return false;
 	}
@@ -145,7 +145,7 @@ static bool is_objc_id_protocol_type(PDemNode node) {
 	}
 	// The inner type may be wrapped in a QUALIFIED_TYPE from rule_qualified_type.
 	// Unwrap it to find the actual type name.
-	DemNode *inner = node->vendor_ext_qualified_ty.inner_type;
+	NodeRef inner = node->vendor_ext_qualified_ty.inner_type;
 	if (inner && inner->tag == CP_DEM_TYPE_KIND_QUALIFIED_TYPE) {
 		inner = inner->qualified_ty.inner_type;
 	}
@@ -156,7 +156,7 @@ static bool is_objc_id_protocol_type(PDemNode node) {
 		memcmp(inner->primitive_ty.name.buf, "objc_object", 11) == 0);
 }
 
-static void pp_type_quals(PDemNode node, DemString *out, CpDemTypeKind target_tag, PDemNode *pbase_ty, PPContext *ctx) {
+static void pp_type_quals(NodeRef node, DemString *out, CpDemTypeKind target_tag, NodeRef *pbase_ty, PPContext *ctx) {
 	if (!node || !out) {
 		return;
 	}
@@ -292,16 +292,16 @@ static void reorder_qualifiers_for_array_fn_ref(DemString *quals) {
 	*quals = reordered;
 }
 
-static void pp_type_with_quals(PDemNode node, DemString *out, PPContext *ctx) {
+static void pp_type_with_quals(NodeRef node, DemString *out, PPContext *ctx) {
 	DemString qualifiers_string = { 0 };
 	dem_string_init(&qualifiers_string);
-	PDemNode base_node = NULL;
+	NodeRef base_node = NULL;
 	pp_type_quals(node, &qualifiers_string, CP_DEM_TYPE_KIND_UNKNOWN, &base_node, ctx);
 
 	if (base_node && base_node->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE) {
 		DemString array_dem_string = { 0 };
 		dem_string_init(&array_dem_string);
-		PDemNode array_inner_base = NULL;
+		NodeRef array_inner_base = NULL;
 		pp_array_type_dimension(base_node, &array_dem_string, &array_inner_base, ctx);
 		ast_pp(array_inner_base, out, ctx);
 		if (dem_string_non_empty(&qualifiers_string)) {
@@ -321,7 +321,7 @@ static void pp_type_with_quals(PDemNode node, DemString *out, PPContext *ctx) {
 		// Handle qualified array: print element type with qualifiers, then ref, then array dimension
 		DemString array_dem_string = { 0 };
 		dem_string_init(&array_dem_string);
-		PDemNode array_inner_base = NULL;
+		NodeRef array_inner_base = NULL;
 		pp_array_type_dimension(base_node->qualified_ty.inner_type, &array_dem_string, &array_inner_base, ctx);
 		ast_pp(array_inner_base, out, ctx);
 		pp_cv_qualifiers(base_node->qualified_ty.qualifiers, out, ctx);
@@ -376,18 +376,18 @@ static void pp_type_with_quals(PDemNode node, DemString *out, PPContext *ctx) {
 	dem_string_deinit(&qualifiers_string);
 }
 
-bool pp_parameter_pack(PDemNode node, DemString *out, PPContext *pp_ctx) {
-	if (!(node->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK && node->child_ref && node->child_ref->tag == CP_DEM_TYPE_KIND_MANY)) {
+bool pp_parameter_pack(NodeRef node, DemString *out, PPContext *pp_ctx) {
+	if (!(node->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK && node->child && node->child->tag == CP_DEM_TYPE_KIND_MANY)) {
 		return false;
 	}
-	const DemNode *many_node = node->child_ref;
+	const DemNode *many_node = node->child;
 	if (pp_ctx->current_pack_index == UT32_MAX) {
 		pp_ctx->current_pack_index = 0;
-		pp_ctx->current_pack_max = VecPDemNode_len(many_node->children);
+		pp_ctx->current_pack_max = VecNodeRef_len(&many_node->children);
 	}
 
-	if (pp_ctx->current_pack_index < VecPDemNode_len(many_node->children)) {
-		PDemNode *child = VecPDemNode_at(many_node->children, pp_ctx->current_pack_index);
+	if (pp_ctx->current_pack_index < VecNodeRef_len(&many_node->children)) {
+		NodeRef *child = VecNodeRef_at(&many_node->children, pp_ctx->current_pack_index);
 		if (child && *child) {
 			ast_pp(*child, out, pp_ctx);
 		} else {
@@ -398,15 +398,15 @@ bool pp_parameter_pack(PDemNode node, DemString *out, PPContext *pp_ctx) {
 }
 
 // Print all elements of a parameter_pack comma-separated (for fold expressions)
-static void pp_pack_all_elements(PDemNode node, DemString *out, PPContext *pp_ctx) {
-	if (node->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK && node->child_ref && node->child_ref->tag == CP_DEM_TYPE_KIND_MANY) {
-		const DemNode *many_node = node->child_ref;
-		size_t count = VecPDemNode_len(many_node->children);
+static void pp_pack_all_elements(NodeRef node, DemString *out, PPContext *pp_ctx) {
+	if (node->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK && node->child && node->child->tag == CP_DEM_TYPE_KIND_MANY) {
+		const DemNode *many_node = node->child;
+		size_t count = VecNodeRef_len(&many_node->children);
 		for (size_t i = 0; i < count; i++) {
 			if (i > 0) {
 				dem_string_append(out, ", ");
 			}
-			PDemNode *child = VecPDemNode_at(many_node->children, i);
+			NodeRef *child = VecNodeRef_at(&many_node->children, i);
 			if (child && *child) {
 				ast_pp(*child, out, pp_ctx);
 			}
@@ -421,7 +421,7 @@ static void pp_pack_all_elements(PDemNode node, DemString *out, PPContext *pp_ct
 // When current_pack_index == UT32_MAX (initial iteration), peeks at element 0
 // to determine the type without advancing the iteration state.
 // Also follows FWD_TEMPLATE_REF indirection to find the underlying pack.
-static PDemNode resolve_pack_element(PDemNode node, PPContext *pp_ctx) {
+static NodeRef resolve_pack_element(NodeRef node, PPContext *pp_ctx) {
 	if (!node) {
 		return NULL;
 	}
@@ -436,11 +436,11 @@ static PDemNode resolve_pack_element(PDemNode node, PPContext *pp_ctx) {
 	if (node->tag != CP_DEM_TYPE_KIND_PARAMETER_PACK) {
 		return NULL;
 	}
-	if (!node->child_ref || node->child_ref->tag != CP_DEM_TYPE_KIND_MANY) {
+	if (!node->child || node->child->tag != CP_DEM_TYPE_KIND_MANY) {
 		return NULL;
 	}
-	const DemNode *many_node = node->child_ref;
-	size_t count = VecPDemNode_len(many_node->children);
+	const DemNode *many_node = node->child;
+	size_t count = VecNodeRef_len(&many_node->children);
 	if (count == 0) {
 		return NULL;
 	}
@@ -450,7 +450,7 @@ static PDemNode resolve_pack_element(PDemNode node, PPContext *pp_ctx) {
 		idx = 0;
 	}
 	if (idx < count) {
-		PDemNode *child = VecPDemNode_at(many_node->children, idx);
+		NodeRef *child = VecNodeRef_at(&many_node->children, idx);
 		if (child && *child) {
 			return *child;
 		}
@@ -458,7 +458,7 @@ static PDemNode resolve_pack_element(PDemNode node, PPContext *pp_ctx) {
 	return NULL;
 }
 
-bool pp_pack_expansion(PDemNode node, DemString *out, PPContext *pp_ctx) {
+bool pp_pack_expansion(NodeRef node, DemString *out, PPContext *pp_ctx) {
 	ut32 saved_pack_index = pp_ctx->current_pack_index;
 	ut32 saved_pack_max = pp_ctx->current_pack_max;
 	pp_ctx->current_pack_index = UT32_MAX;
@@ -493,7 +493,7 @@ beach:
 
 // Helper function to extract the base class name from a ctor/dtor name
 // Recursively unwraps name_with_template_args and nested_name to get the final primitive name
-static bool node_base_name(PDemNode node, DemStringView *out) {
+static bool node_base_name(NodeRef node, DemStringView *out) {
 	if (!node) {
 		return false;
 	}
@@ -565,7 +565,7 @@ static bool node_base_name(PDemNode node, DemStringView *out) {
 	return false;
 }
 
-static bool pp_base_name(PDemNode node, DemString *out) {
+static bool pp_base_name(NodeRef node, DemString *out) {
 	DemStringView base_name = { 0 };
 	if (!node_base_name(node, &base_name)) {
 		return false;
@@ -580,15 +580,15 @@ struct PPFnContext_t;
 typedef void (*AST_PP_FN)(struct PPFnContext_t *, DemString *);
 
 typedef struct PPFnContext_t {
-	DemNode *fn;
-	DemNode *mod;
+	NodeRef fn;
+	NodeRef mod;
 	AST_PP_FN pp_mod;
-	DemNode *quals;
+	NodeRef quals;
 	AST_PP_FN pp_quals;
 	PPContext *pp_ctx;
 } PPFnContext;
 
-static bool extract_function_type(DemNode *node, DemNode **out_func_node) {
+static bool extract_function_type(NodeRef node, NodeRef *out_func_node) {
 	if (!node) {
 		return false;
 	}
@@ -613,12 +613,12 @@ static bool extract_function_type(DemNode *node, DemNode **out_func_node) {
 
 /// Check if a type is pointer/reference to an array type.
 /// Returns true if the outermost non-qualified wrapper is a pointer/reference to an array.
-static bool is_pointer_to_array_type(DemNode *node) {
+static bool is_pointer_to_array_type(NodeRef node) {
 	if (!node) {
 		return false;
 	}
 	if (node->tag == CP_DEM_TYPE_KIND_TYPE && node->subtag != SUB_TAG_INVALID && AST(0)) {
-		DemNode *inner = AST(0);
+		NodeRef inner = AST(0);
 		if (inner->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE) {
 			return true;
 		}
@@ -641,13 +641,13 @@ static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out) {
 		return;
 	}
 
-	DemNode *node = ctx->fn;
-	FunctionTy *ft = &node->fn_ty;
+	NodeRef node = ctx->fn;
+	FunctionTy *ft = (FunctionTy *)&node->fn_ty;
 
 	// Print return type
-	DemNode *ret_fn_ty = NULL;
+	NodeRef ret_fn_ty = NULL;
 	if (ft->ret && extract_function_type(ft->ret, &ret_fn_ty)) {
-		DemNode *saved_ret = ft->ret;
+		NodeRef saved_ret = ft->ret;
 		ft->ret = NULL;
 		PPFnContext inner_ctx = {
 			.fn = ret_fn_ty,
@@ -724,7 +724,7 @@ static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out) {
 	}
 }
 
-static void pp_function_ty(PDemNode node, DemString *out, PPContext *pp_ctx) {
+static void pp_function_ty(NodeRef node, DemString *out, PPContext *pp_ctx) {
 	PPFnContext ctx = { 0 };
 	ctx.fn = node;
 	ctx.pp_ctx = pp_ctx;
@@ -758,7 +758,7 @@ static void pp_function_ty_mod_pointer_to_member_type(PPFnContext *ctx, DemStrin
 	dem_string_append(out, "::*");
 }
 
-void pp_expanded_special_substitution(DemNode *node, DemString *out, PPContext *ctx) {
+void pp_expanded_special_substitution(NodeRef node, DemString *out, PPContext *ctx) {
 	dem_string_append(out, "std::");
 	pp_base_name(node, out);
 	if (node->subtag >= SPECIAL_SUBSTITUTION_STRING) {
@@ -770,7 +770,7 @@ void pp_expanded_special_substitution(DemNode *node, DemString *out, PPContext *
 	}
 }
 
-void pp_special_substitution(DemNode *node, DemString *out) {
+void pp_special_substitution(NodeRef node, DemString *out) {
 	dem_string_append(out, "std::");
 	pp_base_name(node, out);
 }
@@ -786,7 +786,7 @@ static inline void print_close(DemString *out, PPContext *ctx) {
 	ctx->paren_depth--;
 }
 
-static inline void pp_as_operand_ex(DemNode *node, DemString *out, Prec prec, bool strictly_worse, PPContext *ctx) {
+static inline void pp_as_operand_ex(NodeRef node, DemString *out, Prec prec, bool strictly_worse, PPContext *ctx) {
 	if (!node || !out) {
 		return;
 	}
@@ -800,7 +800,7 @@ static inline void pp_as_operand_ex(DemNode *node, DemString *out, Prec prec, bo
 	}
 }
 
-static void pp_template_param_decl_inner(DemNode *node, DemString *out, PPContext *ctx, bool is_pack) {
+static void pp_template_param_decl_inner(NodeRef node, DemString *out, PPContext *ctx, bool is_pack) {
 	if (!node || !out) {
 		return;
 	}
@@ -829,16 +829,16 @@ static void pp_template_param_decl_inner(DemNode *node, DemString *out, PPContex
 			is_pointer_to_array_type(node->non_type_template_param_decl.ty)) {
 			// Pointer/reference to array with a name: need C declarator syntax
 			// e.g. int (*$N) [3] instead of int (*) [3] $N
-			PDemNode ty = node->non_type_template_param_decl.ty;
+			NodeRef ty = node->non_type_template_param_decl.ty;
 			DemString qualifiers_string = { 0 };
 			dem_string_init(&qualifiers_string);
-			PDemNode base_node = NULL;
+			NodeRef base_node = NULL;
 			pp_type_quals(ty, &qualifiers_string, CP_DEM_TYPE_KIND_UNKNOWN, &base_node, ctx);
 
 			DemString array_dem_string = { 0 };
 			dem_string_init(&array_dem_string);
-			PDemNode array_inner_base = NULL;
-			PDemNode array_node = base_node;
+			NodeRef array_inner_base = NULL;
+			NodeRef array_node = base_node;
 			if (base_node && base_node->tag == CP_DEM_TYPE_KIND_QUALIFIED_TYPE &&
 				base_node->qualified_ty.inner_type &&
 				base_node->qualified_ty.inner_type->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE) {
@@ -905,7 +905,7 @@ static void pp_template_param_decl_inner(DemNode *node, DemString *out, PPContex
 	}
 }
 
-static void pp_template_param_decl(DemNode *node, DemString *out, PPContext *ctx) {
+static void pp_template_param_decl(NodeRef node, DemString *out, PPContext *ctx) {
 	if (!node || !out) {
 		return;
 	}
@@ -917,7 +917,7 @@ static void pp_template_param_decl(DemNode *node, DemString *out, PPContext *ctx
 	pp_template_param_decl_inner(node, out, ctx, false);
 }
 
-void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
+void ast_pp(NodeRef node, DemString *out, PPContext *ctx) {
 	if (!node || !out || !ctx) {
 		return;
 	}
@@ -1054,9 +1054,9 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 				}
 				const char *proto_name = proto_start + digits;
 				if (digits > 0 && digits + proto_name_len <= proto_remaining) {
-					DemNode *inner = node->vendor_ext_qualified_ty.inner_type;
+					NodeRef inner = node->vendor_ext_qualified_ty.inner_type;
 					// Unwrap QUALIFIED_TYPE wrapper if present
-					DemNode *actual_inner = inner;
+					NodeRef actual_inner = inner;
 					if (actual_inner && actual_inner->tag == CP_DEM_TYPE_KIND_QUALIFIED_TYPE) {
 						actual_inner = actual_inner->qualified_ty.inner_type;
 					}
@@ -1099,12 +1099,12 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 
 	case CP_DEM_TYPE_KIND_MANY:
 		// Print children with separator
-		if (!node->children) {
+		if (!node->children.data) {
 			break;
 		}
 		bool first = true;
-		vec_foreach_ptr(PDemNode, node->children, child_ptr, {
-			DemNode *child = child_ptr ? *child_ptr : NULL;
+		vec_foreach_ptr(NodeRef, &node->children, child_ptr, {
+			NodeRef child = child_ptr ? *child_ptr : NULL;
 			if (!child) {
 				continue;
 			}
@@ -1168,7 +1168,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			dem_string_append(out, "'");
 		}
 
-		if (ctn->template_params && ctn->template_params->children) {
+		if (ctn->template_params && ctn->template_params->children.data) {
 			dem_string_append(out, "<");
 			ast_pp(node->closure_ty_name.template_params, out, ctx);
 			dem_string_append(out, ">");
@@ -1198,7 +1198,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		// This happens in conversion operators where T_ resolves to a type containing T_ itself.
 		// In such cases, the entire type wrapper (including pointer/reference qualifiers) is implicit.
 		if (node->subtag != SUB_TAG_INVALID && AST(0) && ctx->resolving_fwd_ref) {
-			PDemNode inner = AST(0);
+			NodeRef inner = AST(0);
 			if (inner->tag == CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF &&
 				inner->fwd_template_ref &&
 				inner->fwd_template_ref->ref == ctx->resolving_fwd_ref) {
@@ -1206,7 +1206,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			}
 		}
 		// Check if this is a function pointer (or pointer/reference/qualified wrapping a function pointer)
-		DemNode *func_node = NULL;
+		NodeRef func_node = NULL;
 		if (extract_function_type(node, &func_node)) {
 			// This is a function pointer - use special formatting
 			PPFnContext pp_fn_context = {
@@ -1220,22 +1220,22 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			// Check if this is a pointer/reference wrapping a parameter pack that
 			// resolves to a function type or array type during pack expansion.
 			// In that case, we need proper C declarator syntax: int (*)() not int ()*.
-			PDemNode resolved = resolve_pack_element(AST(0), ctx);
+			NodeRef resolved = resolve_pack_element(AST(0), ctx);
 			if (resolved && (resolved->tag == CP_DEM_TYPE_KIND_FUNCTION_TYPE || resolved->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE)) {
 				// Initialize pack state if this is the first iteration
 				// (pp_parameter_pack would normally do this, but we're bypassing it)
 				// Follow FWD_TEMPLATE_REF to the actual PARAMETER_PACK for pack state
-				PDemNode pack_node = AST(0);
+				NodeRef pack_node = AST(0);
 				if (pack_node->tag == CP_DEM_TYPE_KIND_FWD_TEMPLATE_REF &&
 					pack_node->fwd_template_ref && pack_node->fwd_template_ref->ref) {
 					pack_node = pack_node->fwd_template_ref->ref;
 				}
 				if (ctx->current_pack_index == UT32_MAX &&
 					pack_node->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK &&
-					pack_node->child_ref &&
-					pack_node->child_ref->tag == CP_DEM_TYPE_KIND_MANY) {
+					pack_node->child &&
+					pack_node->child->tag == CP_DEM_TYPE_KIND_MANY) {
 					ctx->current_pack_index = 0;
-					ctx->current_pack_max = VecPDemNode_len(pack_node->child_ref->children);
+					ctx->current_pack_max = VecNodeRef_len(&pack_node->child->children);
 				}
 				if (resolved->tag == CP_DEM_TYPE_KIND_FUNCTION_TYPE) {
 					PPFnContext pp_fn_context = {
@@ -1249,11 +1249,11 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 					// Pointer/reference to array: int (*) []
 					DemString qualifiers_string = { 0 };
 					dem_string_init(&qualifiers_string);
-					PDemNode base_node = NULL;
+					NodeRef base_node = NULL;
 					pp_type_quals(node, &qualifiers_string, CP_DEM_TYPE_KIND_UNKNOWN, &base_node, ctx);
 					DemString array_dem_string = { 0 };
 					dem_string_init(&array_dem_string);
-					PDemNode array_inner_base = NULL;
+					NodeRef array_inner_base = NULL;
 					pp_array_type_dimension(resolved, &array_dem_string, &array_inner_base, ctx);
 					ast_pp(array_inner_base, out, ctx);
 					if (dem_string_non_empty(&qualifiers_string)) {
@@ -1274,7 +1274,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			}
 		} else {
 			// Regular type - print children and add decorator
-			vec_foreach_ptr(PDemNode, node->children, child_ptr, {
+			vec_foreach_ptr(NodeRef, &node->children, child_ptr, {
 				ast_pp(*child_ptr, out, ctx);
 			});
 		}
@@ -1287,7 +1287,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 	case CP_DEM_TYPE_KIND_VECTOR_TYPE: {
 		DemString dem = { 0 };
 		dem_string_init(&dem);
-		PDemNode inner_ty = NULL;
+		NodeRef inner_ty = NULL;
 		pp_array_type_dimension(node, &dem, &inner_ty, ctx);
 		if (inner_ty) {
 			ast_pp(inner_ty, out, ctx);
@@ -1373,8 +1373,8 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		// Check if pack is a multi-element expanded pack
 		bool pack_is_expanded = (node->fold_expr.pack &&
 			node->fold_expr.pack->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK &&
-			node->fold_expr.pack->child_ref &&
-			node->fold_expr.pack->child_ref->tag == CP_DEM_TYPE_KIND_MANY);
+			node->fold_expr.pack->child &&
+			node->fold_expr.pack->child->tag == CP_DEM_TYPE_KIND_MANY);
 		print_open(out, ctx);
 		if (!node->fold_expr.is_left_fold || node->fold_expr.init) {
 			if (node->fold_expr.is_left_fold) {
@@ -1438,7 +1438,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		break;
 	}
 	case CP_DEM_TYPE_KIND_INIT_LIST_EXPRESSION: {
-		DemNode *ty = node->init_list_expr.ty;
+		NodeRef ty = node->init_list_expr.ty;
 		if (ty) {
 			if (ty->tag == CP_DEM_TYPE_KIND_ARRAY_TYPE && pp_init_list_as_string(ty, out, ctx, node->init_list_expr.inits)) {
 				break;
@@ -1485,7 +1485,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 			dem_string_append(out, "::");
 		}
 		dem_string_append_sv(out, node->new_expr.op);
-		if (node->new_expr.expr_list && VecPDemNode_len(node->new_expr.expr_list->children) > 0) {
+		if (node->new_expr.expr_list && VecNodeRef_len(&node->new_expr.expr_list->children) > 0) {
 			print_open(out, ctx);
 			ast_pp(node->new_expr.expr_list, out, ctx);
 			print_close(out, ctx);
@@ -1494,7 +1494,7 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 		if (node->new_expr.ty) {
 			ast_pp(node->new_expr.ty, out, ctx);
 		}
-		if (node->new_expr.init_list && VecPDemNode_len(node->new_expr.init_list->children) > 0) {
+		if (node->new_expr.init_list && VecNodeRef_len(&node->new_expr.init_list->children) > 0) {
 			print_open(out, ctx);
 			ast_pp(node->new_expr.init_list, out, ctx);
 			print_close(out, ctx);
@@ -1544,9 +1544,9 @@ void ast_pp(DemNode *node, DemString *out, PPContext *ctx) {
 
 	default:
 		// For all other nodes with children, recursively print all children
-		if (node->children) {
-			vec_foreach_ptr(PDemNode, node->children, child_ptr, {
-				DemNode *child = child_ptr ? *child_ptr : NULL;
+		if (node->children.data) {
+			vec_foreach_ptr(NodeRef, &node->children, child_ptr, {
+				NodeRef child = child_ptr ? *child_ptr : NULL;
 				if (child) {
 					ast_pp(child, out, ctx);
 				}
@@ -1731,7 +1731,7 @@ bool parse_base_source_name(DemParser *p, const char **pout, size_t *plen) {
 	return true;
 }
 
-bool parse_seq_id(DemParser *p, DemNode **pp_out_node) {
+bool parse_seq_id(DemParser *p, NodeRef *pp_out_node) {
 	ut64 sid = 0;
 	if (IS_DIGIT(PEEK()) || IS_UPPER(PEEK())) {
 		if (!parse_base36(p, &sid)) {
@@ -1742,7 +1742,7 @@ bool parse_seq_id(DemParser *p, DemNode **pp_out_node) {
 	if (!READ('_')) {
 		return false;
 	}
-	DemNode *ref = substitute_get(p, sid);
+	NodeRef ref = substitute_get(p, sid);
 	if (!ref) {
 		return false;
 	}
@@ -1795,7 +1795,7 @@ bool rule_number(DemParser *p, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
-bool rule_ctor_dtor_name(DemParser *p, DemResult *r, NameState *ns, PDemNode scope) {
+bool rule_ctor_dtor_name(DemParser *p, DemResult *r, NameState *ns, DemNode *scope) {
 	RULE_HEAD(CTOR_DTOR_NAME);
 
 	if (scope && scope->tag == CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION) {
@@ -1834,7 +1834,7 @@ bool rule_ctor_dtor_name(DemParser *p, DemResult *r, NameState *ns, PDemNode sco
 	RULE_FOOT(ctor_dtor_name);
 }
 
-bool parse_module_name(DemParser *p, PDemNode *pmodule) {
+bool parse_module_name(DemParser *p, NodeRef *pmodule) {
 	const ParseContext ctx = context_save_inline(p, NULL);
 	while (READ('W')) {
 		bool IsPartition = READ('P');
@@ -1845,9 +1845,8 @@ bool parse_module_name(DemParser *p, PDemNode *pmodule) {
 
 		DemNode *Sub = result.output;
 		result.output = NULL;
-		DemNode *sub_module = DemNode_ctor(CP_DEM_TYPE_KIND_MODULE_NAME, ctx.saved_pos, CUR() - ctx.saved_pos);
+		DemNode *sub_module = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_MODULE_NAME, ctx.saved_pos, CUR() - ctx.saved_pos);
 		if (!sub_module) {
-			DemNode_dtor(Sub);
 			DemResult_deinit(&result);
 			return false;
 		}
@@ -1862,13 +1861,13 @@ bool parse_module_name(DemParser *p, PDemNode *pmodule) {
 	return true;
 }
 
-PDemNode parse_abi_tags(DemParser *p, PDemNode node) {
+NodeRef parse_abi_tags(DemParser *p, NodeRef node) {
 	while (READ('B')) {
 		DemStringView tag = { 0 };
 		if (!parse_base_source_name(p, &tag.buf, &tag.len)) {
 			return node;
 		}
-		PDemNode tagged = DemNode_ctor(CP_DEM_TYPE_KIND_ABI_TAG_TY, tag.buf, tag.len);
+		DemNode *tagged = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_ABI_TAG_TY, tag.buf, tag.len);
 		if (!tagged) {
 			return node;
 		}
@@ -1880,7 +1879,7 @@ PDemNode parse_abi_tags(DemParser *p, PDemNode node) {
 }
 
 bool rule_unqualified_name(DemParser *p, DemResult *r,
-	NameState *ns, DemNode *scope, DemNode *module) {
+	NameState *ns, DemNode *scope, NodeRef module) {
 	RULE_HEAD(UNQUALIFIED_NAME);
 
 	if (!parse_module_name(p, &module)) {
@@ -1895,14 +1894,14 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 		CALL_MANY1_N(result, rule_source_name, ", ", 'E');
 		if (result) {
 			// Wrap structured binding names in brackets: [a1, a2]
-			DemNode *wrapper = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, result->val.buf, result->val.len);
+			DemNode *wrapper = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_MANY, result->val.buf, result->val.len);
 			if (!wrapper) {
 				TRACE_RETURN_FAILURE();
 			}
 			wrapper->many_ty.sep = "";
-			Node_append(wrapper, make_primitive_type(CUR(), CUR(), "[", 1));
-			Node_append(wrapper, result);
-			Node_append(wrapper, make_primitive_type(CUR(), CUR(), "]", 1));
+			Node_append(wrapper, make_primitive_type(p->context, CUR(), CUR(), "[", 1), p->context);
+			Node_append(wrapper, result, p->context);
+			Node_append(wrapper, make_primitive_type(p->context, CUR(), CUR(), "]", 1), p->context);
 			result = wrapper;
 		}
 	} else if (PEEK() == 'U') {
@@ -1920,35 +1919,32 @@ bool rule_unqualified_name(DemParser *p, DemResult *r,
 
 	if (result && module) {
 		// Attach module name: name@module
-		DemNode *wrapper = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, result->val.buf, result->val.len);
+		DemNode *wrapper = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_MANY, result->val.buf, result->val.len);
 		if (!wrapper) {
-			DemNode_dtor(result);
-			DemNode_dtor(module);
 			TRACE_RETURN_FAILURE();
 		}
 		wrapper->many_ty.sep = "";
-		Node_append(wrapper, result);
-		Node_append(wrapper, make_primitive_type(CUR(), CUR(), "@", 1));
-		Node_append(wrapper, module);
+		Node_append(wrapper, result, p->context);
+		Node_append(wrapper, make_primitive_type(p->context, CUR(), CUR(), "@", 1), p->context);
+		Node_append(wrapper, module, p->context);
 		result = wrapper;
 	}
 	if (result) {
-		result = parse_abi_tags(p, result);
+		result = (DemNode *)parse_abi_tags(p, result);
 	}
 	if (result && is_member_like_friend) {
 		// MemberLikeFriendName: scope::friend name
-		DemNode *friend_prefix = make_primitive_type(CUR(), CUR(), "friend ", 7);
+		DemNode *friend_prefix = make_primitive_type(p->context, CUR(), CUR(), "friend ", 7);
 		if (!friend_prefix) {
 			TRACE_RETURN_FAILURE();
 		}
-		DemNode *wrapper = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, result->val.buf, result->val.len);
+		DemNode *wrapper = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_MANY, result->val.buf, result->val.len);
 		if (!wrapper) {
-			DemNode_dtor(friend_prefix);
 			TRACE_RETURN_FAILURE();
 		}
 		wrapper->many_ty.sep = "";
-		Node_append(wrapper, friend_prefix);
-		Node_append(wrapper, result);
+		Node_append(wrapper, friend_prefix, p->context);
+		Node_append(wrapper, result, p->context);
 		node->tag = CP_DEM_TYPE_KIND_NESTED_NAME;
 		node->nested_name.qual = scope;
 		node->nested_name.name = wrapper;
@@ -1972,13 +1968,11 @@ bool rule_unresolved_name(DemParser *p, DemResult *r) {
 		MUST_MATCH((CALL_RULE(rule_unresolved_type)) &&
 			(PEEK() == 'I' ? CALL_RULE(rule_template_args) : true));
 
-		PDemNode qualifier_level = NULL;
+		NodeRef qualifier_level = NULL;
 		CALL_MANY_N(qualifier_level, rule_unresolved_qualifier_level, "::", 'E');
-		if (qualifier_level && VecPDemNode_len(qualifier_level->children) > 0) {
+		if (qualifier_level && VecNodeRef_len(&qualifier_level->children) > 0) {
 			AST_APPEND_STR("::");
 			AST_APPEND_NODE(qualifier_level);
-		} else {
-			DemNode_dtor(qualifier_level);
 		}
 
 		AST_APPEND_STR("::");
@@ -2008,7 +2002,7 @@ bool rule_unscoped_name(DemParser *p, DemResult *r, NameState *ns, bool *is_subs
 
 	DemNode *std_node = NULL;
 	if (READ_STR("St")) {
-		std_node = make_primitive_type(CUR(), CUR(), "std", 3);
+		std_node = make_primitive_type(p->context, CUR(), CUR(), "std", 3);
 		if (!std_node) {
 			TRACE_RETURN_FAILURE();
 		}
@@ -2025,10 +2019,6 @@ bool rule_unscoped_name(DemParser *p, DemResult *r, NameState *ns, bool *is_subs
 			*is_subst = true;
 			result = subst;
 		} else {
-			DemNode_dtor(std_node);
-			DemNode_dtor(result);
-			DemNode_dtor(module);
-			DemNode_dtor(subst);
 			TRACE_RETURN_FAILURE();
 		}
 	}
@@ -2061,7 +2051,7 @@ bool rule_decltype(DemParser *p, DemResult *r) {
 	if (!(READ_STR("Dt") || READ_STR("DT"))) {
 		TRACE_RETURN_FAILURE();
 	}
-	PDemNode expr = NULL;
+	NodeRef expr = NULL;
 	MUST_MATCH(CALL_RULE_N(expr, rule_expression) && READ('E'));
 	AST_APPEND_STR("decltype(");
 	AST_APPEND_NODE(expr);
@@ -2076,7 +2066,6 @@ bool rule_array_type(DemParser *p, DemResult *r) {
 	if (PEEK() == '_') {
 		// Empty dimension: A_<type> - just consume the '_' without creating a size node
 		MUST_MATCH(READ('_'));
-		DemNode_dtor(node->array_ty.dimension);
 		node->array_ty.dimension = NULL;
 	} else if (isdigit(PEEK())) {
 		MUST_MATCH(CALL_RULE_N(node->array_ty.dimension, rule_number) && READ('_'));
@@ -2093,7 +2082,7 @@ bool rule_vector_type(DemParser *p, DemResult *r) {
 	if (isdigit(PEEK())) {
 		MUST_MATCH(CALL_RULE_N(node->array_ty.dimension, rule_number) && READ('_'));
 		if (READ('p')) {
-			PDemNode dim = node->array_ty.dimension;
+			NodeRef dim = node->array_ty.dimension;
 			node->array_ty.dimension = NULL;
 			AST_APPEND_STR("pixel vector[");
 			AST_APPEND_NODE(dim);
@@ -2286,7 +2275,7 @@ bool rule_operator_name(DemParser *p, DemResult *r, NameState *ns) {
 
 	if (READ_STR("li")) {
 		// ::= li <source-name>  # operator ""
-		PDemNode opname = NULL;
+		NodeRef opname = NULL;
 		MUST_MATCH(CALL_RULE_N(opname, rule_source_name));
 		AST_APPEND_STR("operator\"\" ");
 		AST_APPEND_NODE(opname);
@@ -2320,13 +2309,13 @@ bool rule_expr_primary(DemParser *p, DemResult *r) {
 	// Matches LLVM's SaveTemplateParams in parseExprPrimary.
 	if (PEEK() == '_' && PEEK_AT(1) == 'Z') {
 		context_save(lz_literal);
-		VecPNodeList saved_template_params_lz = p->template_params;
-		NodeList *saved_outer_template_params_lz = p->outer_template_params;
-		VecPNodeList_init(&p->template_params);
-		p->outer_template_params = VecF(PDemNode, ctor)();
+		VecVecNodeRef saved_template_params_lz = p->template_params;
+		VecNodeRef *saved_outer_template_params_lz = p->outer_template_params;
+		VecVecNodeRef_init(&p->template_params);
+		p->outer_template_params = VecF(NodeRef, ctor)();
 		bool lz_ok = READ_STR("_Z") && CALL_RULE(rule_encoding) && READ('E');
-		VecPNodeList_deinit(&p->template_params);
-		VecF(PDemNode, dtor)(p->outer_template_params);
+		VecVecNodeRef_deinit(&p->template_params);
+		VecF(NodeRef, dtor)(p->outer_template_params);
 		p->template_params = saved_template_params_lz;
 		p->outer_template_params = saved_outer_template_params_lz;
 		if (lz_ok) {
@@ -2346,11 +2335,9 @@ bool rule_expr_primary(DemParser *p, DemResult *r) {
 		if (closure && READ('E')) {
 			// Mark as literal lambda (subtag=1) for different formatting: [](...){...}
 			closure->subtag = 1;
-			DemNode_dtor(node);
 			node = closure;
 			TRACE_RETURN_SUCCESS;
 		}
-		DemNode_dtor(closure);
 		context_restore(closure_literal);
 	}
 
@@ -2725,31 +2712,25 @@ bool rule_expression(DemParser *p, DemResult *r) {
 	}
 	if (READ_STR("sZ")) {
 		// sizeof...(pack) — when the param resolves to a pack, expand all elements
-		PDemNode sz_param = NULL;
+		NodeRef sz_param = NULL;
 		if (!CALL_RULE_N(sz_param, rule_template_param) && !CALL_RULE_N(sz_param, rule_function_param)) {
 			TRACE_RETURN_FAILURE();
 		}
 		AST_APPEND_STR("sizeof...(");
-		if (sz_param->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK && sz_param->child_ref &&
-			sz_param->child_ref->tag == CP_DEM_TYPE_KIND_MANY) {
+		if (sz_param->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK && sz_param->child &&
+			sz_param->child->tag == CP_DEM_TYPE_KIND_MANY) {
 			// Expand all pack elements comma-separated
-			const DemNode *many = sz_param->child_ref;
-			size_t count = VecPDemNode_len(many->children);
+			const DemNode *many = sz_param->child;
+			size_t count = VecNodeRef_len(&many->children);
 			for (size_t i = 0; i < count; i++) {
 				if (i > 0) {
 					AST_APPEND_STR(", ");
 				}
-				PDemNode *child = VecPDemNode_at(many->children, i);
+				NodeRef *child = VecNodeRef_at(&many->children, i);
 				if (child && *child) {
-					PDemNode cloned = DemNode_clone(*child);
-					if (!cloned) {
-						DemNode_dtor(sz_param);
-						TRACE_RETURN_FAILURE();
-					}
-					AST_APPEND_NODE(cloned);
+					AST_APPEND_NODE(*child);
 				}
 			}
-			DemNode_dtor(sz_param);
 		} else {
 			AST_APPEND_NODE(sz_param);
 		}
@@ -2776,7 +2757,7 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		if (has_params) {
 			AST_APPEND_STR(" (");
 			bool first_param = true;
-			while (!READ('_')) {
+			while (IN_RANGE(CUR()) && !READ('_')) {
 				if (!first_param) {
 					AST_APPEND_STR(", ");
 				}
@@ -2787,12 +2768,12 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		}
 		AST_APPEND_STR(" { ");
 		// Parse requirements until E
-		while (!READ('E')) {
+		while (IN_RANGE(CUR()) && !READ('E')) {
 			if (READ('X')) {
 				// Expression requirement: X <expression> [N] [R <name>]
 				bool req_noexcept = false;
-				PDemNode req_type_constraint = NULL;
-				PDemNode req_expr = NULL;
+				NodeRef req_type_constraint = NULL;
+				NodeRef req_expr = NULL;
 				MUST_MATCH(CALL_RULE_N(req_expr, rule_expression));
 				req_noexcept = READ('N');
 				if (READ('R')) {
@@ -2835,9 +2816,9 @@ bool rule_expression(DemParser *p, DemResult *r) {
 	if (READ_STR("mc")) {
 		// mc <type> <expression> <offset number> E
 		// Pointer-to-member conversion: (type)(expr)
-		PDemNode mc_ty = NULL;
+		NodeRef mc_ty = NULL;
 		MUST_MATCH(CALL_RULE_N(mc_ty, rule_type));
-		PDemNode mc_expr = NULL;
+		NodeRef mc_expr = NULL;
 		MUST_MATCH(CALL_RULE_N(mc_expr, rule_expression));
 		// Parse offset (not printed): optional 'n' prefix for negative, then digits
 		READ('n');
@@ -2855,9 +2836,9 @@ bool rule_expression(DemParser *p, DemResult *r) {
 	if (READ_STR("so")) {
 		// <expr-primary> ::= so <type> <expr> <offset number> [ <union-selector>* ] [p] E
 		// Prints: <expr>.<type at offset N>
-		PDemNode so_ty = NULL;
+		NodeRef so_ty = NULL;
 		MUST_MATCH(CALL_RULE_N(so_ty, rule_type));
-		PDemNode so_expr = NULL;
+		NodeRef so_expr = NULL;
 		MUST_MATCH(CALL_RULE_N(so_expr, rule_expression));
 		// Parse offset: optional 'n' prefix for negative, then digits
 		bool offset_negative = READ('n');
@@ -2891,11 +2872,11 @@ bool rule_expression(DemParser *p, DemResult *r) {
 		TRACE_RETURN_SUCCESS;
 	}
 	if (READ('u')) {
-		PDemNode name = NULL;
+		NodeRef name = NULL;
 		MUST_MATCH(CALL_RULE_N(name, rule_source_name));
 
 		bool is_uuid = false;
-		PDemNode uuid = NULL;
+		NodeRef uuid = NULL;
 		DemStringView base_name = { 0 };
 		if (!node_base_name(name, &base_name)) {
 			TRACE_RETURN_FAILURE();
@@ -2910,16 +2891,16 @@ bool rule_expression(DemParser *p, DemResult *r) {
 			}
 		}
 
-		PDemNode args = NULL;
+		DemNode *args = NULL;
 		if (is_uuid) {
 			if (!uuid) {
 				TRACE_RETURN_FAILURE();
 			}
-			args = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, name->val.buf, CUR() - name->val.buf);
+			args = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_MANY, name->val.buf, CUR() - name->val.buf);
 			if (!args) {
 				TRACE_RETURN_FAILURE();
 			}
-			Node_append(args, uuid);
+			Node_append(args, uuid, p->context);
 		} else {
 			CALL_MANY_N(args, rule_template_arg, ", ", '\0');
 		}
@@ -2960,13 +2941,15 @@ bool rule_template_param(DemParser *p, DemResult *r) {
 	}
 
 	// Check if this is a lambda auto parameter (must be checked before forward ref creation)
-	bool can_resolve = level < VecPNodeList_len(&p->template_params) &&
-		VecPNodeList_at(&p->template_params, level) != NULL &&
-		index < VecPDemNode_len(*VecPNodeList_at(&p->template_params, level));
+	bool can_resolve = level < VecVecNodeRef_len(&p->template_params) &&
+		VecVecNodeRef_at(&p->template_params, level) != NULL &&
+		index < VecNodeRef_len(VecVecNodeRef_at(&p->template_params, level));
 
-	if (!can_resolve && p->parse_lambda_params_at_level == level && level <= VecPNodeList_len(&p->template_params)) {
-		if (level == VecPNodeList_len(&p->template_params)) {
-			VecPNodeList_append(&p->template_params, NULL);
+	if (!can_resolve && p->parse_lambda_params_at_level == level && level <= VecVecNodeRef_len(&p->template_params)) {
+		if (level == VecVecNodeRef_len(&p->template_params)) {
+			if (!VecVecNodeRef_append(&p->template_params, NULL)) {
+				TRACE_RETURN_FAILURE();
+			}
 		}
 		PRIMITIVE_TYPE("auto");
 		TRACE_RETURN_SUCCESS;
@@ -3019,7 +3002,7 @@ bool rule_template_param(DemParser *p, DemResult *r) {
 		TRACE_RETURN_FAILURE();
 	}
 
-	DemNode *t = template_param_get(p, level, index);
+	NodeRef t = template_param_get(p, level, index);
 	if (!t) {
 		TRACE_RETURN_FAILURE();
 	}
@@ -3027,10 +3010,10 @@ bool rule_template_param(DemParser *p, DemResult *r) {
 		fprintf(stderr, "[template_param] Resolved T L%" PRIu64 "_%" PRIu64 " => tag=%d, permit_fwd=%d\n",
 			level, index, t->tag, p->permit_forward_template_refs);
 		if (t->tag == CP_DEM_TYPE_KIND_PARAMETER_PACK) {
-			fprintf(stderr, "[template_param] Is PARAMETER_PACK, child_ref=%p\n", (void *)t->child_ref);
-			if (t->child_ref && t->child_ref->tag == CP_DEM_TYPE_KIND_MANY) {
+			fprintf(stderr, "[template_param] Is PARAMETER_PACK, child_ref=%p\n", (void *)t->child);
+			if (t->child && t->child->tag == CP_DEM_TYPE_KIND_MANY) {
 				fprintf(stderr, "[template_param] MANY children count=%zu\n",
-					t->child_ref->children ? VecPDemNode_len(t->child_ref->children) : 0);
+					t->child->children.data ? VecNodeRef_len(&t->child->children) : 0);
 			}
 		}
 	}
@@ -3153,7 +3136,7 @@ bool rule_special_name(DemParser *p, DemResult *r) {
 		switch (PEEK()) {
 		case 'I':
 			ADV();
-			PDemNode module_name = NULL;
+			NodeRef module_name = NULL;
 			if (!parse_module_name(p, &module_name) || !module_name) {
 				TRACE_RETURN_FAILURE();
 			}
@@ -3201,39 +3184,43 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 	(void)parse_cv_qualifiers(p, &node->fn_ty.cv_qualifiers);
 	(void)parse_ref_qualifiers(p, &node->fn_ty.ref_qualifiers);
 
+	DemNode *exception_spec = NULL;
 	if (READ_STR("Do")) {
-		node->fn_ty.exception_spec = MAKE_PRIMITIVE_TYPE(CUR() - 2, CUR(), "noexcept");
-		if (!node->fn_ty.exception_spec) {
+		exception_spec = MAKE_PRIMITIVE_TYPE(CUR() - 2, CUR(), "noexcept");
+		if (!exception_spec) {
 			TRACE_RETURN_FAILURE();
 		}
 	} else if (READ_STR("DO")) {
-		PDemNode spec = NULL;
+		NodeRef spec = NULL;
 		MUST_MATCH(CALL_RULE_N(spec, rule_expression) && READ('E'));
-		node->fn_ty.exception_spec = DemNode_ctor(CP_DEM_TYPE_KIND_NOEXCEPT_SPEC, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
-		if (!node->fn_ty.exception_spec) {
+		exception_spec = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_NOEXCEPT_SPEC, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
+		if (!exception_spec) {
 			TRACE_RETURN_FAILURE();
 		}
-		node->fn_ty.exception_spec->child = spec;
+		exception_spec->child = spec;
 	} else if (READ_STR("Dw")) {
-		PDemNode spec = NULL;
+		NodeRef spec = NULL;
 		MUST_MATCH(CALL_MANY_N(spec, rule_type, ", ", 'E'));
-		node->fn_ty.exception_spec = DemNode_ctor(CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
-		if (!node->fn_ty.exception_spec) {
+		exception_spec = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_DYNAMIC_EXCEPTION_SPEC, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
+		if (!exception_spec) {
 			TRACE_RETURN_FAILURE();
 		}
-		node->fn_ty.exception_spec->child = spec;
+		exception_spec->child = spec;
 	}
+	node->fn_ty.exception_spec = exception_spec;
 
 	(void)READ_STR("Dx");
 	MUST_MATCH(READ('F'));
 	(void)READ('Y');
 	MUST_MATCH(CALL_RULE_N(node->fn_ty.ret, rule_type));
 
-	node->fn_ty.params = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, CUR(), 0);
-	if (!node->fn_ty.params) {
+	DemNode *params = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_MANY, CUR(), 0);
+	if (!params) {
 		TRACE_RETURN_FAILURE();
 	}
-	node->fn_ty.params->many_ty.sep = ", ";
+	params->many_ty.sep = ", ";
+	node->fn_ty.params = params;
+
 	while (true) {
 		if (READ('E')) {
 			break;
@@ -3249,11 +3236,11 @@ bool rule_function_type(DemParser *p, DemResult *r) {
 			node->fn_ty.ref_qualifiers.is_r_value = true;
 			break;
 		}
-		PDemNode param = NULL;
+		NodeRef param = NULL;
 		MUST_MATCH(CALL_RULE_N(param, rule_type));
-		Node_append(node->fn_ty.params, param);
+		Node_append(params, param, p->context);
 	}
-	node->fn_ty.params->val.len = CUR() - node->fn_ty.params->val.buf;
+	params->val.len = CUR() - node->fn_ty.params->val.buf;
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -3313,12 +3300,12 @@ bool rule_builtin_type(DemParser *p, DemResult *r) {
 					AST_APPEND_STR("(");
 					ADV(); // skip 'I'
 					bool first_arg = true;
-					while (!READ('E')) {
+					while (IN_RANGE(CUR()) && !READ('E')) {
 						if (!first_arg) {
 							AST_APPEND_STR(", ");
 						}
 						first_arg = false;
-						PDemNode arg = NULL;
+						NodeRef arg = NULL;
 						if (!CALL_RULE_N(arg, rule_template_arg)) {
 							context_restore(vendor_ext_type);
 							goto vendor_ext_type_failed;
@@ -3412,7 +3399,6 @@ bool rule_class_enum_type(DemParser *p, DemResult *r) {
 		AST_APPEND_STR(elab_prefix);
 		AST_APPEND_NODE(name);
 	} else {
-		DemNode_dtor(node);
 		node = name;
 	}
 	TRACE_RETURN_SUCCESS;
@@ -3538,16 +3524,15 @@ bool rule_type(DemParser *p, DemResult *r) {
 			}
 			// else both are rvalue ref -> stays RVALUE_REFERENCE_TYPE
 			// Unwrap the inner reference: promote its child to be our direct child
-			PDemNode inner_child = AST(0);
-			if (inner_child->children && inner_child->children->length > 0) {
-				PDemNode *grandchild_ptr = VecPDemNode_at(inner_child->children, 0);
+			NodeRef inner_child = AST(0);
+			if (inner_child->children.data && inner_child->children.length > 0) {
+				NodeRef *grandchild_ptr = VecNodeRef_at(&inner_child->children, 0);
 				if (grandchild_ptr && *grandchild_ptr) {
-					PDemNode grandchild = *grandchild_ptr;
+					NodeRef grandchild = *grandchild_ptr;
 					*grandchild_ptr = NULL; // Prevent double-free
 					// Replace inner_child with grandchild in node's children
-					PDemNode *child_ptr = VecPDemNode_at(node->children, 0);
+					NodeRef *child_ptr = VecNodeRef_at(&node->children, 0);
 					if (child_ptr) {
-						DemNode_dtor(*child_ptr);
 						*child_ptr = grandchild;
 					}
 				}
@@ -3577,7 +3562,7 @@ bool rule_type(DemParser *p, DemResult *r) {
 			// DK <type-constraint>  # constrained decltype(auto) placeholder
 			ut32 is_decltype_auto = (PEEK_AT(1) == 'K') ? 1 : 0;
 			ADV_BY(2);
-			PDemNode constraint = NULL;
+			NodeRef constraint = NULL;
 			MUST_MATCH(CALL_RULE_N_VA(constraint, rule_name, NULL));
 			node->tag = CP_DEM_TYPE_KIND_CONSTRAINED_PLACEHOLDER;
 			node->subtag = is_decltype_auto;
@@ -3590,8 +3575,8 @@ bool rule_type(DemParser *p, DemResult *r) {
 			MUST_MATCH(CALL_RULE_REPLACE_NODE(rule_class_enum_type));
 			break;
 		}
-		PDemNode template_param_node = NULL;
-		PDemNode template_args_node = NULL;
+		DemNode *template_param_node = NULL;
+		NodeRef template_args_node = NULL;
 		MUST_MATCH(CALL_RULE_N(template_param_node, rule_template_param));
 		if (PEEK() == 'I' && !p->not_parse_template_args) {
 			AST_APPEND_TYPE;
@@ -3600,9 +3585,7 @@ bool rule_type(DemParser *p, DemResult *r) {
 			node->name_with_template_args.name = template_param_node;
 			node->name_with_template_args.template_args = template_args_node;
 		} else {
-			PDemNode saved_node = node;
 			node = template_param_node;
-			DemNode_dtor(saved_node);
 		}
 		break;
 	}
@@ -3621,7 +3604,6 @@ bool rule_type(DemParser *p, DemResult *r) {
 				DemNode *ta = NULL;
 				CALL_RULE_N(ta, rule_template_args);
 				if (!ta) {
-					DemNode_dtor(result);
 					TRACE_RETURN_FAILURE();
 				}
 				node->tag = CP_DEM_TYPE_KIND_NAME_WITH_TEMPLATE_ARGS;
@@ -3633,7 +3615,6 @@ bool rule_type(DemParser *p, DemResult *r) {
 				// Module-scoped name without template args:
 				// replace node with result so it gets added to the
 				// substitution table at beach: and returned properly.
-				DemNode_dtor(node);
 				node = result;
 			}
 			break;
@@ -3678,11 +3659,11 @@ bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
 	// forward_template_refs since recursive rule_encoding modifies all three
 	// (outer_template_params is aliased by template_params entries, so
 	// clearing it corrupts saved state). Matches LLVM's SaveTemplateParams.
-	VecPNodeList saved_template_params_ln = p->template_params;
-	NodeList *saved_outer_template_params_ln = p->outer_template_params;
+	VecVecNodeRef saved_template_params_ln = p->template_params;
+	VecNodeRef *saved_outer_template_params_ln = p->outer_template_params;
 	VecT(PForwardTemplateRef) saved_forward_refs_ln = p->forward_template_refs;
-	VecPNodeList_init(&p->template_params);
-	p->outer_template_params = VecF(PDemNode, ctor)();
+	VecVecNodeRef_init(&p->template_params);
+	p->outer_template_params = VecF(NodeRef, ctor)();
 	VecF(PForwardTemplateRef, init)(&p->forward_template_refs);
 
 	CALL_RULE_N(node->local_name.encoding, rule_encoding);
@@ -3691,11 +3672,35 @@ bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
 	// ForwardTemplateRef->ref pointers (which point into these nodes)
 	// remain valid until DemParser_deinit.
 
+	// Pre-reserve orphan_fwd_refs so the transfer loop (step 3) cannot
+	// fail mid-way.  If we cannot reserve, fail rule_local_name entirely
+	// rather than freeing individual ForwardTemplateRef structs (which
+	// would leave dangling fwd_template_ref pointers in AST nodes that
+	// are still reachable from the context's node pool).
+	{
+		ut64 inner_fwd_count = VecPForwardTemplateRef_len(&p->forward_template_refs);
+		if (inner_fwd_count > 0) {
+			ut64 needed = VecPForwardTemplateRef_len(&p->orphan_fwd_refs) + inner_fwd_count;
+			if (!VecF(PForwardTemplateRef, reserve)(&p->orphan_fwd_refs, needed)) {
+				// OOM: cannot transfer forward refs safely.
+				// Destroy inner state and fail rule_local_name.
+				VecF(PForwardTemplateRef, deinit)(&p->forward_template_refs);
+				VecF(NodeRef, dtor)(p->outer_template_params);
+				VecVecNodeRef_deinit(&p->template_params);
+				p->template_params = saved_template_params_ln;
+				p->outer_template_params = saved_outer_template_params_ln;
+				VecF(PForwardTemplateRef, init)(&p->forward_template_refs);
+				p->forward_template_refs = saved_forward_refs_ln;
+				TRACE_RETURN_FAILURE();
+			}
+		}
+	}
+
 	// 1. Move inner outer_template_params DemNode entries to orphan_nodes
-	for (ut64 i = 0; i < VecPDemNode_len(p->outer_template_params); i++) {
-		PDemNode *pn = VecPDemNode_at(p->outer_template_params, i);
+	for (ut64 i = 0; i < VecNodeRef_len(p->outer_template_params); i++) {
+		NodeRef *pn = VecNodeRef_at(p->outer_template_params, i);
 		if (pn && *pn) {
-			VecF(PDemNode, append)(&p->orphan_nodes, pn);
+			VecF(NodeRef, append)(&p->orphan_nodes, pn);
 		}
 	}
 	free(p->outer_template_params->data);
@@ -3704,20 +3709,23 @@ bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
 	p->outer_template_params->capacity = 0;
 	free(p->outer_template_params);
 
-	// 2. Move inner template_params NodeList entries (level > 0) to
-	//    orphan_nodes, then free the NodeList structs.
-	for (ut64 i = 1; i < VecPNodeList_len(&p->template_params); i++) {
-		PNodeList *ppnl = VecPNodeList_at(&p->template_params, i);
-		if (ppnl && *ppnl) {
-			NodeList *nl = *ppnl;
-			for (ut64 j = 0; j < VecPDemNode_len(nl); j++) {
-				PDemNode *pn = VecPDemNode_at(nl, j);
+	// 2. Move inner template_params entries to orphan_nodes,
+	//    then free the inner data arrays. VecVecNodeRef_at returns an
+	//    interior pointer (NOT a separate heap allocation), so only
+	//    free nl->data, never nl itself.
+	for (ut64 i = 0; i < VecVecNodeRef_len(&p->template_params); i++) {
+		VecNodeRef *nl = VecVecNodeRef_at(&p->template_params, i);
+		if (nl) {
+			for (ut64 j = 0; j < VecNodeRef_len(nl); j++) {
+				NodeRef *pn = VecNodeRef_at(nl, j);
 				if (pn && *pn) {
-					VecF(PDemNode, append)(&p->orphan_nodes, pn);
+					VecF(NodeRef, append)(&p->orphan_nodes, pn);
 				}
 			}
 			free(nl->data);
-			free(nl);
+			nl->data = NULL;
+			nl->length = 0;
+			nl->capacity = 0;
 		}
 	}
 	free(p->template_params.data);
@@ -3726,6 +3734,7 @@ bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
 	//    (they will be freed by DemParser_deinit). We cannot move them
 	//    to the outer forward_template_refs because the outer encoding's
 	//    resolve_forward_template_refs would re-resolve them incorrectly.
+	//    Capacity was pre-reserved above, so appends cannot fail.
 	for (ut64 i = 0; i < VecPForwardTemplateRef_len(&p->forward_template_refs); i++) {
 		PForwardTemplateRef *pfwd = VecPForwardTemplateRef_at(&p->forward_template_refs, i);
 		if (pfwd && *pfwd) {
@@ -3745,7 +3754,7 @@ bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
 	const char *saved_pos = CUR();
 	if (READ('s')) {
 		parse_discriminator(p);
-		DemNode *string_lit = make_primitive_type(saved_pos, CUR(), "string literal", strlen("string literal"));
+		DemNode *string_lit = make_primitive_type(p->context, saved_pos, CUR(), "string literal", strlen("string literal"));
 		if (!string_lit) {
 			TRACE_RETURN_FAILURE();
 		}
@@ -3755,37 +3764,36 @@ bool rule_local_name(DemParser *p, DemResult *r, NameState *ns) {
 
 	// The template parameters of the inner entity name are unrelated to those
 	// of the enclosing encoding context (matching LLVM's SaveTemplateParams).
-	VecPNodeList saved_template_params = p->template_params;
-	VecPNodeList_init(&p->template_params);
+	VecVecNodeRef saved_template_params = p->template_params;
+	VecVecNodeRef_init(&p->template_params);
 
 	if (READ('d')) {
 		CALL_RULE(rule_number);
 		parse_number(p, NULL, true);
 		if (!READ('_')) {
-			VecPNodeList_deinit(&p->template_params);
-			p->template_params = saved_template_params;
-			TRACE_RETURN_FAILURE();
+			goto fail;
 		}
 		CALL_RULE_N_VA(node->local_name.entry, rule_name, ns);
 		if (!node->local_name.entry) {
-			VecPNodeList_deinit(&p->template_params);
-			p->template_params = saved_template_params;
-			TRACE_RETURN_FAILURE();
+			goto fail;
 		}
-		VecPNodeList_deinit(&p->template_params);
-		p->template_params = saved_template_params;
-		TRACE_RETURN_SUCCESS;
+		goto ok;
 	}
 	CALL_RULE_N_VA(node->local_name.entry, rule_name, ns);
 	if (!node->local_name.entry) {
-		VecPNodeList_deinit(&p->template_params);
-		p->template_params = saved_template_params;
-		TRACE_RETURN_FAILURE();
+		goto fail;
 	}
 	parse_discriminator(p);
-	VecPNodeList_deinit(&p->template_params);
+
+ok:
+	VecVecNodeRef_deinit(&p->template_params);
 	p->template_params = saved_template_params;
 	TRACE_RETURN_SUCCESS;
+
+fail:
+	VecVecNodeRef_deinit(&p->template_params);
+	p->template_params = saved_template_params;
+	TRACE_RETURN_FAILURE();
 }
 
 bool rule_substitution(DemParser *p, DemResult *r) {
@@ -3806,14 +3814,14 @@ bool rule_substitution(DemParser *p, DemResult *r) {
 		default: TRACE_RETURN_FAILURE();
 		}
 		ADV();
-		PDemNode special_subst = DemNode_ctor(CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
+		DemNode *special_subst = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION, saved_ctx_rule.saved_pos, CUR() - saved_ctx_rule.saved_pos);
 		if (!special_subst) {
 			TRACE_RETURN_FAILURE();
 		}
 		special_subst->subtag = kind;
 		special_subst->tag = CP_DEM_TYPE_KIND_SPECIAL_SUBSTITUTION;
 
-		PDemNode with_tags = parse_abi_tags(p, special_subst);
+		DemNode *with_tags = (DemNode *)parse_abi_tags(p, special_subst);
 		if (with_tags && with_tags != special_subst) {
 			AST_APPEND_TYPE1(with_tags);
 			special_subst = with_tags;
@@ -3822,11 +3830,11 @@ bool rule_substitution(DemParser *p, DemResult *r) {
 		RETURN_AND_OUTPUT_VAR(special_subst);
 	}
 
-	DemNode *child_node = NULL;
+	NodeRef child_node = NULL;
 	if (!parse_seq_id(p, &child_node)) {
 		TRACE_RETURN_FAILURE();
 	}
-	DemNode_copy(node, child_node);
+	node = (DemNode *)child_node;
 	TRACE_RETURN_SUCCESS;
 }
 
@@ -3869,7 +3877,6 @@ bool rule_name(DemParser *p, DemResult *r, NameState *ns) {
 		DemNode *ta = NULL;
 		CALL_RULE_N_VA(ta, rule_template_args_ex, ns != NULL);
 		if (!ta) {
-			DemNode_dtor(result);
 			TRACE_RETURN_FAILURE();
 		}
 		if (ns) {
@@ -3881,7 +3888,6 @@ bool rule_name(DemParser *p, DemResult *r, NameState *ns) {
 		TRACE_RETURN_SUCCESS;
 	}
 	if (is_subst) {
-		DemNode_dtor(result);
 		TRACE_RETURN_FAILURE();
 	}
 	RETURN_AND_OUTPUT_VAR(result);
@@ -3910,7 +3916,7 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 	}
 
 	DemNode *ast_node = NULL;
-	while (!READ('E')) {
+	while (IN_RANGE(CUR()) && !READ('E')) {
 		if (ns) {
 			ns->end_with_template_args = false;
 		}
@@ -3931,7 +3937,7 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 			if (ns) {
 				ns->end_with_template_args = true;
 			}
-			ast_node = make_name_with_template_args(saved_ctx_rule.saved_pos, CUR(), ast_node, ta);
+			ast_node = make_name_with_template_args(p->context, saved_ctx_rule.saved_pos, CUR(), ast_node, ta);
 		} else if (PEEK() == 'D' && (PEEK_AT(1) == 't' || PEEK_AT(1) == 'T')) {
 			if (ast_node != NULL) {
 				goto fail;
@@ -3946,7 +3952,7 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 			if (PEEK() == 'S') {
 				DemNode *subst = NULL;
 				if (PEEK_AT(1) == 't') {
-					subst = make_primitive_type(CUR(), CUR() + 2, "std", 3);
+					subst = make_primitive_type(p->context, CUR(), CUR() + 2, "std", 3);
 					ADV_BY(2);
 				} else {
 					CALL_RULE_N(subst, rule_substitution);
@@ -3957,7 +3963,6 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 				if (subst->tag == CP_DEM_TYPE_KIND_MODULE_NAME) {
 					module = subst;
 				} else if (ast_node) {
-					DemNode_dtor(subst);
 					goto fail;
 				} else {
 					ast_node = subst;
@@ -3977,16 +3982,12 @@ bool rule_nested_name(DemParser *p, DemResult *r, NameState *ns) {
 		AST_APPEND_TYPE1(ast_node);
 		READ('M');
 	}
-	if (ast_node == NULL || VecF(PDemNode, empty)(&p->detected_types)) {
+	if (ast_node == NULL || VecF(NodeRef, empty)(&p->detected_types)) {
 		TRACE_RETURN_FAILURE();
 	}
-	DemNode **pop_node = VecF(PDemNode, pop)(&p->detected_types);
-	if (pop_node) {
-		DemNode_dtor(*pop_node);
-	}
+	VecF(NodeRef, pop)(&p->detected_types);
 	RETURN_AND_OUTPUT_VAR(ast_node);
 fail:
-	DemNode_dtor(ast_node);
 	TRACE_RETURN_FAILURE();
 }
 
@@ -3994,7 +3995,7 @@ bool is_template_param_decl(DemParser *p) {
 	return PEEK() == 'T' && strchr("yptnk", PEEK_AT(1)) != NULL;
 }
 
-DemNode *parse_template_param_decl(DemParser *p, NodeList *params);
+DemNode *parse_template_param_decl(DemParser *p, VecNodeRef *params, size_t params_level);
 
 bool rule_template_arg(DemParser *p, DemResult *r) {
 	RULE_HEAD(TEMPLATE_ARG);
@@ -4028,11 +4029,10 @@ bool rule_template_arg(DemParser *p, DemResult *r) {
 		// <template-arg> ::= <template-param-decl> <template-arg>
 		// Parse the decl for side effects (registers the param), then
 		// discard it and parse the actual arg that follows.
-		DemNode *decl = parse_template_param_decl(p, NULL);
+		DemNode *decl = parse_template_param_decl(p, NULL, 0);
 		if (!decl) {
 			TRACE_RETURN_FAILURE();
 		}
-		DemNode_dtor(decl);
 		RETURN_SUCCESS_OR_FAIL(CALL_RULE_REPLACE_NODE(rule_template_arg));
 	}
 	default:
@@ -4052,72 +4052,113 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 		TRACE_RETURN_FAILURE();
 	}
 	if (tag_templates) {
-		VecPNodeList_clear(&p->template_params);
-		VecPNodeList_append(&p->template_params, &p->outer_template_params);
-		VecPDemNode_clear(p->outer_template_params);
-	}
-	PDemNode many_node = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, saved_ctx_rule.saved_pos, 1);
-	if (!many_node) {
-		TRACE_RETURN_FAILURE();
-	}
-	while (!READ('E')) {
-		PDemNode arg = NULL;
-		if (!CALL_RULE_N(arg, rule_template_arg)) {
+		VecVecNodeRef_clear(&p->template_params);
+		if (!VecVecNodeRef_append(&p->template_params, p->outer_template_params)) {
 			TRACE_RETURN_FAILURE();
+		}
+		// Only zero outer_template_params AFTER append succeeded;
+		// otherwise its .data would leak (never transferred into template_params).
+		VecNodeRef_init(p->outer_template_params);
+	}
+	DemNode *many_node = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_MANY, saved_ctx_rule.saved_pos, 1);
+	if (!many_node) {
+		goto template_args_fail;
+	}
+	while (IN_RANGE(CUR()) && !READ('E')) {
+		if (tag_templates) {
+			VecNodeRef *tp0 = VecVecNodeRef_at(&p->template_params, 0);
+			if (tp0) {
+				*tp0 = *p->outer_template_params;
+			}
+		}
+		DemNode *arg = NULL;
+		if (!CALL_RULE_N(arg, rule_template_arg)) {
+			goto template_args_fail;
 		}
 		if (tag_templates) {
 			DemNode *entry = arg;
 			if (arg->tag == CP_DEM_TYPE_KIND_TEMPLATE_ARGUMENT_PACK) {
-				entry = DemNode_ctor(CP_DEM_TYPE_KIND_PARAMETER_PACK, arg->val.buf, arg->val.len);
+				entry = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_PARAMETER_PACK, arg->val.buf, arg->val.len);
 				if (entry) {
-					entry->child_ref = arg->child;
+					entry->child = arg->child;
 				}
-			} else {
-				entry = DemNode_clone(arg);
 			}
 			if (!entry) {
-				DemNode_dtor(arg);
-				TRACE_RETURN_FAILURE();
+				goto template_args_fail;
 			}
 
-			VecF(PDemNode, append)(p->outer_template_params, &entry);
+			if (!VecF(NodeRef, append)(p->outer_template_params, (NodeRef *)&entry)) {
+				goto template_args_fail;
+			}
+			// Sync template_params[0] after append — VecNodeRef_append may
+			// have realloc'd outer_template_params->data, making the by-value
+			// copy in template_params[0] stale. Must sync before any recursive
+			// parsing (e.g. the Q constraint expression below) that could call
+			// template_param_get() and read the stale .data pointer.
+			VecNodeRef *tp0_sync = VecVecNodeRef_at(&p->template_params, 0);
+			if (tp0_sync) {
+				*tp0_sync = *p->outer_template_params;
+			}
 		}
-		Node_append(many_node, arg);
+		Node_append(many_node, arg, p->context);
 		if (READ('Q')) {
 			// C++20 constraint expression attached to the template argument.
 			// Parse it and discard — LLVM doesn't print these either.
 			bool saved_in_constraint_expr = p->in_constraint_expr;
 			p->in_constraint_expr = true;
-			PDemNode constraint_expr = NULL;
+			NodeRef constraint_expr = NULL;
 			bool ok = CALL_RULE_N(constraint_expr, rule_expression) && READ('E');
 			p->in_constraint_expr = saved_in_constraint_expr;
 			if (!ok) {
-				TRACE_RETURN_FAILURE();
+				goto template_args_fail;
 			}
-			DemNode_dtor(constraint_expr);
 			break; // Q...E terminates the template arg list
+		}
+	}
+	if (tag_templates) {
+		// template_params[0] is a by-value copy; sync back after parsing
+		VecNodeRef *tp0 = VecVecNodeRef_at(&p->template_params, 0);
+		if (tp0) {
+			*tp0 = *p->outer_template_params;
+			VecNodeRef_init(p->outer_template_params);
 		}
 	}
 	many_node->many_ty.sep = ", ";
 	many_node->val.len = CUR() - many_node->val.buf;
 	node->child = many_node;
 	TRACE_RETURN_SUCCESS;
+
+template_args_fail:
+	if (tag_templates) {
+		// Sync outer_template_params back into template_params[0] and clear
+		// outer_template_params to prevent double-free during DemParser_deinit.
+		// Without this, both outer_template_params and template_params[0]
+		// would hold aliased .data pointers that get freed independently.
+		VecNodeRef *tp0 = VecVecNodeRef_at(&p->template_params, 0);
+		if (tp0) {
+			*tp0 = *p->outer_template_params;
+			VecNodeRef_init(p->outer_template_params);
+		}
+	}
+	TRACE_RETURN_FAILURE();
 }
 
-static DemNode *append_synthetic_template_parameter(DemParser *p, NodeList *params, TemplateParamKind kind) {
+static DemNode *append_synthetic_template_parameter(DemParser *p, VecNodeRef *params, TemplateParamKind kind) {
 	size_t index = p->num_synthetic_template_parameters[(size_t)kind]++;
-	DemNode *param = DemNode_ctor(CP_DEM_TYPE_KIND_SYNTHETIC_TEMPLATE_PARAM_NAME, CUR(), 0);
+	DemNode *param = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_SYNTHETIC_TEMPLATE_PARAM_NAME, CUR(), 0);
 	if (param) {
 		param->synthetic_template_param_name.kind = kind;
 		param->synthetic_template_param_name.index = index;
 		if (params) {
-			VecPDemNode_append(params, &param);
+			if (!VecNodeRef_append(params, (NodeRef *)&param)) {
+				return NULL;
+			}
 		}
 	}
 	return param;
 }
 
-DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
+DemNode *parse_template_param_decl(DemParser *p, VecNodeRef *params, size_t params_level) {
 	const char *saved_pos = CUR();
 	if (!READ('T')) {
 		return NULL;
@@ -4130,7 +4171,7 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 		if (!name) {
 			return NULL;
 		}
-		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_TYPE_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
+		DemNode *decl = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_TYPE_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
 		if (!decl) {
 			return NULL;
 		}
@@ -4140,7 +4181,7 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 	case 'k': {
 		// Tk <name> [<template-args>] - constrained parameter (concept)
 		ADV();
-		PDemNode constraint = NULL;
+		NodeRef constraint = NULL;
 		{
 			// Template param references inside the concept's template args
 			// (e.g. T_ in True<T_>) cannot be resolved at this point because
@@ -4161,10 +4202,8 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 		if (!name) {
 			return NULL;
 		}
-		PDemNode decl = DemNode_ctor(CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
+		DemNode *decl = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_CONSTRAINED_TYPE_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
 		if (!decl) {
-			DemNode_dtor(name);
-			DemNode_dtor(constraint);
 			return NULL;
 		}
 		decl->constrained_type_template_param_decl.name = name;
@@ -4178,12 +4217,17 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 		if (!name) {
 			return NULL;
 		}
+		if (params) {
+			VecNodeRef *tp_slot = VecVecNodeRef_at(&p->template_params, params_level);
+			if (tp_slot) {
+				*tp_slot = *params;
+			}
+		}
 		DemResult result = { 0 };
 		if (!rule_type(p, &result) || !result.output) {
-			DemNode_dtor(name);
 			return NULL;
 		}
-		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
+		DemNode *decl = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_NON_TYPE_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
 		if (!decl) {
 			return NULL;
 		}
@@ -4194,67 +4238,58 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 	case 't': {
 		// Tt <template-param-decl>* E - template template parameter
 		ADV();
-		PDemNode inner_params = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, CUR(), 0);
+		DemNode *inner_params = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_MANY, CUR(), 0);
 		if (!inner_params) {
 			return NULL;
 		}
 		// Push a new template param scope for the Tt's inner params so that
 		// TL references can resolve them (TL0_ = this Tt's params).
-		PNodeList tt_template_params = VecPDemNode_ctor();
-		VecPNodeList_append(&p->template_params, &tt_template_params);
-		size_t saved_tt_len = VecPNodeList_len(&p->template_params);
+		VecNodeRef *tt_template_params = VecNodeRef_ctor();
+		if (!tt_template_params || !VecVecNodeRef_append(&p->template_params, tt_template_params)) {
+			free(tt_template_params);
+			return NULL;
+		}
+		size_t saved_tt_len = VecVecNodeRef_len(&p->template_params);
 
-		PDemNode requires_node = NULL;
-		while (!READ('E')) {
-			PDemNode param = parse_template_param_decl(p, tt_template_params);
+		NodeRef requires_node = NULL;
+		while (IN_RANGE(CUR()) && !READ('E')) {
+			NodeRef param = parse_template_param_decl(p, tt_template_params, saved_tt_len - 1);
+			// Sync heap-allocated tt_template_params back into template_params
+			// so that TL references (e.g. TL0_) can resolve inner params.
+			// MUST sync before any resize/cleanup because parse_template_param_decl
+			// may have realloc'd tt_template_params->data, making the by-value
+			// snapshot in template_params stale.
+			VecNodeRef *tp_slot = VecVecNodeRef_at(&p->template_params, saved_tt_len - 1);
+			if (tp_slot) {
+				*tp_slot = *tt_template_params;
+			}
 			if (!param) {
-				VecPNodeList_resize(&p->template_params, saved_tt_len - 1);
-				if (tt_template_params) {
-					free(tt_template_params->data);
-					free(tt_template_params);
-				}
-				DemNode_dtor(inner_params);
+				VecVecNodeRef_resize(&p->template_params, saved_tt_len - 1);
+				free(tt_template_params);
 				return NULL;
 			}
-			Node_append(inner_params, param);
+			Node_append(inner_params, param, p->context);
 			if (READ('Q')) {
 				DemResult requires_result = { 0 };
 				if (!rule_expression(p, &requires_result) && READ('E')) {
-					VecPNodeList_resize(&p->template_params, saved_tt_len - 1);
-					if (tt_template_params) {
-						free(tt_template_params->data);
-						free(tt_template_params);
-					}
-					DemNode_dtor(requires_node);
-					DemNode_dtor(inner_params);
+					VecVecNodeRef_resize(&p->template_params, saved_tt_len - 1);
+					free(tt_template_params);
 					return NULL;
-				}
-				if (requires_node) {
-					DemNode_dtor(requires_node);
 				}
 				requires_node = requires_result.output;
 			}
 		}
-		// Pop the Tt's template param scope
-		VecPNodeList_resize(&p->template_params, saved_tt_len - 1);
-		if (tt_template_params) {
-			free(tt_template_params->data);
-			free(tt_template_params);
-		}
+		VecVecNodeRef_resize(&p->template_params, saved_tt_len - 1);
+		free(tt_template_params);
 		inner_params->many_ty.sep = ", ";
 		inner_params->val.len = CUR() - inner_params->val.buf;
 
 		DemNode *name = append_synthetic_template_parameter(p, params, TEMPLATEPARAMKIND_TEMPLATE);
 		if (!name) {
-			DemNode_dtor(inner_params);
-			DemNode_dtor(requires_node);
 			return NULL;
 		}
-		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
+		DemNode *decl = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_TEMPLATE_PARAM_DECL, saved_pos, CUR() - saved_pos);
 		if (!decl) {
-			DemNode_dtor(name);
-			DemNode_dtor(inner_params);
-			DemNode_dtor(requires_node);
 			return NULL;
 		}
 		decl->template_param_decl.name = name;
@@ -4265,13 +4300,12 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 	case 'p': {
 		// Tp <template-param-decl> - parameter pack
 		ADV();
-		PDemNode param = parse_template_param_decl(p, NULL);
+		NodeRef param = parse_template_param_decl(p, NULL, 0);
 		if (!param) {
 			return NULL;
 		}
-		DemNode *decl = DemNode_ctor(CP_DEM_TYPE_KIND_TEMPLATE_PARAM_PACK_DECL, CUR(), 0);
+		DemNode *decl = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_TEMPLATE_PARAM_PACK_DECL, CUR(), 0);
 		if (!decl) {
-			DemNode_dtor(param);
 			return NULL;
 		}
 		decl->child = param;
@@ -4281,11 +4315,12 @@ DemNode *parse_template_param_decl(DemParser *p, NodeList *params) {
 	default:
 		break;
 	}
+
 	return NULL;
 }
 
 bool rule_template_param_decl(DemParser *p, DemResult *r) {
-	DemNode *result = parse_template_param_decl(p, NULL);
+	DemNode *result = parse_template_param_decl(p, NULL, 0);
 	if (!result) {
 		return false;
 	}
@@ -4321,39 +4356,54 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 		// Ul <template-param-decl>* [Q <constraint-expr>] <lambda-sig> [Q <constraint-expr>] E <number> _
 
 		size_t saved_parse_lambda_params_at_level = p->parse_lambda_params_at_level;
-		p->parse_lambda_params_at_level = VecPNodeList_len(&p->template_params);
+		p->parse_lambda_params_at_level = VecVecNodeRef_len(&p->template_params);
 
-		size_t saved_template_params_len = VecPNodeList_len(&p->template_params);
-		PNodeList lambda_template_params = VecPDemNode_ctor();
-		VecPNodeList_append(&p->template_params, &lambda_template_params);
+		size_t saved_template_params_len = VecVecNodeRef_len(&p->template_params);
+		VecNodeRef *lambda_template_params = VecNodeRef_ctor();
+		if (!lambda_template_params || !VecVecNodeRef_append(&p->template_params, lambda_template_params)) {
+			free(lambda_template_params);
+			p->parse_lambda_params_at_level = saved_parse_lambda_params_at_level;
+			TRACE_RETURN_FAILURE();
+		}
 
 		bool saved_permit_forward_template_refs = p->permit_forward_template_refs;
 		p->permit_forward_template_refs = true;
 
-		PDemNode temp_params = NULL;
+		DemNode *temp_params = NULL;
 		while (is_template_param_decl(p)) {
-			PDemNode param = parse_template_param_decl(p, lambda_template_params);
+			VecNodeRef *tp_slot = VecVecNodeRef_at(&p->template_params, p->parse_lambda_params_at_level);
+			if (tp_slot) {
+				*tp_slot = *lambda_template_params;
+			}
+			NodeRef param = parse_template_param_decl(p, lambda_template_params, p->parse_lambda_params_at_level);
 			if (!param) {
-				TRACE_RETURN_FAILURE();
+				goto lambda_fail;
 			}
 			if (!temp_params) {
-				temp_params = DemNode_ctor(CP_DEM_TYPE_KIND_MANY, param->val.buf, 0);
+				temp_params = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_MANY, param->val.buf, 0);
 				if (!temp_params) {
-					DemNode_dtor(param);
-					TRACE_RETURN_FAILURE();
+					goto lambda_fail;
 				}
 				temp_params->many_ty.sep = ", ";
 			}
-			Node_append(temp_params, param);
+			Node_append(temp_params, param, p->context);
 		}
 		if (temp_params) {
 			temp_params->val.len = CUR() - temp_params->val.buf;
+			// Sync the heap-allocated lambda_template_params back into template_params.
+			// VecVecNodeRef stores VecNodeRef by value, so the copy at
+			// template_params[level] is stale after parse_template_param_decl
+			// appended synthetic params to the heap-allocated lambda_template_params.
+			VecNodeRef *tp_slot = VecVecNodeRef_at(&p->template_params, p->parse_lambda_params_at_level);
+			if (tp_slot) {
+				*tp_slot = *lambda_template_params;
+			}
 		}
 		if (!temp_params) {
-			VecPNodeList_pop(&p->template_params);
+			VecVecNodeRef_pop(&p->template_params);
 		}
 
-		PDemNode requires1 = NULL;
+		NodeRef requires1 = NULL;
 		if (READ('Q')) {
 			// C++20 constraint expression (templated lambda).
 			// Template params are printed as raw names (e.g. T, TL0_) since we
@@ -4364,31 +4414,31 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 			bool ok_r1 = CALL_RULE_N(requires1, rule_expression);
 			p->in_constraint_expr = saved_in_constraint_expr;
 			if (!ok_r1 || !requires1) {
-				TRACE_RETURN_FAILURE();
+				goto lambda_fail;
 			}
 		}
 		DemNode *params = NULL;
 		if (!READ('v')) {
 			CALL_MANY1_N(params, rule_type, ", ", '\0');
 		}
-		PDemNode requires2 = NULL;
+		NodeRef requires2 = NULL;
 		if (READ('Q')) {
 			bool saved_in_constraint_expr2 = p->in_constraint_expr;
 			p->in_constraint_expr = true;
 			bool ok_r2 = CALL_RULE_N(requires2, rule_expression);
 			p->in_constraint_expr = saved_in_constraint_expr2;
 			if (!ok_r2 || !requires2) {
-				TRACE_RETURN_FAILURE();
+				goto lambda_fail;
 			}
 		}
 		if (!READ('E')) {
-			TRACE_RETURN_FAILURE();
+			goto lambda_fail;
 		}
 		if (!parse_number(p, &node->closure_ty_name.count, false)) {
-			TRACE_RETURN_FAILURE();
+			goto lambda_fail;
 		}
 		if (!READ('_')) {
-			TRACE_RETURN_FAILURE();
+			goto lambda_fail;
 		}
 		node->tag = CP_DEM_TYPE_KIND_CLOSURE_TY_NAME;
 		node->closure_ty_name.template_params = temp_params;
@@ -4401,14 +4451,28 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 
 		p->permit_forward_template_refs = saved_permit_forward_template_refs;
 		p->parse_lambda_params_at_level = saved_parse_lambda_params_at_level;
-		VecPNodeList_resize(&p->template_params, saved_template_params_len);
-		// Free the vector structure but NOT the nodes inside it.
-		// The nodes are owned by the template param decl nodes in the AST tree.
-		if (lambda_template_params) {
-			free(lambda_template_params->data);
-			free(lambda_template_params);
-		}
+		VecVecNodeRef_resize(&p->template_params, saved_template_params_len);
+		// Free the heap-allocated vector structure only.
+		// Its .data was already freed by VecVecNodeRef_resize (which calls the
+		// element destructor on the by-value copy stored in template_params).
+		// The NodeRef *elements* inside are owned by the AST tree, not by us.
+		free(lambda_template_params);
 		TRACE_RETURN_SUCCESS;
+
+	lambda_fail:
+		p->permit_forward_template_refs = saved_permit_forward_template_refs;
+		p->parse_lambda_params_at_level = saved_parse_lambda_params_at_level;
+		// Sync heap vec into template_params slot before resize: parse_template_param_decl
+		// may have realloc'd lambda_template_params->data, making the by-value copy stale.
+		{
+			VecNodeRef *tp_slot = VecVecNodeRef_at(&p->template_params, saved_template_params_len);
+			if (tp_slot) {
+				*tp_slot = *lambda_template_params;
+			}
+		}
+		VecVecNodeRef_resize(&p->template_params, saved_template_params_len);
+		free(lambda_template_params);
+		TRACE_RETURN_FAILURE();
 	}
 	RULE_FOOT(unnamed_type_name);
 }
@@ -4473,7 +4537,7 @@ bool rule_encoding(DemParser *p, DemResult *r) {
 	}
 
 	if (is_end_of_encoding(p)) {
-		PDemNode name = node->fn_ty.name;
+		DemNode *name = (DemNode *)node->fn_ty.name;
 		node->fn_ty.name = NULL;
 		RETURN_AND_OUTPUT_VAR(name);
 	}
@@ -4509,12 +4573,23 @@ bool rule_encoding(DemParser *p, DemResult *r) {
 	TRACE_RETURN_SUCCESS;
 }
 
+void DemContext_init(DemContext *ctx) {
+	if (!ctx) {
+		return;
+	}
+	VecPDemNode_init(&ctx->node_pool);
+	VecPDemNode_reserve(&ctx->node_pool, 1024);
+	dem_string_init(&ctx->output);
+}
+
 void DemContext_deinit(DemContext *ctx) {
 	if (!ctx) {
 		return;
 	}
 	DemParser_deinit(&ctx->parser);
-	DemResult_deinit(&ctx->result);
+	VecPDemNode_deinit(&ctx->node_pool);
+	ctx->result.output = NULL;
+	ctx->result.error = DEM_ERR_OK;
 	dem_string_deinit(&ctx->output);
 }
 
@@ -4539,14 +4614,15 @@ bool parse_rule(DemContext *ctx, const char *mangled, DemRule rule, CpDemOptions
 	DemParser *p = &ctx->parser;
 	DemParser_init(p, opts, mangled);
 	ctx->parser.trace = trace;
+	ctx->parser.context = ctx;
 	if (!rule(p, &ctx->result)) {
 		return false;
 	}
 	PPContext pp_ctx = { 0 };
-	if (ctx->parser.trace && VecPDemNode_len(&p->detected_types) > 0) {
+	if (ctx->parser.trace && VecNodeRef_len(&p->detected_types) > 0) {
 		DemString buf = { 0 };
-		vec_foreach_ptr_i(PDemNode, &p->detected_types, i, sub_ptr, {
-			DemNode *sub = sub_ptr ? *sub_ptr : NULL;
+		vec_foreach_ptr_i(NodeRef, &p->detected_types, i, sub_ptr, {
+			NodeRef sub = sub_ptr ? *sub_ptr : NULL;
 			dem_string_appendf(&buf, "[%lu] = ", i);
 			if (sub) {
 				PPContext_init(&pp_ctx, opts);
@@ -4676,6 +4752,7 @@ char *cp_demangle_v3(const char *mangled, CpDemOptions opts) {
 	}
 
 	DemContext ctx = { 0 };
+	DemContext_init(&ctx);
 	if (!parse_rule(&ctx, p, rule_mangled_name, opts)) {
 		DemContext_deinit(&ctx);
 		free(parse_buf);
@@ -4730,6 +4807,7 @@ char *cp_demangle_v3_type(const char *mangled, CpDemOptions opts) {
 	}
 
 	DemContext ctx = { 0 };
+	DemContext_init(&ctx);
 	if (!parse_rule(&ctx, mangled, rule_type, opts)) {
 		DemContext_deinit(&ctx);
 		return NULL;
