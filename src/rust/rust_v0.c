@@ -86,10 +86,13 @@ static bool rust_v0_parse_path(rust_v0_t *v0, bool is_type, bool no_trail);
 static void rust_v0_parse_type(rust_v0_t *v0);
 
 static bool rust_v0_init(rust_v0_t *v0, const char *symbol, bool hide_disambiguator) {
+	if (!v0 || !symbol) {
+		return false;
+	}
 	// https://doc.rust-lang.org/rustc/symbol-mangling/v0.html#vendor-specific-suffix
 	if ((v0->trail = strchr(symbol, '.')) ||
 		(v0->trail = strchr(symbol, '$'))) {
-		v0->symbol_size = v0->trail - v0->symbol;
+		v0->symbol_size = v0->trail - symbol;
 	} else {
 		v0->symbol_size = strlen(symbol);
 	}
