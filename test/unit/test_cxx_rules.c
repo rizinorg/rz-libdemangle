@@ -49,8 +49,29 @@ bool test_parse_base36_oob(void) {
 	mu_end;
 }
 
+/**
+ * Regression test for a double-free in template parameter scope cleanup.
+ *
+ * Template-template parameter declarations keep an in-progress scope in a
+ * heap-allocated VecNodeRef while template_params also needs a snapshot for
+ * TL references. The snapshot must not share the same .data allocation,
+ * because nested template argument parsing can clear template_params while
+ * the outer heap vector is still alive.
+ */
+bool test_template_param_scope_double_free(void) {
+	const char *input = "U1TIegePOlJiF1TIgePOlJiTtTtTyTtTtTyQ1TIe0OFOF1TILZ00IFOF1TIgePOlJiTtTtTyQ";
+	char *r = cp_demangle(input, DEM_OPT_ALL);
+	mu_assert_null(r, "template param scope input should fail gracefully");
+
+	r = cp_demangle_v3_type(input, DEM_OPT_ALL);
+	mu_assert_null(r, "template param scope type input should fail gracefully");
+
+	mu_end;
+}
+
 int all_tests() {
 	mu_run_test(test_parse_base36_oob);
+	mu_run_test(test_template_param_scope_double_free);
 
 	return tests_passed != tests_run;
 }

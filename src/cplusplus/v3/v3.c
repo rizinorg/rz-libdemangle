@@ -3997,6 +3997,80 @@ bool is_template_param_decl(DemParser *p) {
 
 DemNode *parse_template_param_decl(DemParser *p, VecNodeRef *params, size_t params_level);
 
+/**
+ * Copy a scope into an independent snapshot.
+ *
+ * \param[in,out] dst Destination snapshot.
+ * \param[in] src Source scope.
+ * \return true on success.
+ *
+ * VecNodeRef.data arrays stay separate; NodeRef targets stay parser-owned.
+ */
+static bool template_param_scope_copy(VecNodeRef *dst, const VecNodeRef *src) {
+	if (!dst || !src) {
+		return false;
+	}
+	if (dst == src) {
+		return true;
+	}
+	if (src->length && !src->data) {
+		return false;
+	}
+	if (src->length > dst->capacity && !VecNodeRef_reserve(dst, src->length)) {
+		return false;
+	}
+	if (src->length) {
+		memcpy(dst->data, src->data, src->length * sizeof(NodeRef));
+	}
+	dst->length = src->length;
+	return true;
+}
+
+/**
+ * Sync an existing template_params level.
+ *
+ * \param[in,out] p Parser.
+ * \param[in] level Existing level.
+ * \param[in] src Source scope.
+ * \return true on success.
+ */
+static bool template_params_sync_scope(DemParser *p, size_t level, const VecNodeRef *src) {
+	VecNodeRef *dst = VecVecNodeRef_at(&p->template_params, level);
+	return dst && template_param_scope_copy(dst, src);
+}
+
+/**
+ * Sync a template_params level if it exists.
+ *
+ * \param[in,out] p Parser.
+ * \param[in] level Optional level.
+ * \param[in] src Source scope.
+ * \return true when the level is missing or copied successfully.
+ */
+static bool template_params_try_sync_scope(DemParser *p, size_t level, const VecNodeRef *src) {
+	VecNodeRef *dst = VecVecNodeRef_at(&p->template_params, level);
+	return !dst || template_param_scope_copy(dst, src);
+}
+
+/**
+ * Push a copied template_params level.
+ *
+ * \param[in,out] p Parser.
+ * \param[in] src Optional source scope.
+ * \return true on success.
+ */
+static bool template_params_push_scope_copy(DemParser *p, const VecNodeRef *src) {
+	size_t old_len = VecVecNodeRef_len(&p->template_params);
+	if (!VecVecNodeRef_append(&p->template_params, NULL)) {
+		return false;
+	}
+	if (src && !template_params_sync_scope(p, old_len, src)) {
+		VecVecNodeRef_resize(&p->template_params, old_len);
+		return false;
+	}
+	return true;
+}
+
 bool rule_template_arg(DemParser *p, DemResult *r) {
 	RULE_HEAD(TEMPLATE_ARG);
 	switch (PEEK()) {
@@ -4053,12 +4127,11 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 	}
 	if (tag_templates) {
 		VecVecNodeRef_clear(&p->template_params);
-		if (!VecVecNodeRef_append(&p->template_params, p->outer_template_params)) {
+		if (!template_params_push_scope_copy(p, p->outer_template_params)) {
 			TRACE_RETURN_FAILURE();
 		}
-		// Only zero outer_template_params AFTER append succeeded;
-		// otherwise its .data would leak (never transferred into template_params).
-		VecNodeRef_init(p->outer_template_params);
+		// Rebuild the working vector from this list's arguments.
+		VecNodeRef_clear(p->outer_template_params);
 	}
 	DemNode *many_node = DemNode_ctor(p->context, CP_DEM_TYPE_KIND_MANY, saved_ctx_rule.saved_pos, 1);
 	if (!many_node) {
@@ -4066,9 +4139,9 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 	}
 	while (IN_RANGE(CUR()) && !READ('E')) {
 		if (tag_templates) {
-			VecNodeRef *tp0 = VecVecNodeRef_at(&p->template_params, 0);
-			if (tp0) {
-				*tp0 = *p->outer_template_params;
+			// Optional sync preserves the previous missing-slot behavior.
+			if (!template_params_try_sync_scope(p, 0, p->outer_template_params)) {
+				goto template_args_fail;
 			}
 		}
 		DemNode *arg = NULL;
@@ -4090,14 +4163,9 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 			if (!VecF(NodeRef, append)(p->outer_template_params, (NodeRef *)&entry)) {
 				goto template_args_fail;
 			}
-			// Sync template_params[0] after append — VecNodeRef_append may
-			// have realloc'd outer_template_params->data, making the by-value
-			// copy in template_params[0] stale. Must sync before any recursive
-			// parsing (e.g. the Q constraint expression below) that could call
-			// template_param_get() and read the stale .data pointer.
-			VecNodeRef *tp0_sync = VecVecNodeRef_at(&p->template_params, 0);
-			if (tp0_sync) {
-				*tp0_sync = *p->outer_template_params;
+			// Publish updates for template_param_get().
+			if (!template_params_try_sync_scope(p, 0, p->outer_template_params)) {
+				goto template_args_fail;
 			}
 		}
 		Node_append(many_node, arg, p->context);
@@ -4116,12 +4184,11 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 		}
 	}
 	if (tag_templates) {
-		// template_params[0] is a by-value copy; sync back after parsing
-		VecNodeRef *tp0 = VecVecNodeRef_at(&p->template_params, 0);
-		if (tp0) {
-			*tp0 = *p->outer_template_params;
-			VecNodeRef_init(p->outer_template_params);
+		// Publish final args, then clear the working vector.
+		if (!template_params_try_sync_scope(p, 0, p->outer_template_params)) {
+			goto template_args_fail;
 		}
+		VecNodeRef_clear(p->outer_template_params);
 	}
 	many_node->many_ty.sep = ", ";
 	many_node->val.len = CUR() - many_node->val.buf;
@@ -4130,15 +4197,12 @@ bool rule_template_args_ex(DemParser *p, DemResult *r, bool tag_templates) {
 
 template_args_fail:
 	if (tag_templates) {
-		// Sync outer_template_params back into template_params[0] and clear
-		// outer_template_params to prevent double-free during DemParser_deinit.
-		// Without this, both outer_template_params and template_params[0]
-		// would hold aliased .data pointers that get freed independently.
 		VecNodeRef *tp0 = VecVecNodeRef_at(&p->template_params, 0);
 		if (tp0) {
-			*tp0 = *p->outer_template_params;
-			VecNodeRef_init(p->outer_template_params);
+			// Best-effort restore while returning failure.
+			(void)template_param_scope_copy(tp0, p->outer_template_params);
 		}
+		VecNodeRef_clear(p->outer_template_params);
 	}
 	TRACE_RETURN_FAILURE();
 }
@@ -4219,8 +4283,8 @@ DemNode *parse_template_param_decl(DemParser *p, VecNodeRef *params, size_t para
 		}
 		if (params) {
 			VecNodeRef *tp_slot = VecVecNodeRef_at(&p->template_params, params_level);
-			if (tp_slot) {
-				*tp_slot = *params;
+			if (tp_slot && !template_param_scope_copy(tp_slot, params)) {
+				return NULL;
 			}
 		}
 		DemResult result = { 0 };
@@ -4242,11 +4306,10 @@ DemNode *parse_template_param_decl(DemParser *p, VecNodeRef *params, size_t para
 		if (!inner_params) {
 			return NULL;
 		}
-		// Push a new template param scope for the Tt's inner params so that
-		// TL references can resolve them (TL0_ = this Tt's params).
+		// Push a snapshot for TL references to this Tt's params.
 		VecNodeRef *tt_template_params = VecNodeRef_ctor();
-		if (!tt_template_params || !VecVecNodeRef_append(&p->template_params, tt_template_params)) {
-			free(tt_template_params);
+		if (!tt_template_params || !template_params_push_scope_copy(p, tt_template_params)) {
+			VecNodeRef_dtor(tt_template_params);
 			return NULL;
 		}
 		size_t saved_tt_len = VecVecNodeRef_len(&p->template_params);
@@ -4254,18 +4317,16 @@ DemNode *parse_template_param_decl(DemParser *p, VecNodeRef *params, size_t para
 		NodeRef requires_node = NULL;
 		while (IN_RANGE(CUR()) && !READ('E')) {
 			NodeRef param = parse_template_param_decl(p, tt_template_params, saved_tt_len - 1);
-			// Sync heap-allocated tt_template_params back into template_params
-			// so that TL references (e.g. TL0_) can resolve inner params.
-			// MUST sync before any resize/cleanup because parse_template_param_decl
-			// may have realloc'd tt_template_params->data, making the by-value
-			// snapshot in template_params stale.
+			// Publish appended Tt params before recursive reads or cleanup.
 			VecNodeRef *tp_slot = VecVecNodeRef_at(&p->template_params, saved_tt_len - 1);
-			if (tp_slot) {
-				*tp_slot = *tt_template_params;
+			if (tp_slot && !template_param_scope_copy(tp_slot, tt_template_params)) {
+				VecVecNodeRef_resize(&p->template_params, saved_tt_len - 1);
+				VecNodeRef_dtor(tt_template_params);
+				return NULL;
 			}
 			if (!param) {
 				VecVecNodeRef_resize(&p->template_params, saved_tt_len - 1);
-				free(tt_template_params);
+				VecNodeRef_dtor(tt_template_params);
 				return NULL;
 			}
 			Node_append(inner_params, param, p->context);
@@ -4273,14 +4334,14 @@ DemNode *parse_template_param_decl(DemParser *p, VecNodeRef *params, size_t para
 				DemResult requires_result = { 0 };
 				if (!rule_expression(p, &requires_result) && READ('E')) {
 					VecVecNodeRef_resize(&p->template_params, saved_tt_len - 1);
-					free(tt_template_params);
+					VecNodeRef_dtor(tt_template_params);
 					return NULL;
 				}
 				requires_node = requires_result.output;
 			}
 		}
 		VecVecNodeRef_resize(&p->template_params, saved_tt_len - 1);
-		free(tt_template_params);
+		VecNodeRef_dtor(tt_template_params);
 		inner_params->many_ty.sep = ", ";
 		inner_params->val.len = CUR() - inner_params->val.buf;
 
@@ -4360,8 +4421,9 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 
 		size_t saved_template_params_len = VecVecNodeRef_len(&p->template_params);
 		VecNodeRef *lambda_template_params = VecNodeRef_ctor();
-		if (!lambda_template_params || !VecVecNodeRef_append(&p->template_params, lambda_template_params)) {
-			free(lambda_template_params);
+		// Push a snapshot for lambda template-param references.
+		if (!lambda_template_params || !template_params_push_scope_copy(p, lambda_template_params)) {
+			VecNodeRef_dtor(lambda_template_params);
 			p->parse_lambda_params_at_level = saved_parse_lambda_params_at_level;
 			TRACE_RETURN_FAILURE();
 		}
@@ -4372,8 +4434,9 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 		DemNode *temp_params = NULL;
 		while (is_template_param_decl(p)) {
 			VecNodeRef *tp_slot = VecVecNodeRef_at(&p->template_params, p->parse_lambda_params_at_level);
-			if (tp_slot) {
-				*tp_slot = *lambda_template_params;
+			// Publish params before parsing the next declaration.
+			if (tp_slot && !template_param_scope_copy(tp_slot, lambda_template_params)) {
+				goto lambda_fail;
 			}
 			NodeRef param = parse_template_param_decl(p, lambda_template_params, p->parse_lambda_params_at_level);
 			if (!param) {
@@ -4390,13 +4453,10 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 		}
 		if (temp_params) {
 			temp_params->val.len = CUR() - temp_params->val.buf;
-			// Sync the heap-allocated lambda_template_params back into template_params.
-			// VecVecNodeRef stores VecNodeRef by value, so the copy at
-			// template_params[level] is stale after parse_template_param_decl
-			// appended synthetic params to the heap-allocated lambda_template_params.
+			// Publish final lambda params.
 			VecNodeRef *tp_slot = VecVecNodeRef_at(&p->template_params, p->parse_lambda_params_at_level);
-			if (tp_slot) {
-				*tp_slot = *lambda_template_params;
+			if (tp_slot && !template_param_scope_copy(tp_slot, lambda_template_params)) {
+				goto lambda_fail;
 			}
 		}
 		if (!temp_params) {
@@ -4452,11 +4512,7 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 		p->permit_forward_template_refs = saved_permit_forward_template_refs;
 		p->parse_lambda_params_at_level = saved_parse_lambda_params_at_level;
 		VecVecNodeRef_resize(&p->template_params, saved_template_params_len);
-		// Free the heap-allocated vector structure only.
-		// Its .data was already freed by VecVecNodeRef_resize (which calls the
-		// element destructor on the by-value copy stored in template_params).
-		// The NodeRef *elements* inside are owned by the AST tree, not by us.
-		free(lambda_template_params);
+		VecNodeRef_dtor(lambda_template_params);
 		TRACE_RETURN_SUCCESS;
 
 	lambda_fail:
@@ -4467,11 +4523,11 @@ bool rule_unnamed_type_name(DemParser *p, DemResult *r) {
 		{
 			VecNodeRef *tp_slot = VecVecNodeRef_at(&p->template_params, saved_template_params_len);
 			if (tp_slot) {
-				*tp_slot = *lambda_template_params;
+				(void)template_param_scope_copy(tp_slot, lambda_template_params);
 			}
 		}
 		VecVecNodeRef_resize(&p->template_params, saved_template_params_len);
-		free(lambda_template_params);
+		VecNodeRef_dtor(lambda_template_params);
 		TRACE_RETURN_FAILURE();
 	}
 	RULE_FOOT(unnamed_type_name);
