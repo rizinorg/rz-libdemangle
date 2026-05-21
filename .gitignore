@@ -1,5 +1,6 @@
 build*/
 .cache/
+.vscode/
 debug_demangler
 debug_demangler.c
 debug_demangler.dSYM/

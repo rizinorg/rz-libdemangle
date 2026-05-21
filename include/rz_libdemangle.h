@@ -34,6 +34,7 @@ DEM_LIB_EXPORT char *libdemangle_handler_java(const char *symbol, RzDemangleOpts
 DEM_LIB_EXPORT char *libdemangle_handler_msvc(const char *symbol, RzDemangleOpts opts);
 DEM_LIB_EXPORT char *libdemangle_handler_objc(const char *symbol, RzDemangleOpts opts);
 DEM_LIB_EXPORT char *libdemangle_handler_pascal(const char *symbol, RzDemangleOpts opts);
+DEM_LIB_EXPORT char *libdemangle_handler_d(const char *mangled, RzDemangleOpts opts);
 
 #ifdef __cplusplus
 }

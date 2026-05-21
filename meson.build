@@ -28,6 +28,8 @@ libdemangle_src = [
     'src' / 'rust' / 'rust.c',
     'src' / 'rust' / 'rust_legacy.c',
     'src' / 'rust' / 'rust_v0.c',
+    
+    'src' / 'd' / 'dmd.c',
 ]
 
 tests = [
@@ -37,7 +39,8 @@ tests = [
     'objc',
     'pascal',
     'rust',
-
+    'd',
+    
     'subs', # Substitution table tests
 
     # C++ demangling tests (organized by category)

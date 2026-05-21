@@ -2,42 +2,53 @@
 
 This library contains all rizin demanglers and is linked statically in rizin to provide demangling support in rizin
 
-## Run tests with asan
+## Clone Repository
 
 ```
-meson -Dbuildtype=debugoptimized -Db_sanitize=address,undefined build
-ninja -C build test
+git clone https://github.com/rizinorg/rz-libdemangle.git
+cd rz-libdemangle
 ```
 
 ## Build and install cli tool
 
 This cli tool does not require rizin.
 
-### Install
+```
+meson setup build --prefix=/usr -Denable_cli=true
+meson compile -C build
+sudo meson install -C build
+```
 
-```
-meson --prefix=/usr -Denable_cli=true build
-ninja -C build install
-```
 
 ### Usage
 
 ```
-demangle -s pascal 'OUTPUT_$$_init'
+rz-demangle -s pascal 'OUTPUT_$$_init'
 ```
 
-## Install library in prefix path
+
+## Install Library
+
+To install the library into the system prefix:
+
 
 ```
-meson --prefix=/usr -Dinstall_lib=true build
-ninja -C build install
+meson setup build --prefix=/usr -Dinstall_lib=true
+meson compile -C build
+sudo meson install -C build
 ```
 
-## Demangler
 
-## Building
+## Development
+
+### Debug Build with Sanitizers
 
 ```
-meson -Dbuildtype=debugoptimized -Db_sanitize=address,undefined build
-ninja -C build test
+meson setup build -Dbuildtype=debugoptimized -Db_sanitize=address,undefined
+```
+
+### Run Tests
+
+```
+meson test -C build
 ```
