@@ -1848,15 +1848,19 @@ DEM_LIB_EXPORT char *libdemangle_handler_d(const char *mangled, RzDemangleOpts o
 	ctx->err = false;
 	ctx->in_template_arg = false;
 	if (!mangled) {
-		dem_string_drain(ctx->demangled);
+		dem_string_free(ctx->demangled);
 		dem_string_free(ctx->attr);
 		RZ_FREE(ctx);
 		return NULL;
 	}
 
+	char *res = NULL;
 	consumeWhile(mangled, ctx, ' ');
-	parseMangledName(mangled, ctx, true);
-	char *res = dem_string_drain(ctx->demangled);
+	if (parseMangledName(mangled, ctx, true)) {
+		res = dem_string_drain(ctx->demangled);
+	} else {
+		dem_string_free(ctx->demangled);
+	}
 	dem_string_free(ctx->attr);
 	RZ_FREE(ctx);
 	return res;
