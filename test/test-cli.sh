@@ -38,6 +38,9 @@ set -e
 "$CLI" 'rust' '_RNvC6_123foo3bar'
 "$CLI" -s 'rust' '_RNvC6_123foo3bar'
 
+"$CLI" 'd' '_D3std4mainZ'
+"$CLI" -s 'd' '_D3std4mainZ'
+
 if [ ! -z "$HAS_SWIFT" ]; then
     "$CLI" 'swift' '__TFC4main8FooClasss3barSS'
     "$CLI" -s 'swift' '__TFC4main8FooClasss3barSS'

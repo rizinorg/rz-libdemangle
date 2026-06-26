@@ -13,7 +13,7 @@
 #define SWIFT ""
 #endif
 
-#define LANGUAGES "java, msvc, objc, " SWIFT "pascal, rust, " CPP
+#define LANGUAGES "java, msvc, objc, d " SWIFT "pascal, rust, " CPP
 
 typedef char *(*handler_t)(const char *symbol, RzDemangleOpts opts);
 
@@ -32,6 +32,7 @@ static language_t languages[] = {
 	{ .name = "msvc", .demangle = libdemangle_handler_msvc },
 	{ .name = "objc", .demangle = libdemangle_handler_objc },
 	{ .name = "pascal", .demangle = libdemangle_handler_pascal },
+	{ .name = "d", .demangle = libdemangle_handler_d },
 };
 
 static void usage(const char *prog) {

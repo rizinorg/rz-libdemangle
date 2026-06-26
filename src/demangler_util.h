@@ -80,6 +80,7 @@ bool dem_string_append(DemString *ds, const char *string);
 bool dem_string_append_prefix_n(DemString *ds, const char *string, size_t size);
 bool dem_string_append_n(DemString *ds, const char *string, size_t size);
 bool dem_string_appendf(DemString *ds, const char *fmt, ...);
+bool dem_string_appendv(DemString *ds, const char *fmt, va_list varg);
 bool dem_string_append_char(DemString *ds, const char ch);
 bool dem_string_concat(DemString *dst, DemString *src);
 bool dem_string_equals(DemString *ds, DemString *other);

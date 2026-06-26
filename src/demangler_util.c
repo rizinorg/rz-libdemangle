@@ -372,30 +372,36 @@ bool dem_string_empty(const DemString *ds) {
 	return ds->len == 0 || !ds->buf || ds->buf[0] == 0;
 }
 
-bool dem_string_appendf(DemString *ds, const char *fmt, ...) {
-	va_list ap1;
+bool dem_string_appendv(DemString *ds, const char *fmt, va_list varg) {
 	va_list ap2;
 	int size;
 	bool res = true;
 	dem_return_val_if_fail(ds && fmt, false);
-
-	va_start(ap1, fmt);
-	va_copy(ap2, ap1);
-	size = vsnprintf(NULL, 0, fmt, ap1);
+	va_copy(ap2, varg);
+	size = vsnprintf(NULL, 0, fmt, varg);
 	if (size < 1) {
 		// always success on empty strings
-		goto dem_string_appendf_end;
+		goto dem_string_appendv_end;
 	} else if (!dem_string_increase_capacity(ds, size)) {
 		res = false;
-		goto dem_string_appendf_end;
+		goto dem_string_appendv_end;
 	}
 
 	vsnprintf(ds->buf + ds->len, size + 1, fmt, ap2);
 	ds->len += size;
 
-dem_string_appendf_end:
+dem_string_appendv_end:
 	va_end(ap2);
-	va_end(ap1);
+	return res;
+}
+
+bool dem_string_appendf(DemString *ds, const char *fmt, ...) {
+	va_list ap;
+	bool res;
+	dem_return_val_if_fail(ds && fmt, false);
+	va_start(ap, fmt);
+	res = dem_string_appendv(ds, fmt, ap);
+	va_end(ap);
 	return res;
 }
 
