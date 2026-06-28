@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "demangler_util.h"
-#include <stdarg.h>
 /* These are mostly copied from rz_util till the util itself is not a side lib */
 
 #define dem_return_val_if_fail(expr, val) \
