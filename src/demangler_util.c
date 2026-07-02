@@ -345,6 +345,9 @@ bool dem_string_concat(DemString *dst, DemString *src) {
 	if (!dem_string_increase_capacity(dst, src->len)) {
 		return false;
 	}
+	if (!dst->buf) {
+		return false;
+	}
 
 	memcpy(dst->buf + dst->len, src->buf, src->len);
 	dst->len += src->len;
