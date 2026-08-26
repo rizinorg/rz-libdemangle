@@ -492,7 +492,7 @@ beach:
 }
 
 // Helper function to extract the base class name from a ctor/dtor name
-// Recursively unwraps name_with_template_args and nested_name to get the final primitive name
+// Recursively unwraps name wrappers to get the final primitive name
 static bool node_base_name(NodeRef node, DemStringView *out) {
 	if (!node) {
 		return false;
@@ -557,10 +557,16 @@ static bool node_base_name(NodeRef node, DemStringView *out) {
 		}
 		return false;
 
+	case CP_DEM_TYPE_KIND_UNNAMED_TYPE_NAME:
+		// Ut/Ub store the printable name as a primitive child
+		if (AST(0)) {
+			return node_base_name(AST(0), out);
+		}
+		break;
 	case CP_DEM_TYPE_KIND_PRIMITIVE_TY:
 		return sv_form_cstr(out, node->primitive_ty.name.buf);
 	default:
-		return node_base_name(node, out);
+		return false;
 	}
 	return false;
 }
