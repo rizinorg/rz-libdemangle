@@ -39,7 +39,35 @@ typedef struct {
 	bool is_ctor;
 	bool is_dtor;
 	ut8 operator_type; // 0 if not an operator, otherwise a positive value
+
+	// Monotonic counter of calls into the mutually-recursive parameter/template-class
+	// rules (cpdem_param_type, cpdem_class_names, cpdem_template_class,
+	// cpdem_template_param_type, cpdem_func_params). Never decremented, so it bounds
+	// both the total work done on one mangled name and (since a call can only recurse
+	// after incrementing it) the maximum C-stack recursion depth. A deeply or
+	// self-referentially nested type list (e.g. "T<T<T<T<...") would otherwise recurse
+	// through this cycle until the native call stack overflows -- there is no other
+	// guard against it.
+	ut64 parse_calls;
 } CpDem;
+
+// Same cap v3's parser recursion guard uses (cplusplus/v3/macros.h) -- chosen there to
+// stay well under a stack overflow for this kind of recursive-descent parser.
+#define CPDEM_MAX_PARSE_CALLS 1024
+
+/**
+ * \b Guard against unbounded recursion/looping across the mutually-recursive
+ * parameter/template-class rules. Call once at the top of each such rule, right after
+ * the NULL-argument check; returns NULL (this file's existing failure convention) once
+ * the call budget for this mangled name is exhausted.
+ */
+#define CPDEM_CHECK_RECURSION() \
+	do { \
+		if (dem->parse_calls >= CPDEM_MAX_PARSE_CALLS) { \
+			return NULL; \
+		} \
+		dem->parse_calls++; \
+	} while (0)
 
 CpDem *cpdem_init(CpDem *dem, const char *mangled, CpDemOptions opts);
 void cpdem_fini(CpDem *dem);
