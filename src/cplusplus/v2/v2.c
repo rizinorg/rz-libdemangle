@@ -663,6 +663,7 @@ CpDem *cpdem_class_names(CpDem *dem, ClassNameVec *class_names, ut64 qualifiers_
 	if (!dem || !class_names || !qualifiers_count) {
 		return NULL;
 	}
+	CPDEM_CHECK_RECURSION();
 
 	/* get each qualifier and append in qualifier name vector */
 	VecDemString_reserve(class_names, qualifiers_count);
@@ -989,6 +990,7 @@ CpDem *cpdem_param_type(CpDem *dem, ParamVec *params) {
 	if (!dem || !params) {
 		return NULL;
 	}
+	CPDEM_CHECK_RECURSION();
 
 	Param param = { 0 };
 	param_init(&param);
@@ -1444,6 +1446,7 @@ CpDem *cpdem_func_params(CpDem *dem) {
 	if (!dem) {
 		return NULL;
 	}
+	CPDEM_CHECK_RECURSION();
 
 	dem->has_params = true;
 
@@ -1458,6 +1461,7 @@ CpDem *cpdem_template_param_type(CpDem *dem, ParamVec *params) {
 	if (!dem || !params) {
 		return NULL;
 	}
+	CPDEM_CHECK_RECURSION();
 
 	switch (PEEK()) {
 	case 'Z': {
@@ -1505,6 +1509,7 @@ CpDem *cpdem_template_class(CpDem *dem, DemString *tclass_name) {
 	if (!dem || !tclass_name) {
 		return NULL;
 	}
+	CPDEM_CHECK_RECURSION();
 
 	/* get custom type name first */
 	DemString class_name = { 0 };
