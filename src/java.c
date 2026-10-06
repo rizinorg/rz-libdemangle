@@ -11,6 +11,29 @@ typedef struct {
 #define is_native_type(x) ((x) && !IS_UPPER(x))
 #define is_varargs(x)     ((x)[0] == '.' && (x)[1] == '.' && (x)[2] == '.')
 
+// Finds the '>' that closes the '<' this generic-argument list started
+// right after (type points just past it), tracking nesting depth instead
+// of returning the first '>' in the string. A nested parameterized type,
+// e.g. "Ljava/util/List<Ljava/util/List<Ljava/lang/Object;>;>;", has an
+// inner '>' that a naive search (strstr(type, ">")) would stop at,
+// truncating the generic-argument list one level too early and corrupting
+// the rest of the parse. Returns NULL (same convention strchr/strstr use)
+// if the brackets are unbalanced.
+static char *find_matching_close_angle(char *type) {
+	int depth = 1;
+	for (; *type; type++) {
+		if (*type == '<') {
+			depth++;
+		} else if (*type == '>') {
+			depth--;
+			if (depth == 0) {
+				return type;
+			}
+		}
+	}
+	return NULL;
+}
+
 // The following table contains the list of java classes that can be simplified
 // to save memory and making the demangled string more readable.
 static java_replace_t java_replace_table[] = {
@@ -153,7 +176,10 @@ static bool demangle_type(char *type, DemString *sb, size_t *used) {
 			dem_string_append(sb, "T");
 		} else {
 			bool comma = false;
-			end = strstr(type, ">");
+			end = find_matching_close_angle(type);
+			if (!end) {
+				return false;
+			}
 			end[0] = 0;
 			while (*type && type != end) {
 				if (*type == ';') {
