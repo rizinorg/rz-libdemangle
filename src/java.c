@@ -11,16 +11,8 @@ typedef struct {
 #define is_native_type(x) ((x) && !IS_UPPER(x))
 #define is_varargs(x)     ((x)[0] == '.' && (x)[1] == '.' && (x)[2] == '.')
 
-// Finds the '>' that closes the '<' this generic-argument list started
-// right after (type points just past it), tracking nesting depth instead
-// of returning the first '>' in the string. A nested parameterized type,
-// e.g. "Ljava/util/List<Ljava/util/List<Ljava/lang/Object;>;>;", has an
-// inner '>' that a naive search (strstr(type, ">")) would stop at,
-// truncating the generic-argument list one level too early and corrupting
-// the rest of the parse. Returns NULL (same convention strchr/strstr use)
-// if the brackets are unbalanced.
 static char *find_matching_close_angle(char *type) {
-	int depth = 1;
+	size_t depth = 1;
 	for (; *type; type++) {
 		if (*type == '<') {
 			depth++;

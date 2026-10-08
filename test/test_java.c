@@ -255,11 +255,6 @@ mu_demangle_tests(java,
 	mu_demangle_test("Ljavax/net/ssl/SSLSession;", "javax.net.ssl.SSLSession"),
 	mu_demangle_test("Ljavax/net/ssl/SSLSocket;", "javax.net.ssl.SSLSocket"),
 	mu_demangle_test("Lio/socket/engineio/parser/Parser$DecodePayloadCallback<Ljava/lang/String;>;", "io.socket.engineio.parser.Parser$DecodePayloadCallback<String>"),
-	// Regression test: a nested parameterized type. The generic-argument scan used to
-	// find the first '>' in the string with strstr(), which is the *inner* List's
-	// closing bracket here, truncating the outer List's argument list one level too
-	// early and corrupting the rest of the parse. It now tracks '<'/'>' nesting depth
-	// to find the matching close instead.
 	mu_demangle_test("Ljava/util/List<Ljava/util/List<Ljava/lang/Object;>;>;", "java.util.List<java.util.List<Object>>"),
 	mu_demangle_test("Lokhttp3/Address;", "okhttp3.Address"),
 	mu_demangle_test("Lokhttp3/Authenticator$1;", "okhttp3.Authenticator$1"),
