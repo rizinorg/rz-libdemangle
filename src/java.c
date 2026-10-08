@@ -11,6 +11,21 @@ typedef struct {
 #define is_native_type(x) ((x) && !IS_UPPER(x))
 #define is_varargs(x)     ((x)[0] == '.' && (x)[1] == '.' && (x)[2] == '.')
 
+static char *find_matching_close_angle(char *type) {
+	size_t depth = 1;
+	for (; *type; type++) {
+		if (*type == '<') {
+			depth++;
+		} else if (*type == '>') {
+			depth--;
+			if (depth == 0) {
+				return type;
+			}
+		}
+	}
+	return NULL;
+}
+
 // The following table contains the list of java classes that can be simplified
 // to save memory and making the demangled string more readable.
 static java_replace_t java_replace_table[] = {
@@ -153,7 +168,10 @@ static bool demangle_type(char *type, DemString *sb, size_t *used) {
 			dem_string_append(sb, "T");
 		} else {
 			bool comma = false;
-			end = strstr(type, ">");
+			end = find_matching_close_angle(type);
+			if (!end) {
+				return false;
+			}
 			end[0] = 0;
 			while (*type && type != end) {
 				if (*type == ';') {
