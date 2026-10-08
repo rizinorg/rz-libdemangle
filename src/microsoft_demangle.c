@@ -11,7 +11,34 @@
 typedef struct SAbbrState {
 	DemList *types;
 	DemList *names;
+
+	// Monotonic counter of calls into the mutually-recursive name/template/data-type
+	// rules (get_namespace_and_name, get_template, get_template_params, parse_data_type).
+	// Never decremented, so it bounds both the total work done on one mangled name and
+	// (since a call can only recurse further after incrementing it) the maximum C-stack
+	// recursion depth. A deeply or self-referentially nested class/template type (e.g.
+	// "V?$A@V?$A@V?$A@...@@@@@@") would otherwise recurse through this cycle until the
+	// native call stack overflows -- there is no other guard against it.
+	ut64 parse_calls;
 } SAbbrState;
+
+// Same cap rz-libdemangle's other recursive-descent demanglers (GNU v2, D, Borland) use
+// for this exact risk.
+#define MSVC_MAX_PARSE_CALLS 1024
+
+/**
+ * \brief Guard against unbounded recursion across the mutually-recursive name/template/
+ * data-type rules. Call once at the top of each such rule, right after any existing
+ * NULL/empty-input check; returns the caller's own failure value once the call budget
+ * for this mangled name is exhausted.
+ */
+#define MSVC_CHECK_RECURSION(abbr, failure_value) \
+	do { \
+		if ((abbr)->parse_calls >= MSVC_MAX_PARSE_CALLS) { \
+			return (failure_value); \
+		} \
+		(abbr)->parse_calls++; \
+	} while (0)
 
 typedef enum EObjectType {
 	eObjectTypeStaticClassMember = 2,
@@ -247,6 +274,7 @@ static bool copy_string_n(STypeCodeStr *type_code_str, const char *str_for_copy,
 }
 
 static int get_template_params(SAbbrState *abbr, const char *sym, size_t *amount_of_read_chars, char **str_type_code) {
+	MSVC_CHECK_RECURSION(abbr, eDemanglerErrUncorrectMangledSymbol);
 	SStateInfo state;
 	init_state_struct(&state, sym);
 	const char template_param[] = "template-parameter-";
@@ -837,6 +865,7 @@ fail:
 
 ///////////////////////////////////////////////////////////////////////////////
 static size_t get_template(SAbbrState *abbr, const char *buf, SStrInfo *str_info, bool memorize) {
+	MSVC_CHECK_RECURSION(abbr, 0);
 	size_t len = 0;
 	char *str_type_code = NULL;
 	STypeCodeStr type_code_str;
@@ -935,6 +964,7 @@ static size_t get_namespace_and_name(SAbbrState *abbr, const char *buf, STypeCod
 	if (RZ_STR_ISEMPTY(buf)) {
 		return 0;
 	}
+	MSVC_CHECK_RECURSION(abbr, 0);
 
 	size_t len = 0, read_len = 0, tmp_len = 0;
 
@@ -2088,6 +2118,7 @@ static EDemanglerErr parse_data_type(SAbbrState *abbr, const char *sym, SDataTyp
 	if (!data_type) {
 		return eDemanglerErrInternal;
 	}
+	MSVC_CHECK_RECURSION(abbr, eDemanglerErrUncorrectMangledSymbol);
 	data_type->left = data_type->right = NULL;
 	// Data type and access level
 	switch (*curr_pos) {
@@ -2559,6 +2590,7 @@ EDemanglerErr microsoft_demangle(SDemangler *demangler, char **demangled_name) {
 	SAbbrState abbr;
 	abbr.types = dem_list_newf(free);
 	abbr.names = dem_list_newf(free);
+	abbr.parse_calls = 0;
 
 	if (!demangler || !demangled_name) {
 		err = eDemanglerErrMemoryAllocation;
