@@ -9,6 +9,21 @@
 #define borland_cxx_operator(pfx, op) \
 	{ pfx, (sizeof(pfx) - 1), op, (sizeof(op) - 1) }
 
+// borland_delphi_type, borland_delphi_custom_type and borland_delphi_array are mutually
+// recursive with no other bound on their depth (a "$<custom type>" template argument, or
+// a self-nested custom type, can recurse through this cycle once per nesting level), so a
+// deeply or self-referentially nested mangled type can exhaust the native C stack. Every
+// recursive call increments *calls before it can recurse further, so this bounds depth
+// too, the same way rz-libdemangle's other demanglers guard the identical risk.
+#define BORLAND_MAX_RECURSION_CALLS 1024
+#define BORLAND_CHECK_RECURSION(calls) \
+	do { \
+		if (*(calls) >= BORLAND_MAX_RECURSION_CALLS) { \
+			return NULL; \
+		} \
+		(*(calls))++; \
+	} while (0)
+
 typedef struct borland_repl_s {
 	const char *pfx;
 	size_t pfx_len;
@@ -182,12 +197,13 @@ fail:
 	return NULL;
 }
 
-char *borland_delphi_type(const char *begin, const char *end, const char **leftovers);
+char *borland_delphi_type(const char *begin, const char *end, const char **leftovers, size_t *calls);
 
-char *borland_delphi_custom_type(const char *begin, const char *end, const char **leftovers) {
+char *borland_delphi_custom_type(const char *begin, const char *end, const char **leftovers, size_t *calls) {
 	if (begin >= end) {
 		return NULL;
 	}
+	BORLAND_CHECK_RECURSION(calls);
 
 	size_t length = borland_delphi_parse_len(begin, end, &begin);
 	if (length < 1 || begin + length > end) {
@@ -213,7 +229,7 @@ char *borland_delphi_custom_type(const char *begin, const char *end, const char 
 				is_pointer = true;
 			}
 			// custom subtype.
-			subtype = borland_delphi_custom_type(begin, type_end, &begin);
+			subtype = borland_delphi_custom_type(begin, type_end, &begin, calls);
 			if (!subtype) {
 				goto fail;
 			}
@@ -272,7 +288,7 @@ char *borland_delphi_custom_type(const char *begin, const char *end, const char 
 			}
 			parse_digit = true;
 
-			subtype = borland_delphi_type(type_beg, type_end, &begin);
+			subtype = borland_delphi_type(type_beg, type_end, &begin, calls);
 			if (!subtype) {
 				goto fail;
 			}
@@ -310,10 +326,11 @@ fail:
 	return NULL;
 }
 
-char *borland_delphi_array(const char *begin, const char *end, const char **leftovers) {
+char *borland_delphi_array(const char *begin, const char *end, const char **leftovers, size_t *calls) {
 	if (begin >= end) {
 		return NULL;
 	}
+	BORLAND_CHECK_RECURSION(calls);
 
 	int size = borland_delphi_parse_len(begin, end, &begin);
 	if (size < 1) {
@@ -341,7 +358,7 @@ char *borland_delphi_array(const char *begin, const char *end, const char **left
 			continue;
 		} else if (IS_DIGIT(begin[0])) {
 			// custom ctype.
-			char *ctype = borland_delphi_custom_type(begin, end, &begin);
+			char *ctype = borland_delphi_custom_type(begin, end, &begin, calls);
 			if (!ctype) {
 				goto fail;
 			}
@@ -366,10 +383,11 @@ fail:
 	return NULL;
 }
 
-char *borland_delphi_type(const char *begin, const char *end, const char **leftovers) {
+char *borland_delphi_type(const char *begin, const char *end, const char **leftovers, size_t *calls) {
 	if (begin >= end) {
 		return NULL;
 	}
+	BORLAND_CHECK_RECURSION(calls);
 
 	bool is_const = false, is_volatile = false, is_reference = false, is_rvalue_ref = false, is_function = false;
 	char *ctype = NULL;
@@ -428,14 +446,14 @@ char *borland_delphi_type(const char *begin, const char *end, const char **lefto
 		}
 
 		if (IS_DIGIT(begin[0])) {
-			ctype = borland_delphi_custom_type(begin, end, &begin);
+			ctype = borland_delphi_custom_type(begin, end, &begin, calls);
 			if (!ctype) {
 				goto fail;
 			}
 			dem_string_append(prefix, ctype);
 			free(ctype);
 		} else if (begin[0] == 'a') {
-			ctype = borland_delphi_array(begin + 1, end, &begin);
+			ctype = borland_delphi_array(begin + 1, end, &begin, calls);
 			if (!ctype) {
 				goto fail;
 			}
@@ -472,7 +490,7 @@ char *borland_delphi_type(const char *begin, const char *end, const char **lefto
 
 		if (begin < end && begin[0] == '$') {
 			// append operator return type
-			char *type = borland_delphi_type(begin + 1, end, &begin);
+			char *type = borland_delphi_type(begin + 1, end, &begin, calls);
 			if (!type) {
 				goto fail;
 			}
@@ -624,6 +642,7 @@ char *demangle_borland_delphi(const char *mangled) {
 	bool is_template = false;
 	const char *begin = mangled + 1, *tmp = NULL;
 	const char *end = mangled + mangled_len;
+	size_t calls = 0;
 	DemList *types = dem_list_newf(free);
 	DemString *prefix = dem_string_new();
 	DemString *suffix = dem_string_new();
@@ -695,7 +714,7 @@ char *demangle_borland_delphi(const char *mangled) {
 				dem_string_append(prefix, ctype);
 			} else {
 				bool is_custom = IS_DIGIT(begin[0]);
-				char *type = borland_delphi_type(begin, end, &begin);
+				char *type = borland_delphi_type(begin, end, &begin, &calls);
 				if (!type) {
 					goto demangle_fail;
 				}
@@ -744,7 +763,7 @@ char *demangle_borland_delphi(const char *mangled) {
 			dem_string_appends(suffix, " volatile");
 			continue;
 		case 'o':
-			tmp = borland_delphi_type(begin + 1, strchr(begin, '$'), &begin);
+			tmp = borland_delphi_type(begin + 1, strchr(begin, '$'), &begin, &calls);
 			if (!tmp) {
 				goto demangle_fail;
 			}
@@ -785,7 +804,7 @@ procedure:
 			tmp--;
 		} else {
 			bool is_custom = IS_DIGIT(tmp[0]);
-			char *type = borland_delphi_type(tmp, end, &tmp);
+			char *type = borland_delphi_type(tmp, end, &tmp, &calls);
 			if (!type) {
 				goto demangle_fail;
 			}
@@ -803,7 +822,7 @@ procedure:
 
 	if (tmp < end && tmp[0] == '$') {
 		// append operator return type
-		char *type = borland_delphi_type(tmp + 1, end, &tmp);
+		char *type = borland_delphi_type(tmp + 1, end, &tmp, &calls);
 		if (!type) {
 			goto demangle_fail;
 		}
