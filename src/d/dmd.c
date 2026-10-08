@@ -11,10 +11,20 @@
 		return (ret); \
 	} while (0)
 
+// Same cap the sibling Rust v0 demangler uses for the identical risk
+// (RUST_MAX_RECURSION_LEVEL, src/rust/rust_v0.c) -- a D function-pointer
+// parameter type, or a template argument, can nest another instance of
+// itself (parseType -> ... -> parseParameter -> parseType, or
+// parseTemplateArg -> ... -> parseTemplateArgs -> parseTemplateArg), and
+// nothing bounded that recursion before this guard: a deeply or
+// self-referentially nested mangled name could exhaust the native C stack.
+#define D_MAX_RECURSION_LEVEL 512
+
 typedef struct DDemangleContext_t {
 	DemString *demangled;
 	DemString *attr;
 	size_t curr;
+	size_t recursion_level;
 	bool in_template_arg;
 	bool err;
 } DDemangleContext;
@@ -380,29 +390,44 @@ static void writeFuncAttrs(FuncAttributes attrs, DemString *dest) {
 }
 
 static bool parseType(const char *mangled, DDemangleContext *ctx) {
+	if (ctx->err || ctx->recursion_level >= D_MAX_RECURSION_LEVEL) {
+		ERR(ctx, false);
+	}
+	ctx->recursion_level++;
 	DemString *saved_attr = ctx->attr;
 	ctx->attr = dem_string_new();
 	bool res = parseTypeImpl(mangled, ctx);
 	dem_string_free(ctx->attr);
 	ctx->attr = saved_attr;
+	ctx->recursion_level--;
 	return res;
 }
 
 static bool parseValue(const char *mangled, DDemangleContext *ctx, const char *type_name, char type_char) {
+	if (ctx->err || ctx->recursion_level >= D_MAX_RECURSION_LEVEL) {
+		ERR(ctx, false);
+	}
+	ctx->recursion_level++;
 	DemString *saved_attr = ctx->attr;
 	ctx->attr = dem_string_new();
 	bool res = parseValueImpl(mangled, ctx, type_name, type_char);
 	dem_string_free(ctx->attr);
 	ctx->attr = saved_attr;
+	ctx->recursion_level--;
 	return res;
 }
 
 static bool parseTemplateArg(const char *mangled, DDemangleContext *ctx) {
+	if (ctx->err || ctx->recursion_level >= D_MAX_RECURSION_LEVEL) {
+		ERR(ctx, false);
+	}
+	ctx->recursion_level++;
 	DemString *saved_attr = ctx->attr;
 	ctx->attr = dem_string_new();
 	bool res = parseTemplateArgImpl(mangled, ctx);
 	dem_string_free(ctx->attr);
 	ctx->attr = saved_attr;
+	ctx->recursion_level--;
 	return res;
 }
 
@@ -1845,6 +1870,7 @@ DEM_LIB_EXPORT char *libdemangle_handler_d(const char *mangled, RzDemangleOpts o
 	ctx->demangled = dem_string_new();
 	ctx->attr = dem_string_new();
 	ctx->curr = 0;
+	ctx->recursion_level = 0;
 	ctx->err = false;
 	ctx->in_template_arg = false;
 	if (!mangled) {
