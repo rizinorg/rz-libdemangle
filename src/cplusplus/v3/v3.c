@@ -643,9 +643,17 @@ static void pp_function_ty_mod_return_fn(PPFnContext *, DemString *);
 static void pp_function_ty_quals(PPFnContext *ctx, DemString *out);
 
 static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out) {
-	if (!ctx || !ctx->fn || !out) {
+	if (!ctx || !ctx->fn || !out || !ctx->pp_ctx) {
 		return;
 	}
+	// Guard against infinite recursion (e.g. a pathological function-returning-function
+	// chain), the same counter and cap ast_pp() already uses: this function recurses into
+	// itself (via the ft->ret function-type path below, and via pp_function_ty_mod_return_fn)
+	// without ever going through ast_pp()'s own check for that specific chain.
+	if (ctx->pp_ctx->recursion_depth > 256) {
+		return;
+	}
+	ctx->pp_ctx->recursion_depth++;
 
 	NodeRef node = ctx->fn;
 	FunctionTy *ft = (FunctionTy *)&node->fn_ty;
