@@ -82,7 +82,7 @@ elif cc.has_argument('--std=c99')
     add_project_arguments('--std=c99', language : 'c')
 endif
 
-libdemangle = both_libraries(
+libdemangle = library(
     'demangle',
     libdemangle_src,
     c_args : common_c_args + libdemangle_c_args,
@@ -92,14 +92,9 @@ libdemangle = both_libraries(
     include_directories : include_directories(['include', 'src']),
 )
 
-# When used as a subproject with default_library=static (e.g., Rizin),
-# prefer the static library. Otherwise, use the shared library by default.
-if get_option('default_library') == 'static'
-    libdemangle_link = libdemangle.get_static_lib()
-elif get_option('default_library') == 'shared'
-    libdemangle_link = libdemangle.get_shared_lib()
-else
-    # For 'both', prefer static for better compatibility as a subproject
+# When building both library types, prefer static linking for consumers.
+libdemangle_link = libdemangle
+if get_option('default_library') == 'both'
     libdemangle_link = libdemangle.get_static_lib()
 endif
 
@@ -152,6 +147,19 @@ endif
 
 if get_option('enable_tests') and not meson.is_subproject()
     test_dependencies = []
+    test_libdemangle = libdemangle_link
+    # Tests use internal symbols that are hidden from the shared library.
+    if get_option('default_library') == 'shared'
+        test_libdemangle = static_library(
+            'demangle_test',
+            libdemangle_src,
+            c_args : common_c_args + libdemangle_c_args,
+            dependencies : [],
+            implicit_include_directories : false,
+            install : false,
+            include_directories : include_directories(['include', 'src']),
+        )
+    endif
     if get_option('b_sanitize').contains('address')
         test_dependencies += cc.find_library('asan')
     endif
@@ -188,7 +196,7 @@ if get_option('enable_tests') and not meson.is_subproject()
         exe = executable(
             'test_@0@'.format(test),
             'test/test_@0@.c'.format(test),
-            link_whole : libdemangle.get_static_lib(),
+            link_whole : test_libdemangle,
             include_directories : include_directories(['include', 'test', 'src']),
             dependencies : test_dependencies,
             c_args : test_c_args,
@@ -206,7 +214,7 @@ if get_option('enable_tests') and not meson.is_subproject()
         exe = executable(
             'test_@0@'.format(test),
             'test/unit/test_@0@.c'.format(test),
-            link_whole : libdemangle.get_static_lib(),
+            link_whole : test_libdemangle,
             include_directories : include_directories(['include', 'test', 'src']),
             dependencies : test_dependencies,
             c_args : common_c_args,
