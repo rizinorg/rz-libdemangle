@@ -1522,6 +1522,7 @@ CpDem *cpdem_template_class(CpDem *dem, DemString *tclass_name) {
 	st64 numtp = 0;
 	READ_NUMBER(numtp);
 	if (numtp < 0) {
+		dem_string_deinit(&class_name);
 		return NULL;
 	}
 
@@ -1532,6 +1533,7 @@ CpDem *cpdem_template_class(CpDem *dem, DemString *tclass_name) {
 	while (numtp--) {
 		if (!cpdem_template_param_type(dem, &tparams)) {
 			VecParam_deinit(&tparams);
+			dem_string_deinit(&class_name);
 			return NULL;
 		}
 	}
