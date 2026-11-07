@@ -643,9 +643,17 @@ static void pp_function_ty_mod_return_fn(PPFnContext *, DemString *);
 static void pp_function_ty_quals(PPFnContext *ctx, DemString *out);
 
 static void pp_function_ty_with_context(PPFnContext *ctx, DemString *out) {
-	if (!ctx || !ctx->fn || !out) {
+	if (!ctx || !ctx->fn || !out || !ctx->pp_ctx) {
 		return;
 	}
+	// Guard against infinite recursion (e.g. a pathological function-returning-function
+	// chain), the same counter and cap ast_pp() already uses: this function recurses into
+	// itself (via the ft->ret function-type path below, and via pp_function_ty_mod_return_fn)
+	// without ever going through ast_pp()'s own check for that specific chain.
+	if (ctx->pp_ctx->recursion_depth > 256) {
+		return;
+	}
+	ctx->pp_ctx->recursion_depth++;
 
 	NodeRef node = ctx->fn;
 	FunctionTy *ft = (FunctionTy *)&node->fn_ty;
@@ -1588,6 +1596,13 @@ static const DemSimpleEntry simple_entries[] = {
 };
 
 static void dem_simplify(DemString *out) {
+	if (!out || !out->buf) {
+		// Nothing was ever appended (e.g. the pretty-printer bailed out via a
+		// recursion guard before writing anything) -- nothing to simplify, and
+		// dem_string_replace_all() below would otherwise just log a harmless
+		// "assertion ... failed" once per table entry for this same reason.
+		return;
+	}
 	for (size_t i = 0; i < sizeof(simple_entries) / sizeof(simple_entries[0]); i++) {
 		dem_string_replace_all(
 			out,
