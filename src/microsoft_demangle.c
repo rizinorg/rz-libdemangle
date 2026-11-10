@@ -11,7 +11,28 @@
 typedef struct SAbbrState {
 	DemList *types;
 	DemList *names;
+	ut64 parse_calls;
+	bool recursion_limit_hit;
 } SAbbrState;
+
+#define MSVC_MAX_PARSE_CALLS 1024
+
+/**
+ * \brief Guard against unbounded recursion across the mutually-recursive name/template/
+ * data-type rules. Call once at the top of each such rule, right after any existing
+ * NULL/empty-input check; returns the caller's own failure value once the call budget
+ * for this mangled name is exhausted, and records that this happened so the top-level
+ * entry point can turn the overall result into a clean failure instead of letting some
+ * caller's partial-result fallback paper over it with a truncated string.
+ */
+#define MSVC_CHECK_RECURSION(abbr, failure_value) \
+	do { \
+		if ((abbr)->parse_calls >= MSVC_MAX_PARSE_CALLS) { \
+			(abbr)->recursion_limit_hit = true; \
+			return (failure_value); \
+		} \
+		(abbr)->parse_calls++; \
+	} while (0)
 
 typedef enum EObjectType {
 	eObjectTypeStaticClassMember = 2,
@@ -247,6 +268,7 @@ static bool copy_string_n(STypeCodeStr *type_code_str, const char *str_for_copy,
 }
 
 static int get_template_params(SAbbrState *abbr, const char *sym, size_t *amount_of_read_chars, char **str_type_code) {
+	MSVC_CHECK_RECURSION(abbr, eDemanglerErrUncorrectMangledSymbol);
 	SStateInfo state;
 	init_state_struct(&state, sym);
 	const char template_param[] = "template-parameter-";
@@ -837,6 +859,7 @@ fail:
 
 ///////////////////////////////////////////////////////////////////////////////
 static size_t get_template(SAbbrState *abbr, const char *buf, SStrInfo *str_info, bool memorize) {
+	MSVC_CHECK_RECURSION(abbr, 0);
 	size_t len = 0;
 	char *str_type_code = NULL;
 	STypeCodeStr type_code_str;
@@ -935,6 +958,7 @@ static size_t get_namespace_and_name(SAbbrState *abbr, const char *buf, STypeCod
 	if (RZ_STR_ISEMPTY(buf)) {
 		return 0;
 	}
+	MSVC_CHECK_RECURSION(abbr, 0);
 
 	size_t len = 0, read_len = 0, tmp_len = 0;
 
@@ -2088,6 +2112,7 @@ static EDemanglerErr parse_data_type(SAbbrState *abbr, const char *sym, SDataTyp
 	if (!data_type) {
 		return eDemanglerErrInternal;
 	}
+	MSVC_CHECK_RECURSION(abbr, eDemanglerErrUncorrectMangledSymbol);
 	data_type->left = data_type->right = NULL;
 	// Data type and access level
 	switch (*curr_pos) {
@@ -2556,7 +2581,7 @@ EDemanglerErr microsoft_demangle(SDemangler *demangler, char **demangled_name) {
 	//	char *tmp = NULL;
 
 	// TODO: need refactor... maybe remove the static variable somewhere?
-	SAbbrState abbr;
+	SAbbrState abbr = { 0 };
 	abbr.types = dem_list_newf(free);
 	abbr.names = dem_list_newf(free);
 
@@ -2569,6 +2594,12 @@ EDemanglerErr microsoft_demangle(SDemangler *demangler, char **demangled_name) {
 		err = parse_microsoft_rtti_mangled_name(&abbr, demangler->symbol + 2, demangled_name, NULL);
 	} else {
 		err = parse_microsoft_mangled_name(&abbr, demangler->symbol + 1, demangled_name, NULL);
+	}
+
+	if (abbr.recursion_limit_hit) {
+		free(*demangled_name);
+		*demangled_name = NULL;
+		err = eDemanglerErrUncorrectMangledSymbol;
 	}
 
 microsoft_demangle_err:
