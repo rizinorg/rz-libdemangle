@@ -3,6 +3,7 @@
 
 #include "microsoft_demangle.h"
 #include <ctype.h>
+#include <limits.h>
 
 #define MICROSOFT_NAME_LEN            (256)
 #define MICROSOFR_CLASS_NAMESPACE_LEN (256)
@@ -186,7 +187,7 @@ static char *type_code_str_get(STypeCodeStr *type_code_str);
 static size_t get_template(SAbbrState *abbr, const char *buf, SStrInfo *str_info, bool memorize);
 static char *get_num(SStateInfo *state);
 static EDemanglerErr parse_data_type(SAbbrState *abbr, const char *sym, SDataType *demangled_type, size_t *len);
-static size_t get_namespace_and_name(SAbbrState *abbr, const char *buf, STypeCodeStr *type_code_str, size_t *amount_of_names, bool memorize);
+static size_t get_namespace_and_name(SAbbrState *abbr, const char *buf, STypeCodeStr *type_code_str, const char *tag, bool memorize);
 static inline EDemanglerErr get_storage_class(const char encoded, const char **storage_class);
 static inline size_t get_ptr_modifier(const char *encoded, SDataType *ptr_modifier);
 static EDemanglerErr parse_function(SAbbrState *abbr, const char *sym, STypeCodeStr *type_code_str, char **demangled_function, size_t *chars_read);
@@ -816,7 +817,20 @@ static size_t get_operator_code(SAbbrState *abbr, const char *buf, DemList *name
 			case 'H': SET_OPERATOR_CODE("vector_vbase_copy_ctor_iter"); break;
 			case 'I': SET_OPERATOR_CODE("managed_vector_copy_ctor_iter"); break;
 			case 'J': SET_OPERATOR_CODE("local_static_thread_guard"); break;
-			case 'K': SET_OPERATOR_CODE("user_defined_literal_op"); break;
+			case 'K': {
+				const char *end = strchr(buf, '@');
+				if (!end || end == buf || (size_t)(end - buf) > INT_MAX) {
+					goto fail;
+				}
+				char *name = dem_str_newf("operator \"\"%.*s", (int)(end - buf), buf);
+				if (!name) {
+					goto fail;
+				}
+				SET_OPERATOR_CODE(name);
+				free(name);
+				read_len += end - buf + 1;
+				break;
+			}
 			default: goto fail;
 			}
 			break;
@@ -919,14 +933,42 @@ get_template_err:
 	return len;
 }
 
+static bool is_simd_intrinsic(const char *name, const char *tag) {
+	static const struct {
+		const char *name;
+		const char *tag;
+	} intrinsics[] = {
+		{ "__m64", "union" },
+		{ "__m128", "union" },
+		{ "__m128i", "union" },
+		{ "__m128d", "struct" },
+		{ "__m256", "union" },
+		{ "__m256i", "union" },
+		{ "__m256d", "struct" },
+		{ "__m512", "union" },
+		{ "__m512i", "union" },
+		{ "__m512d", "struct" },
+	};
+
+	if (!name || strncmp(name, "__m", 3)) {
+		return false;
+	}
+	for (size_t i = 0; i < RZ_ARRAY_SIZE(intrinsics); i++) {
+		if (!strcmp(intrinsics[i].name, name)) {
+			return !strcmp(intrinsics[i].tag, tag);
+		}
+	}
+	return false;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief get_namespace_and_name
 /// \param buf Current buffer position with mangled name
 /// \param type_code_str String with got name and namespaces
-/// \param amount_of_names Amount of names that was in list
+/// \param tag Optional type keyword, such as "struct" or "union"
 /// \return Return amount of processed chars
 ///
-static size_t get_namespace_and_name(SAbbrState *abbr, const char *buf, STypeCodeStr *type_code_str, size_t *amount_of_names, bool memorize) {
+static size_t get_namespace_and_name(SAbbrState *abbr, const char *buf, STypeCodeStr *type_code_str, const char *tag, bool memorize) {
 	const char *curr_pos = NULL, *prev_pos = NULL, *tmp = NULL;
 	DemList /* <SStrInfo *> */ *names_l = NULL;
 	DemListIter *it = NULL;
@@ -938,6 +980,8 @@ static size_t get_namespace_and_name(SAbbrState *abbr, const char *buf, STypeCod
 	size_t len = 0, read_len = 0, tmp_len = 0;
 
 	names_l = dem_list_newf(sstrinfo_free);
+	const char *code = !strncmp(buf, "?$?", 3) ? buf + 2 : buf;
+	char structor = code[0] == '?' && (code[1] == '0' || code[1] == '1') ? code[1] : 0;
 
 	if (*buf == '?') {
 		size_t res = get_operator_code(abbr, buf, names_l, memorize);
@@ -1128,8 +1172,28 @@ static size_t get_namespace_and_name(SAbbrState *abbr, const char *buf, STypeCod
 
 get_namespace_and_name_err:
 	tmp_len = dem_list_length(names_l);
-	if (amount_of_names) {
-		*amount_of_names = tmp_len;
+	if (structor && tmp_len > 1) {
+		SStrInfo *op = dem_list_get_n(names_l, 0);
+		const SStrInfo *klass = dem_list_get_n(names_l, 1);
+		const char *placeholder = structor == '1' ? "~destructor" : "constructor";
+		size_t prefix = strlen(placeholder);
+		if (op && klass && op->str_ptr && klass->str_ptr && !strncmp(op->str_ptr, placeholder, prefix)) {
+			// A constructor template has its own arguments after the class name.
+			char *name = dem_str_newf("%s%s%s", structor == '1' ? "~" : "", klass->str_ptr, op->str_ptr + prefix);
+			if (name) {
+				free(op->str_ptr);
+				op->str_ptr = name;
+				op->len = strlen(name);
+			}
+		}
+	}
+	if (tag) {
+		// A back-reference to a global SIMD type uses the same spelling as its full name.
+		const SStrInfo *name = tmp_len == 1 ? dem_list_get_n(names_l, 0) : NULL;
+		if (!name || !is_simd_intrinsic(name->str_ptr, tag)) {
+			copy_string(type_code_str, tag);
+			copy_string(type_code_str, " ");
+		}
 	}
 	SStrInfo *str_info;
 	dem_list_foreach_prev(names_l, it, str_info) {
@@ -1243,11 +1307,9 @@ DEF_STATE_ACTION(_) {
 // isdigit need to check is it need to do deabbreviation of names
 // +2 -> skipp @@  ( the end of class, union,...
 // or +2 -> skip abbreviated_num + '@'
-#define GET_USER_DEF_TYPE_NAME(data_struct_str) \
+#define GET_USER_DEF_TYPE_NAME(tag) \
 	{ \
-		copy_string(type_code_str, data_struct_str); \
-\
-		check_len = get_namespace_and_name(abbr, state->buff_for_parsing, type_code_str, NULL, true); \
+		check_len = get_namespace_and_name(abbr, state->buff_for_parsing, type_code_str, tag, true); \
 		if (check_len) { \
 			state->amount_of_read_chars += check_len; \
 			state->buff_for_parsing += check_len; \
@@ -1261,55 +1323,15 @@ DEF_STATE_ACTION(_) {
 	}
 
 DEF_STATE_ACTION(T) {
-#define PROCESS_CASE(case_string, type_str) \
-	{ \
-		check_len = strlen(case_string); \
-		if (strncmp(state->buff_for_parsing, case_string, check_len) == 0) { \
-			copy_string(type_code_str, type_str); \
-			state->buff_for_parsing += check_len; \
-			state->amount_of_read_chars += check_len; \
-			return; \
-		} \
-	}
-
 	size_t check_len = 0;
-
 	state->state = eTCStateEnd;
-
-	PROCESS_CASE("__m64@@", "__m64");
-	PROCESS_CASE("__m128@@", "__m128");
-	PROCESS_CASE("__m128i@@", "__m128i");
-	PROCESS_CASE("__m256@@", "__m256");
-	PROCESS_CASE("__m256i@@", "__m256i");
-	PROCESS_CASE("__m512@@", "__m512");
-	PROCESS_CASE("__m512i@@", "__m512i");
-
-	GET_USER_DEF_TYPE_NAME("union ");
-#undef PROCESS_CASE
+	GET_USER_DEF_TYPE_NAME("union");
 }
 
 DEF_STATE_ACTION(U) {
-#define PROCESS_CASE(case_string, type_str) \
-	{ \
-		check_len = strlen(case_string); \
-		if (strncmp(state->buff_for_parsing, case_string, check_len) == 0) { \
-			copy_string(type_code_str, type_str); \
-			state->amount_of_read_chars += check_len; \
-			state->buff_for_parsing += check_len; \
-			return; \
-		} \
-	}
-
 	size_t check_len = 0;
-
 	state->state = eTCStateEnd;
-
-	PROCESS_CASE("__m128d@@", "__m128d");
-	PROCESS_CASE("__m256d@@", "__m256d");
-	PROCESS_CASE("__m512d@@", "__m512d");
-
-	GET_USER_DEF_TYPE_NAME("struct ");
-#undef PROCESS_CASE
+	GET_USER_DEF_TYPE_NAME("struct");
 }
 
 DEF_STATE_ACTION(W) {
@@ -1325,7 +1347,7 @@ DEF_STATE_ACTION(W) {
 	state->buff_for_parsing++;
 	state->amount_of_read_chars++;
 
-	GET_USER_DEF_TYPE_NAME("enum ");
+	GET_USER_DEF_TYPE_NAME("enum");
 }
 
 DEF_STATE_ACTION(V) {
@@ -1333,7 +1355,7 @@ DEF_STATE_ACTION(V) {
 	size_t check_len = 0;
 	state->state = eTCStateEnd;
 
-	GET_USER_DEF_TYPE_NAME("class ");
+	GET_USER_DEF_TYPE_NAME("class");
 }
 
 #undef GET_USER_DEF_TYPE_NAME
@@ -2412,9 +2434,8 @@ static EDemanglerErr parse_function(SAbbrState *abbr, const char *sym, STypeCode
 		curr_pos++;
 	}
 
-	// Return type, or @ if 'void'
+	// Constructors and destructors have no return type.
 	if (*curr_pos == '@') {
-		ret_type = strdup("void");
 		curr_pos++;
 	} else {
 		err = get_type_code_string(abbr, curr_pos, &len, &ret_type, NULL);
@@ -2521,8 +2542,7 @@ static EDemanglerErr parse_microsoft_mangled_name(SAbbrState *abbr, const char *
 		err = eDemanglerErrMemoryAllocation;
 		goto parse_microsoft_mangled_name_err;
 	}
-	size_t i;
-	size_t len = get_namespace_and_name(abbr, curr_pos, &type_code_str, &i, false);
+	size_t len = get_namespace_and_name(abbr, curr_pos, &type_code_str, NULL, false);
 	if (!len) {
 		err = eDemanglerErrUncorrectMangledSymbol;
 		goto parse_microsoft_mangled_name_err;
