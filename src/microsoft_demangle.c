@@ -567,7 +567,10 @@ static size_t get_operator_code(SAbbrState *abbr, const char *buf, DemList *name
 		case '6': SET_OPERATOR_CODE("operator^="); break;
 		case '7': SET_OPERATOR_CODE("vftable"); break;
 		case '8': SET_OPERATOR_CODE("vbtable"); break;
-		case '9': SET_OPERATOR_CODE("vcall"); break;
+		case '9':
+			// MSVC's generated name opens with a backtick and closes with an apostrophe.
+			SET_OPERATOR_CODE("`vcall'");
+			break;
 		case 'A': SET_OPERATOR_CODE("typeof"); break;
 		case 'B': SET_OPERATOR_CODE("local_static_guard"); break;
 		case 'C':
@@ -730,14 +733,19 @@ static size_t get_operator_code(SAbbrState *abbr, const char *buf, DemList *name
 			case '0': {
 				size_t len;
 				char *str = NULL;
-				if (!*buf++) {
+				if (*buf == '?') {
+					if (parse_microsoft_rtti_mangled_name(abbr, buf + 1, &str, &len) != eDemanglerErrOK) {
+						goto fail;
+					}
+					read_len++;
+				} else if (get_type_code_string(abbr, buf, &len, &str, NULL) != eDemanglerErrOK || !str) {
 					goto fail;
 				}
-				if (parse_microsoft_rtti_mangled_name(abbr, buf, &str, &len) != eDemanglerErrOK) {
-					goto fail;
-				}
-				read_len += len + 1;
+				read_len += len;
 				str = dem_str_append(str, " `RTTI Type Descriptor'");
+				if (!str) {
+					goto fail;
+				}
 				SET_OPERATOR_CODE(str);
 				free(str);
 				break;
@@ -2331,6 +2339,43 @@ static EDemanglerErr parse_function_type(const char *sym, SDataType *data_type,
 		SET_ACCESS_MODIFIER('V', is_implicit_this_pointer, "public virtual");
 		SET_THUNK_MODIFIER('W', "[thunk]:public virtual");
 		SET_THUNK_MODIFIER('X', "[thunk]:public virtual");
+	case '$': {
+		bool extended = *curr_pos == 'R';
+		if (extended) {
+			curr_pos++;
+		}
+		if (*curr_pos < '0' || *curr_pos > '5') {
+			return eDemanglerErrUncorrectMangledSymbol;
+		}
+		static const char *const access[] = { "private", "protected", "public" };
+		const char *visibility = access[(*curr_pos++ - '0') / 2];
+		SStateInfo state;
+		init_state_struct(&state, curr_pos);
+		int64_t offsets[4];
+		for (size_t i = 0; i < (extended ? 4 : 2); i++) {
+			char *num = get_num(&state);
+			if (!num) {
+				return eDemanglerErrUncorrectMangledSymbol;
+			}
+			// MSVC also encodes negative displacements as unsigned 32-bit numbers.
+			uint32_t bits = (uint32_t)strtoll(num, NULL, 10);
+			offsets[i] = bits <= INT32_MAX ? (int64_t)bits : (int64_t)bits - (INT64_C(1) << 32);
+			free(num);
+		}
+		curr_pos = state.buff_for_parsing;
+		data_type->left = dem_str_newf("[thunk]:%s virtual", visibility);
+		if (extended) {
+			data_type->right = dem_str_newf("`vtordispex{%" PRId64 ", %" PRId64 ", %" PRId64 ", %" PRId64 "}'",
+				offsets[0], offsets[1], offsets[2], offsets[3]);
+		} else {
+			data_type->right = dem_str_newf("`vtordisp{%" PRId64 ", %" PRId64 "}'", offsets[0], offsets[1]);
+		}
+		if (!data_type->left || !data_type->right) {
+			return eDemanglerErrMemoryAllocation;
+		}
+		*is_implicit_this_pointer = true;
+		break;
+	}
 	case 'Y': // near
 	case 'Z': // far
 		break;
@@ -2374,6 +2419,25 @@ static EDemanglerErr parse_function(SAbbrState *abbr, const char *sym, STypeCode
 	if (!strncmp(curr_pos, "$$F", 3)) {
 		// Managed function (Managed C++ or C++/CLI)
 		curr_pos += 3;
+	}
+
+	if (!strncmp(curr_pos, "$B", 2)) {
+		SStateInfo state;
+		init_state_struct(&state, curr_pos + 2);
+		char *slot = get_num(&state);
+		curr_pos = state.buff_for_parsing;
+		call_conv = slot && *curr_pos == 'A' ? get_calling_convention(curr_pos[1]) : NULL;
+		if (!call_conv) {
+			err = eDemanglerErrUncorrectMangledSymbol;
+		} else {
+			curr_pos += 2;
+			*demangled_function = dem_str_newf("[thunk]: %s %s{%s, {flat}}", call_conv, type_code_str->type_str, slot);
+			if (!*demangled_function) {
+				err = eDemanglerErrMemoryAllocation;
+			}
+		}
+		free(slot);
+		goto parse_function_err;
 	}
 
 	err = parse_function_type(curr_pos, &data_type, &len, &is_static, &is_implicit_this_pointer);
@@ -2582,7 +2646,7 @@ static EDemanglerErr parse_microsoft_mangled_name(SAbbrState *abbr, const char *
 		*demangled_name = dem_str_append(*demangled_name, type_code_str.type_str);
 		*demangled_name = dem_str_append(*demangled_name, data_type.right);
 		sdatatype_fini(&data_type);
-	} else if (isalpha(*curr_pos)) {
+	} else if (isalpha((unsigned char)*curr_pos) || *curr_pos == '$') {
 		err = parse_function(abbr, curr_pos, &type_code_str, demangled_name, &len);
 		curr_pos += len;
 	} else {
