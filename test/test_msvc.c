@@ -4,6 +4,9 @@
 #include "minunit.h"
 
 mu_demangle_tests(msvc,
+	mu_demangle_test("??$f@P6AXPAH@Z@@YAXPAD0@Z", "void __cdecl f<void (__cdecl *)(int *)>(char *, char *)"),
+	mu_demangle_test("?f@X@@QAE?BVY@@XZ", "public: class Y const __thiscall X::f(void)"),
+	mu_demangle_test("??HVector2D@@QBE?AV0@ABV0@@Z", "public: class Vector2D __thiscall Vector2D::operator+(class Vector2D const &)const"),
 	mu_demangle_test(".?AV?$_CancellationTokenCallback@Vlambda_1@?1??_RegisterCancellation@_Task_impl_base@details@Concurrency@@QEAAXV?$weak_ptr@U_Task_impl_base@details@Concurrency@@@std@@@Z@@details@Concurrency@@", "class Concurrency::details::_CancellationTokenCallback<class `public: void __cdecl Concurrency::details::_Task_impl_base::_RegisterCancellation(class std::weak_ptr<struct Concurrency::details::_Task_impl_base>) __ptr64'::`2'::lambda_1>"),
 	mu_demangle_test(".?AV?$FunctionT@P6AXPAX@Z@ns@@", "class ns::FunctionT<void (__cdecl *)(void *)>"),
 	mu_demangle_test(".?AV?$GHI@$00VPQR@MNO@JKL@@@DEF@ABC@@", "class ABC::DEF::GHI<1, class JKL::MNO::PQR>"),

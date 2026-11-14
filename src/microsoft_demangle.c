@@ -840,11 +840,10 @@ static size_t get_template(SAbbrState *abbr, const char *buf, SStrInfo *str_info
 	size_t len = 0;
 	char *str_type_code = NULL;
 	STypeCodeStr type_code_str;
-	// DemListIter *it = NULL;
-	DemList *saved_abbr_names = abbr->names; // save current abbr names, this
-	DemList *new_abbr_names = dem_list_newf(free);
+	// A template argument list has its own name and parameter type back-references.
+	SAbbrState args = { .types = dem_list_newf(free), .names = dem_list_newf(free) };
 	memset(str_info, 0, sizeof(*str_info));
-	if (!init_type_code_str_struct(&type_code_str)) {
+	if (!init_type_code_str_struct(&type_code_str) || !args.types || !args.names) {
 		goto get_template_err;
 	}
 
@@ -871,19 +870,18 @@ static size_t get_template(SAbbrState *abbr, const char *buf, SStrInfo *str_info
 		// get/copy template len/name
 		len += (tmp - buf + 1);
 		copy_string_n(&type_code_str, buf, len - 1);
-		dem_list_append(new_abbr_names, dem_str_ndup(buf, len - 1));
+		dem_list_append(args.names, dem_str_ndup(buf, len - 1));
 		buf += len;
 	}
 
 	copy_string(&type_code_str, "<");
 
-	abbr->names = new_abbr_names;
 	bool first = true;
 	// get identifier
 	size_t i = 0;
 	while (*buf != '@') {
-		if (get_type_code_string(abbr, buf, &i, &str_type_code) != eDemanglerErrOK) {
-			if (get_template_params(abbr, buf, &i, &str_type_code) != eDemanglerErrOK) {
+		if (get_type_code_string(&args, buf, &i, &str_type_code) != eDemanglerErrOK) {
+			if (get_template_params(&args, buf, &i, &str_type_code) != eDemanglerErrOK) {
 				RZ_FREE(str_type_code);
 				goto get_template_err;
 			}
@@ -911,8 +909,8 @@ get_template_err:
 		str_info->len = type_code_str.curr_pos;
 	}
 
-	dem_list_free(new_abbr_names);
-	abbr->names = saved_abbr_names; // restore global list with name abbr.
+	dem_list_free(args.names);
+	dem_list_free(args.types);
 
 	if (memorize && str_info->str_ptr) {
 		dem_list_append(abbr->names, strdup(str_info->str_ptr));
@@ -2279,6 +2277,7 @@ static EDemanglerErr parse_function(SAbbrState *abbr, const char *sym, STypeCode
 	bool is_implicit_this_pointer;
 	bool is_static;
 	const char *memb_func_access_code = NULL;
+	const char *return_qualifier = NULL;
 	const char *call_conv = NULL;
 	char *demangled_args = NULL;
 	char *ret_type = NULL;
@@ -2350,7 +2349,7 @@ static EDemanglerErr parse_function(SAbbrState *abbr, const char *sym, STypeCode
 
 	// get storage class code for return
 	if (*curr_pos == '?') {
-		err = get_storage_class(*++curr_pos, &memb_func_access_code);
+		err = get_storage_class(*++curr_pos, &return_qualifier);
 		if (err != eDemanglerErrOK) {
 			goto parse_function_err;
 		}
@@ -2390,6 +2389,10 @@ print_function:
 
 	if (ret_type) {
 		copy_string(&func_str, ret_type);
+		if (return_qualifier) {
+			copy_string(&func_str, " ");
+			copy_string(&func_str, return_qualifier);
+		}
 		copy_string(&func_str, " ");
 	}
 
