@@ -156,6 +156,12 @@ mu_demangle_tests(msvc,
 	mu_demangle_test("??$?0H@Foo@@QAE@H@Z", "public: __thiscall Foo::Foo<int>(int)"),
 	mu_demangle_test("??__K_l@@YA?AUStringLiteral@@PBDI@Z", "struct StringLiteral __cdecl operator \"\"_l(char const *, unsigned int)"),
 	mu_demangle_test("?compare_equals@?$__crt_simd_traits@$0A@E@@SA?AT__m128i@@T2@0@Z", "public: static __m128i __cdecl __crt_simd_traits<0, unsigned char>::compare_equals(__m128i, __m128i)"),
+	mu_demangle_test("??_R0H@8", "int `RTTI Type Descriptor'"),
+	mu_demangle_test("??_R0PAD@8", "char * `RTTI Type Descriptor'"),
+	mu_demangle_test("??_9WithVirtual@@$B7AA", "[thunk]: __cdecl WithVirtual::`vcall'{8, {flat}}"),
+	mu_demangle_test("??_9WithVirtual@@$BA@AE", "[thunk]: __thiscall WithVirtual::`vcall'{0, {flat}}"),
+	mu_demangle_test("?sound@Dog@@$4PPPPPPPM@A@BEXXZ", "[thunk]:public virtual: void __thiscall Dog::sound`vtordisp{-4, 0}'(void)const"),
+	mu_demangle_test("?f@A@@$R4BA@A@PPPPPPPM@7AEXXZ", "[thunk]:public virtual: void __thiscall A::f`vtordispex{16, 0, -4, 8}'(void)"),
 	// end
 );
 
