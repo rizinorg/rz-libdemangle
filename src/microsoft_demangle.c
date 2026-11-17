@@ -67,6 +67,7 @@ typedef struct STypeCodeStr {
 	char type_str_buf[MICROSOFT_NAME_LEN];
 	size_t type_str_len;
 	size_t curr_pos;
+	size_t declarator_pos; // Insertion point for the identifier in a pointer or array declarator.
 } STypeCodeStr;
 
 struct SStateInfo;
@@ -178,7 +179,7 @@ static state_func const state_table[eTCStateMax] = {
 ///////////////////////////////////////////////////////////////////////////////
 
 static void init_state_struct(SStateInfo *state, const char *buff_for_parsing);
-static EDemanglerErr get_type_code_string(SAbbrState *abbr, const char *sym, size_t *amount_of_read_chars, char **str_type_code);
+static EDemanglerErr get_type_code_string(SAbbrState *abbr, const char *sym, size_t *amount_of_read_chars, char **str_type_code, size_t *declarator_pos);
 static bool init_type_code_str_struct(STypeCodeStr *type_code_str);
 static void free_type_code_str_struct(STypeCodeStr *type_code_str);
 static char *type_code_str_get(STypeCodeStr *type_code_str);
@@ -880,7 +881,7 @@ static size_t get_template(SAbbrState *abbr, const char *buf, SStrInfo *str_info
 	// get identifier
 	size_t i = 0;
 	while (*buf != '@') {
-		if (get_type_code_string(&args, buf, &i, &str_type_code) != eDemanglerErrOK) {
+		if (get_type_code_string(&args, buf, &i, &str_type_code, NULL) != eDemanglerErrOK) {
 			if (get_template_params(&args, buf, &i, &str_type_code) != eDemanglerErrOK) {
 				RZ_FREE(str_type_code);
 				goto get_template_err;
@@ -1399,6 +1400,17 @@ static char *get_num(SStateInfo *state) {
 	return ptr;
 }
 
+// The storage code and the pointee's own pointer code can encode the same qualifier.
+static const char *pointee_qualifier(const char *cv, char pointee) {
+	switch (pointee) {
+	case 'Q': return strstr(cv, "volatile") ? "volatile" : NULL;
+	case 'B':
+	case 'R': return strstr(cv, "const") ? "const" : NULL;
+	case 'S': return NULL;
+	default: return cv;
+	}
+}
+
 static inline void parse_type_modifier(SAbbrState *abbr, SStateInfo *state, STypeCodeStr *type_code_str, const char *modifier_str) {
 	size_t i = 0;
 	EDemanglerErr err = eDemanglerErrOK;
@@ -1467,6 +1479,7 @@ static inline void parse_type_modifier(SAbbrState *abbr, SStateInfo *state, STyp
 		const char *storage_class_str;
 		err = get_storage_class(*state->buff_for_parsing, &storage_class_str);
 		if (storage_class_str) {
+			storage_class_str = pointee_qualifier(storage_class_str, state->buff_for_parsing[1]);
 			copy_string(&storage_class, storage_class_str);
 		}
 		if (err == eDemanglerErrOK) {
@@ -1478,7 +1491,9 @@ static inline void parse_type_modifier(SAbbrState *abbr, SStateInfo *state, STyp
 		sdatatype_fini(&mod);
 	} while (i);
 
-	if (*state->buff_for_parsing == 'Y') {
+	size_t array_pos = 0;
+	bool is_array = *state->buff_for_parsing == 'Y';
+	if (is_array) {
 		char *n1;
 		int num;
 
@@ -1500,6 +1515,7 @@ static inline void parse_type_modifier(SAbbrState *abbr, SStateInfo *state, STyp
 			}
 			copy_string(&tmp_str, modifier_str);
 			copy_string_n(&tmp_str, mod_right.type_str, mod_right.curr_pos);
+			array_pos = tmp_str.curr_pos;
 			copy_string(&tmp_str, ")");
 		}
 
@@ -1541,8 +1557,9 @@ static inline void parse_type_modifier(SAbbrState *abbr, SStateInfo *state, STyp
 		state->amount_of_read_chars += 3;
 	}
 
-	err = get_type_code_string(abbr, state->buff_for_parsing, &i, &tmp);
-	if (err != eDemanglerErrOK) {
+	size_t pos = 0;
+	err = get_type_code_string(abbr, state->buff_for_parsing, &i, &tmp, &pos);
+	if (err != eDemanglerErrOK || !tmp) {
 		state->err = eTCStateMachineErrUnsupportedTypeCode;
 		goto MODIFIER_err;
 	}
@@ -1552,11 +1569,21 @@ static inline void parse_type_modifier(SAbbrState *abbr, SStateInfo *state, STyp
 	if (is_pin_ptr) {
 		copy_string(type_code_str, "cli::pin_ptr<");
 	}
-	copy_string(type_code_str, tmp);
+	bool nested = pos && !clr_type && !is_pin_ptr;
+	copy_string_n(type_code_str, tmp, nested ? pos : strlen(tmp));
 	if (type_code_str->curr_pos && type_code_str->type_str[type_code_str->curr_pos - 1] != ' ' && tmp_str.type_str[0] != ' ') {
 		copy_string(type_code_str, " ");
 	}
+	if (is_array) {
+		type_code_str->declarator_pos = type_code_str->curr_pos + array_pos;
+	}
 	copy_string_n(type_code_str, tmp_str.type_str, tmp_str.curr_pos);
+	if (nested) {
+		if (!is_array) {
+			type_code_str->declarator_pos = type_code_str->curr_pos;
+		}
+		copy_string(type_code_str, tmp + pos);
+	}
 	if (is_pin_ptr) {
 		copy_string(type_code_str, ">");
 	}
@@ -1568,10 +1595,6 @@ MODIFIER_err:
 	free_type_code_str_struct(&storage_class);
 	free_type_code_str_struct(&mod_left);
 	free_type_code_str_struct(&mod_right);
-}
-
-DEF_STATE_ACTION(S) {
-	parse_type_modifier(abbr, state, type_code_str, "* const volatile");
 }
 
 static inline const char *get_calling_convention(char calling_convention) {
@@ -1623,7 +1646,7 @@ static EDemanglerErr parse_function_args(SAbbrState *abbr, const char *sym, char
 			if (len) {
 				copy_string(&func_str, ", ");
 			}
-			err = get_type_code_string(abbr, curr_pos, &len, &tmp);
+			err = get_type_code_string(abbr, curr_pos, &len, &tmp, NULL);
 			if (err != eDemanglerErrOK) {
 				// abbreviation of type processing
 				if ((*curr_pos >= '0') && (*curr_pos <= '9')) {
@@ -1718,7 +1741,7 @@ static void parse_function_pointer(SAbbrState *abbr, SStateInfo *state, STypeCod
 		state->buff_for_parsing++;
 		state->amount_of_read_chars += 2;
 	}
-	err = get_type_code_string(abbr, state->buff_for_parsing, &i, &ret_type);
+	err = get_type_code_string(abbr, state->buff_for_parsing, &i, &ret_type, NULL);
 	if (err != eDemanglerErrOK) {
 		state->err = eTCStateMachineErrUnsupportedTypeCode;
 		return;
@@ -1729,13 +1752,15 @@ static void parse_function_pointer(SAbbrState *abbr, SStateInfo *state, STypeCod
 		copy_string(type_code_str, " ");
 		copy_string(type_code_str, storage);
 	}
-	copy_string(type_code_str, " (");
 	RZ_FREE(ret_type);
-
+	copy_string_n(type_code_str, " (", pointer_str ? 2 : 1);
 	copy_string(type_code_str, call_conv);
-	copy_string(type_code_str, " ");
-	copy_string(type_code_str, pointer_str);
-	copy_string(type_code_str, ")");
+	if (pointer_str) {
+		copy_string(type_code_str, " ");
+		copy_string(type_code_str, pointer_str);
+		type_code_str->declarator_pos = type_code_str->curr_pos;
+		copy_string(type_code_str, ")");
+	}
 
 	state->amount_of_read_chars += i;
 	state->buff_for_parsing += i;
@@ -1810,6 +1835,10 @@ DEF_STATE_ACTION(P) {
 	PARSE_POINTER("*");
 }
 
+DEF_STATE_ACTION(S) {
+	PARSE_POINTER("* const volatile");
+}
+
 DEF_STATE_ACTION(R) {
 	PARSE_POINTER("* volatile");
 }
@@ -1834,7 +1863,12 @@ DEF_STATE_ACTION($) {
 	state->amount_of_read_chars += 2;
 	switch (*state->buff_for_parsing++) {
 	case 'A':
-		state->state = eTCStateP;
+		if (*state->buff_for_parsing == '6') {
+			state->buff_for_parsing++;
+			parse_function_pointer(abbr, state, type_code_str, NULL);
+		} else {
+			state->state = eTCStateP;
+		}
 		break;
 	case 'B':
 		parse_type_modifier(abbr, state, type_code_str, "");
@@ -1935,6 +1969,7 @@ static bool init_type_code_str_struct(STypeCodeStr *type_code_str) {
 	type_code_str->type_str = type_code_str->type_str_buf;
 	*type_code_str->type_str = '\0';
 	type_code_str->curr_pos = 0;
+	type_code_str->declarator_pos = 0;
 	return true;
 }
 
@@ -1965,7 +2000,7 @@ static char *type_code_str_get(STypeCodeStr *type_code_str) {
 // End of machine functions for parsing type codes
 ///////////////////////////////////////////////////////////////////////////////
 
-static EDemanglerErr get_type_code_string(SAbbrState *abbr, const char *sym, size_t *amount_of_read_chars, char **str_type_code) {
+static EDemanglerErr get_type_code_string(SAbbrState *abbr, const char *sym, size_t *amount_of_read_chars, char **str_type_code, size_t *declarator_pos) {
 	EDemanglerErr err = eDemanglerErrOK;
 	STypeCodeStr type_code_str;
 	SStateInfo state;
@@ -1988,6 +2023,10 @@ static EDemanglerErr get_type_code_string(SAbbrState *abbr, const char *sym, siz
 				break;
 			case eTCStateMachineErrUnsupportedTypeCode:
 				err = eDemanglerErrUnsupportedMangling;
+				break;
+			case eTCStateMachineErrAlloc:
+				err = eDemanglerErrMemoryAllocation;
+				break;
 			default:
 				break;
 			}
@@ -1997,6 +2036,11 @@ static EDemanglerErr get_type_code_string(SAbbrState *abbr, const char *sym, siz
 
 	*str_type_code = type_code_str_get(&type_code_str);
 	*amount_of_read_chars = state.amount_of_read_chars;
+	if (!*str_type_code) {
+		err = eDemanglerErrMemoryAllocation;
+	} else if (declarator_pos) {
+		*declarator_pos = type_code_str.declarator_pos;
+	}
 
 get_type_code_string_err:
 	free_type_code_str_struct(&type_code_str);
@@ -2080,6 +2124,7 @@ static EDemanglerErr parse_data_type(SAbbrState *abbr, const char *sym, SDataTyp
 	SDataType modifier = { 0 };
 	const char *storage_class = NULL;
 	char *tmp;
+	size_t pos = 0;
 	if (len) {
 		*len = 0;
 	}
@@ -2111,7 +2156,7 @@ static EDemanglerErr parse_data_type(SAbbrState *abbr, const char *sym, SDataTyp
 		}
 		curr_pos++;
 		i = 0;
-		err = get_type_code_string(abbr, curr_pos, &i, &tmp);
+		err = get_type_code_string(abbr, curr_pos, &i, &tmp, &pos);
 		if (err != eDemanglerErrOK) {
 			sdatatype_fini(&modifier);
 			return err;
@@ -2126,8 +2171,19 @@ static EDemanglerErr parse_data_type(SAbbrState *abbr, const char *sym, SDataTyp
 		}
 		curr_pos++;
 
-		data_type->right = strdup("");
-		if (storage_class) {
+		data_type->right = strdup(pos ? tmp + pos : "");
+		if (!data_type->right) {
+			free(tmp);
+			sdatatype_fini(&modifier);
+			return eDemanglerErrMemoryAllocation;
+		}
+		if (pos) {
+			tmp[pos] = '\0';
+		}
+		// Array element qualifiers occur after the dimensions in the type encoding.
+		if (!strncmp(data_type->right, ")[", 2) || data_type->right[0] == '[') {
+			data_type->left = dem_str_newf("%s%s", modifier.left, tmp);
+		} else if (storage_class) {
 			data_type->left = dem_str_newf("%s%s %s%s", modifier.left, tmp, storage_class, modifier.right);
 		} else {
 			data_type->left = dem_str_newf("%s%s%s", modifier.left, tmp, modifier.right);
@@ -2361,7 +2417,7 @@ static EDemanglerErr parse_function(SAbbrState *abbr, const char *sym, STypeCode
 		ret_type = strdup("void");
 		curr_pos++;
 	} else {
-		err = get_type_code_string(abbr, curr_pos, &len, &ret_type);
+		err = get_type_code_string(abbr, curr_pos, &len, &ret_type, NULL);
 		if (err != eDemanglerErrOK) {
 			err = eDemanglerErrUncorrectMangledSymbol;
 			goto parse_function_err;
@@ -2536,7 +2592,7 @@ static EDemanglerErr parse_microsoft_rtti_mangled_name(SAbbrState *abbr, const c
 		return err;
 	}
 	size_t len;
-	err = get_type_code_string(abbr, sym, &len, &type);
+	err = get_type_code_string(abbr, sym, &len, &type, NULL);
 	if (err != eDemanglerErrOK) {
 		return err;
 	}
